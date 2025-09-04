@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -8,6 +8,7 @@ import * as yup from 'yup'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, User, Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { RoleSelectionModal } from '@/components/modal/RoleSelectionModal'
 import Image from 'next/image'
 
 const schema = yup.object({
@@ -22,8 +23,27 @@ interface LoginForm {
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
+  const [showRoleModal, setShowRoleModal] = useState(false)
   const router = useRouter()
-  const { login, isLoading } = useAuth()
+  const { login, isLoading, user } = useAuth()
+  
+  // Check if user is logged in and has multiple roles
+  useEffect(() => {
+    if (user && user.roles && user.roles.length > 1) {
+      setShowRoleModal(true)
+    } else if (user && user.activeRole) {
+      // If user has only one role or activeRole is set, redirect to their role-specific page
+      const roleRoutes = {
+        'QTV_KHOA': '/qtv-khoa',
+        'PHONG_QUAN_TRI': '/phong-quan-tri', 
+        'TO_TRUONG_KY_THUAT': '/to-truong-ky-thuat',
+        'KY_THUAT_VIEN': '/ky-thuat-vien',
+        'GIANG_VIEN': '/giang-vien'
+      }
+      const route = roleRoutes[user.activeRole as keyof typeof roleRoutes] || '/admin'
+      router.push(route)
+    }
+  }, [user, router])
 
   const {
     register,
@@ -39,22 +59,28 @@ export default function LoginPage() {
       const email = data.username.includes('@') ? data.username : `${data.username}@iuh.edu.vn`
       await login(email, data.password)
       toast.success('Đăng nhập thành công!')
-      router.push('/admin')
+      
+      // Role selection will be handled by useEffect to avoid race conditions
     } catch (error) {
       console.error('Login error:', error)
       toast.error('Tên đăng nhập hoặc mật khẩu không chính xác!')
     }
   }
 
+  const handleCloseRoleModal = () => {
+    setShowRoleModal(false)
+    router.push('/admin')
+  }
+  
   return (
     <div className="bg-white/40 backdrop-blur-sm rounded-lg shadow-lg p-8 w-full max-w-md mx-auto">
       {/* Logo */}
       <div className="text-center mb-6">
         <Image
-          src={"/images/logo-IUH-ngang-trang-300x131-1.webp"}
+          src={"/images/logo-light.webp"}
           alt="Logo IUH"
-          width={120}
-          height={52}
+          width={250}
+          height={109}
           className="mx-auto mb-4"
           priority
         />
@@ -132,7 +158,7 @@ export default function LoginPage() {
             </label>
           </div>
           <div className="text-sm">
-            <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
+            <a href="#" className="font-medium text-blue-700 hover:text-blue-600">
               Quên mật khẩu?
             </a>
           </div>
@@ -157,6 +183,12 @@ export default function LoginPage() {
           )}
         </button>
       </form>
+      
+      {/* Role Selection Modal */}
+      <RoleSelectionModal 
+        isOpen={showRoleModal}
+        onClose={handleCloseRoleModal}
+      />
     </div>
   )
 }

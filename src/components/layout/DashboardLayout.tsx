@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import { RoleSwitcher } from "@/components/common/RoleSwitcher";
+import { UserRole, RoleInfo } from "@/types/repair";
 import {
   LayoutDashboard,
   Wrench,
@@ -14,6 +16,11 @@ import {
   ClipboardList,
   Users,
   BarChart3,
+  FileText,
+  CheckCircle,
+  AlertTriangle,
+  UserCheck,
+  Shield,
 } from "lucide-react";
 
 // Navigation items
@@ -23,6 +30,140 @@ interface NavigationItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
+// Navigation items by role
+const getNavigationByRole = (userRole: string): NavigationItem[] => {
+  const navigationMap = {
+    [UserRole.GIANG_VIEN]: [
+      {
+        name: "Dashboard",
+        href: "/giang-vien",
+        icon: LayoutDashboard,
+      },
+      {
+        name: "Báo cáo lỗi",
+        href: "/giang-vien/bao-cao-loi",
+        icon: AlertTriangle,
+      },
+      {
+        name: "Theo dõi tiến độ",
+        href: "/giang-vien/theo-doi-tien-do",
+        icon: ClipboardList,
+      },
+      {
+        name: "Tra cứu thiết bị",
+        href: "/giang-vien/tra-cuu-thiet-bi",
+        icon: Settings,
+      }
+    ],
+    [UserRole.KY_THUAT_VIEN]: [
+      {
+        name: "Dashboard",
+        href: "/ky-thuat-vien",
+        icon: LayoutDashboard,
+      },
+      {
+        name: "Xử lý lỗi",
+        href: "/ky-thuat-vien/xu-ly-loi",
+        icon: Wrench,
+      },
+      {
+        name: "Đề xuất thay thế",
+        href: "/ky-thuat-vien/de-xuat-thay-the",
+        icon: FileText,
+      },
+      {
+        name: "Quản lý tài sản",
+        href: "/ky-thuat-vien/quan-ly-tai-san",
+        icon: Settings,
+      },
+      {
+        name: "Thống kê cá nhân",
+        href: "/ky-thuat-vien/thong-ke-ca-nhan",
+        icon: BarChart3,
+      }
+    ],
+    [UserRole.TO_TRUONG_KY_THUAT]: [
+      {
+        name: "Dashboard",
+        href: "/to-truong-ky-thuat",
+        icon: LayoutDashboard,
+      },
+      {
+        name: "Quản lý KTV",
+        href: "/to-truong-ky-thuat/quan-ly-ky-thuat-vien",
+        icon: Users,
+      },
+      {
+        name: "Giám sát lỗi",
+        href: "/to-truong-ky-thuat/giam-sat-loi",
+        icon: ClipboardList,
+      },
+      {
+        name: "Phê duyệt thay thế",
+        href: "/to-truong-ky-thuat/phe-duyet-thay-the",
+        icon: CheckCircle,
+      },
+      {
+        name: "Lập tờ trình",
+        href: "/to-truong-ky-thuat/lap-to-trinh",
+        icon: FileText,
+      }
+    ],
+    [UserRole.PHONG_QUAN_TRI]: [
+      {
+        name: "Dashboard",
+        href: "/phong-quan-tri",
+        icon: LayoutDashboard,
+      },
+      {
+        name: "Xử lý tờ trình",
+        href: "/phong-quan-tri/xu-ly-to-trinh",
+        icon: FileText,
+      },
+      {
+        name: "Kiểm tra thực tế",
+        href: "/phong-quan-tri/kiem-tra-thuc-te",
+        icon: UserCheck,
+      },
+      {
+        name: "Lập biên bản",
+        href: "/phong-quan-tri/lap-bien-ban",
+        icon: ClipboardList,
+      }
+    ],
+    [UserRole.QTV_KHOA]: [
+      {
+        name: "Dashboard",
+        href: "/qtv-khoa",
+        icon: LayoutDashboard,
+      },
+      {
+        name: "Quản lý người dùng",
+        href: "/qtv-khoa/quan-ly-nguoi-dung",
+        icon: Users,
+      },
+      {
+        name: "Phê duyệt cuối cùng",
+        href: "/qtv-khoa/phe-duyet-cuoi-cung",
+        icon: Shield,
+      },
+      {
+        name: "Thống kê báo cáo",
+        href: "/qtv-khoa/thong-ke-bao-cao",
+        icon: BarChart3,
+      },
+      {
+        name: "Giám sát hệ thống",
+        href: "/qtv-khoa/giam-sat-he-thong",
+        icon: Settings,
+      }
+    ]
+  };
+
+  return navigationMap[userRole as UserRole] || [];
+};
+
+// Fallback navigation for admin route
 const navigation: NavigationItem[] = [
   {
     name: "Dashboard",
@@ -73,7 +214,7 @@ function SidebarUserSection({ handleLogout }: { handleLogout: () => void }) {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-900">{user.name}</p>
-            <p className="text-xs text-gray-500">{user.role}</p>
+            <p className="text-xs text-gray-500">{RoleInfo[user.activeRole]?.name || user.activeRole}</p>
           </div>
         </div>
         <button
@@ -174,13 +315,15 @@ function Topbar() {
           </div>
         </div>
         <div className="flex items-center space-x-4">
+          {/* Role Switcher */}
+          <RoleSwitcher />
           <div className="flex items-center space-x-3">
             <div className="hidden sm:flex flex-col text-right">
               <h1 className="text-lg font-semibold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent text-right">
                 {getGreeting()} {user?.name.split(' ').pop()}
               </h1>
               <p className="text-xs text-gray-500 font-normal mt-0.5 text-right">
-                Chúc bạn có một ngày tuyệt vời!
+                {user && user.roles.length > 1 ? `Vai trò: ${RoleInfo[user.activeRole]?.name || user.activeRole}` : 'Chúc bạn có một ngày tuyệt vời!'}
               </p>
             </div>
             <div className="relative p-2 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-sm border border-blue-100/50">
@@ -202,6 +345,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading, logout, isAuthenticated } = useAuth();
+
+  // Get navigation based on user active role
+  const userNavigation = user?.activeRole ? getNavigationByRole(user.activeRole) : navigation;
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -281,7 +427,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
         {/* Mobile Navigation & user section */}
         <SidebarNavigation
-          navigation={navigation}
+          navigation={userNavigation}
           pathname={pathname}
           isMobile
           setIsMobileSidebarOpen={setIsMobileSidebarOpen}
@@ -303,13 +449,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   Repair Asset
                 </span>
                 <p className="text-xs text-gray-500 font-medium">
-                  Khoa CNTT - IUH
+                  {user?.activeRole && RoleInfo[user.activeRole]?.name || 'Khoa CNTT - IUH'}
                 </p>
               </div>
             </div>
             {/* Navigation */}
             <SidebarNavigation
-              navigation={navigation}
+              navigation={userNavigation}
               pathname={pathname}
             />
             {/* Desktop user section */}

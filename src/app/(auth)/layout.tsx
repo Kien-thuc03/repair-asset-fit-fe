@@ -1,15 +1,62 @@
+'use client'
+
 import { ReactNode } from 'react'
+
+// Demo accounts component
+function DemoAccountsInfo() {
+  // Demo users for testing - should match AuthContext
+  const demoUsers = [
+    {
+      name: "Quản trị viên Khoa",
+      username: "qtv",
+      password: "qtv123",
+      role: "QTV_KHOA"
+    },
+    {
+      name: "Nhân viên Phòng Quản trị",
+      username: "quantri",
+      password: "quantri123",
+      role: "PHONG_QUAN_TRI"
+    },
+    {
+      name: "Tổ trưởng Kỹ thuật",
+      username: "totruong",
+      password: "totruong123",
+      role: "TO_TRUONG_KY_THUAT"
+    },
+    {
+      name: "Kỹ thuật viên",
+      username: "kythuat",
+      password: "kythuat123",
+      role: "KY_THUAT_VIEN"
+    },
+    {
+      name: "Giảng viên",
+      username: "giangvien",
+      password: "giangvien123",
+      role: "GIANG_VIEN"
+    }
+  ];
+
+  return (
+    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+      <h4 className="text-xs font-medium text-blue-800 mb-2">Tài khoản demo:</h4>
+      <div className="space-y-1 text-xs text-blue-700">
+        {demoUsers.map((user, index) => (
+          <p key={index}>
+            <strong>{user.name}:</strong> {user.username} / {user.password}
+          </p>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen relative">
       {/* Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url('/images/image-1_Campus-IUH_bgLogin.png')",
-        }}
-      >
+      <div className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-[url('/images/image-1_Campus-IUH_bgLogin.png')]">
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
       </div>
@@ -29,14 +76,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             </div>
 
             {/* Demo accounts info */}
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                <h4 className="text-xs font-medium text-blue-800 mb-1">Tài khoản demo:</h4>
-                <div className="space-y-0.5 text-xs text-blue-700">
-                <p><strong>Admin:</strong> admin / admin123</p>
-                <p><strong>Kỹ thuật viên:</strong> tech / tech123</p>
-                <p><strong>Người dùng:</strong> user / user123</p>
-                </div>
-            </div>
+            <DemoAccountsInfo />
         </div>
       </div>
     </div>

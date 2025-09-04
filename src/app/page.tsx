@@ -3,20 +3,23 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { UserRole, RoleInfo } from '@/types/repair'
 
 export default function Home() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated) {
-        router.push('/admin')
+      if (isAuthenticated && user) {
+        // Redirect to role-specific dashboard
+        const defaultRoute = RoleInfo[user.role as UserRole]?.defaultRoute || '/admin'
+        router.push(defaultRoute)
       } else {
         router.push('/login')
       }
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [isAuthenticated, isLoading, user, router])
 
   if (isLoading) {
     return (
