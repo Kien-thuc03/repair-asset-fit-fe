@@ -97,6 +97,7 @@ export interface User {
   name: string
   email: string
   username?: string
+  password?: string
   roles: UserRole[]    // User can have multiple roles
   activeRole: UserRole // Currently active role
   department?: string

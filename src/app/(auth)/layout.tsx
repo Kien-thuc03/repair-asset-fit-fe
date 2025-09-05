@@ -1,42 +1,18 @@
 'use client'
 
 import { ReactNode } from 'react'
+import { demoUsers as demoUsersData } from '@/lib/mockData/users'
+import { User } from '@/types/repair'
 
 // Demo accounts component
 function DemoAccountsInfo() {
   // Demo users for testing - should match AuthContext
-  const demoUsers = [
-    {
-      name: "Quản trị viên Khoa",
-      username: "qtv",
-      password: "qtv123",
-      role: "QTV_KHOA"
-    },
-    {
-      name: "Nhân viên Phòng Quản trị",
-      username: "quantri",
-      password: "quantri123",
-      role: "PHONG_QUAN_TRI"
-    },
-    {
-      name: "Tổ trưởng Kỹ thuật",
-      username: "totruong",
-      password: "totruong123",
-      role: "TO_TRUONG_KY_THUAT"
-    },
-    {
-      name: "Kỹ thuật viên",
-      username: "kythuat",
-      password: "kythuat123",
-      role: "KY_THUAT_VIEN"
-    },
-    {
-      name: "Giảng viên",
-      username: "giangvien",
-      password: "giangvien123",
-      role: "GIANG_VIEN"
-    }
-  ];
+  const demoUsers = demoUsersData.map((user: User) => ({
+    name: user.name,
+    username: user.username,
+    password: user.password,
+    role: user.roles[0]
+  }))
 
   return (
     <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
