@@ -13,7 +13,7 @@ export default function Home() {
     if (!isLoading) {
       if (isAuthenticated && user) {
         // Redirect to role-specific dashboard
-        const defaultRoute = RoleInfo[user.role as UserRole]?.defaultRoute || '/admin'
+        const defaultRoute = RoleInfo[user.activeRole as UserRole]?.defaultRoute || '/admin'
         router.push(defaultRoute)
       } else {
         router.push('/login')

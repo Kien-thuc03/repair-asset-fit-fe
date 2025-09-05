@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { RoleSwitcher } from "@/components/common/RoleSwitcher";
 import { UserRole, RoleInfo } from "@/types/repair";
@@ -204,22 +205,22 @@ function SidebarUserSection({ handleLogout }: { handleLogout: () => void }) {
   if (!user) return null;
 
   return (
-    <div className="border-t border-gray-200 p-4 bg-gray-50">
+    <div className="border-t border-blue-700 p-4 bg-blue-900">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
             <span className="text-xs font-semibold text-white">
               {user.name.charAt(0)}
             </span>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-            <p className="text-xs text-gray-500">{RoleInfo[user.activeRole]?.name || user.activeRole}</p>
+            <p className="text-sm font-medium text-white">{user.name}</p>
+            <p className="text-xs text-blue-200">{RoleInfo[user.activeRole]?.name || user.activeRole}</p>
           </div>
         </div>
         <button
           onClick={handleLogout}
-          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+          className="p-2 text-blue-200 hover:text-red-300 hover:bg-red-600/20 rounded-lg transition-colors"
           title="Đăng xuất"
         >
           <LogOut className="h-4 w-4" />
@@ -248,25 +249,25 @@ function SidebarNavigation({
   };
 
   return (
-    <nav className="flex-1 px-4 py-6 space-y-1">
+    <nav className="flex-1 px-4 py-6 space-y-2">
       {navigation.map((item: NavigationItem) => {
         const isActive = pathname === item.href;
         return (
           <Link
             key={item.name}
             href={item.href}
-            className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+            className={`group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
               isActive
-                ? "bg-blue-50 text-blue-700"
-                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                ? "bg-blue-700 text-white"
+                : "text-blue-200 hover:text-white hover:bg-blue-700"
             }`}
             onClick={handleNavClick}
           >
             <item.icon
               className={`mr-3 h-5 w-5 ${
                 isActive
-                  ? "text-blue-600"
-                  : "text-gray-400 group-hover:text-gray-500"
+                  ? "text-white"
+                  : "text-blue-300 group-hover:text-white"
               }`}
             />
             <span>{item.name}</span>
@@ -281,14 +282,6 @@ function SidebarNavigation({
 function Topbar() {
   const { user } = useAuth();
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "Chào buổi sáng";
-    if (hour >= 12 && hour < 13) return "Chào buổi trưa";
-    if (hour >= 13 && hour < 18) return "Chào buổi chiều";
-    return "Chào buổi tối";
-  };
-
   return (
     <div className="relative z-10 flex-shrink-0 flex h-16 bg-white border-b border-gray-200">
       <button
@@ -301,33 +294,58 @@ function Topbar() {
       >
         <Menu className="h-5 w-5" />
       </button>
+      
+      {/* Header với logo và tên trường */}
       <div className="flex-1 px-6 flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-500">
-            <span>
-              {new Date().toLocaleDateString("vi-VN", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </span>
+          {/* Logo và tên trường */}
+          <div className="flex items-center space-x-3">
+            <Image
+              src="/images/Logo_IUH.webp"
+              alt="Logo"
+              width={100}
+              height={40}
+              className="rounded-lg"
+            />
+            <div>
+              <h1 className="text-[14px] font-semibold text-gray-500">
+                ĐẠI HỌC CÔNG NGHIỆP TP.HCM
+              </h1>
+              <p className="text-[12px] text-gray-400 font-medium">
+                KHOA CÔNG NGHỆ THÔNG TIN
+              </p>
+            </div>
           </div>
         </div>
+        
+        {/* User info và controls */}
         <div className="flex items-center space-x-4">
           {/* Role Switcher */}
           <RoleSwitcher />
+          
+          {/* Notifications */}
+          <button 
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+            title="Thông báo"
+            aria-label="Thông báo"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-3.5-3.5a7.5 7.5 0 10-10.61 0L2 17h5m8 0V9a3 3 0 00-3-3v0a3 3 0 00-3 3v8m8 0a2 2 0 11-4 0" />
+            </svg>
+          </button>
+          
+          {/* User info */}
           <div className="flex items-center space-x-3">
-            <div className="hidden sm:flex flex-col text-right">
-              <h1 className="text-lg font-semibold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent text-right">
-                {getGreeting()} {user?.name.split(' ').pop()}
-              </h1>
-              <p className="text-xs text-gray-500 font-normal mt-0.5 text-right">
-                {user && user.roles.length > 1 ? `Vai trò: ${RoleInfo[user.activeRole]?.name || user.activeRole}` : 'Chúc bạn có một ngày tuyệt vời!'}
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-900">{user?.name || 'Nguyễn Kiến Thức'}</p>
+              <p className="text-xs text-green-600">
+                {user && user.roles.length > 1 ? `${RoleInfo[user.activeRole]?.name || user.activeRole}` : 'Sinh viên'}
               </p>
             </div>
-            <div className="relative p-2 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-sm border border-blue-100/50">
-              <Wrench className="h-6 w-6 text-blue-600" />
+            <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+              <span className="text-xs font-semibold text-white">
+                {user?.name?.charAt(0) || 'N'}
+              </span>
             </div>
           </div>
         </div>
@@ -398,27 +416,31 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       {/* Mobile sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 flex flex-col w-64 bg-white border-r border-gray-200 shadow-lg z-40 transform transition-all duration-300 ease-in-out md:hidden ${
+        className={`fixed inset-y-0 left-0 flex flex-col w-64 bg-blue-900 shadow-lg z-40 transform transition-all duration-300 ease-in-out md:hidden ${
           isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Mobile Sidebar header */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between h-16 px-6 bg-blue-800">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Wrench className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <span className="text-lg font-semibold text-gray-900">
-                Repair Asset
+            <Image
+              src="/images/logo-IUH-ngang-trang-300x131-1.png"
+              alt="Logo"
+              width={40}
+              height={40}
+              className="rounded-lg"
+            />
+          <div>
+              <span className="text-white font-semibold text-sm">
+                HỆ THỐNG SỬA CHỮA
               </span>
-              <p className="text-xs text-gray-500 font-medium">
-                Khoa CNTT - IUH
+              <p className="text-blue-200 text-xs">
+                QUẢN LÝ TÀI SẢN
               </p>
             </div>
           </div>
           <button
-            className="w-8 h-8 flex items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-md text-blue-200 hover:bg-blue-700 hover:text-white transition-colors"
             onClick={() => setIsMobileSidebarOpen(false)}
             aria-label="Đóng menu"
           >
@@ -438,26 +460,32 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Desktop sidebar */}
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-64">
-          <div className="flex flex-col flex-grow border-r border-gray-200 bg-white overflow-y-auto">
+          <div className="flex flex-col flex-grow bg-blue-900 overflow-y-auto">
             {/* Desktop Header */}
-            <div className="flex items-center flex-shrink-0 px-6 py-5 bg-white border-b border-gray-200">
-              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center mr-3">
-                <Wrench className="h-6 w-6 text-white" />
-              </div>
+            <div className="flex flex-col items-center flex-shrink-0 px-6 py-2 bg-blue-900">
+              <Image
+                src="/images/logo-IUH-ngang-trang-300x131-1.png"
+                alt="Logo"
+                width={100}
+                height={45}
+                className="rounded-lg mb-4"
+              />
               <div>
-                <span className="text-lg font-semibold text-gray-900">
-                  Repair Asset
-                </span>
-                <p className="text-xs text-gray-500 font-medium">
-                  {user?.activeRole && RoleInfo[user.activeRole]?.name || 'Khoa CNTT - IUH'}
-                </p>
+                <div className="text-[#8cb9de] font-medium text-[16px] text-center">
+                 DANH MỤC QUẢN LÝ
+                </div>
+                <div className="text-gray-100 font-medium text-xs mt-1 text-center">
+                  SỬA CHỮA THIẾT BỊ
+                </div>
               </div>
             </div>
+            
             {/* Navigation */}
             <SidebarNavigation
               navigation={userNavigation}
               pathname={pathname}
             />
+            
             {/* Desktop user section */}
             <SidebarUserSection handleLogout={handleLogout} />
           </div>

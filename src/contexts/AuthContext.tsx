@@ -28,8 +28,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Demo users are imported from @/lib/mockData/users
-
   // Check if user is logged in on app start
   useEffect(() => {
     const savedUser = localStorage.getItem("repair_user");
