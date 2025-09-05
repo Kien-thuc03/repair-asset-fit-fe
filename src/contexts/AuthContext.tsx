@@ -20,6 +20,7 @@ type AuthContextType = {
   switchRole: (role: UserRole) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitializing: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -27,21 +28,37 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // Thêm trạng thái isInitializing để kiểm soát quá trình khởi tạo
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // Check if user is logged in on app start
   useEffect(() => {
-    const savedUser = localStorage.getItem("repair_user");
-    if (savedUser) {
-      try {
-        const parsedUser = JSON.parse(savedUser);
-        setUser(parsedUser);
-        // Set cookie for middleware
-        document.cookie = `repair_user=${savedUser}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
-      } catch (error) {
-        localStorage.removeItem("repair_user");
-        document.cookie = "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    // Đặt một timeout nhỏ để đảm bảo hydration đã hoàn tất
+    const checkAuth = async () => {
+      const savedUser = localStorage.getItem("repair_user");
+      if (savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          // Kiểm tra tính hợp lệ của dữ liệu người dùng
+          if (parsedUser && parsedUser.id && parsedUser.roles && parsedUser.activeRole) {
+            setUser(parsedUser);
+            // Set cookie for middleware
+            document.cookie = `repair_user=${savedUser}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
+          } else {
+            // Xóa dữ liệu không hợp lệ
+            localStorage.removeItem("repair_user");
+            document.cookie = "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          }
+        } catch (error) {
+          localStorage.removeItem("repair_user");
+          document.cookie = "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        }
       }
-    }
+      // Đánh dấu quá trình khởi tạo đã hoàn tất
+      setIsInitializing(false);
+    };
+    
+    checkAuth();
   }, []);
 
   async function login(email: string, password: string) {
@@ -101,9 +118,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         switchRole,
         isAuthenticated: !!user,
         isLoading,
+        isInitializing,
       }}
     >
-      {children}
+      {isInitializing ? (
+        // Hiển thị một loading indicator trong quá trình khởi tạo để tránh nhấp nháy
+        <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-80 z-50">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

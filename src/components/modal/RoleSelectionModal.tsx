@@ -23,19 +23,8 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
   const { user, switchRole } = useAuth()
   const router = useRouter()
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
-
-  // Reset selected role when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedRole(null)
-    }
-  }, [isOpen])
-
-  if (!isOpen || !user || user.roles.length <= 1) return null
-
-  const handleRoleSelection = (role: UserRole) => {
-    setSelectedRole(role)
-  }
+  const [isAutoSelectEnabled, setIsAutoSelectEnabled] = useState(true)
+  const [countdown, setCountdown] = useState(10)
 
   const handleContinue = () => {
     if (selectedRole) {
@@ -46,6 +35,59 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
       const defaultRoute = RoleInfo[selectedRole].defaultRoute
       router.push(defaultRoute)
     }
+  }
+
+  // Khởi tạo selectedRole với vai trò hiện tại hoặc vai trò đầu tiên trong danh sách
+  useEffect(() => {
+    if (isOpen && user && user.roles.length > 0) {
+      // Đặt vai trò đang hoạt động làm mặc định nếu có
+      if (user.activeRole && user.roles.includes(user.activeRole)) {
+        setSelectedRole(user.activeRole);
+      } else {
+        // Nếu không, đặt vai trò đầu tiên làm mặc định
+        setSelectedRole(user.roles[0]);
+      }
+    }
+  }, [isOpen, user]);
+  
+  // Thêm một timeout để tự động chọn vai trò sau 10 giây nếu người dùng không chọn
+  useEffect(() => {
+    if (isOpen && isAutoSelectEnabled && selectedRole) {
+      // Reset đếm ngược
+      setCountdown(10);
+      
+      // Cập nhật đếm ngược mỗi giây
+      const countdownInterval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      // Tự động chọn vai trò sau 10 giây
+      const timer = setTimeout(() => {
+        if (selectedRole) {
+          switchRole(selectedRole);
+          const defaultRoute = RoleInfo[selectedRole].defaultRoute;
+          router.push(defaultRoute);
+          onClose();
+        }
+      }, 10000);
+      
+      return () => {
+        clearTimeout(timer);
+        clearInterval(countdownInterval);
+      };
+    }
+  }, [isOpen, isAutoSelectEnabled, selectedRole, router, switchRole, onClose]);
+
+  if (!isOpen || !user || user.roles.length <= 1) return null
+
+  const handleRoleSelection = (role: UserRole) => {
+    setSelectedRole(role)
   }
 
   return (
@@ -105,24 +147,46 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
           </div>
           
           {/* Footer */}
-          <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Hủy
-            </button>
-            <button
-              onClick={handleContinue}
-              disabled={!selectedRole}
-              className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
-                selectedRole
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-blue-400 cursor-not-allowed'
-              }`}
-            >
-              Tiếp tục
-            </button>
+          <div className="p-6 border-t border-gray-200 flex justify-between items-center">
+            <div className="flex items-center">
+              <div className="flex items-center mr-2">
+                <input
+                  id="auto-select"
+                  type="checkbox"
+                  checked={isAutoSelectEnabled}
+                  onChange={(e) => setIsAutoSelectEnabled(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                />
+                <label htmlFor="auto-select" className="ml-2 text-sm text-gray-600">
+                  Tự động chọn sau
+                </label>
+              </div>
+              {isAutoSelectEnabled && (
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                  {countdown}s
+                </span>
+              )}
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleContinue}
+                disabled={!selectedRole}
+                className={`px-4 py-2 text-sm font-medium text-white rounded-md ${
+                  selectedRole
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-blue-400 cursor-not-allowed'
+                }`}
+              >
+                Tiếp tục
+              </button>
+            </div>
           </div>
         </div>
       </div>
