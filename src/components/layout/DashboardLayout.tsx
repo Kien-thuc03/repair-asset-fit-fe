@@ -476,7 +476,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         }`}
       >
         {/* Mobile Sidebar header */}
-        <div className="flex items-center justify-between h-16 px-6 bg-blue-800">
+        <div className="flex items-center justify-between h-16 px-6 bg-blue-900">
           <div className="flex items-center space-x-3">
             <Image
               src="/images/logo-IUH-ngang-trang-300x131-1.png"
