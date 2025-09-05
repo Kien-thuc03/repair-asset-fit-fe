@@ -199,36 +199,7 @@ const navigation: NavigationItem[] = [
 ];
 
 // Sidebar User Section
-function SidebarUserSection({ handleLogout }: { handleLogout: () => void }) {
-  const { user } = useAuth();
 
-  if (!user) return null;
-
-  return (
-    <div className="border-t border-blue-700 p-4 bg-blue-900">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
-            <span className="text-xs font-semibold text-white">
-              {user.name.charAt(0)}
-            </span>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-white">{user.name}</p>
-            <p className="text-xs text-blue-200">{RoleInfo[user.activeRole]?.name || user.activeRole}</p>
-          </div>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="p-2 text-blue-200 hover:text-red-300 hover:bg-red-600/20 rounded-lg transition-colors"
-          title="Đăng xuất"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // Sidebar Navigation
 function SidebarNavigation({
@@ -280,7 +251,29 @@ function SidebarNavigation({
 
 // Topbar
 function Topbar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('[data-dropdown="user-menu"]')) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isUserMenuOpen]);
 
   return (
     <div className="relative z-10 flex-shrink-0 flex h-16 bg-white border-b border-gray-200">
@@ -334,19 +327,68 @@ function Topbar() {
             </svg>
           </button>
           
-          {/* User info */}
-          <div className="flex items-center space-x-3">
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{user?.name || 'Nguyễn Kiến Thức'}</p>
-              <p className="text-xs text-green-600">
-                {user && user.roles.length > 1 ? `${RoleInfo[user.activeRole]?.name || user.activeRole}` : 'Sinh viên'}
-              </p>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
-              <span className="text-xs font-semibold text-white">
-                {user?.name?.charAt(0) || 'N'}
-              </span>
-            </div>
+          {/* User dropdown menu */}
+          <div className="relative" data-dropdown="user-menu">
+            <button 
+              type="button"
+              className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer"
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              aria-label="User menu"
+            >
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">{user?.name || 'Nguyễn Kiến Thức'}</p>
+                <p className="text-xs text-green-600">
+                  {user && user.roles.length > 1 ? `${RoleInfo[user.activeRole]?.name || user.activeRole}` : 'Sinh viên'}
+                </p>
+              </div>
+              <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+                <span className="text-xs font-semibold text-white">
+                  {user?.name?.charAt(0) || 'N'}
+                </span>
+              </div>
+            </button>
+
+            {/* Dropdown menu */}
+            {isUserMenuOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                
+                {/* Menu items */}
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    // Handle password update
+                  }}
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Cập nhật mật khẩu</span>
+                </button>
+                
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    // Handle profile info
+                  }}
+                >
+                  <Users className="w-4 h-4" />
+                  <span>Thông tin cá nhân</span>
+                </button>
+                
+                <div className="border-t border-gray-100 mt-1">
+                  <button
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Đăng xuất</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -386,6 +428,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     window.addEventListener("openMobileSidebar", openSidebar);
     return () => window.removeEventListener("openMobileSidebar", openSidebar);
   }, [pathname]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('[data-dropdown="user-menu"]')) {
+        // This will be handled by the Topbar component
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   if (isLoading) {
     return (
@@ -454,7 +509,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           isMobile
           setIsMobileSidebarOpen={setIsMobileSidebarOpen}
         />
-        <SidebarUserSection handleLogout={handleLogout} />
       </div>
 
       {/* Desktop sidebar */}
@@ -485,9 +539,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               navigation={userNavigation}
               pathname={pathname}
             />
-            
-            {/* Desktop user section */}
-            <SidebarUserSection handleLogout={handleLogout} />
           </div>
         </div>
       </div>
