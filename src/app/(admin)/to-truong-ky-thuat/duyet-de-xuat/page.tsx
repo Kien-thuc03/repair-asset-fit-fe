@@ -385,10 +385,10 @@ export default function DuyetDeXuatPage() {
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-          <div className="overflow-x-auto flex-1">
-            <table className="min-w-full divide-y divide-gray-200 h-full">
+          <div className="overflow-x-auto overflow-y-auto flex-1">
+            <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr>
+                <tr className="h-12">
                   <th
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("assetCode")}>
@@ -442,11 +442,11 @@ export default function DuyetDeXuatPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200 flex-1">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {filteredRequests.length > 0 ? (
                   filteredRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={request.id} className="hover:bg-gray-50 h-[78px]">
+                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
                         <div className="flex items-center">
                           <Computer className="h-8 w-8 text-gray-400 mr-3" />
                           <div>
@@ -459,7 +459,7 @@ export default function DuyetDeXuatPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
                         <div className="flex items-center">
                           <User className="h-4 w-4 text-gray-400 mr-2" />
                           <div>
@@ -472,7 +472,7 @@ export default function DuyetDeXuatPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
                         <div className="flex items-center">
                           <Building2 className="h-4 w-4 text-gray-400 mr-2" />
                           <span className="text-sm text-gray-900">
@@ -480,7 +480,7 @@ export default function DuyetDeXuatPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
                             request.priority
@@ -488,7 +488,7 @@ export default function DuyetDeXuatPage() {
                           {getPriorityText(request.priority)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
                             request.status
@@ -496,7 +496,7 @@ export default function DuyetDeXuatPage() {
                           {getStatusText(request.status)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 text-gray-400 mr-2" />
                           <span className="text-sm text-gray-900">
@@ -506,7 +506,7 @@ export default function DuyetDeXuatPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium h-[78px]">
                         <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => {
@@ -535,11 +535,11 @@ export default function DuyetDeXuatPage() {
                     </tr>
                   ))
                 ) : (
-                  <tr className="h-full">
-                    <td colSpan={7} className="h-full">
-                      <div className="h-full flex items-center justify-center py-20">
+                  <tr className="h-[78px]">
+                    <td colSpan={7} className="h-[78px]">
+                      <div className="h-[78px] flex items-center justify-center">
                         <div className="flex flex-col items-center">
-                          <Search className="h-12 w-12 text-gray-300 mb-4" />
+                          <Search className="h-8 w-8 text-gray-300 mb-2" />
                           <h3 className="text-sm font-medium text-gray-900 mb-1">
                             Không tìm thấy kết quả
                           </h3>
