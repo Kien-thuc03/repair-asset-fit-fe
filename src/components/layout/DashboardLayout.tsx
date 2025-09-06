@@ -95,7 +95,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: CheckCircle,
       },
       {
-        name: "Quản lý nhóm",
+        name: "Phân công khu vực",
         href: "/to-truong-ky-thuat/phan-cong",
         icon: Users,
       },
@@ -108,6 +108,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         name: "Lập tờ trình",
         href: "/to-truong-ky-thuat/lap-to-trinh",
         icon: FileText,
+      },
+      {
+        name: "Tra cứu tài sản",
+        href: "/to-truong-ky-thuat/tra-cuu-tai-san",
+        icon: Settings,
       },
     ],
     [UserRole.PHONG_QUAN_TRI]: [

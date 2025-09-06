@@ -215,10 +215,10 @@ export default function ToTruongKyThuatDashboard() {
                   <Users className="h-5 w-5" />
                 </span>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900">
-                    Quản lý nhóm
+                  <h4 className="text-sm font-medium text-gray-900">              
+                    Xác nhận biên bản
                   </h4>
-                  <p className="text-xs text-gray-500">Phân công công việc</p>
+                  <p className="text-xs text-gray-500">Xác nhận biên bản do phòng quản trị gửi</p>
                 </div>
               </div>
             </Link>
