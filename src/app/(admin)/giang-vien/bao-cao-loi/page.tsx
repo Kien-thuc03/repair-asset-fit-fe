@@ -26,7 +26,7 @@ interface Component {
   name: string;
   componentSpecs?: string;
   serialNumber?: string;
-  status: 'INSTALLED' | 'REMOVED' | 'MAINTENANCE' | 'FAULTY';
+  status: "INSTALLED" | "REMOVED" | "MAINTENANCE" | "FAULTY";
   installedAt: string;
   removedAt?: string;
   notes?: string;
@@ -54,7 +54,7 @@ const mockAssets: Asset[] = [
   {
     id: "ASSET002",
     name: "PC Dell OptiPlex 3080 - Máy 02",
-    assetCode: "PC-A101-02", 
+    assetCode: "PC-A101-02",
     roomId: "ROOM001",
   },
   {
@@ -77,8 +77,8 @@ const mockAssets: Asset[] = [
     roomId: "ROOM002",
   },
   {
-    id: "ASSET006", 
-    name: "PC HP Pavilion - Máy 03", 
+    id: "ASSET006",
+    name: "PC HP Pavilion - Máy 03",
     assetCode: "PC-A102-03",
     roomId: "ROOM002",
   },
@@ -141,17 +141,17 @@ const mockComponents: Component[] = [
     componentSpecs: "6 cores, 12 threads, 2.5GHz base, 4.4GHz boost",
     serialNumber: "CPU001",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP002",
-    computerAssetId: "ASSET001", 
+    computerAssetId: "ASSET001",
     componentType: "RAM",
     name: "Kingston Fury Beast DDR4",
     componentSpecs: "16GB 3200MHz",
     serialNumber: "RAM001",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP003",
@@ -161,7 +161,7 @@ const mockComponents: Component[] = [
     componentSpecs: "512GB NVMe M.2",
     serialNumber: "SSD001",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP004",
@@ -170,7 +170,7 @@ const mockComponents: Component[] = [
     name: "Dell OptiPlex 3080 Motherboard",
     componentSpecs: "Intel B460 chipset",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP005",
@@ -179,7 +179,7 @@ const mockComponents: Component[] = [
     name: "Dell 200W PSU",
     componentSpecs: "200W 80+ Bronze",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP006",
@@ -189,7 +189,7 @@ const mockComponents: Component[] = [
     componentSpecs: "22 inch 1920x1080 LED",
     serialNumber: "MON001",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP007",
@@ -199,7 +199,7 @@ const mockComponents: Component[] = [
     componentSpecs: "USB Wired Keyboard",
     serialNumber: "KB001",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP008",
@@ -209,7 +209,7 @@ const mockComponents: Component[] = [
     componentSpecs: "USB Optical Mouse",
     serialNumber: "MS001",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP009",
@@ -218,10 +218,10 @@ const mockComponents: Component[] = [
     name: "Dell OptiPlex 3080 Case",
     componentSpecs: "Mini Tower",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
 
-  // ASSET002 - PC Dell OptiPlex 3080 - Máy 02 
+  // ASSET002 - PC Dell OptiPlex 3080 - Máy 02
   {
     id: "COMP011",
     computerAssetId: "ASSET002",
@@ -229,8 +229,8 @@ const mockComponents: Component[] = [
     name: "Intel Core i5-12400",
     componentSpecs: "6 cores, 12 threads, 2.5GHz base, 4.4GHz boost",
     serialNumber: "CPU002",
-    status: "INSTALLED", 
-    installedAt: "2023-01-15T00:00:00Z"
+    status: "INSTALLED",
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP012",
@@ -240,7 +240,7 @@ const mockComponents: Component[] = [
     componentSpecs: "16GB 3200MHz",
     serialNumber: "RAM002",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP013",
@@ -250,7 +250,7 @@ const mockComponents: Component[] = [
     componentSpecs: "512GB NVMe M.2",
     serialNumber: "SSD002",
     status: "FAULTY",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP014",
@@ -259,7 +259,7 @@ const mockComponents: Component[] = [
     name: "Dell OptiPlex 3080 Motherboard",
     componentSpecs: "Intel B460 chipset",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP015",
@@ -269,17 +269,17 @@ const mockComponents: Component[] = [
     componentSpecs: "22 inch 1920x1080 LED",
     serialNumber: "MON002",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP016",
     computerAssetId: "ASSET002",
-    componentType: "KEYBOARD", 
+    componentType: "KEYBOARD",
     name: "Dell KB216",
     componentSpecs: "USB Wired Keyboard",
     serialNumber: "KB002",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
   {
     id: "COMP017",
@@ -289,7 +289,7 @@ const mockComponents: Component[] = [
     componentSpecs: "USB Optical Mouse",
     serialNumber: "MS002",
     status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z"
+    installedAt: "2023-01-15T00:00:00Z",
   },
 
   // ASSET003 - PC HP ProDesk 400 - Máy 03
@@ -301,7 +301,7 @@ const mockComponents: Component[] = [
     componentSpecs: "4 cores, 8 threads, 3.3GHz base, 4.3GHz boost",
     serialNumber: "CPU003",
     status: "INSTALLED",
-    installedAt: "2023-03-20T00:00:00Z"
+    installedAt: "2023-03-20T00:00:00Z",
   },
   {
     id: "COMP022",
@@ -311,7 +311,7 @@ const mockComponents: Component[] = [
     componentSpecs: "8GB 2666MHz",
     serialNumber: "RAM003",
     status: "INSTALLED",
-    installedAt: "2023-03-20T00:00:00Z"
+    installedAt: "2023-03-20T00:00:00Z",
   },
   {
     id: "COMP023",
@@ -321,7 +321,7 @@ const mockComponents: Component[] = [
     componentSpecs: "256GB SATA",
     serialNumber: "SSD003",
     status: "INSTALLED",
-    installedAt: "2023-03-20T00:00:00Z"
+    installedAt: "2023-03-20T00:00:00Z",
   },
   {
     id: "COMP024",
@@ -331,7 +331,7 @@ const mockComponents: Component[] = [
     componentSpecs: "21.5 inch 1920x1080 IPS",
     serialNumber: "MON003",
     status: "FAULTY",
-    installedAt: "2023-03-20T00:00:00Z"
+    installedAt: "2023-03-20T00:00:00Z",
   },
   {
     id: "COMP025",
@@ -339,9 +339,9 @@ const mockComponents: Component[] = [
     componentType: "KEYBOARD",
     name: "HP Standard Keyboard",
     componentSpecs: "USB Wired Keyboard",
-    serialNumber: "KB003", 
+    serialNumber: "KB003",
     status: "INSTALLED",
-    installedAt: "2023-03-20T00:00:00Z"
+    installedAt: "2023-03-20T00:00:00Z",
   },
 ];
 
@@ -467,7 +467,9 @@ export default function BaoCaoLoiPage() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 disabled={!formData.roomId}>
                 <option value="">
-                  {!formData.roomId ? "Vui lòng chọn phòng trước" : "Chọn thiết bị"}
+                  {!formData.roomId
+                    ? "Vui lòng chọn phòng trước"
+                    : "Chọn thiết bị"}
                 </option>
                 {filteredAssets.map((asset) => (
                   <option key={asset.id} value={asset.id}>
@@ -504,17 +506,21 @@ export default function BaoCaoLoiPage() {
                       }))
                     }
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">Chọn linh kiện cụ thể (nếu biết rõ)</option>
+                    <option value="">
+                      Chọn linh kiện cụ thể (nếu biết rõ)
+                    </option>
                     {filteredComponents.map((component) => (
                       <option key={component.id} value={component.id}>
                         {component.componentType} - {component.name}
-                        {component.componentSpecs && ` (${component.componentSpecs})`}
-                        {component.status === 'FAULTY' && ' - ⚠️ Đã báo lỗi'}
-                        {component.status === 'MAINTENANCE' && ' - 🔧 Đang bảo trì'}
+                        {component.componentSpecs &&
+                          ` (${component.componentSpecs})`}
+                        {component.status === "FAULTY" && " - ⚠️ Đã báo lỗi"}
+                        {component.status === "MAINTENANCE" &&
+                          " - 🔧 Đang bảo trì"}
                       </option>
                     ))}
                   </select>
-                  
+
                   {/* Hiển thị danh sách tất cả linh kiện trong máy để tham khảo */}
                   <div className="mt-3 p-3 bg-gray-50 rounded-md">
                     <p className="text-sm font-medium text-gray-700 mb-2">
@@ -522,30 +528,42 @@ export default function BaoCaoLoiPage() {
                     </p>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       {filteredComponents.map((component) => (
-                        <div 
+                        <div
                           key={component.id}
                           className={`p-2 rounded ${
-                            component.status === 'FAULTY' 
-                              ? 'bg-red-100 text-red-800 border border-red-200' 
-                              : component.status === 'MAINTENANCE'
-                              ? 'bg-yellow-100 text-yellow-800 border border-yellow-200'
-                              : 'bg-green-100 text-green-800 border border-green-200'
+                            component.status === "FAULTY"
+                              ? "bg-red-100 text-red-800 border border-red-200"
+                              : component.status === "MAINTENANCE"
+                              ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                              : "bg-green-100 text-green-800 border border-green-200"
                           }`}>
-                          <div className="font-medium">{component.componentType}</div>
+                          <div className="font-medium">
+                            {component.componentType}
+                          </div>
                           <div className="text-gray-600">{component.name}</div>
                           {component.componentSpecs && (
-                            <div className="text-gray-500">{component.componentSpecs}</div>
+                            <div className="text-gray-500">
+                              {component.componentSpecs}
+                            </div>
                           )}
                           <div className="mt-1">
-                            <span className={`px-1 py-0.5 rounded text-xs ${
-                              component.status === 'INSTALLED' ? 'bg-green-200' :
-                              component.status === 'FAULTY' ? 'bg-red-200' :
-                              component.status === 'MAINTENANCE' ? 'bg-yellow-200' :
-                              'bg-gray-200'
-                            }`}>
-                              {component.status === 'INSTALLED' ? 'Hoạt động' :
-                               component.status === 'FAULTY' ? 'Có lỗi' :
-                               component.status === 'MAINTENANCE' ? 'Bảo trì' : component.status}
+                            <span
+                              className={`px-1 py-0.5 rounded text-xs ${
+                                component.status === "INSTALLED"
+                                  ? "bg-green-200"
+                                  : component.status === "FAULTY"
+                                  ? "bg-red-200"
+                                  : component.status === "MAINTENANCE"
+                                  ? "bg-yellow-200"
+                                  : "bg-gray-200"
+                              }`}>
+                              {component.status === "INSTALLED"
+                                ? "Hoạt động"
+                                : component.status === "FAULTY"
+                                ? "Có lỗi"
+                                : component.status === "MAINTENANCE"
+                                ? "Bảo trì"
+                                : component.status}
                             </span>
                           </div>
                         </div>
