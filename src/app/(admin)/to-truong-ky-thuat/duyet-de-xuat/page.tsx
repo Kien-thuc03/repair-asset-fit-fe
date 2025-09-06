@@ -340,16 +340,6 @@ export default function DuyetDeXuatPage() {
               Xem xét và phê duyệt các đề xuất thay thế thiết bị
             </p>
           </div>
-
-          <div className="flex space-x-3">
-            <button
-              onClick={handleExportExcel}
-              className="inline-flex items-center px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
-              <Download className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">Xuất Excel</span>
-              <span className="sm:hidden">Xuất</span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -755,6 +745,20 @@ export default function DuyetDeXuatPage() {
             </table>
           </div>
         </div>
+      </div>
+
+      {/* Export Button */}
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={handleExportExcel}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <Download className="h-4 w-4 mr-2" />
+          <span>
+            {selectedItems.length > 0
+              ? `Xuất Excel (${selectedItems.length} mục)`
+              : `Xuất Excel (${filteredRequests.length} mục)`}
+          </span>
+        </button>
       </div>
 
       {/* Detail Modal */}
