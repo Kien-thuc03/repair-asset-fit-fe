@@ -11,6 +11,8 @@ import {
   Edit,
   Save,
   X,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 
 interface Technician {
@@ -128,6 +130,40 @@ export default function PhanCongPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingArea, setEditingArea] = useState<string | null>(null);
   const [selectedTechnician, setSelectedTechnician] = useState<string>("");
+  const [sortField, setSortField] = useState<string>("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Hàm xử lý sắp xếp
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Hàm lấy icon sắp xếp
+  const getSortIcon = (field: string) => {
+    return (
+      <div className="flex flex-col">
+        <ChevronUp
+          className={`h-3 w-3 ${
+            sortField === field && sortDirection === "asc"
+              ? "text-blue-600"
+              : "text-gray-300"
+          }`}
+        />
+        <ChevronDown
+          className={`h-3 w-3 -mt-1 ${
+            sortField === field && sortDirection === "desc"
+              ? "text-blue-600"
+              : "text-gray-300"
+          }`}
+        />
+      </div>
+    );
+  };
 
   const handleAssignTechnician = (areaId: string, technicianId: string) => {
     setAreas((prev) =>
@@ -178,6 +214,39 @@ export default function PhanCongPage() {
       area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       area.building.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Sắp xếp khu vực đã lọc
+  const sortedAreas = [...filteredAreas].sort((a, b) => {
+    if (!sortField) return 0;
+
+    let aValue: string = "";
+    let bValue: string = "";
+
+    switch (sortField) {
+      case "name":
+        aValue = a.name;
+        bValue = b.name;
+        break;
+      case "building":
+        aValue = a.building;
+        bValue = b.building;
+        break;
+      case "floors":
+        aValue = a.floors.join(", ");
+        bValue = b.floors.join(", ");
+        break;
+      case "technician":
+        aValue = getTechnicianName(a.assignedTechnician || "");
+        bValue = getTechnicianName(b.assignedTechnician || "");
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
 
   const filteredTechnicians = technicians.filter(
     (tech) =>
@@ -258,7 +327,7 @@ export default function PhanCongPage() {
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">
-              Danh sách khu vực ({filteredAreas.length})
+              Danh sách khu vực ({sortedAreas.length})
             </h2>
           </div>
 
@@ -266,17 +335,37 @@ export default function PhanCongPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Khu vực
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort("name")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Khu vực</span>
+                      {getSortIcon("name")}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tòa nhà
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort("building")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Tòa nhà</span>
+                      {getSortIcon("building")}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tầng
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort("floors")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Tầng</span>
+                      {getSortIcon("floors")}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kỹ thuật viên phụ trách
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => handleSort("technician")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Kỹ thuật viên phụ trách</span>
+                      {getSortIcon("technician")}
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Thao tác
@@ -284,7 +373,7 @@ export default function PhanCongPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredAreas.map((area) => (
+                {sortedAreas.map((area) => (
                   <tr key={area.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
