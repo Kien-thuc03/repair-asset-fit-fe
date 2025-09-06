@@ -152,6 +152,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userJson = JSON.stringify(updatedUser);
       localStorage.setItem("repair_user", userJson);
       document.cookie = `repair_user=${userJson}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
+      
+      // Chuyển hướng tới URL tương ứng với vai trò được chọn
+      // Sử dụng window.location thay vì router để đảm bảo làm mới toàn bộ trang
+      import("@/types/repair").then(({ RoleInfo }) => {
+        const defaultRoute = RoleInfo[role].defaultRoute;
+        window.location.href = defaultRoute;
+      });
     }
   }
 

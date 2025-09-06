@@ -28,12 +28,9 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
 
   const handleContinue = () => {
     if (selectedRole) {
+      // Chỉ gọi switchRole, việc chuyển hướng sẽ được xử lý bên trong hàm switchRole
       switchRole(selectedRole)
       onClose()
-      
-      // Navigate to default route for selected role
-      const defaultRoute = RoleInfo[selectedRole].defaultRoute
-      router.push(defaultRoute)
     }
   }
 
@@ -73,9 +70,8 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
       // Tự động chọn vai trò sau 10 giây
       const timer = setTimeout(() => {
         if (selectedRole) {
+          // Chỉ gọi switchRole, việc chuyển hướng sẽ được xử lý bên trong hàm switchRole
           switchRole(selectedRole);
-          const defaultRoute = RoleInfo[selectedRole].defaultRoute;
-          router.push(defaultRoute);
           onClose();
         }
       }, 10000);
