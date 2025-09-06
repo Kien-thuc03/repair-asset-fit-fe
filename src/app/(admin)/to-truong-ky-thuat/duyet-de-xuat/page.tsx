@@ -302,8 +302,8 @@ export default function DuyetDeXuatPage() {
           </div>
 
           <div className="flex space-x-3">
-            <button className="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <button className="inline-flex items-center px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
+              <Download className="h-3 w-3 mr-1" />
               <span className="hidden sm:inline">Xuất Excel</span>
               <span className="sm:hidden">Xuất</span>
             </button>
@@ -431,15 +431,19 @@ export default function DuyetDeXuatPage() {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
                         <div className="text-gray-500">Người yêu cầu</div>
-                        <div className="text-gray-900 font-medium">{request.requestedBy}</div>
+                        <div className="text-gray-900 font-medium">
+                          {request.requestedBy}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-500">Vị trí</div>
-                        <div className="text-gray-900 font-medium truncate">{request.location}</div>
+                        <div className="text-gray-900 font-medium truncate">
+                          {request.location}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-500">Trạng thái</div>
@@ -460,9 +464,11 @@ export default function DuyetDeXuatPage() {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="mt-2 text-xs text-gray-500">
-                      {new Date(request.requestDate).toLocaleDateString("vi-VN")}
+                      {new Date(request.requestDate).toLocaleDateString(
+                        "vi-VN"
+                      )}
                     </div>
                   </div>
                 ))
@@ -545,7 +551,9 @@ export default function DuyetDeXuatPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredRequests.length > 0 ? (
                   filteredRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50 h-[60px] sm:h-[78px]">
+                    <tr
+                      key={request.id}
+                      className="hover:bg-gray-50 h-[60px] sm:h-[78px]">
                       <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
                         <div className="flex items-center">
                           <Computer className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mr-2 sm:mr-3 flex-shrink-0" />
@@ -585,9 +593,15 @@ export default function DuyetDeXuatPage() {
                           className={`inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
                             request.priority
                           )}`}>
-                          <span className="hidden sm:inline">{getPriorityText(request.priority)}</span>
+                          <span className="hidden sm:inline">
+                            {getPriorityText(request.priority)}
+                          </span>
                           <span className="sm:hidden">
-                            {request.priority === "high" ? "C" : request.priority === "medium" ? "TB" : "T"}
+                            {request.priority === "high"
+                              ? "C"
+                              : request.priority === "medium"
+                              ? "TB"
+                              : "T"}
                           </span>
                         </span>
                       </td>
@@ -596,9 +610,15 @@ export default function DuyetDeXuatPage() {
                           className={`inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
                             request.status
                           )}`}>
-                          <span className="hidden sm:inline">{getStatusText(request.status)}</span>
+                          <span className="hidden sm:inline">
+                            {getStatusText(request.status)}
+                          </span>
                           <span className="sm:hidden">
-                            {request.status === "pending" ? "CD" : request.status === "approved" ? "DD" : "TC"}
+                            {request.status === "pending"
+                              ? "CD"
+                              : request.status === "approved"
+                              ? "DD"
+                              : "TC"}
                           </span>
                         </span>
                       </td>
@@ -606,7 +626,9 @@ export default function DuyetDeXuatPage() {
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                           <span className="text-sm text-gray-900">
-                            {new Date(request.requestDate).toLocaleDateString("vi-VN")}
+                            {new Date(request.requestDate).toLocaleDateString(
+                              "vi-VN"
+                            )}
                           </span>
                         </div>
                       </td>
