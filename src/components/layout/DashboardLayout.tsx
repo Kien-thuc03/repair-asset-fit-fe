@@ -90,19 +90,19 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: LayoutDashboard,
       },
       {
-        name: "Quản lý KTV",
-        href: "/to-truong-ky-thuat/quan-ly-ky-thuat-vien",
+        name: "Duyệt đề xuất",
+        href: "/to-truong-ky-thuat/duyet-de-xuat",
+        icon: CheckCircle,
+      },
+      {
+        name: "Quản lý nhóm",
+        href: "/to-truong-ky-thuat/phan-cong",
         icon: Users,
       },
       {
-        name: "Giám sát lỗi",
-        href: "/to-truong-ky-thuat/giam-sat-loi",
+        name: "Danh sách báo lỗi",
+        href: "/to-truong-ky-thuat/danh-sach-bao-loi",
         icon: ClipboardList,
-      },
-      {
-        name: "Phê duyệt thay thế",
-        href: "/to-truong-ky-thuat/phe-duyet-thay-the",
-        icon: CheckCircle,
       },
       {
         name: "Lập tờ trình",
