@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Users,
   FileCheck,
-  AlertTriangle,
   TrendingUp,
   Clock,
   CheckCircle,

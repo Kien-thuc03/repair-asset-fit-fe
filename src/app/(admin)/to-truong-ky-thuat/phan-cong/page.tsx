@@ -39,7 +39,7 @@ const mockTechnicians: Technician[] = [
     phone: "0123456789",
     status: "active",
     assignedAreas: ["area001", "area002"],
-    currentTask: "Sửa máy tính P.A101",
+    currentTask: "Sửa mainboard máy tính H301-01",
   },
   {
     id: "tech002",
@@ -48,7 +48,7 @@ const mockTechnicians: Technician[] = [
     phone: "0987654321",
     status: "busy",
     assignedAreas: ["area003"],
-    currentTask: "Bảo trì máy chiếu B204",
+    currentTask: "Thay RAM máy tính H205-15",
   },
   {
     id: "tech003",
@@ -66,49 +66,58 @@ const mockTechnicians: Technician[] = [
     status: "offline",
     assignedAreas: [],
   },
+  {
+    id: "tech005",
+    name: "Hoàng Văn E",
+    email: "hoange@iuh.edu.vn",
+    phone: "0789123456",
+    status: "active",
+    assignedAreas: ["area006"],
+    currentTask: "Kiểm tra nguồn điện H109-22",
+  },
 ];
 
 const mockAreas: Area[] = [
   {
     id: "area001",
-    name: "Tòa A - Tầng 1-3",
-    building: "Tòa A",
+    name: "Tòa H - Tầng 1-3",
+    building: "Tòa H",
     floors: ["Tầng 1", "Tầng 2", "Tầng 3"],
     assignedTechnician: "tech001",
   },
   {
     id: "area002",
-    name: "Tòa A - Tầng 4-6",
-    building: "Tòa A",
+    name: "Tòa H - Tầng 4-6",
+    building: "Tòa H",
     floors: ["Tầng 4", "Tầng 5", "Tầng 6"],
-    assignedTechnician: "tech001",
-  },
-  {
-    id: "area003",
-    name: "Tòa B - Toàn bộ",
-    building: "Tòa B",
-    floors: ["Tầng 1", "Tầng 2", "Tầng 3", "Tầng 4"],
     assignedTechnician: "tech002",
   },
   {
-    id: "area004",
-    name: "Tòa C - Tầng 1-2",
-    building: "Tòa C",
-    floors: ["Tầng 1", "Tầng 2"],
+    id: "area003",
+    name: "Tòa H - Tầng 7-9",
+    building: "Tòa H",
+    floors: ["Tầng 7", "Tầng 8", "Tầng 9"],
     assignedTechnician: "tech003",
+  },
+  {
+    id: "area004",
+    name: "Tòa H - Phòng thí nghiệm T1-T3",
+    building: "Tòa H",
+    floors: ["Lab Tầng 1", "Lab Tầng 2", "Lab Tầng 3"],
+    assignedTechnician: "tech004",
   },
   {
     id: "area005",
-    name: "Tòa C - Tầng 3-5",
-    building: "Tòa C",
-    floors: ["Tầng 3", "Tầng 4", "Tầng 5"],
-    assignedTechnician: "tech003",
+    name: "Tòa H - Phòng thí nghiệm T4-T6",
+    building: "Tòa H",
+    floors: ["Lab Tầng 4", "Lab Tầng 5", "Lab Tầng 6"],
+    assignedTechnician: "tech005",
   },
   {
     id: "area006",
-    name: "Tòa D - Lab máy tính",
-    building: "Tòa D",
-    floors: ["Tầng 1", "Tầng 2"],
+    name: "Tòa H - Phòng thí nghiệm T7-T9",
+    building: "Tòa H",
+    floors: ["Lab Tầng 7", "Lab Tầng 8", "Lab Tầng 9"],
   },
 ];
 
@@ -182,7 +191,7 @@ export default function PhanCongPage() {
       {/* Header */}
       <div className="mb-8">
         <Link
-          href="/admin/to-truong-ky-thuat"
+          href="/to-truong-ky-thuat"
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Về trang chủ

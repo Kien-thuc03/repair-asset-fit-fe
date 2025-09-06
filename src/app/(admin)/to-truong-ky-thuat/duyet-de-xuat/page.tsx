@@ -34,48 +34,93 @@ interface ReplacementRequest {
 const mockRequests: ReplacementRequest[] = [
   {
     id: "REQ-001",
-    assetCode: "PC001",
+    assetCode: "PC-H301-01",
     assetName: "Máy tính Desktop Dell OptiPlex 3070",
     requestedBy: "Nguyễn Văn A",
-    unit: "Khoa CNTT",
-    location: "Phòng A101",
-    reason: "Hỏng mainboard, không thể sửa chữa",
+    unit: "Khoa Công nghệ Thông tin",
+    location: "Tòa H - Phòng H301",
+    reason: "Hỏng mainboard Intel H310, không thể sửa chữa",
     status: "pending",
     priority: "high",
     requestDate: "2024-01-15",
-    estimatedCost: 15000000,
+    estimatedCost: 8500000,
     description:
-      "Máy tính bị hỏng mainboard sau 5 năm sử dụng, đã kiểm tra và không thể sửa chữa được.",
+      "Máy tính bị hỏng mainboard sau 4 năm sử dụng, đã kiểm tra và xác định cần thay thế mainboard mới Intel H310 hoặc tương đương.",
   },
   {
     id: "REQ-002",
-    assetCode: "PRJ004",
-    assetName: "Máy chiếu Panasonic PT-VX510",
+    assetCode: "PC-H205-15",
+    assetName: "Máy tính Desktop HP EliteDesk 800",
     requestedBy: "Trần Thị B",
-    unit: "Khoa Cơ khí",
-    location: "Phòng B204",
-    reason: "Đèn chiếu đã hết tuổi thọ",
+    unit: "Khoa Công nghệ Thông tin",
+    location: "Tòa H - Phòng H205",
+    reason: "RAM DDR4 8GB hỏng, máy không khởi động được",
     status: "pending",
     priority: "medium",
     requestDate: "2024-01-14",
-    estimatedCost: 8000000,
+    estimatedCost: 1200000,
     description:
-      "Đèn chiếu đã sử dụng hết 4000 giờ, hình ảnh mờ không còn phù hợp cho giảng dạy.",
+      "RAM DDR4 8GB bị lỗi sau 3 năm sử dụng, máy báo lỗi memory test failed, cần thay RAM mới cùng loại.",
   },
   {
     id: "REQ-003",
-    assetCode: "LAP005",
-    assetName: "Laptop HP EliteBook 840",
+    assetCode: "PC-H704-08",
+    assetName: "Máy tính Desktop Asus VivoPC",
     requestedBy: "Lê Văn C",
-    unit: "Khoa Kinh tế",
-    location: "Phòng C305",
-    reason: "Pin hỏng, bàn phím không hoạt động",
+    unit: "Khoa Công nghệ Thông tin",
+    location: "Tòa H - Phòng H704",
+    reason: "Ổ cứng SSD 256GB hỏng, mất dữ liệu",
     status: "approved",
-    priority: "low",
+    priority: "high",
     requestDate: "2024-01-12",
-    estimatedCost: 12000000,
+    estimatedCost: 2800000,
     description:
-      "Laptop đã sử dụng 4 năm, pin không giữ được điện và bàn phím bị lỗi nhiều phím.",
+      "Ổ cứng SSD Samsung 256GB bị bad sector nghiêm trọng, không thể phục hồi dữ liệu, cần thay SSD mới cùng dung lượng.",
+  },
+  {
+    id: "REQ-004",
+    assetCode: "PC-H109-22",
+    assetName: "Máy tính Desktop Lenovo ThinkCentre",
+    requestedBy: "Phạm Thị D",
+    unit: "Khoa Công nghệ Thông tin",
+    location: "Tòa H - Phòng H109",
+    reason: "Nguồn điện 500W bị cháy, có mùi khét",
+    status: "pending",
+    priority: "high",
+    requestDate: "2024-01-16",
+    estimatedCost: 1800000,
+    description:
+      "Nguồn điện Cooler Master 500W bị short mạch, có tiếng nổ nhỏ và mùi cháy, cần thay nguồn mới ngay lập tức để đảm bảo an toàn.",
+  },
+  {
+    id: "REQ-005",
+    assetCode: "PC-H508-11",
+    assetName: "Máy tính Desktop MSI Pro",
+    requestedBy: "Hoàng Văn E",
+    unit: "Khoa Công nghệ Thông tin",
+    location: "Tòa H - Phòng H508",
+    reason: "Card đồ họa GTX 1050 hỏng, không hiển thị hình ảnh",
+    status: "pending",
+    priority: "medium",
+    requestDate: "2024-01-13",
+    estimatedCost: 4200000,
+    description:
+      "Card đồ họa NVIDIA GTX 1050 2GB bị lỗi chip, màn hình không hiển thị gì, cần thay card đồ họa mới tương đương hoặc cao hơn.",
+  },
+  {
+    id: "REQ-006",
+    assetCode: "PC-H902-03",
+    assetName: "Máy tính Desktop Acer Veriton",
+    requestedBy: "Võ Thị F",
+    unit: "Khoa Công nghệ Thông tin",
+    location: "Tòa H - Phòng H902",
+    reason: "CPU Intel i5-8400 quá nóng, máy tự động tắt",
+    status: "rejected",
+    priority: "low",
+    requestDate: "2024-01-10",
+    estimatedCost: 5500000,
+    description:
+      "CPU Intel i5-8400 bị quá nhiệt do tản nhiệt hỏng, đã thay tản nhiệt mới nhưng CPU vẫn bị lỗi, cần thay CPU mới.",
   },
 ];
 
@@ -177,7 +222,7 @@ export default function DuyetDeXuatPage() {
       {/* Header */}
       <div className="mb-8">
         <Link
-          href="/admin/to-truong-ky-thuat"
+          href="/to-truong-ky-thuat"
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Về trang chủ
