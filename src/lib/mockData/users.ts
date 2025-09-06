@@ -1,65 +1,105 @@
-import { UserRole } from "@/types/repair";
+import { UserStatus } from "@/types/user";
 
-// Mock users for authentication system
-export const demoUsers = [
+// Mock users - data theo cấu trúc bảng users trong database
+export const users = [
   {
-    id: "1",
-    name: "Quản trị viên Khoa",
-    email: "qtv@iuh.edu.vn",
-    username: "qtv",
+    id: "user-1",
+    username: "qtv", // Tài khoản đăng nhập
     password: "qtv123",
-    roles: [UserRole.QTV_KHOA],
-    activeRole: UserRole.QTV_KHOA,
-    department: "Khoa CNTT"
+    fullName: "Quản trị viên Khoa",
+    email: "qtv@iuh.edu.vn",
+    unitId: "unit-1", // Khoa CNTT
+    phoneNumber: "0901234001",
+    birthDate: new Date("1985-01-15"),
+    status: UserStatus.ACTIVE,
+    createdAt: new Date("2023-01-01"),
+    updatedAt: new Date("2023-01-01"),
+    deletedAt: null
   },
   {
-    id: "2",
-    name: "Nhân viên Phòng Quản trị",
-    email: "quantri@iuh.edu.vn",
+    id: "user-2",
     username: "quantri",
     password: "quantri123",
-    roles: [UserRole.PHONG_QUAN_TRI],
-    activeRole: UserRole.PHONG_QUAN_TRI,
-    department: "Phòng Quản trị"
+    fullName: "Nhân viên Phòng Quản trị",
+    email: "quantri@iuh.edu.vn",
+    unitId: "unit-2", // Phòng Quản trị
+    phoneNumber: "0901234002",
+    birthDate: new Date("1987-03-20"),
+    status: UserStatus.ACTIVE,
+    createdAt: new Date("2023-01-01"),
+    updatedAt: new Date("2023-01-01"),
+    deletedAt: null
   },
   {
-    id: "3",
-    name: "Tổ trưởng Kỹ thuật",
-    email: "totruong@iuh.edu.vn",
+    id: "user-3",
     username: "totruong",
     password: "totruong123",
-    roles: [UserRole.TO_TRUONG_KY_THUAT],
-    activeRole: UserRole.TO_TRUONG_KY_THUAT,
-    department: "Tổ Kỹ thuật"
+    fullName: "Tổ trưởng Kỹ thuật",
+    email: "totruong@iuh.edu.vn",
+    unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
+    phoneNumber: "0901234003",
+    birthDate: new Date("1980-05-10"),
+    status: UserStatus.ACTIVE,
+    createdAt: new Date("2023-01-01"),
+    updatedAt: new Date("2023-01-01"),
+    deletedAt: null
   },
   {
-    id: "4", 
-    name: "Kỹ thuật viên",
-    email: "kythuat@iuh.edu.vn",
+    id: "user-4",
     username: "kythuat",
     password: "kythuat123",
-    roles: [UserRole.KY_THUAT_VIEN],
-    activeRole: UserRole.KY_THUAT_VIEN,
-    department: "Tổ Kỹ thuật"
+    fullName: "Kỹ thuật viên",
+    email: "kythuat@iuh.edu.vn",
+    unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
+    phoneNumber: "0901234004",
+    birthDate: new Date("1990-07-25"),
+    status: UserStatus.ACTIVE,
+    createdAt: new Date("2023-01-01"),
+    updatedAt: new Date("2023-01-01"),
+    deletedAt: null
   },
   {
-    id: "5",
-    name: "Giảng viên",
-    email: "giangvien@iuh.edu.vn",
+    id: "user-5",
     username: "giangvien",
     password: "giangvien123",
-    roles: [UserRole.GIANG_VIEN],
-    activeRole: UserRole.GIANG_VIEN,
-    department: "Khoa CNTT"
+    fullName: "Giảng viên",
+    email: "giangvien@iuh.edu.vn",
+    unitId: "unit-1", // Khoa CNTT
+    phoneNumber: "0901234005",
+    birthDate: new Date("1988-11-30"),
+    status: UserStatus.ACTIVE,
+    createdAt: new Date("2023-01-01"),
+    updatedAt: new Date("2023-01-01"),
+    deletedAt: null
   },
   {
-    id: "6",
-    name: "Giảng viên kiêm QTV",
-    email: "gv_qtv@iuh.edu.vn",
+    id: "user-6",
     username: "gvqtv",
     password: "gvqtv123",
-    roles: [UserRole.GIANG_VIEN, UserRole.QTV_KHOA],
-    activeRole: UserRole.GIANG_VIEN, 
-    department: "Khoa CNTT"
+    fullName: "Giảng viên kiêm QTV",
+    email: "gv_qtv@iuh.edu.vn",
+    unitId: "unit-1", // Khoa CNTT
+    phoneNumber: "0901234006",
+    birthDate: new Date("1982-09-05"),
+    status: UserStatus.ACTIVE,
+    createdAt: new Date("2023-01-01"),
+    updatedAt: new Date("2023-01-01"),
+    deletedAt: null
+  },
+  {
+    id: "user-7",
+    username: "kehoach",
+    password: "kehoach123",
+    fullName: "Trưởng phòng Kế hoạch Đầu tư",
+    email: "kehoach@iuh.edu.vn",
+    unitId: "unit-3", // Phòng Kế hoạch Đầu tư
+    phoneNumber: "0901234007",
+    birthDate: new Date("1975-04-12"),
+    status: UserStatus.ACTIVE,
+    createdAt: new Date("2023-01-01"),
+    updatedAt: new Date("2023-01-01"),
+    deletedAt: null
   }
 ];
+
+// Bỏ legacy code không cần thiết nữa

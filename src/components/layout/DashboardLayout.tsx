@@ -322,7 +322,7 @@ function Topbar() {
             title="Thông báo"
             aria-label="Thông báo"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-bell-icon lucide-bell">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bell-icon lucide-bell">
               <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
               <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
             </svg>
@@ -337,14 +337,14 @@ function Topbar() {
               aria-label="User menu"
             >
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.name || 'Nguyễn Kiến Thức'}</p>
+                <p className="text-sm font-medium text-gray-900">{user?.fullName || 'Nguyễn Kiến Thức'}</p>
                 <p className="text-xs text-green-600">
                   {user && user.roles.length > 1 ? `${RoleInfo[user.activeRole]?.name || user.activeRole}` : 'Sinh viên'}
                 </p>
               </div>
               <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
                 <span className="text-xs font-semibold text-white">
-                  {user?.name?.charAt(0) || 'N'}
+                  {user?.fullName?.charAt(0) || 'N'}
                 </span>
               </div>
             </button>
