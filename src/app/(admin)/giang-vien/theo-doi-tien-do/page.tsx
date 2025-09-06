@@ -8,6 +8,8 @@ import {
   Eye,
   Search,
   X,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 
 interface RepairRequest {
@@ -156,6 +158,20 @@ export default function TheoDaoTienDoPage() {
   const [selectedRequest, setSelectedRequest] = useState<RepairRequest | null>(
     null
   );
+  
+  // Sorting state
+  const [sortField, setSortField] = useState<keyof RepairRequest | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Handle sorting
+  const handleSort = (field: keyof RepairRequest) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   useEffect(() => {
     let filtered = requests;
@@ -176,12 +192,78 @@ export default function TheoDaoTienDoPage() {
       filtered = filtered.filter((request) => request.status === statusFilter);
     }
 
+    // Apply sorting
+    if (sortField) {
+      filtered.sort((a, b) => {
+        const aValue: string | undefined = a[sortField] as string | undefined;
+        const bValue: string | undefined = b[sortField] as string | undefined;
+
+        // Handle null/undefined values
+        if (!aValue && !bValue) return 0;
+        if (!aValue) return sortDirection === "asc" ? -1 : 1;
+        if (!bValue) return sortDirection === "asc" ? 1 : -1;
+
+        // Handle date comparison
+        if (sortField === "createdAt" || sortField === "acceptedAt" || sortField === "completedAt") {
+          const aTime = new Date(aValue).getTime();
+          const bTime = new Date(bValue).getTime();
+          return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
+        }
+
+        // Handle string comparison
+        const aLower = aValue.toLowerCase();
+        const bLower = bValue.toLowerCase();
+
+        if (aLower < bLower) {
+          return sortDirection === "asc" ? -1 : 1;
+        }
+        if (aLower > bLower) {
+          return sortDirection === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
     setFilteredRequests(filtered);
-  }, [requests, searchTerm, statusFilter]);
+  }, [requests, searchTerm, statusFilter, sortField, sortDirection]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("vi-VN");
   };
+
+  // Sortable header component
+  const SortableHeader = ({ 
+    field, 
+    children 
+  }: { 
+    field: keyof RepairRequest, 
+    children: React.ReactNode 
+  }) => (
+    <th 
+      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center space-x-1">
+        <span>{children}</span>
+        <div className="flex flex-col">
+          <ChevronUp 
+            className={`w-3 h-3 ${
+              sortField === field && sortDirection === "asc" 
+                ? "text-blue-600" 
+                : "text-gray-400"
+            }`} 
+          />
+          <ChevronDown 
+            className={`w-3 h-3 ${
+              sortField === field && sortDirection === "desc" 
+                ? "text-blue-600" 
+                : "text-gray-400"
+            }`} 
+          />
+        </div>
+      </div>
+    </th>
+  );
 
   return (
     <div className="space-y-6">
@@ -249,27 +331,27 @@ export default function TheoDaoTienDoPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader field="requestCode">
                   Mã yêu cầu
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="assetName">
                   Tài sản
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="roomName">
                   Phòng
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="errorTypeName">
                   Loại lỗi
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="status">
                   Trạng thái
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="assignedTechnicianName">
                   Người xử lý
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader field="createdAt">
                   Ngày tạo
-                </th>
+                </SortableHeader>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
