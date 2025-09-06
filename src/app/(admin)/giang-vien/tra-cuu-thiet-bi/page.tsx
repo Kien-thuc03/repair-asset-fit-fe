@@ -11,6 +11,10 @@ import {
   Eye,
   QrCode,
   X,
+  Camera,
+  Calendar,
+  User,
+  Wrench,
 } from "lucide-react";
 
 interface Asset {
@@ -29,6 +33,25 @@ interface Asset {
   assignedTo?: string;
   specifications?: Record<string, string>;
   qrCode: string;
+}
+
+interface RepairHistory {
+  id: string;
+  assetId: string;
+  requestCode: string;
+  reportDate: string;
+  completedDate: string;
+  errorType: string;
+  description: string;
+  technicianName: string;
+  solution: string;
+  componentChanges?: {
+    componentType: string;
+    oldComponent?: string;
+    newComponent: string;
+    changeReason: string;
+  }[];
+  status: "HOÀN_THÀNH" | "ĐANG_XỬ_LÝ" | "HỦY_BỎ";
 }
 
 const mockAssets: Asset[] = [
@@ -172,6 +195,61 @@ const mockAssets: Asset[] = [
   },
 ];
 
+const mockRepairHistory: RepairHistory[] = [
+  {
+    id: "REPAIR001",
+    assetId: "ASSET001",
+    requestCode: "YCSC-2024-0015",
+    reportDate: "2024-11-20T08:00:00Z",
+    completedDate: "2024-11-21T16:30:00Z",
+    errorType: "Lỗi phần cứng",
+    description: "RAM bị lỗi, máy tính khởi động không ổn định",
+    technicianName: "Kỹ thuật viên Minh",
+    solution: "Thay thế RAM từ 8GB lên 16GB",
+    componentChanges: [
+      {
+        componentType: "RAM",
+        oldComponent: "Kingston 8GB DDR4 2666MHz",
+        newComponent: "Kingston Fury Beast 16GB DDR4 3200MHz",
+        changeReason: "RAM cũ bị lỗi, nâng cấp dung lượng",
+      },
+    ],
+    status: "HOÀN_THÀNH",
+  },
+  {
+    id: "REPAIR002",
+    assetId: "ASSET001",
+    requestCode: "YCSC-2024-0008",
+    reportDate: "2024-10-15T09:15:00Z",
+    completedDate: "2024-10-15T14:20:00Z",
+    errorType: "Lỗi phần mềm",
+    description: "Màn hình xanh chết, hệ điều hành không khởi động được",
+    technicianName: "Kỹ thuật viên An",
+    solution: "Cài đặt lại Windows 11, cập nhật driver",
+    status: "HOÀN_THÀNH",
+  },
+  {
+    id: "REPAIR003",
+    assetId: "ASSET003",
+    requestCode: "YCSC-2024-0025",
+    reportDate: "2024-12-01T10:30:00Z",
+    completedDate: "2024-12-02T15:45:00Z",
+    errorType: "Lỗi phần cứng",
+    description: "Ổ cứng có bad sector, tốc độ truy xuất chậm",
+    technicianName: "Kỹ thuật viên Hùng",
+    solution: "Thay thế ổ cứng HDD bằng SSD mới",
+    componentChanges: [
+      {
+        componentType: "STORAGE",
+        oldComponent: "WD Blue 500GB HDD",
+        newComponent: "Samsung 980 512GB NVMe SSD",
+        changeReason: "Ổ cứng cũ có bad sector, nâng cấp SSD để tăng hiệu suất",
+      },
+    ],
+    status: "HOÀN_THÀNH",
+  },
+];
+
 const statusConfig = {
   HOẠT_ĐỘNG: {
     label: "Hoạt động",
@@ -212,6 +290,40 @@ export default function TraCuuThietBiPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showRepairHistory, setShowRepairHistory] = useState(false);
+
+  // Detect if user is on mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Get repair history for selected asset
+  const getRepairHistory = (assetId: string) => {
+    return mockRepairHistory.filter((repair) => repair.assetId === assetId);
+  };
+
+  // Handle QR scan
+  const handleQRScan = (qrCode: string) => {
+    const asset = assets.find((asset) => asset.qrCode === qrCode);
+    if (asset) {
+      setSelectedAsset(asset);
+      setShowRepairHistory(true);
+    } else {
+      alert("Không tìm thấy thiết bị với mã QR này!");
+    }
+  };
+
+  // Simulate QR scan for demo
+  const simulateQRScan = () => {
+    const randomAsset = assets[Math.floor(Math.random() * assets.length)];
+    handleQRScan(randomAsset.qrCode);
+  };
 
   useEffect(() => {
     let filtered = assets;
@@ -272,20 +384,32 @@ export default function TraCuuThietBiPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
-        <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <Search className="w-6 h-6 text-green-600" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Search className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Tra cứu tài sản
+              </h1>
+              <p className="text-gray-600">
+                Tìm kiếm và xem thông tin chi tiết tài sản thiết bị
+              </p>
             </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Tra cứu tài sản
-            </h1>
-            <p className="text-gray-600">
-              Tìm kiếm và xem thông tin chi tiết tài sản thiết bị
-            </p>
-          </div>
+
+          {/* QR Scanner Button - Mobile Only */}
+          {isMobile && (
+            <button
+              onClick={simulateQRScan}
+              className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg transition flex items-center justify-center shadow-lg"
+              title="Quét mã QR thiết bị">
+              <Camera className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -472,15 +596,15 @@ export default function TraCuuThietBiPage() {
 
                 <div className="mt-4 flex justify-between items-center">
                   <button
-                    onClick={() => setSelectedAsset(asset)}
+                    onClick={() => {
+                      setSelectedAsset(asset);
+                      setShowRepairHistory(false);
+                    }}
                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <Eye className="w-3 h-3 mr-1" />
                     Chi tiết
                   </button>
-                  <button className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <QrCode className="w-3 h-3 mr-1" />
-                    QR Code
-                  </button>
+                  
                 </div>
               </div>
             </div>
@@ -510,151 +634,317 @@ export default function TraCuuThietBiPage() {
                   Chi tiết tài sản: {selectedAsset.name}
                 </h3>
                 <button
-                  onClick={() => setSelectedAsset(null)}
+                  onClick={() => {
+                    setSelectedAsset(null);
+                    setShowRepairHistory(false);
+                  }}
                   className="text-gray-400 hover:text-gray-600">
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Basic Information */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-medium text-gray-900">
-                    Thông tin cơ bản
-                  </h4>
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Mã tài sản:
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {selectedAsset.assetCode}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Tên tài sản:
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {selectedAsset.name}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Danh mục:
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {selectedAsset.category}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Model:
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {selectedAsset.model}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Serial Number:
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {selectedAsset.serialNumber}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Phòng:
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {selectedAsset.roomName}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-500">
-                        Trạng thái:
-                      </span>
-                      <div
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          statusConfig[selectedAsset.status].color
-                        }`}>
-                        {statusConfig[selectedAsset.status].label}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Warranty & Maintenance */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-medium text-gray-900">
-                    Bảo hành & Bảo trì
-                  </h4>
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Ngày mua:
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {formatDate(selectedAsset.purchaseDate)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
-                        Hết hạn bảo hành:
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {formatDate(selectedAsset.warrantyExpiry)}
-                      </span>
-                    </div>
-                    {selectedAsset.lastMaintenanceDate && (
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
-                          Bảo trì lần cuối:
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {formatDate(selectedAsset.lastMaintenanceDate)}
-                        </span>
-                      </div>
-                    )}
-                    {selectedAsset.assignedTo && (
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
-                          Được giao cho:
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {selectedAsset.assignedTo}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Specifications */}
-                {selectedAsset.specifications && (
-                  <div className="lg:col-span-2">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">
-                      Thông số kỹ thuật
-                    </h4>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {Object.entries(selectedAsset.specifications).map(
-                          ([key, value]) => (
-                            <div key={key} className="flex justify-between">
-                              <span className="text-sm font-medium text-gray-500">
-                                {key}:
-                              </span>
-                              <span className="text-sm text-gray-900">
-                                {String(value)}
-                              </span>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+              {/* Tab Navigation */}
+              <div className="border-b border-gray-200 mb-6">
+                <nav className="-mb-px flex space-x-8">
+                  <button
+                    onClick={() => setShowRepairHistory(false)}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      !showRepairHistory
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}>
+                    Thông tin thiết bị
+                  </button>
+                  <button
+                    onClick={() => setShowRepairHistory(true)}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      showRepairHistory
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    }`}>
+                    Lịch sử sửa chữa (
+                    {getRepairHistory(selectedAsset.id).length})
+                  </button>
+                </nav>
               </div>
+
+              {/* Content based on active tab */}
+              {!showRepairHistory ? (
+                // Device Information Tab
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-medium text-gray-900">
+                      Thông tin cơ bản
+                    </h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          Mã tài sản:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {selectedAsset.assetCode}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          Tên tài sản:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {selectedAsset.name}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          Danh mục:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {selectedAsset.category}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          Model:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {selectedAsset.model}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          Serial Number:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {selectedAsset.serialNumber}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          Phòng:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {selectedAsset.roomName}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-500">
+                          Trạng thái:
+                        </span>
+                        <div
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                            statusConfig[selectedAsset.status].color
+                          }`}>
+                          {statusConfig[selectedAsset.status].label}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Warranty & Maintenance */}
+                  <div className="space-y-4">
+                    <h4 className="text-lg font-medium text-gray-900">
+                      Bảo hành & Bảo trì
+                    </h4>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          Ngày mua:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {formatDate(selectedAsset.purchaseDate)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          Hết hạn bảo hành:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {formatDate(selectedAsset.warrantyExpiry)}
+                        </span>
+                      </div>
+                      {selectedAsset.lastMaintenanceDate && (
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">
+                            Bảo trì lần cuối:
+                          </span>
+                          <span className="text-sm text-gray-900">
+                            {formatDate(selectedAsset.lastMaintenanceDate)}
+                          </span>
+                        </div>
+                      )}
+                      {selectedAsset.assignedTo && (
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">
+                            Được giao cho:
+                          </span>
+                          <span className="text-sm text-gray-900">
+                            {selectedAsset.assignedTo}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Specifications */}
+                  {selectedAsset.specifications && (
+                    <div className="lg:col-span-2">
+                      <h4 className="text-lg font-medium text-gray-900 mb-4">
+                        Thông số kỹ thuật
+                      </h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {Object.entries(selectedAsset.specifications).map(
+                            ([key, value]) => (
+                              <div key={key} className="flex justify-between">
+                                <span className="text-sm font-medium text-gray-500">
+                                  {key}:
+                                </span>
+                                <span className="text-sm text-gray-900">
+                                  {String(value)}
+                                </span>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Repair History Tab
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Wrench className="w-5 h-5 text-blue-600" />
+                    <h4 className="text-lg font-medium text-gray-900">
+                      Lịch sử sửa chữa và thay thế linh kiện
+                    </h4>
+                  </div>
+
+                  {getRepairHistory(selectedAsset.id).length === 0 ? (
+                    <div className="text-center py-8">
+                      <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">
+                        Thiết bị này chưa có lịch sử sửa chữa
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {getRepairHistory(selectedAsset.id).map((repair) => (
+                        <div
+                          key={repair.id}
+                          className="border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span className="font-semibold text-gray-900">
+                                  {repair.requestCode}
+                                </span>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    repair.status === "HOÀN_THÀNH"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-blue-100 text-blue-800"
+                                  }`}>
+                                  {repair.status === "HOÀN_THÀNH"
+                                    ? "Hoàn thành"
+                                    : "Đang xử lý"}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {repair.errorType}
+                              </p>
+                            </div>
+                            <div className="text-right text-sm text-gray-500">
+                              <div className="flex items-center space-x-1">
+                                <Calendar className="w-4 h-4" />
+                                <span>{formatDate(repair.reportDate)}</span>
+                              </div>
+                              {repair.completedDate && (
+                                <div className="flex items-center space-x-1 mt-1">
+                                  <CheckCircle className="w-4 h-4" />
+                                  <span>
+                                    {formatDate(repair.completedDate)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div>
+                              <h6 className="font-medium text-gray-900 mb-2">
+                                Mô tả lỗi:
+                              </h6>
+                              <p className="text-sm text-gray-600">
+                                {repair.description}
+                              </p>
+
+                              <div className="mt-3">
+                                <h6 className="font-medium text-gray-900 mb-2">
+                                  Giải pháp:
+                                </h6>
+                                <p className="text-sm text-gray-600">
+                                  {repair.solution}
+                                </p>
+                              </div>
+
+                              <div className="mt-3 flex items-center space-x-1 text-sm text-gray-500">
+                                <User className="w-4 h-4" />
+                                <span>
+                                  Kỹ thuật viên: {repair.technicianName}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Component Changes */}
+                            {repair.componentChanges &&
+                              repair.componentChanges.length > 0 && (
+                                <div>
+                                  <h6 className="font-medium text-gray-900 mb-2">
+                                    Thay thế linh kiện:
+                                  </h6>
+                                  <div className="space-y-3">
+                                    {repair.componentChanges.map(
+                                      (change, index) => (
+                                        <div
+                                          key={index}
+                                          className="bg-blue-50 p-3 rounded-lg">
+                                          <div className="font-medium text-sm text-blue-900 mb-1">
+                                            {change.componentType}
+                                          </div>
+                                          {change.oldComponent && (
+                                            <div className="text-xs text-red-600 mb-1">
+                                              <span className="font-medium">
+                                                Cũ:
+                                              </span>{" "}
+                                              {change.oldComponent}
+                                            </div>
+                                          )}
+                                          <div className="text-xs text-green-600 mb-1">
+                                            <span className="font-medium">
+                                              Mới:
+                                            </span>{" "}
+                                            {change.newComponent}
+                                          </div>
+                                          <div className="text-xs text-gray-600">
+                                            <span className="font-medium">
+                                              Lý do:
+                                            </span>{" "}
+                                            {change.changeReason}
+                                          </div>
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
