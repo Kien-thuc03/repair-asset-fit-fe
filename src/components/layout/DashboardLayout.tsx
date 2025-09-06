@@ -322,8 +322,9 @@ function Topbar() {
             title="Thông báo"
             aria-label="Thông báo"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-3.5-3.5a7.5 7.5 0 10-10.61 0L2 17h5m8 0V9a3 3 0 00-3-3v0a3 3 0 00-3 3v8m8 0a2 2 0 11-4 0" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-bell-icon lucide-bell">
+              <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
+              <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
             </svg>
           </button>
           
@@ -490,7 +491,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 HỆ THỐNG SỬA CHỮA
               </span>
               <p className="text-blue-200 text-xs">
-                QUẢN LÝ TÀI SẢN
+                QUẢN LÝ THIẾT BỊ
               </p>
             </div>
           </div>

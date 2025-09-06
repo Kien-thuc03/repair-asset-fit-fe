@@ -194,7 +194,7 @@ export default function QTVKhoaDashboard() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-900">
-                    Người dùng 'giangvien' đăng nhập thành công
+                    Người dùng &apos;giangvien&apos; đăng nhập thành công
                   </p>
                   <p className="text-xs text-gray-500">10:30 AM</p>
                 </div>
