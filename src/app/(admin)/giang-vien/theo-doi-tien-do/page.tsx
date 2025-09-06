@@ -314,7 +314,7 @@ export default function TheoDaoTienDoPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.assignedTechnicianName || "Chưa phân công"}
+                      {request.assignedTechnicianName || "Chưa tiếp nhận"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(request.createdAt)}

@@ -360,6 +360,11 @@ export default function BaoCaoLoiPage() {
   const [filteredComponents, setFilteredComponents] = useState<Component[]>([]);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Debug filteredComponents changes
+  useEffect(() => {
+    console.log("filteredComponents updated:", filteredComponents);
+  }, [filteredComponents]);
+
   // Detect if user is on mobile device
   useEffect(() => {
     const checkMobile = () => {
@@ -409,29 +414,31 @@ export default function BaoCaoLoiPage() {
   };
 
   const handleQRScan = (qrCode: string) => {
+    console.log("QR Code scanned:", qrCode);
     // Tìm asset dựa trên QR code
     const asset = mockAssets.find((asset) => asset.assetCode === qrCode);
+    console.log("Found asset:", asset);
+    
     if (asset) {
       // Tự động điền thông tin từ QR code
       const room = mockRooms.find((room) => room.id === asset.roomId);
+      console.log("Found room:", room);
+      
       if (room) {
-        setFormData((prev) => ({
-          ...prev,
-          roomId: asset.roomId,
-          assetId: asset.id,
-          componentId: "",
-        }));
-
-        // Filter assets and components
-        const roomAssets = mockAssets.filter((a) => a.roomId === asset.roomId);
-        setFilteredAssets(roomAssets);
-
-        const components = mockComponents.filter(
-          (comp) => comp.computerAssetId === asset.id
-        );
-        setFilteredComponents(components);
-
-        alert(`Đã quét thành công!\nMáy: ${asset.name}\nPhòng: ${room.name}`);
+        // Gọi handleRoomChange trước để set room và filter assets
+        handleRoomChange(asset.roomId);
+        
+        // Sau đó gọi handleAssetChange để set asset và filter components
+        setTimeout(() => {
+          handleAssetChange(asset.id);
+          
+          const components = mockComponents.filter(
+            (comp) => comp.computerAssetId === asset.id
+          );
+          console.log("Filtered components after QR scan:", components);
+          
+          alert(`Đã quét thành công!\nMáy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}`);
+        }, 100);
       }
     } else {
       alert("Không tìm thấy thiết bị với mã QR này!");
