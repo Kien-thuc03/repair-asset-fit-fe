@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { AlertTriangle, Camera, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { AlertTriangle, Camera, Send, QrCode } from "lucide-react";
 
 interface ReportForm {
   assetId: string;
@@ -358,6 +358,17 @@ export default function BaoCaoLoiPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [filteredComponents, setFilteredComponents] = useState<Component[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect if user is on mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -397,6 +408,40 @@ export default function BaoCaoLoiPage() {
     );
   };
 
+  const handleQRScan = (qrCode: string) => {
+    // Tìm asset dựa trên QR code
+    const asset = mockAssets.find(asset => asset.assetCode === qrCode);
+    if (asset) {
+      // Tự động điền thông tin từ QR code
+      const room = mockRooms.find(room => room.id === asset.roomId);
+      if (room) {
+        setFormData(prev => ({ 
+          ...prev, 
+          roomId: asset.roomId, 
+          assetId: asset.id, 
+          componentId: "" 
+        }));
+        
+        // Filter assets and components
+        const roomAssets = mockAssets.filter((a) => a.roomId === asset.roomId);
+        setFilteredAssets(roomAssets);
+        
+        const components = mockComponents.filter((comp) => comp.computerAssetId === asset.id);
+        setFilteredComponents(components);
+        
+        alert(`Đã quét thành công!\nMáy: ${asset.name}\nPhòng: ${room.name}`);
+      }
+    } else {
+      alert('Không tìm thấy thiết bị với mã QR này!');
+    }
+  };
+
+  const simulateQRScan = () => {
+    // Simulate QR scan for demo (in real app, this would use camera)
+    const randomAsset = mockAssets[Math.floor(Math.random() * mockAssets.length)];
+    handleQRScan(randomAsset.assetCode);
+  };
+
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setFormData((prev) => ({
@@ -425,6 +470,28 @@ export default function BaoCaoLoiPage() {
           </div>
         </div>
       </div>
+
+      {/* QR Scanner Button for Mobile */}
+      {isMobile && (
+        <div className="bg-blue-50 shadow rounded-lg">
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+              <QrCode className="w-5 h-5 mr-2 text-blue-600" />
+              Quét mã QR thiết bị
+            </h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Quét mã QR trên thiết bị để tự động điền thông tin
+            </p>
+            <button
+              type="button"
+              onClick={simulateQRScan}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition flex items-center justify-center">
+              <Camera className="w-4 h-4 mr-2" />
+              Mở máy ảnh quét QR
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       <div className="bg-white shadow rounded-lg">
@@ -526,7 +593,7 @@ export default function BaoCaoLoiPage() {
                     <p className="text-sm font-medium text-gray-700 mb-2">
                       Tất cả linh kiện trong máy này:
                     </p>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       {filteredComponents.map((component) => (
                         <div
                           key={component.id}
@@ -537,12 +604,12 @@ export default function BaoCaoLoiPage() {
                               ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
                               : "bg-green-100 text-green-800 border border-green-200"
                           }`}>
-                          <div className="font-medium">
+                          <div className="font-medium truncate">
                             {component.componentType}
                           </div>
-                          <div className="text-gray-600">{component.name}</div>
+                          <div className="text-gray-600 truncate">{component.name}</div>
                           {component.componentSpecs && (
-                            <div className="text-gray-500">
+                            <div className="text-gray-500 truncate text-xs">
                               {component.componentSpecs}
                             </div>
                           )}
