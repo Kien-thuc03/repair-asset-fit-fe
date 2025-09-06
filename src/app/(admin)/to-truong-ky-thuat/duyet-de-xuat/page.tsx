@@ -281,9 +281,9 @@ export default function DuyetDeXuatPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <Link
           href="/to-truong-ky-thuat"
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
@@ -291,37 +291,38 @@ export default function DuyetDeXuatPage() {
           Về trang chủ
         </Link>
 
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               Duyệt đề xuất thay thế
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">
               Xem xét và phê duyệt các đề xuất thay thế thiết bị
             </p>
           </div>
 
           <div className="flex space-x-3">
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-              <Download className="h-4 w-4 mr-2" />
-              Xuất Excel
+            <button className="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+              <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Xuất Excel</span>
+              <span className="sm:hidden">Xuất</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 items-end">
+      <div className="bg-white p-3 sm:p-6 rounded-lg shadow mb-4 sm:mb-6">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4 items-end">
           <div className="flex flex-col h-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-6">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
               Tìm kiếm
             </label>
-            <div className="relative flex-1 min-w-0 h-10">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none flex-shrink-0 z-10" />
+            <div className="relative flex-1 min-w-0 h-9 sm:h-10">
+              <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400 pointer-events-none flex-shrink-0 z-10" />
               <input
                 type="text"
-                className="absolute inset-0 w-full h-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                className="absolute inset-0 w-full h-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
                 placeholder="Mã tài sản, tên thiết bị..."
                 value={searchTerm}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -332,12 +333,12 @@ export default function DuyetDeXuatPage() {
           </div>
 
           <div className="flex flex-col h-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-6">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
               Trạng thái
             </label>
-            <div className="flex-1 h-10">
+            <div className="flex-1 h-9 sm:h-10">
               <select
-                className="w-full h-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}>
                 <option value="all">Tất cả</option>
@@ -349,12 +350,12 @@ export default function DuyetDeXuatPage() {
           </div>
 
           <div className="flex flex-col h-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-6">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
               Độ ưu tiên
             </label>
-            <div className="flex-1 h-10">
+            <div className="flex-1 h-9 sm:h-10">
               <select
-                className="w-full h-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full h-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                 value={selectedPriority}
                 onChange={(e) => setSelectedPriority(e.target.value)}>
                 <option value="all">Tất cả</option>
@@ -366,9 +367,9 @@ export default function DuyetDeXuatPage() {
           </div>
 
           <div className="flex flex-col h-full justify-end">
-            <div className="h-10">
-              <button className="w-full h-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                <Filter className="h-4 w-4 mr-2 flex-shrink-0" />
+            <div className="h-9 sm:h-10">
+              <button className="w-full h-full inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                 Lọc
               </button>
             </div>
@@ -377,36 +378,133 @@ export default function DuyetDeXuatPage() {
       </div>
 
       {/* Requests Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden h-[600px] flex flex-col">
-        <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-lg font-medium text-gray-900">
+      <div className="bg-white shadow rounded-lg overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] flex flex-col">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex-shrink-0">
+          <h2 className="text-base sm:text-lg font-medium text-gray-900">
             Danh sách đề xuất ({filteredRequests.length})
           </h2>
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-          <div className="overflow-x-auto overflow-y-auto flex-1">
+          {/* Mobile Card View */}
+          <div className="block sm:hidden flex-1 overflow-y-auto">
+            <div className="p-3 space-y-3">
+              {filteredRequests.length > 0 ? (
+                filteredRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center">
+                        <Computer className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">
+                            {request.assetCode}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {request.assetName}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-1 ml-2">
+                        <button
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setShowModal(true);
+                          }}
+                          className="text-indigo-600 hover:text-indigo-900 p-1">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        {request.status === "pending" && (
+                          <>
+                            <button
+                              onClick={() => handleApprove(request.id)}
+                              className="text-green-600 hover:text-green-900 p-1">
+                              <CheckCircle className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleReject(request.id)}
+                              className="text-red-600 hover:text-red-900 p-1">
+                              <XCircle className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <div className="text-gray-500">Người yêu cầu</div>
+                        <div className="text-gray-900 font-medium">{request.requestedBy}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Vị trí</div>
+                        <div className="text-gray-900 font-medium truncate">{request.location}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Trạng thái</div>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                            request.status
+                          )}`}>
+                          {getStatusText(request.status)}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Độ ưu tiên</div>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
+                            request.priority
+                          )}`}>
+                          {getPriorityText(request.priority)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-2 text-xs text-gray-500">
+                      {new Date(request.requestDate).toLocaleDateString("vi-VN")}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                  <h3 className="text-sm font-medium text-gray-900 mb-1">
+                    Không tìm thấy kết quả
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden sm:block overflow-x-auto overflow-y-auto flex-1">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr className="h-12">
+                <tr className="h-10 sm:h-12">
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("assetCode")}>
                     <div className="flex items-center">
-                      Tài sản
+                      <span className="hidden lg:inline">Tài sản</span>
+                      <span className="lg:hidden">TS</span>
                       {getSortIcon("assetCode")}
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("requestedBy")}>
                     <div className="flex items-center">
-                      Người yêu cầu
+                      <span className="hidden lg:inline">Người yêu cầu</span>
+                      <span className="lg:hidden">Người YC</span>
                       {getSortIcon("requestedBy")}
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 hidden md:table-cell"
                     onClick={() => handleSort("location")}>
                     <div className="flex items-center">
                       Vị trí
@@ -414,30 +512,32 @@ export default function DuyetDeXuatPage() {
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("priority")}>
                     <div className="flex items-center">
-                      Độ ưu tiên
+                      <span className="hidden lg:inline">Độ ưu tiên</span>
+                      <span className="lg:hidden">UT</span>
                       {getSortIcon("priority")}
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("status")}>
                     <div className="flex items-center">
-                      Trạng thái
+                      <span className="hidden lg:inline">Trạng thái</span>
+                      <span className="lg:hidden">TT</span>
                       {getSortIcon("status")}
                     </div>
                   </th>
                   <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 hidden lg:table-cell"
                     onClick={() => handleSort("requestDate")}>
                     <div className="flex items-center">
                       Ngày yêu cầu
                       {getSortIcon("requestDate")}
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Thao tác
                   </th>
                 </tr>
@@ -445,88 +545,92 @@ export default function DuyetDeXuatPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredRequests.length > 0 ? (
                   filteredRequests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50 h-[78px]">
-                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
+                    <tr key={request.id} className="hover:bg-gray-50 h-[60px] sm:h-[78px]">
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
                         <div className="flex items-center">
-                          <Computer className="h-8 w-8 text-gray-400 mr-3" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
+                          <Computer className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mr-2 sm:mr-3 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                               {request.assetCode}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-xs text-gray-500 truncate">
                               {request.assetName}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
                         <div className="flex items-center">
-                          <User className="h-4 w-4 text-gray-400 mr-2" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
+                          <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                               {request.requestedBy}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-xs text-gray-500 truncate lg:block hidden">
                               {request.unit}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px] hidden md:table-cell">
                         <div className="flex items-center">
-                          <Building2 className="h-4 w-4 text-gray-400 mr-2" />
-                          <span className="text-sm text-gray-900">
+                          <Building2 className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                          <span className="text-sm text-gray-900 truncate">
                             {request.location}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
+                          className={`inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
                             request.priority
                           )}`}>
-                          {getPriorityText(request.priority)}
+                          <span className="hidden sm:inline">{getPriorityText(request.priority)}</span>
+                          <span className="sm:hidden">
+                            {request.priority === "high" ? "C" : request.priority === "medium" ? "TB" : "T"}
+                          </span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                          className={`inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
                             request.status
                           )}`}>
-                          {getStatusText(request.status)}
+                          <span className="hidden sm:inline">{getStatusText(request.status)}</span>
+                          <span className="sm:hidden">
+                            {request.status === "pending" ? "CD" : request.status === "approved" ? "DD" : "TC"}
+                          </span>
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap h-[78px]">
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px] hidden lg:table-cell">
                         <div className="flex items-center">
-                          <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                          <Calendar className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                           <span className="text-sm text-gray-900">
-                            {new Date(request.requestDate).toLocaleDateString(
-                              "vi-VN"
-                            )}
+                            {new Date(request.requestDate).toLocaleDateString("vi-VN")}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium h-[78px]">
-                        <div className="flex items-center justify-end space-x-2">
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-right text-sm font-medium h-[60px] sm:h-[78px]">
+                        <div className="flex items-center justify-end space-x-1 sm:space-x-2">
                           <button
                             onClick={() => {
                               setSelectedRequest(request);
                               setShowModal(true);
                             }}
-                            className="text-indigo-600 hover:text-indigo-900">
-                            <Eye className="h-4 w-4" />
+                            className="text-indigo-600 hover:text-indigo-900 p-1">
+                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                           </button>
                           {request.status === "pending" && (
                             <>
                               <button
                                 onClick={() => handleApprove(request.id)}
-                                className="text-green-600 hover:text-green-900">
-                                <CheckCircle className="h-4 w-4" />
+                                className="text-green-600 hover:text-green-900 p-1">
+                                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                               </button>
                               <button
                                 onClick={() => handleReject(request.id)}
-                                className="text-red-600 hover:text-red-900">
-                                <XCircle className="h-4 w-4" />
+                                className="text-red-600 hover:text-red-900 p-1">
+                                <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                               </button>
                             </>
                           )}
@@ -535,15 +639,15 @@ export default function DuyetDeXuatPage() {
                     </tr>
                   ))
                 ) : (
-                  <tr className="h-[78px]">
-                    <td colSpan={7} className="h-[78px]">
-                      <div className="h-[78px] flex items-center justify-center">
+                  <tr className="h-[60px] sm:h-[78px]">
+                    <td colSpan={7} className="h-[60px] sm:h-[78px]">
+                      <div className="h-[60px] sm:h-[78px] flex items-center justify-center">
                         <div className="flex flex-col items-center">
-                          <Search className="h-8 w-8 text-gray-300 mb-2" />
-                          <h3 className="text-sm font-medium text-gray-900 mb-1">
+                          <Search className="h-6 w-6 sm:h-8 sm:w-8 text-gray-300 mb-2" />
+                          <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-1">
                             Không tìm thấy kết quả
                           </h3>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-xs text-gray-500">
                             Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
                           </p>
                         </div>
@@ -560,97 +664,97 @@ export default function DuyetDeXuatPage() {
       {/* Detail Modal */}
       {showModal && selectedRequest && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+          <div className="relative top-4 sm:top-20 mx-auto p-3 sm:p-5 border w-11/12 sm:w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-base sm:text-lg font-medium text-gray-900">
                   Chi tiết đề xuất #{selectedRequest.id}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600">
-                  <XCircle className="h-6 w-6" />
+                  className="text-gray-400 hover:text-gray-600 p-1">
+                  <XCircle className="h-5 w-5 sm:h-6 sm:w-6" />
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3 sm:space-y-4 max-h-[70vh] overflow-y-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Mã tài sản
                     </label>
-                    <p className="text-sm text-gray-900 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
                       {selectedRequest.assetCode}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Tên thiết bị
                     </label>
-                    <p className="text-sm text-gray-900 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
                       {selectedRequest.assetName}
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Người yêu cầu
                     </label>
-                    <p className="text-sm text-gray-900 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
                       {selectedRequest.requestedBy}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Đơn vị
                     </label>
-                    <p className="text-sm text-gray-900 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
                       {selectedRequest.unit}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     Vị trí
                   </label>
-                  <p className="text-sm text-gray-900 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-900 mt-1">
                     {selectedRequest.location}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     Lý do thay thế
                   </label>
-                  <p className="text-sm text-gray-900 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-900 mt-1">
                     {selectedRequest.reason}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
                     Mô tả chi tiết
                   </label>
-                  <p className="text-sm text-gray-900 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-900 mt-1">
                     {selectedRequest.description}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Chi phí ước tính
                     </label>
-                    <p className="text-sm text-gray-900 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
                       {selectedRequest.estimatedCost.toLocaleString("vi-VN")}{" "}
                       VNĐ
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Độ ưu tiên
                     </label>
                     <span
@@ -664,15 +768,15 @@ export default function DuyetDeXuatPage() {
               </div>
 
               {selectedRequest.status === "pending" && (
-                <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-6 pt-4 border-t">
                   <button
                     onClick={() => handleReject(selectedRequest.id)}
-                    className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500">
                     Từ chối
                   </button>
                   <button
                     onClick={() => handleApprove(selectedRequest.id)}
-                    className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
                     Phê duyệt
                   </button>
                 </div>
