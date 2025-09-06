@@ -254,11 +254,11 @@ export default function DuyetDeXuatPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Tìm kiếm
             </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
                 placeholder="Mã tài sản, tên thiết bị..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
