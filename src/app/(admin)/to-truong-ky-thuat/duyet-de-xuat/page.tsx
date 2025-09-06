@@ -136,6 +136,8 @@ export default function DuyetDeXuatPage() {
   const [showModal, setShowModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   const filteredRequests = requests
     .filter((request) => {
@@ -280,6 +282,44 @@ export default function DuyetDeXuatPage() {
     }
   };
 
+  // Xử lý checkbox
+  const handleSelectItem = (itemId: string) => {
+    setSelectedItems((prev) => {
+      const newSelected = prev.includes(itemId)
+        ? prev.filter((id) => id !== itemId)
+        : [...prev, itemId];
+
+      // Update selectAll state based on new selection
+      setSelectAll(
+        newSelected.length === filteredRequests.length &&
+          filteredRequests.length > 0
+      );
+      return newSelected;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll || selectedItems.length === filteredRequests.length) {
+      setSelectedItems([]);
+      setSelectAll(false);
+    } else {
+      setSelectedItems(filteredRequests.map((req) => req.id));
+      setSelectAll(true);
+    }
+  };
+
+  // Xử lý xuất Excel
+  const handleExportExcel = () => {
+    const itemsToExport =
+      selectedItems.length > 0
+        ? filteredRequests.filter((req) => selectedItems.includes(req.id))
+        : filteredRequests;
+
+    console.log("Xuất Excel:", itemsToExport);
+    // TODO: Implement actual Excel export logic
+    alert(`Xuất ${itemsToExport.length} bản ghi ra Excel`);
+  };
+
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       {/* Header */}
@@ -302,7 +342,9 @@ export default function DuyetDeXuatPage() {
           </div>
 
           <div className="flex space-x-3">
-            <button className="inline-flex items-center px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <button
+              onClick={handleExportExcel}
+              className="inline-flex items-center px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
               <Download className="h-3 w-3 mr-1" />
               <span className="hidden sm:inline">Xuất Excel</span>
               <span className="sm:hidden">Xuất</span>
@@ -380,9 +422,16 @@ export default function DuyetDeXuatPage() {
       {/* Requests Table */}
       <div className="bg-white shadow rounded-lg overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] flex flex-col">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách đề xuất ({filteredRequests.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-medium text-gray-900">
+              Danh sách đề xuất ({filteredRequests.length})
+            </h2>
+            {selectedItems.length > 0 && (
+              <div className="text-xs sm:text-sm text-blue-600 font-medium">
+                Đã chọn: {selectedItems.length} mục
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
@@ -396,6 +445,12 @@ export default function DuyetDeXuatPage() {
                     className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 text-blue-600 rounded mr-2 mt-1 flex-shrink-0"
+                          checked={selectedItems.includes(request.id)}
+                          onChange={() => handleSelectItem(request.id)}
+                        />
                         <Computer className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
                         <div className="min-w-0">
                           <div className="text-sm font-medium text-gray-900 truncate">
@@ -491,6 +546,17 @@ export default function DuyetDeXuatPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr className="h-10 sm:h-12">
+                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left w-12">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 text-blue-600 rounded"
+                      checked={
+                        filteredRequests.length > 0 &&
+                        selectedItems.length === filteredRequests.length
+                      }
+                      onChange={handleSelectAll}
+                    />
+                  </th>
                   <th
                     className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("assetCode")}>
@@ -554,6 +620,14 @@ export default function DuyetDeXuatPage() {
                     <tr
                       key={request.id}
                       className="hover:bg-gray-50 h-[60px] sm:h-[78px]">
+                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap w-12">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 text-blue-600 rounded"
+                          checked={selectedItems.includes(request.id)}
+                          onChange={() => handleSelectItem(request.id)}
+                        />
+                      </td>
                       <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
                         <div className="flex items-center">
                           <Computer className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mr-2 sm:mr-3 flex-shrink-0" />
@@ -662,7 +736,7 @@ export default function DuyetDeXuatPage() {
                   ))
                 ) : (
                   <tr className="h-[60px] sm:h-[78px]">
-                    <td colSpan={7} className="h-[60px] sm:h-[78px]">
+                    <td colSpan={8} className="h-[60px] sm:h-[78px]">
                       <div className="h-[60px] sm:h-[78px] flex items-center justify-center">
                         <div className="flex flex-col items-center">
                           <Search className="h-6 w-6 sm:h-8 sm:w-8 text-gray-300 mb-2" />
