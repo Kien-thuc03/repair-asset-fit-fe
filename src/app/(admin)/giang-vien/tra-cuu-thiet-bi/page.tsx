@@ -16,43 +16,7 @@ import {
   User,
   Wrench,
 } from "lucide-react";
-
-interface Asset {
-  id: string;
-  assetCode: string;
-  name: string;
-  category: string;
-  model: string;
-  serialNumber: string;
-  roomId: string;
-  roomName: string;
-  status: "HOẠT_ĐỘNG" | "BẢO_TRÌ" | "HỎNG_HÓC" | "NGỪNG_SỬ_DỤNG";
-  purchaseDate: string;
-  warrantyExpiry: string;
-  lastMaintenanceDate?: string;
-  assignedTo?: string;
-  specifications?: Record<string, string>;
-  qrCode: string;
-}
-
-interface RepairHistory {
-  id: string;
-  assetId: string;
-  requestCode: string;
-  reportDate: string;
-  completedDate: string;
-  errorType: string;
-  description: string;
-  technicianName: string;
-  solution: string;
-  componentChanges?: {
-    componentType: string;
-    oldComponent?: string;
-    newComponent: string;
-    changeReason: string;
-  }[];
-  status: "HOÀN_THÀNH" | "ĐANG_XỬ_LÝ" | "HỦY_BỎ";
-}
+import { Asset, RepairHistory } from "@/types";
 
 const mockAssets: Asset[] = [
   {
@@ -604,7 +568,6 @@ export default function TraCuuThietBiPage() {
                     <Eye className="w-3 h-3 mr-1" />
                     Chi tiết
                   </button>
-                  
                 </div>
               </div>
             </div>

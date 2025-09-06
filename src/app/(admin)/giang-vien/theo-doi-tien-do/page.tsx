@@ -11,31 +11,7 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-
-interface RepairRequest {
-  id: string;
-  requestCode: string;
-  assetId: string;
-  assetName: string;
-  assetCode: string;
-  componentId?: string;
-  componentName?: string;
-  reporterId: string;
-  reporterName: string;
-  assignedTechnicianId?: string;
-  assignedTechnicianName?: string;
-  roomId: string;
-  roomName: string;
-  errorTypeId?: string;
-  errorTypeName?: string;
-  description: string;
-  mediaUrls?: string[];
-  status: "CHỜ_TIẾP_NHẬN" | "ĐANG_XỬ_LÝ" | "HOÀN_THÀNH" | "HỦY_BỎ";
-  resolutionNotes?: string;
-  createdAt: string;
-  acceptedAt?: string;
-  completedAt?: string;
-}
+import { EnhancedRepairRequest as RepairRequest } from "@/types";
 
 const mockRequests: RepairRequest[] = [
   {

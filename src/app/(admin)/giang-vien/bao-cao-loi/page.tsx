@@ -2,35 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { AlertTriangle, Camera, Send, QrCode } from "lucide-react";
-
-interface ReportForm {
-  assetId: string;
-  componentId: string;
-  roomId: string;
-  errorTypeId: string;
-  description: string;
-  mediaFiles: File[];
-}
-
-interface Asset {
-  id: string;
-  name: string;
-  assetCode: string;
-  roomId: string;
-}
-
-interface Component {
-  id: string;
-  computerAssetId: string;
-  componentType: string;
-  name: string;
-  componentSpecs?: string;
-  serialNumber?: string;
-  status: "INSTALLED" | "REMOVED" | "MAINTENANCE" | "FAULTY";
-  installedAt: string;
-  removedAt?: string;
-  notes?: string;
-}
+import { ReportForm, SimpleAsset as Asset, Component } from "@/types";
 
 const errorTypes = [
   { id: "ET001", name: "Không khởi động được" },
