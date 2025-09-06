@@ -418,26 +418,28 @@ export default function BaoCaoLoiPage() {
     // Tìm asset dựa trên QR code
     const asset = mockAssets.find((asset) => asset.assetCode === qrCode);
     console.log("Found asset:", asset);
-    
+
     if (asset) {
       // Tự động điền thông tin từ QR code
       const room = mockRooms.find((room) => room.id === asset.roomId);
       console.log("Found room:", room);
-      
+
       if (room) {
         // Gọi handleRoomChange trước để set room và filter assets
         handleRoomChange(asset.roomId);
-        
+
         // Sau đó gọi handleAssetChange để set asset và filter components
         setTimeout(() => {
           handleAssetChange(asset.id);
-          
+
           const components = mockComponents.filter(
             (comp) => comp.computerAssetId === asset.id
           );
           console.log("Filtered components after QR scan:", components);
-          
-          alert(`Đã quét thành công!\nMáy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}`);
+
+          alert(
+            `Đã quét thành công!\nMáy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}`
+          );
         }, 100);
       }
     } else {

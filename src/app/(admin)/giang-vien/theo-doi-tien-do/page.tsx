@@ -158,7 +158,7 @@ export default function TheoDaoTienDoPage() {
   const [selectedRequest, setSelectedRequest] = useState<RepairRequest | null>(
     null
   );
-  
+
   // Sorting state
   const [sortField, setSortField] = useState<keyof RepairRequest | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -204,7 +204,11 @@ export default function TheoDaoTienDoPage() {
         if (!bValue) return sortDirection === "asc" ? 1 : -1;
 
         // Handle date comparison
-        if (sortField === "createdAt" || sortField === "acceptedAt" || sortField === "completedAt") {
+        if (
+          sortField === "createdAt" ||
+          sortField === "acceptedAt" ||
+          sortField === "completedAt"
+        ) {
           const aTime = new Date(aValue).getTime();
           const bTime = new Date(bValue).getTime();
           return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
@@ -232,33 +236,32 @@ export default function TheoDaoTienDoPage() {
   };
 
   // Sortable header component
-  const SortableHeader = ({ 
-    field, 
-    children 
-  }: { 
-    field: keyof RepairRequest, 
-    children: React.ReactNode 
+  const SortableHeader = ({
+    field,
+    children,
+  }: {
+    field: keyof RepairRequest;
+    children: React.ReactNode;
   }) => (
-    <th 
+    <th
       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
-      onClick={() => handleSort(field)}
-    >
+      onClick={() => handleSort(field)}>
       <div className="flex items-center space-x-1">
         <span>{children}</span>
         <div className="flex flex-col">
-          <ChevronUp 
+          <ChevronUp
             className={`w-3 h-3 ${
-              sortField === field && sortDirection === "asc" 
-                ? "text-blue-600" 
+              sortField === field && sortDirection === "asc"
+                ? "text-blue-600"
                 : "text-gray-400"
-            }`} 
+            }`}
           />
-          <ChevronDown 
+          <ChevronDown
             className={`w-3 h-3 ${
-              sortField === field && sortDirection === "desc" 
-                ? "text-blue-600" 
+              sortField === field && sortDirection === "desc"
+                ? "text-blue-600"
                 : "text-gray-400"
-            }`} 
+            }`}
           />
         </div>
       </div>
@@ -331,27 +334,15 @@ export default function TheoDaoTienDoPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <SortableHeader field="requestCode">
-                  Mã yêu cầu
-                </SortableHeader>
-                <SortableHeader field="assetName">
-                  Tài sản
-                </SortableHeader>
-                <SortableHeader field="roomName">
-                  Phòng
-                </SortableHeader>
-                <SortableHeader field="errorTypeName">
-                  Loại lỗi
-                </SortableHeader>
-                <SortableHeader field="status">
-                  Trạng thái
-                </SortableHeader>
+                <SortableHeader field="requestCode">Mã yêu cầu</SortableHeader>
+                <SortableHeader field="assetName">Tài sản</SortableHeader>
+                <SortableHeader field="roomName">Phòng</SortableHeader>
+                <SortableHeader field="errorTypeName">Loại lỗi</SortableHeader>
+                <SortableHeader field="status">Trạng thái</SortableHeader>
                 <SortableHeader field="assignedTechnicianName">
                   Người xử lý
                 </SortableHeader>
-                <SortableHeader field="createdAt">
-                  Ngày tạo
-                </SortableHeader>
+                <SortableHeader field="createdAt">Ngày tạo</SortableHeader>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
