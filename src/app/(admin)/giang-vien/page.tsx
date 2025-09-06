@@ -1,47 +1,49 @@
-'use client'
+"use client";
 
-import { useAuth } from '@/contexts/AuthContext'
-import { AlertTriangle, Clock, CheckCircle, FileText } from 'lucide-react'
+import { useAuth } from "@/contexts/AuthContext";
+import { AlertTriangle, Clock, CheckCircle, FileText } from "lucide-react";
 
 const stats = [
   {
-    name: 'Báo cáo đã gửi',
-    value: '12',
-    change: '+2 tuần này',
-    changeType: 'positive',
+    name: "Báo cáo đã gửi",
+    value: "12",
+    change: "+2 tuần này",
+    changeType: "positive",
     icon: FileText,
   },
   {
-    name: 'Đang xử lý',
-    value: '3',
-    change: '1 khẩn cấp',
-    changeType: 'neutral',
+    name: "Đang xử lý",
+    value: "3",
+    change: "1 khẩn cấp",
+    changeType: "neutral",
     icon: Clock,
   },
   {
-    name: 'Đã hoàn thành',
-    value: '8',
-    change: '+3 tuần này',
-    changeType: 'positive',
+    name: "Đã hoàn thành",
+    value: "8",
+    change: "+3 tuần này",
+    changeType: "positive",
     icon: CheckCircle,
   },
   {
-    name: 'Cần theo dõi',
-    value: '1',
-    change: 'Quá hạn',
-    changeType: 'negative',
+    name: "Cần theo dõi",
+    value: "1",
+    change: "Quá hạn",
+    changeType: "negative",
     icon: AlertTriangle,
   },
-]
+];
 
 export default function GiangVienDashboard() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Giảng viên</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Dashboard Giảng viên
+        </h1>
         <p className="mt-2 text-gray-600">
           Chào mừng {user?.fullName}! Quản lý báo cáo lỗi thiết bị của bạn.
         </p>
@@ -52,8 +54,7 @@ export default function GiangVienDashboard() {
         {stats.map((item) => (
           <div
             key={item.name}
-            className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6"
-          >
+            className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6">
             <div>
               <div className="absolute rounded-md bg-blue-500 p-3">
                 <item.icon className="h-6 w-6 text-white" aria-hidden="true" />
@@ -63,16 +64,17 @@ export default function GiangVienDashboard() {
               </p>
             </div>
             <div className="ml-16 flex items-baseline">
-              <p className="text-2xl font-semibold text-gray-900">{item.value}</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {item.value}
+              </p>
               <p
                 className={`ml-2 flex items-baseline text-sm font-semibold ${
-                  item.changeType === 'positive'
-                    ? 'text-green-600'
-                    : item.changeType === 'negative'
-                    ? 'text-red-600'
-                    : 'text-gray-600'
-                }`}
-              >
+                  item.changeType === "positive"
+                    ? "text-green-600"
+                    : item.changeType === "negative"
+                    ? "text-red-600"
+                    : "text-gray-600"
+                }`}>
                 {item.change}
               </p>
             </div>
@@ -118,5 +120,5 @@ export default function GiangVienDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }
