@@ -366,8 +366,8 @@ export default function BaoCaoLoiPage() {
       setIsMobile(window.innerWidth <= 768);
     };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -410,35 +410,38 @@ export default function BaoCaoLoiPage() {
 
   const handleQRScan = (qrCode: string) => {
     // Tìm asset dựa trên QR code
-    const asset = mockAssets.find(asset => asset.assetCode === qrCode);
+    const asset = mockAssets.find((asset) => asset.assetCode === qrCode);
     if (asset) {
       // Tự động điền thông tin từ QR code
-      const room = mockRooms.find(room => room.id === asset.roomId);
+      const room = mockRooms.find((room) => room.id === asset.roomId);
       if (room) {
-        setFormData(prev => ({ 
-          ...prev, 
-          roomId: asset.roomId, 
-          assetId: asset.id, 
-          componentId: "" 
+        setFormData((prev) => ({
+          ...prev,
+          roomId: asset.roomId,
+          assetId: asset.id,
+          componentId: "",
         }));
-        
+
         // Filter assets and components
         const roomAssets = mockAssets.filter((a) => a.roomId === asset.roomId);
         setFilteredAssets(roomAssets);
-        
-        const components = mockComponents.filter((comp) => comp.computerAssetId === asset.id);
+
+        const components = mockComponents.filter(
+          (comp) => comp.computerAssetId === asset.id
+        );
         setFilteredComponents(components);
-        
+
         alert(`Đã quét thành công!\nMáy: ${asset.name}\nPhòng: ${room.name}`);
       }
     } else {
-      alert('Không tìm thấy thiết bị với mã QR này!');
+      alert("Không tìm thấy thiết bị với mã QR này!");
     }
   };
 
   const simulateQRScan = () => {
     // Simulate QR scan for demo (in real app, this would use camera)
-    const randomAsset = mockAssets[Math.floor(Math.random() * mockAssets.length)];
+    const randomAsset =
+      mockAssets[Math.floor(Math.random() * mockAssets.length)];
     handleQRScan(randomAsset.assetCode);
   };
 
@@ -607,7 +610,9 @@ export default function BaoCaoLoiPage() {
                           <div className="font-medium truncate">
                             {component.componentType}
                           </div>
-                          <div className="text-gray-600 truncate">{component.name}</div>
+                          <div className="text-gray-600 truncate">
+                            {component.name}
+                          </div>
                           {component.componentSpecs && (
                             <div className="text-gray-500 truncate text-xs">
                               {component.componentSpecs}
