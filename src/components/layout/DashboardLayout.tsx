@@ -250,14 +250,12 @@ function SidebarNavigation({
 }
 
 // Topbar
-function Topbar() {
-  const { user, logout } = useAuth();
+function Topbar({ onLogout }: { onLogout: () => void }) {
+  const { user } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const router = useRouter();
 
   const handleLogout = () => {
-    logout();
-    router.push('/login');
+    onLogout();
   };
 
   // Close dropdown when clicking outside
@@ -289,22 +287,23 @@ function Topbar() {
       </button>
       
       {/* Header với logo và tên trường */}
-      <div className="flex-1 px-6 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex-1 px-2 sm:px-4 lg:px-6 flex items-center justify-between">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Logo và tên trường */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1 sm:space-x-3">
             <Image
               src="/images/Logo_IUH.webp"
               alt="Logo"
-              width={100}
-              height={40}
-              className="rounded-lg"
+              width={60}
+              height={24}
+              className="rounded-lg sm:w-[80px] sm:h-[32px] lg:w-[100px] lg:h-[40px]"
             />
-            <div>
-              <h1 className="text-[14px] font-semibold text-gray-500">
+            {/* Ẩn text trên mobile nhỏ, hiện trên sm và lớn hơn */}
+            <div className="hidden sm:block">
+              <h1 className="text-[10px] sm:text-[12px] lg:text-[14px] font-semibold text-gray-500 leading-tight">
                 ĐẠI HỌC CÔNG NGHIỆP TP.HCM
               </h1>
-              <p className="text-[12px] text-gray-400 font-medium">
+              <p className="text-[8px] sm:text-[10px] lg:text-[12px] text-gray-400 font-medium leading-tight">
                 KHOA CÔNG NGHỆ THÔNG TIN
               </p>
             </div>
@@ -312,17 +311,19 @@ function Topbar() {
         </div>
         
         {/* User info và controls */}
-        <div className="flex items-center space-x-4">
-          {/* Role Switcher */}
-          <RoleSwitcher />
+        <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4">
+          {/* Role Switcher - ẩn trên mobile nhỏ */}
+          <div className="hidden sm:block">
+            <RoleSwitcher />
+          </div>
           
           {/* Notifications */}
           <button 
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+            className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             title="Thông báo"
             aria-label="Thông báo"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bell-icon lucide-bell">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bell-icon lucide-bell sm:w-6 sm:h-6">
               <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
               <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
             </svg>
@@ -332,17 +333,21 @@ function Topbar() {
           <div className="relative" data-dropdown="user-menu">
             <button 
               type="button"
-              className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer"
+              className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 hover:bg-gray-50 rounded-lg p-1 sm:p-2 transition-colors cursor-pointer"
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               aria-label="User menu"
             >
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.fullName || 'Nguyễn Kiến Thức'}</p>
-                <p className="text-xs text-green-600">
+              {/* User info - chỉ hiện trên tablet và desktop */}
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-medium text-gray-900 truncate max-w-[120px] lg:max-w-none">
+                  {user?.fullName || 'Nguyễn Kiến Thức'}
+                </p>
+                <p className="text-xs text-green-600 truncate">
                   {user && user.roles.length > 1 ? `${RoleInfo[user.activeRole]?.name || user.activeRole}` : 'Sinh viên'}
                 </p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+              {/* Avatar */}
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-semibold text-white">
                   {user?.fullName?.charAt(0) || 'N'}
                 </span>
@@ -351,7 +356,21 @@ function Topbar() {
 
             {/* Dropdown menu */}
             {isUserMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+              <div className="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                {/* User info for mobile - chỉ hiện trên mobile */}
+                <div className="px-4 py-3 border-b border-gray-100 md:hidden">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.fullName || 'Nguyễn Kiến Thức'}
+                  </p>
+                  <p className="text-xs text-green-600 truncate">
+                    {user && user.roles.length > 1 ? `${RoleInfo[user.activeRole]?.name || user.activeRole}` : 'Sinh viên'}
+                  </p>
+                </div>
+
+                {/* Role Switcher for mobile - chỉ hiện trên mobile */}
+                <div className="px-4 py-2 border-b border-gray-100 sm:hidden">
+                  <RoleSwitcher />
+                </div>
                 
                 {/* Menu items */}
                 <button
@@ -361,7 +380,7 @@ function Topbar() {
                     // Handle password update
                   }}
                 >
-                  <Settings className="w-4 h-4" />
+                  <Settings className="w-4 h-4 flex-shrink-0" />
                   <span>Cập nhật mật khẩu</span>
                 </button>
                 
@@ -372,7 +391,7 @@ function Topbar() {
                     // Handle profile info
                   }}
                 >
-                  <Users className="w-4 h-4" />
+                  <Users className="w-4 h-4 flex-shrink-0" />
                   <span>Thông tin cá nhân</span>
                 </button>
                 
@@ -384,7 +403,7 @@ function Topbar() {
                       handleLogout();
                     }}
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-4 h-4 flex-shrink-0" />
                     <span>Đăng xuất</span>
                   </button>
                 </div>
@@ -410,6 +429,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Get navigation based on user active role
   const userNavigation = user?.activeRole ? getNavigationByRole(user.activeRole) : navigation;
 
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -417,11 +442,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       return;
     }
   }, [isAuthenticated, isLoading, router]);
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
 
   useEffect(() => {
     // Listen for openMobileSidebar event
@@ -547,7 +567,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* Top bar */}
-        <Topbar />
+        <Topbar onLogout={handleLogout} />
         {/* Page content */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-8">
