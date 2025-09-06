@@ -39,7 +39,10 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
 
   // Khởi tạo selectedRole với vai trò hiện tại hoặc vai trò đầu tiên trong danh sách
   useEffect(() => {
-    if (isOpen && user && user.roles.length > 0) {
+    if (isOpen && user && user.roles && user.roles.length > 0) {
+      console.log("RoleModal - User roles:", user.roles);
+      console.log("RoleModal - Active role:", user.activeRole);
+      
       // Đặt vai trò đang hoạt động làm mặc định nếu có
       if (user.activeRole && user.roles.includes(user.activeRole)) {
         setSelectedRole(user.activeRole);
@@ -84,7 +87,7 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
     }
   }, [isOpen, isAutoSelectEnabled, selectedRole, router, switchRole, onClose]);
 
-  if (!isOpen || !user || user.roles.length <= 1) return null
+  if (!isOpen || !user || !user.roles || user.roles.length <= 1) return null
 
   const handleRoleSelection = (role: UserRole) => {
     setSelectedRole(role)

@@ -43,7 +43,7 @@ export default function QTVKhoaDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard Quản trị viên khoa</h1>
         <p className="mt-2 text-gray-600">
-          Chào mừng {user?.name}! Quản lý hệ thống và dữ liệu của khoa.
+          Chào mừng {user?.fullName}! Quản lý hệ thống và dữ liệu của khoa.
         </p>
       </div>
 

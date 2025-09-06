@@ -55,9 +55,8 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      // Convert username to email format for demo
-      const email = data.username.includes('@') ? data.username : `${data.username}@iuh.edu.vn`
-      await login(email, data.password)
+      // Sử dụng trực tiếp username không chuyển đổi thành email
+      await login(data.username, data.password)
       toast.success('Đăng nhập thành công!')
       
       // Role selection will be handled by useEffect to avoid race conditions
