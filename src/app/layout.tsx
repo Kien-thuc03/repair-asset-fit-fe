@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="vi">
+    <html lang="vi" className="mdl-js">
       <body suppressHydrationWarning className={`${inter.variable} antialiased`}>
         <Providers>
           {children}

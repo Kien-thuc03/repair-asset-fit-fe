@@ -1,17 +1,17 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { demoUsers as demoUsersData } from '@/lib/mockData/users'
-import { User } from '@/types/repair'
+import { users as demoUsersData } from '@/lib/mockData/users'
+import { UserEntity } from '@/types/user'
 
 // Demo accounts component
 function DemoAccountsInfo() {
   // Demo users for testing - should match AuthContext
-  const demoUsers = demoUsersData.map((user: User) => ({
-    name: user.name,
+  const demoUsers = demoUsersData.map((user: UserEntity) => ({
+    id: user.id,
+    fullName: user.fullName,
     username: user.username,
     password: user.password,
-    role: user.roles[0]
   }))
 
   return (
@@ -20,7 +20,7 @@ function DemoAccountsInfo() {
       <div className="space-y-1 text-xs text-blue-700">
         {demoUsers.map((user, index) => (
           <p key={index}>
-            <strong>{user.name}:</strong> {user.username} / {user.password}
+            <strong>{user.fullName}:</strong> {user.username} / {user.password}
           </p>
         ))}
       </div>
