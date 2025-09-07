@@ -14,7 +14,6 @@ const stats = [
   {
     name: "Báo cáo đã gửi",
     value: "12",
-    change: "+2 tuần này",
     changeType: "positive",
     icon: FileText,
     color: "bg-blue-500",
@@ -22,7 +21,6 @@ const stats = [
   {
     name: "Đang xử lý",
     value: "3",
-    change: "1 khẩn cấp",
     changeType: "warning",
     icon: Clock,
     color: "bg-yellow-500",
@@ -30,7 +28,6 @@ const stats = [
   {
     name: "Đã hoàn thành",
     value: "8",
-    change: "+3 tuần này",
     changeType: "positive",
     icon: CheckCircle,
     color: "bg-green-500",
@@ -38,7 +35,6 @@ const stats = [
   {
     name: "Cần theo dõi",
     value: "1",
-    change: "Quá hạn",
     changeType: "negative",
     icon: AlertTriangle,
     color: "bg-red-500",
@@ -77,18 +73,6 @@ export default function GiangVienDashboard() {
             <div className="ml-16 flex items-baseline">
               <p className="text-2xl font-semibold text-gray-900">
                 {item.value}
-              </p>
-              <p
-                className={`ml-2 flex items-baseline text-sm font-semibold ${
-                  item.changeType === "positive"
-                    ? "text-green-600"
-                    : item.changeType === "negative"
-                    ? "text-red-600"
-                    : item.changeType === "warning"
-                    ? "text-yellow-600"
-                    : "text-gray-600"
-                }`}>
-                {item.change}
               </p>
             </div>
           </div>

@@ -332,7 +332,9 @@ export default function BaoCaoLoiPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [filteredComponents, setFilteredComponents] = useState<Component[]>([]);
-  const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>([]);
+  const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>(
+    []
+  );
   const [isMobile, setIsMobile] = useState(false);
 
   // Debug filteredComponents changes
@@ -579,7 +581,9 @@ export default function BaoCaoLoiPage() {
                       </p>
                       <div className="flex flex-wrap gap-1">
                         {selectedComponentIds.map((componentId) => {
-                          const component = filteredComponents.find(c => c.id === componentId);
+                          const component = filteredComponents.find(
+                            (c) => c.id === componentId
+                          );
                           return (
                             <span
                               key={componentId}
@@ -589,11 +593,17 @@ export default function BaoCaoLoiPage() {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const newSelectedIds = selectedComponentIds.filter(id => id !== componentId);
+                                  const newSelectedIds =
+                                    selectedComponentIds.filter(
+                                      (id) => id !== componentId
+                                    );
                                   setSelectedComponentIds(newSelectedIds);
                                   setFormData((prev) => ({
                                     ...prev,
-                                    componentId: newSelectedIds.length > 0 ? newSelectedIds[0] : "",
+                                    componentId:
+                                      newSelectedIds.length > 0
+                                        ? newSelectedIds[0]
+                                        : "",
                                   }));
                                 }}
                                 className="ml-1 text-blue-700 hover:text-blue-900">
@@ -608,21 +618,31 @@ export default function BaoCaoLoiPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     {filteredComponents.map((component) => {
-                      const isSelected = selectedComponentIds.includes(component.id);
+                      const isSelected = selectedComponentIds.includes(
+                        component.id
+                      );
                       return (
                         <div
                           key={component.id}
                           onClick={() => {
                             let newSelectedIds;
                             if (isSelected) {
-                              newSelectedIds = selectedComponentIds.filter(id => id !== component.id);
+                              newSelectedIds = selectedComponentIds.filter(
+                                (id) => id !== component.id
+                              );
                             } else {
-                              newSelectedIds = [...selectedComponentIds, component.id];
+                              newSelectedIds = [
+                                ...selectedComponentIds,
+                                component.id,
+                              ];
                             }
                             setSelectedComponentIds(newSelectedIds);
                             setFormData((prev) => ({
                               ...prev,
-                              componentId: newSelectedIds.length > 0 ? newSelectedIds[0] : "",
+                              componentId:
+                                newSelectedIds.length > 0
+                                  ? newSelectedIds[0]
+                                  : "",
                             }));
                           }}
                           className={`p-2 rounded cursor-pointer transition-all duration-200 hover:shadow-md ${
@@ -676,7 +696,8 @@ export default function BaoCaoLoiPage() {
                   </div>
 
                   <p className="text-xs text-gray-500 mt-2 italic">
-                    💡 Tip: Click vào linh kiện để chọn/bỏ chọn. Có thể chọn nhiều linh kiện cùng lúc.
+                    💡 Tip: Click vào linh kiện để chọn/bỏ chọn. Có thể chọn
+                    nhiều linh kiện cùng lúc.
                   </p>
                 </div>
               )}
