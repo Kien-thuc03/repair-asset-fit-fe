@@ -1,23 +1,13 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Search,
-  Eye,
-  FileText,
-  Calendar,
-  User,
-  Building2,
-  Computer,
-  DollarSign,
-  Filter,
-} from "lucide-react";
+import { ArrowLeft, Search, Eye, FileText, Filter } from "lucide-react";
 import {
   mockReplacementLists,
   ReplacementList,
 } from "@/lib/mockData/replacementLists";
 import CreateReportModal from "./modal/CreateReportModal";
+import ListDetailModal from "./modal/ListDetailModal";
 
 export default function LapToTrinhPage() {
   const [replacementLists] = useState<ReplacementList[]>(mockReplacementLists);
@@ -160,7 +150,7 @@ export default function LapToTrinhPage() {
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách đề xuất ({filteredLists.length})
+            Danh sách đề xuất đã được duyệt ({filteredLists.length})
           </h2>
         </div>
 
@@ -248,252 +238,138 @@ export default function LapToTrinhPage() {
             </div>
           </div>
 
-          {/* Desktop Table View */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Danh sách
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Người tạo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Số thiết bị
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Chi phí ước tính
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trạng thái
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ngày tạo
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Thao tác
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredLists.length > 0 ? (
-                  filteredLists.map((list) => (
-                    <tr key={list.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <FileText className="h-5 w-5 text-gray-400 mr-3" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {list.title.length > 50
-                                ? `${list.title.substring(0, 50)}...`
-                                : list.title}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              Mã: {list.id}
+          {/* Desktop Table View - Optimized for full width display */}
+          <div className="hidden sm:block">
+            <div className="overflow-hidden">
+              <table className="w-full divide-y divide-gray-200 table-fixed">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="w-[35%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Danh sách
+                    </th>
+                    <th className="w-[12%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Người tạo
+                    </th>
+                    <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Thiết bị
+                    </th>
+                    <th className="w-[15%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Chi phí
+                    </th>
+                    <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Trạng thái
+                    </th>
+                    <th className="w-[10%] hidden lg:table-cell px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ngày tạo
+                    </th>
+                    <th className="w-[8%] lg:w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Thao tác
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredLists.length > 0 ? (
+                    filteredLists.map((list) => (
+                      <tr key={list.id} className="hover:bg-gray-50">
+                        <td className="px-3 py-3">
+                          <div className="flex items-start">
+                            <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium text-gray-900 truncate">
+                                {list.title.length > 45
+                                  ? `${list.title.substring(0, 45)}...`
+                                  : list.title}
+                              </div>
+                              <div className="text-xs text-gray-500 truncate">
+                                #{list.id}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <User className="h-4 w-4 text-gray-400 mr-2" />
-                          <span className="text-sm text-gray-900">
-                            {list.createdBy}
+                        </td>
+                        <td className="px-2 py-3">
+                          <div className="text-sm text-gray-900 truncate">
+                            {list.createdBy.length > 12
+                              ? `${list.createdBy.substring(0, 12)}...`
+                              : list.createdBy}
+                          </div>
+                        </td>
+                        <td className="px-2 py-3 text-center">
+                          <div className="flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-900">
+                              {list.totalItems}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-2 py-3 text-right">
+                          <div className="text-sm font-semibold text-green-600">
+                            {(list.totalCost / 1000000).toFixed(1)}M
+                          </div>
+                          <div className="text-xs text-gray-500">VNĐ</div>
+                        </td>
+                        <td className="px-2 py-3 text-center">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                              list.status
+                            )}`}>
+                            {getStatusText(list.status)}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Computer className="h-4 w-4 text-gray-400 mr-2" />
-                          <span className="text-sm text-gray-900">
-                            {list.totalItems} thiết bị
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <DollarSign className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-sm font-medium text-green-600">
-                            {list.totalCost.toLocaleString("vi-VN")} VNĐ
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                            list.status
-                          )}`}>
-                          {getStatusText(list.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                          <span className="text-sm text-gray-900">
+                        </td>
+                        <td className="hidden lg:table-cell px-2 py-3 text-center">
+                          <div className="text-sm text-gray-900">
                             {new Date(list.createdAt).toLocaleDateString(
-                              "vi-VN"
+                              "vi-VN",
+                              { day: "2-digit", month: "2-digit" }
                             )}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleViewDetail(list)}
-                            className="text-indigo-600 hover:text-indigo-900"
-                            title="Xem chi tiết">
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleCreateReport(list.id)}
-                            className="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100">
-                            <FileText className="h-3 w-3 mr-1" />
-                            Lập tờ trình
-                          </button>
-                        </div>
+                          </div>
+                        </td>
+                        <td className="px-2 py-3">
+                          <div className="flex items-center justify-center space-x-1">
+                            <button
+                              onClick={() => handleViewDetail(list)}
+                              className="text-indigo-600 hover:text-indigo-900 p-1"
+                              title="Xem chi tiết">
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleCreateReport(list.id)}
+                              className="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
+                              title="Lập tờ trình">
+                              <FileText className="h-3 w-3" />
+                              <span className="ml-1 hidden xl:inline">
+                                Trình
+                              </span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                        <h3 className="text-sm font-medium text-gray-900 mb-1">
+                          Không tìm thấy kết quả
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                        </p>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
-                      <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                      <h3 className="text-sm font-medium text-gray-900 mb-1">
-                        Không tìm thấy kết quả
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Detail Modal */}
-      {showDetailModal && selectedList && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-4 sm:top-8 mx-auto p-3 sm:p-5 border w-11/12 sm:w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Chi tiết danh sách #{selectedList.id}
-                </h3>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="text-gray-400 hover:text-gray-600 p-1">
-                  <Eye className="h-6 w-6" />
-                </button>
-              </div>
-
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-                {/* List Info */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">
-                    Thông tin chung
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Tiêu đề:</span>
-                      <p className="font-medium">{selectedList.title}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Người tạo:</span>
-                      <p className="font-medium">{selectedList.createdBy}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Tổng thiết bị:</span>
-                      <p className="font-medium">
-                        {selectedList.totalItems} thiết bị
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Chi phí ước tính:</span>
-                      <p className="font-medium text-green-600">
-                        {selectedList.totalCost.toLocaleString("vi-VN")} VNĐ
-                      </p>
-                    </div>
-                  </div>
-                  {selectedList.description && (
-                    <div className="mt-3">
-                      <span className="text-gray-600">Mô tả:</span>
-                      <p className="text-sm mt-1">{selectedList.description}</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Equipment List */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-3">
-                    Danh sách thiết bị ({selectedList.requests.length})
-                  </h4>
-                  <div className="space-y-3">
-                    {selectedList.requests.map((request) => (
-                      <div
-                        key={request.id}
-                        className="border border-gray-200 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center">
-                            <Computer className="h-4 w-4 text-gray-400 mr-2" />
-                            <span className="font-medium text-sm">
-                              {request.assetCode} - {request.assetName}
-                            </span>
-                          </div>
-                          <span className="text-sm font-semibold text-green-600">
-                            {request.estimatedCost.toLocaleString("vi-VN")} VNĐ
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-600">
-                          <div className="flex items-center">
-                            <User className="h-3 w-3 mr-1" />
-                            <span>{request.requestedBy}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Building2 className="h-3 w-3 mr-1" />
-                            <span className="truncate">{request.location}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Calendar className="h-3 w-3 mr-1" />
-                            <span>
-                              {new Date(request.requestDate).toLocaleDateString(
-                                "vi-VN"
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500 bg-gray-100 p-2 rounded">
-                          <strong>Lý do:</strong> {request.reason}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200">
-                  Đóng
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDetailModal(false);
-                    handleCreateReport(selectedList.id);
-                  }}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Lập tờ trình
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ListDetailModal
+        show={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        selectedList={selectedList}
+        onCreateReport={handleCreateReport}
+      />
 
       {/* Create Report Modal */}
       <CreateReportModal
