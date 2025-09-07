@@ -12,6 +12,8 @@ import {
   Send,
   Filter,
   Signature,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import {
   mockInspectionReports,
@@ -31,6 +33,10 @@ export default function BienBanPage() {
   );
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showSignModal, setShowSignModal] = useState(false);
+  const [sortField, setSortField] = useState<string>("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
+    "none"
+  );
 
   const filteredReports = inspectionReports.filter((report) => {
     const matchesStatus =
@@ -45,6 +51,82 @@ export default function BienBanPage() {
 
     return matchesStatus && matchesSearch;
   });
+
+  // Hàm xử lý sắp xếp 3 trạng thái
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection("none");
+        setSortField("");
+      } else {
+        setSortDirection("asc");
+      }
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Sắp xếp dữ liệu
+  const sortedReports = [...filteredReports].sort((a, b) => {
+    if (sortField === "" || sortDirection === "none") return 0;
+
+    let aValue: string | number | Date;
+    let bValue: string | number | Date;
+
+    switch (sortField) {
+      case "reportNumber":
+        aValue = a.reportNumber;
+        bValue = b.reportNumber;
+        break;
+      case "relatedReportTitle":
+        aValue = a.relatedReportTitle;
+        bValue = b.relatedReportTitle;
+        break;
+      case "createdBy":
+        aValue = a.createdBy;
+        bValue = b.createdBy;
+        break;
+      case "inspectionDate":
+        aValue = new Date(a.inspectionDate);
+        bValue = new Date(b.inspectionDate);
+        break;
+      case "status":
+        aValue = a.status;
+        bValue = b.status;
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  // Hàm hiển thị icon sắp xếp
+  const getSortIcon = (field: string) => {
+    return (
+      <div className="flex flex-col ml-1">
+        <ChevronUp
+          className={`h-3 w-3 ${
+            sortField === field && sortDirection === "asc"
+              ? "text-blue-600"
+              : "text-gray-300"
+          }`}
+        />
+        <ChevronDown
+          className={`h-3 w-3 -mt-1 ${
+            sortField === field && sortDirection === "desc"
+              ? "text-blue-600"
+              : "text-gray-300"
+          }`}
+        />
+      </div>
+    );
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -198,7 +280,7 @@ export default function BienBanPage() {
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách biên bản ({filteredReports.length})
+            Danh sách biên bản ({sortedReports.length})
           </h2>
         </div>
 
@@ -206,8 +288,8 @@ export default function BienBanPage() {
           {/* Mobile Card View */}
           <div className="block sm:hidden">
             <div className="p-3 space-y-3">
-              {filteredReports.length > 0 ? (
-                filteredReports.map((report) => (
+              {sortedReports.length > 0 ? (
+                sortedReports.map((report) => (
                   <div
                     key={report.id}
                     className="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -296,19 +378,44 @@ export default function BienBanPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Số biên bản
+                      <button
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase"
+                        onClick={() => handleSort("reportNumber")}>
+                        <span>Số biên bản</span>
+                        {getSortIcon("reportNumber")}
+                      </button>
                     </th>
                     <th className="w-[30%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Tờ trình liên quan
+                      <button
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase"
+                        onClick={() => handleSort("relatedReportTitle")}>
+                        <span>Tờ trình liên quan</span>
+                        {getSortIcon("relatedReportTitle")}
+                      </button>
                     </th>
                     <th className="w-[12%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Người lập
+                      <button
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase"
+                        onClick={() => handleSort("createdBy")}>
+                        <span>Người lập</span>
+                        {getSortIcon("createdBy")}
+                      </button>
                     </th>
                     <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ngày KT
+                      <button
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        onClick={() => handleSort("inspectionDate")}>
+                        <span>Ngày KT</span>
+                        {getSortIcon("inspectionDate")}
+                      </button>
                     </th>
                     <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Trạng thái
+                      <button
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        onClick={() => handleSort("status")}>
+                        <span>Trạng thái</span>
+                        {getSortIcon("status")}
+                      </button>
                     </th>
                     <th className="w-[13%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Thao tác
@@ -316,8 +423,8 @@ export default function BienBanPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredReports.length > 0 ? (
-                    filteredReports.map((report) => (
+                  {sortedReports.length > 0 ? (
+                    sortedReports.map((report) => (
                       <tr key={report.id} className="hover:bg-gray-50">
                         <td className="px-3 py-3">
                           <div className="flex items-start">
