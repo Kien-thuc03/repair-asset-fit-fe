@@ -54,7 +54,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         name: "Tra cứu thiết bị",
         href: "/giang-vien/tra-cuu-thiet-bi",
         icon: Settings,
-      }
+      },
     ],
     [UserRole.KY_THUAT_VIEN]: [
       {
@@ -81,7 +81,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         name: "Thống kê cá nhân",
         href: "/ky-thuat-vien/thong-ke-ca-nhan",
         icon: BarChart3,
-      }
+      },
     ],
     [UserRole.TO_TRUONG_KY_THUAT]: [
       {
@@ -90,25 +90,30 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: LayoutDashboard,
       },
       {
-        name: "Quản lý KTV",
-        href: "/to-truong-ky-thuat/quan-ly-ky-thuat-vien",
+        name: "Duyệt đề xuất",
+        href: "/to-truong-ky-thuat/duyet-de-xuat",
+        icon: CheckCircle,
+      },
+      {
+        name: "Phân công khu vực",
+        href: "/to-truong-ky-thuat/phan-cong",
         icon: Users,
       },
       {
-        name: "Giám sát lỗi",
-        href: "/to-truong-ky-thuat/giam-sat-loi",
+        name: "Danh sách báo lỗi",
+        href: "/to-truong-ky-thuat/danh-sach-bao-loi",
         icon: ClipboardList,
-      },
-      {
-        name: "Phê duyệt thay thế",
-        href: "/to-truong-ky-thuat/phe-duyet-thay-the",
-        icon: CheckCircle,
       },
       {
         name: "Lập tờ trình",
         href: "/to-truong-ky-thuat/lap-to-trinh",
         icon: FileText,
-      }
+      },
+      {
+        name: "Tra cứu tài sản",
+        href: "/to-truong-ky-thuat/tra-cuu-tai-san",
+        icon: Settings,
+      },
     ],
     [UserRole.PHONG_QUAN_TRI]: [
       {
@@ -130,7 +135,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         name: "Lập biên bản",
         href: "/phong-quan-tri/lap-bien-ban",
         icon: ClipboardList,
-      }
+      },
     ],
     [UserRole.QTV_KHOA]: [
       {
@@ -157,8 +162,8 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         name: "Giám sát hệ thống",
         href: "/qtv-khoa/giam-sat-he-thong",
         icon: Settings,
-      }
-    ]
+      },
+    ],
   };
 
   return navigationMap[userRole as UserRole] || [];
@@ -200,7 +205,6 @@ const navigation: NavigationItem[] = [
 
 // Sidebar User Section
 
-
 // Sidebar Navigation
 function SidebarNavigation({
   navigation,
@@ -232,13 +236,10 @@ function SidebarNavigation({
                 ? "bg-blue-700 text-white"
                 : "text-blue-200 hover:text-white hover:bg-blue-700"
             }`}
-            onClick={handleNavClick}
-          >
+            onClick={handleNavClick}>
             <item.icon
               className={`mr-3 h-5 w-5 ${
-                isActive
-                  ? "text-white"
-                  : "text-blue-300 group-hover:text-white"
+                isActive ? "text-white" : "text-blue-300 group-hover:text-white"
               }`}
             />
             <span>{item.name}</span>
@@ -250,14 +251,12 @@ function SidebarNavigation({
 }
 
 // Topbar
-function Topbar() {
-  const { user, logout } = useAuth();
+function Topbar({ onLogout }: { onLogout: () => void }) {
+  const { user } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const router = useRouter();
 
   const handleLogout = () => {
-    logout();
-    router.push('/login');
+    onLogout();
   };
 
   // Close dropdown when clicking outside
@@ -268,10 +267,11 @@ function Topbar() {
         setIsUserMenuOpen(false);
       }
     };
-    
+
     if (isUserMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isUserMenuOpen]);
 
@@ -283,108 +283,137 @@ function Topbar() {
           const event = new CustomEvent("openMobileSidebar");
           window.dispatchEvent(event);
         }}
-        aria-label="Mở menu"
-      >
+        aria-label="Mở menu">
         <Menu className="h-5 w-5" />
       </button>
-      
+
       {/* Header với logo và tên trường */}
-      <div className="flex-1 px-6 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex-1 px-2 sm:px-4 lg:px-6 flex items-center justify-between">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Logo và tên trường */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1 sm:space-x-3">
             <Image
               src="/images/Logo_IUH.webp"
               alt="Logo"
-              width={100}
-              height={40}
-              className="rounded-lg"
+              width={60}
+              height={24}
+              className="rounded-lg sm:w-[80px] sm:h-[32px] lg:w-[100px] lg:h-[40px]"
             />
-            <div>
-              <h1 className="text-[14px] font-semibold text-gray-500">
+            {/* Ẩn text trên mobile nhỏ, hiện trên sm và lớn hơn */}
+            <div className="hidden sm:block">
+              <h1 className="text-[10px] sm:text-[12px] lg:text-[14px] font-semibold text-gray-500 leading-tight">
                 ĐẠI HỌC CÔNG NGHIỆP TP.HCM
               </h1>
-              <p className="text-[12px] text-gray-400 font-medium">
+              <p className="text-[8px] sm:text-[10px] lg:text-[12px] text-gray-400 font-medium leading-tight">
                 KHOA CÔNG NGHỆ THÔNG TIN
               </p>
             </div>
           </div>
         </div>
-        
+
         {/* User info và controls */}
-        <div className="flex items-center space-x-4">
-          {/* Role Switcher */}
-          <RoleSwitcher />
-          
+        <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4">
+          {/* Role Switcher - ẩn trên mobile nhỏ */}
+          <div className="hidden sm:block">
+            <RoleSwitcher />
+          </div>
+
           {/* Notifications */}
-          <button 
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+          <button
+            className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             title="Thông báo"
-            aria-label="Thông báo"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-bell-icon lucide-bell">
-              <path d="M10.268 21a2 2 0 0 0 3.464 0"/>
-              <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>
+            aria-label="Thông báo">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="lucide lucide-bell-icon lucide-bell sm:w-6 sm:h-6">
+              <path d="M10.268 21a2 2 0 0 0 3.464 0" />
+              <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
             </svg>
           </button>
-          
+
           {/* User dropdown menu */}
           <div className="relative" data-dropdown="user-menu">
-            <button 
+            <button
               type="button"
-              className="flex items-center space-x-3 hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer"
+              className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 hover:bg-gray-50 rounded-lg p-1 sm:p-2 transition-colors cursor-pointer"
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              aria-label="User menu"
-            >
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user?.fullName || 'Nguyễn Kiến Thức'}</p>
-                <p className="text-xs text-green-600">
-                  {user && user.roles.length > 1 ? `${RoleInfo[user.activeRole]?.name || user.activeRole}` : 'Sinh viên'}
+              aria-label="User menu">
+              {/* User info - chỉ hiện trên tablet và desktop */}
+              <div className="text-right hidden md:block">
+                <p className="text-sm font-medium text-gray-900 truncate max-w-[120px] lg:max-w-none">
+                  {user?.fullName || "Nguyễn Kiến Thức"}
+                </p>
+                <p className="text-xs text-green-600 truncate">
+                  {user && user.roles.length > 1
+                    ? `${RoleInfo[user.activeRole]?.name || user.activeRole}`
+                    : "Sinh viên"}
                 </p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+              {/* Avatar */}
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-semibold text-white">
-                  {user?.fullName?.charAt(0) || 'N'}
+                  {user?.fullName?.charAt(0) || "N"}
                 </span>
               </div>
             </button>
 
             {/* Dropdown menu */}
             {isUserMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                
+              <div className="absolute right-0 mt-2 w-56 sm:w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                {/* User info for mobile - chỉ hiện trên mobile */}
+                <div className="px-4 py-3 border-b border-gray-100 md:hidden">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.fullName || "Nguyễn Kiến Thức"}
+                  </p>
+                  <p className="text-xs text-green-600 truncate">
+                    {user && user.roles.length > 1
+                      ? `${RoleInfo[user.activeRole]?.name || user.activeRole}`
+                      : "Sinh viên"}
+                  </p>
+                </div>
+
+                {/* Role Switcher for mobile - chỉ hiện trên mobile */}
+                <div className="px-4 py-2 border-b border-gray-100 sm:hidden">
+                  <RoleSwitcher />
+                </div>
+
                 {/* Menu items */}
                 <button
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
                   onClick={() => {
                     setIsUserMenuOpen(false);
                     // Handle password update
-                  }}
-                >
-                  <Settings className="w-4 h-4" />
+                  }}>
+                  <Settings className="w-4 h-4 flex-shrink-0" />
                   <span>Cập nhật mật khẩu</span>
                 </button>
-                
+
                 <button
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
                   onClick={() => {
                     setIsUserMenuOpen(false);
                     // Handle profile info
-                  }}
-                >
-                  <Users className="w-4 h-4" />
+                  }}>
+                  <Users className="w-4 h-4 flex-shrink-0" />
                   <span>Thông tin cá nhân</span>
                 </button>
-                
+
                 <div className="border-t border-gray-100 mt-1">
                   <button
                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
                     onClick={() => {
                       setIsUserMenuOpen(false);
                       handleLogout();
-                    }}
-                  >
-                    <LogOut className="w-4 h-4" />
+                    }}>
+                    <LogOut className="w-4 h-4 flex-shrink-0" />
                     <span>Đăng xuất</span>
                   </button>
                 </div>
@@ -408,20 +437,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, isLoading, logout, isAuthenticated } = useAuth();
 
   // Get navigation based on user active role
-  const userNavigation = user?.activeRole ? getNavigationByRole(user.activeRole) : navigation;
+  const userNavigation = user?.activeRole
+    ? getNavigationByRole(user.activeRole)
+    : navigation;
+
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
   }, [isAuthenticated, isLoading, router]);
-
-  const handleLogout = () => {
-    logout();
-    router.push('/login');
-  };
 
   useEffect(() => {
     // Listen for openMobileSidebar event
@@ -438,9 +470,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         // This will be handled by the Topbar component
       }
     };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   if (isLoading) {
@@ -464,8 +496,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {isMobileSidebarOpen && (
         <div
           className="fixed inset-0 flex z-40 md:hidden"
-          onClick={() => setIsMobileSidebarOpen(false)}
-        >
+          onClick={() => setIsMobileSidebarOpen(false)}>
           <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" />
         </div>
       )}
@@ -474,8 +505,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div
         className={`fixed inset-y-0 left-0 flex flex-col w-64 bg-blue-900 shadow-lg z-40 transform transition-all duration-300 ease-in-out md:hidden ${
           isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
+        }`}>
         {/* Mobile Sidebar header */}
         <div className="flex items-center justify-between h-16 px-6 bg-blue-900">
           <div className="flex items-center space-x-3">
@@ -486,20 +516,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               height={40}
               className="rounded-lg"
             />
-          <div>
+            <div>
               <span className="text-white font-semibold text-sm">
                 HỆ THỐNG SỬA CHỮA
               </span>
-              <p className="text-blue-200 text-xs">
-                QUẢN LÝ THIẾT BỊ
-              </p>
+              <p className="text-blue-200 text-xs">QUẢN LÝ THIẾT BỊ</p>
             </div>
           </div>
           <button
             className="w-8 h-8 flex items-center justify-center rounded-md text-blue-200 hover:bg-blue-700 hover:text-white transition-colors"
             onClick={() => setIsMobileSidebarOpen(false)}
-            aria-label="Đóng menu"
-          >
+            aria-label="Đóng menu">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -527,14 +554,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               />
               <div>
                 <div className="text-[#8cb9de] font-medium text-[16px] text-center">
-                 DANH MỤC QUẢN LÝ
+                  DANH MỤC QUẢN LÝ
                 </div>
                 <div className="text-gray-100 font-medium text-xs mt-1 text-center">
                   SỬA CHỮA THIẾT BỊ
                 </div>
               </div>
             </div>
-            
+
             {/* Navigation */}
             <SidebarNavigation
               navigation={userNavigation}
@@ -547,7 +574,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* Top bar */}
-        <Topbar />
+        <Topbar onLogout={handleLogout} />
         {/* Page content */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-8">
