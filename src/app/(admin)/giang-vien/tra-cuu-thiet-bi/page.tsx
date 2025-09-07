@@ -533,11 +533,13 @@ export default function TraCuuThietBiPage() {
                     </div>
                   </div>
                   <div
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${
                       statusConfig[asset.status].color
                     }`}>
-                    <StatusIcon className="w-3 h-3 mr-1" />
-                    {statusConfig[asset.status].label}
+                    <StatusIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">
+                      {statusConfig[asset.status].label}
+                    </span>
                   </div>
                 </div>
 
