@@ -229,7 +229,7 @@ export default function TheoDaoTienDoPage() {
     children: React.ReactNode;
   }) => (
     <th
-      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
       onClick={() => handleSort(field)}>
       <div className="flex items-center space-x-1">
         <span>{children}</span>
@@ -315,7 +315,8 @@ export default function TheoDaoTienDoPage() {
           </h3>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden lg:block">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -328,7 +329,7 @@ export default function TheoDaoTienDoPage() {
                   Người xử lý
                 </SortableHeader>
                 <SortableHeader field="createdAt">Ngày tạo</SortableHeader>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
@@ -338,51 +339,82 @@ export default function TheoDaoTienDoPage() {
                 const StatusIcon = statusConfig[request.status].icon;
                 return (
                   <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {request.requestCode}
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                      <div
+                        className="max-w-[120px] truncate"
+                        title={request.requestCode}>
+                        {request.requestCode}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
+                    <td className="px-4 py-4">
+                      <div className="max-w-[160px]">
+                        <div
+                          className="text-sm font-medium text-gray-900 truncate"
+                          title={request.assetName}>
                           {request.assetName}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div
+                          className="text-xs text-gray-500 truncate"
+                          title={request.assetCode}>
                           {request.assetCode}
                         </div>
                         {request.componentName && (
-                          <div className="text-xs text-gray-400">
-                            Linh kiện: {request.componentName}
+                          <div
+                            className="text-xs text-gray-400 truncate"
+                            title={`Linh kiện: ${request.componentName}`}>
+                            LK: {request.componentName}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.roomName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.errorTypeName || "Chưa phân loại"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 text-sm text-gray-500">
                       <div
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          statusConfig[request.status].color
-                        }`}>
-                        <StatusIcon className="w-3 h-3 mr-1" />
-                        {statusConfig[request.status].label}
+                        className="max-w-[100px] truncate"
+                        title={request.roomName}>
+                        {request.roomName}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.assignedTechnicianName || "Chưa tiếp nhận"}
+                    <td className="px-4 py-4 text-sm text-gray-500">
+                      <div
+                        className="max-w-[120px] truncate"
+                        title={request.errorTypeName || "Chưa phân loại"}>
+                        {request.errorTypeName || "Chưa phân loại"}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(request.createdAt)}
+                    <td className="px-4 py-4">
+                      <div
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
+                          statusConfig[request.status].color
+                        }`}>
+                        <StatusIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">
+                          {statusConfig[request.status].label}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 py-4 text-sm text-gray-500">
+                      <div
+                        className="max-w-[120px] truncate"
+                        title={
+                          request.assignedTechnicianName || "Chưa tiếp nhận"
+                        }>
+                        {request.assignedTechnicianName || "Chưa tiếp nhận"}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-500">
+                      <div
+                        className="max-w-[100px] truncate"
+                        title={formatDate(request.createdAt)}>
+                        {new Date(request.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right text-sm font-medium">
                       <button
                         onClick={() => setSelectedRequest(request)}
                         className="text-blue-600 hover:text-blue-900 inline-flex items-center">
-                        <Eye className="w-4 h-4 mr-1" />
-                        Chi tiết
+                        <Eye className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>
@@ -390,6 +422,85 @@ export default function TheoDaoTienDoPage() {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile/Tablet Cards */}
+        <div className="lg:hidden">
+          <div className="space-y-4 p-4">
+            {filteredRequests.map((request) => {
+              const StatusIcon = statusConfig[request.status].icon;
+              return (
+                <div
+                  key={request.id}
+                  className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                        {request.requestCode}
+                      </h4>
+                      <p className="text-sm text-gray-600 truncate">
+                        {request.assetName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {request.assetCode}
+                      </p>
+                    </div>
+                    <div
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
+                        statusConfig[request.status].color
+                      }`}>
+                      <StatusIcon className="w-3 h-3 mr-1" />
+                      {statusConfig[request.status].label}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Phòng:</span>
+                      <p className="text-gray-900 truncate">
+                        {request.roomName}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Loại lỗi:</span>
+                      <p className="text-gray-900 truncate">
+                        {request.errorTypeName || "Chưa phân loại"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Người xử lý:</span>
+                      <p className="text-gray-900 truncate">
+                        {request.assignedTechnicianName || "Chưa tiếp nhận"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Ngày tạo:</span>
+                      <p className="text-gray-900">
+                        {new Date(request.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {request.componentName && (
+                    <div className="text-xs text-gray-400">
+                      Linh kiện: {request.componentName}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setSelectedRequest(request)}
+                      className="text-blue-600 hover:text-blue-900 inline-flex items-center text-sm">
+                      <Eye className="w-4 h-4 mr-1" />
+                      Chi tiết
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {filteredRequests.length === 0 && (
