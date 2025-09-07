@@ -22,6 +22,8 @@ import {
   AlertTriangle,
   UserCheck,
   Shield,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 
 // Navigation items
@@ -211,11 +213,13 @@ function SidebarNavigation({
   pathname,
   isMobile,
   setIsMobileSidebarOpen,
+  isCollapsed,
 }: {
   navigation: NavigationItem[];
   pathname: string;
   isMobile?: boolean;
   setIsMobileSidebarOpen?: (v: boolean) => void;
+  isCollapsed?: boolean;
 }) {
   const handleNavClick = () => {
     if (isMobile && setIsMobileSidebarOpen) {
@@ -224,25 +228,28 @@ function SidebarNavigation({
   };
 
   return (
-    <nav className="flex-1 px-4 py-6 space-y-2">
+    <nav className={`flex-1 py-6 space-y-2 ${isCollapsed ? "px-2" : "px-4"}`}>
       {navigation.map((item: NavigationItem) => {
         const isActive = pathname === item.href;
         return (
           <Link
             key={item.name}
             href={item.href}
-            className={`group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+            className={`group flex items-center ${
+              isCollapsed ? "px-2" : "px-4"
+            } py-3 text-sm font-medium rounded-lg transition-colors ${
               isActive
                 ? "bg-blue-700 text-white"
                 : "text-blue-200 hover:text-white hover:bg-blue-700"
-            }`}
-            onClick={handleNavClick}>
+            } ${isCollapsed ? "justify-center" : ""}`}
+            onClick={handleNavClick}
+            title={isCollapsed ? item.name : undefined}>
             <item.icon
-              className={`mr-3 h-5 w-5 ${
+              className={`${isCollapsed ? "" : "mr-3"} h-5 w-5 ${
                 isActive ? "text-white" : "text-blue-300 group-hover:text-white"
               }`}
             />
-            <span>{item.name}</span>
+            {!isCollapsed && <span>{item.name}</span>}
           </Link>
         );
       })}
@@ -251,7 +258,15 @@ function SidebarNavigation({
 }
 
 // Topbar
-function Topbar({ onLogout }: { onLogout: () => void }) {
+function Topbar({
+  onLogout,
+  isDesktopSidebarCollapsed,
+  setIsDesktopSidebarCollapsed,
+}: {
+  onLogout: () => void;
+  isDesktopSidebarCollapsed: boolean;
+  setIsDesktopSidebarCollapsed: (collapsed: boolean) => void;
+}) {
   const { user } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
@@ -290,6 +305,25 @@ function Topbar({ onLogout }: { onLogout: () => void }) {
       {/* Header với logo và tên trường */}
       <div className="flex-1 px-2 sm:px-4 lg:px-6 flex items-center justify-between">
         <div className="flex items-center space-x-2 sm:space-x-4">
+          {/* Nút toggle sidebar cho desktop - chỉ hiện trên desktop */}
+          <button
+            className="hidden md:flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            onClick={() =>
+              setIsDesktopSidebarCollapsed(!isDesktopSidebarCollapsed)
+            }
+            title={
+              isDesktopSidebarCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"
+            }
+            aria-label={
+              isDesktopSidebarCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"
+            }>
+            {isDesktopSidebarCollapsed ? (
+              <ChevronRight className="h-5 w-5" />
+            ) : (
+              <ChevronLeft className="h-5 w-5" />
+            )}
+          </button>
+
           {/* Logo và tên trường */}
           <div className="flex items-center space-x-1 sm:space-x-3">
             <Image
@@ -432,6 +466,8 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] =
+    useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoading, logout, isAuthenticated } = useAuth();
@@ -536,36 +572,48 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           pathname={pathname}
           isMobile
           setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+          isCollapsed={false}
         />
       </div>
 
       {/* Desktop sidebar */}
       <div className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-64">
+        <div
+          className={`flex flex-col transition-all duration-300 ${
+            isDesktopSidebarCollapsed ? "w-16" : "w-64"
+          }`}>
           <div className="flex flex-col flex-grow bg-blue-900 overflow-y-auto">
             {/* Desktop Header */}
-            <div className="flex flex-col items-center flex-shrink-0 px-6 py-2 bg-blue-900">
-              <Image
-                src="/images/logo-IUH-ngang-trang-300x131-1.png"
-                alt="Logo"
-                width={100}
-                height={45}
-                className="rounded-lg mb-4"
-              />
-              <div>
-                <div className="text-[#8cb9de] font-medium text-[16px] text-center">
-                  DANH MỤC QUẢN LÝ
-                </div>
-                <div className="text-gray-100 font-medium text-xs mt-1 text-center">
-                  SỬA CHỮA THIẾT BỊ
-                </div>
-              </div>
+            <div
+              className={`flex flex-col items-center flex-shrink-0 px-6 py-2 bg-blue-900 ${
+                isDesktopSidebarCollapsed ? "px-2" : "px-6"
+              }`}>
+              {!isDesktopSidebarCollapsed && (
+                <>
+                  <Image
+                    src="/images/logo-IUH-ngang-trang-300x131-1.png"
+                    alt="Logo"
+                    width={100}
+                    height={45}
+                    className="rounded-lg mb-4"
+                  />
+                  <div>
+                    <div className="text-[#8cb9de] font-medium text-[16px] text-center">
+                      DANH MỤC QUẢN LÝ
+                    </div>
+                    <div className="text-gray-100 font-medium text-xs mt-1 text-center">
+                      SỬA CHỮA THIẾT BỊ
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Navigation */}
             <SidebarNavigation
               navigation={userNavigation}
               pathname={pathname}
+              isCollapsed={isDesktopSidebarCollapsed}
             />
           </div>
         </div>
@@ -574,7 +622,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* Top bar */}
-        <Topbar onLogout={handleLogout} />
+        <Topbar
+          onLogout={handleLogout}
+          isDesktopSidebarCollapsed={isDesktopSidebarCollapsed}
+          setIsDesktopSidebarCollapsed={setIsDesktopSidebarCollapsed}
+        />
         {/* Page content */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">
           <div className="py-8">
