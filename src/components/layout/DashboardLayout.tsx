@@ -24,6 +24,7 @@ import {
   Shield,
   ChevronRight,
   ChevronLeft,
+  Calendar,
 } from "lucide-react";
 
 // Navigation items
@@ -115,6 +116,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         name: "Tra cứu tài sản",
         href: "/to-truong-ky-thuat/tra-cuu-tai-san",
         icon: Settings,
+      },
+      {
+        name: "Biên bản",
+        href: "/to-truong-ky-thuat/bien-ban",
+        icon: Calendar,
       },
     ],
     [UserRole.PHONG_QUAN_TRI]: [
