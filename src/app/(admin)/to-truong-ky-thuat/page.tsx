@@ -1,53 +1,17 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { teamLeaderStats } from "@/lib/mockData/stats";
 import {
-  Users,
-  FileCheck,
   TrendingUp,
-  Clock,
-  CheckCircle,
   MapPin,
   FileText,
   ClipboardList,
   BarChart,
+  FileCheck,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
-
-const stats = [
-  {
-    name: "Kỹ thuật viên",
-    value: "5",
-    change: "2 đang bận",
-    changeType: "neutral",
-    icon: Users,
-    color: "bg-blue-500",
-  },
-  {
-    name: "Đề xuất chờ duyệt",
-    value: "12",
-    change: "3 khẩn cấp",
-    changeType: "warning",
-    icon: FileCheck,
-    color: "bg-orange-500",
-  },
-  {
-    name: "Báo cáo đang xử lý",
-    value: "24",
-    change: "+8 hôm nay",
-    changeType: "positive",
-    icon: Clock,
-    color: "bg-yellow-500",
-  },
-  {
-    name: "Hoàn thành tháng này",
-    value: "156",
-    change: "+15%",
-    changeType: "positive",
-    icon: CheckCircle,
-    color: "bg-green-500",
-  },
-];
 
 export default function ToTruongKyThuatDashboard() {
   const { user } = useAuth();
@@ -67,7 +31,7 @@ export default function ToTruongKyThuatDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((item) => (
+        {teamLeaderStats.map((item) => (
           <div
             key={item.name}
             className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6">
@@ -82,18 +46,6 @@ export default function ToTruongKyThuatDashboard() {
             <div className="ml-16 flex items-baseline">
               <p className="text-2xl font-semibold text-gray-900">
                 {item.value}
-              </p>
-              <p
-                className={`ml-2 flex items-baseline text-sm font-semibold ${
-                  item.changeType === "positive"
-                    ? "text-green-600"
-                    : item.changeType === "negative"
-                    ? "text-red-600"
-                    : item.changeType === "warning"
-                    ? "text-orange-600"
-                    : "text-gray-600"
-                }`}>
-                {item.change}
               </p>
             </div>
           </div>
@@ -215,10 +167,12 @@ export default function ToTruongKyThuatDashboard() {
                   <Users className="h-5 w-5" />
                 </span>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900">              
+                  <h4 className="text-sm font-medium text-gray-900">
                     Xác nhận biên bản
                   </h4>
-                  <p className="text-xs text-gray-500">Xác nhận biên bản do phòng quản trị gửi</p>
+                  <p className="text-xs text-gray-500">
+                    Xác nhận biên bản do phòng quản trị gửi
+                  </p>
                 </div>
               </div>
             </Link>
