@@ -137,12 +137,21 @@ export default function TheoDaoTienDoPage() {
 
   // Sorting state
   const [sortField, setSortField] = useState<keyof RepairRequest | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+    "asc"
+  );
 
   // Handle sorting
   const handleSort = (field: keyof RepairRequest) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortField(null);
+      } else {
+        setSortDirection("asc");
+      }
     } else {
       setSortField(field);
       setSortDirection("asc");
@@ -169,7 +178,7 @@ export default function TheoDaoTienDoPage() {
     }
 
     // Apply sorting
-    if (sortField) {
+    if (sortField && sortDirection) {
       filtered.sort((a, b) => {
         const aValue: string | undefined = a[sortField] as string | undefined;
         const bValue: string | undefined = b[sortField] as string | undefined;
