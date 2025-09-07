@@ -254,7 +254,7 @@ export default function TheoDaoTienDoPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen">
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center space-x-3">
@@ -515,6 +515,9 @@ export default function TheoDaoTienDoPage() {
           </div>
         )}
       </div>
+
+      {/* Spacer to ensure minimum height and consistent scrollbar */}
+      <div className="min-h-[200px]"></div>
 
       {/* Request Detail Modal */}
       {selectedRequest && (
