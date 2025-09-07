@@ -1,45 +1,9 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  AlertTriangle,
-  Clock,
-  CheckCircle,
-  FileText,
-  Search,
-} from "lucide-react";
+import { AlertTriangle, Clock, Search } from "lucide-react";
 import Link from "next/link";
-
-const stats = [
-  {
-    name: "Báo cáo đã gửi",
-    value: "12",
-    changeType: "positive",
-    icon: FileText,
-    color: "bg-blue-500",
-  },
-  {
-    name: "Đang xử lý",
-    value: "3",
-    changeType: "warning",
-    icon: Clock,
-    color: "bg-yellow-500",
-  },
-  {
-    name: "Đã hoàn thành",
-    value: "8",
-    changeType: "positive",
-    icon: CheckCircle,
-    color: "bg-green-500",
-  },
-  {
-    name: "Cần theo dõi",
-    value: "1",
-    changeType: "negative",
-    icon: AlertTriangle,
-    color: "bg-red-500",
-  },
-];
+import { lecturerStats } from "@/lib/mockData/stats";
 
 export default function GiangVienDashboard() {
   const { user } = useAuth();
@@ -58,7 +22,7 @@ export default function GiangVienDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((item) => (
+        {lecturerStats.map((item) => (
           <div
             key={item.name}
             className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6">
