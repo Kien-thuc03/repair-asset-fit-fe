@@ -201,34 +201,48 @@ export default function DanhSachBaoLoiPage() {
     useState<RepairRequestForList | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
+    "none"
+  );
 
-  // Hàm xử lý sắp xếp
+  // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: string) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection("none");
+        setSortField("");
+      } else {
+        setSortDirection("asc");
+      }
     } else {
       setSortField(field);
       setSortDirection("asc");
     }
   };
 
-  // Hàm lấy icon sắp xếp
+  // Hàm lấy icon sắp xếp với trạng thái rõ ràng hơn
   const getSortIcon = (field: string) => {
+    if (sortField !== field || sortDirection === "none") {
+      return (
+        <div className="flex flex-col opacity-50 group-hover:opacity-75 transition-opacity">
+          <ChevronUp className="h-3 w-3 text-gray-400" />
+          <ChevronDown className="h-3 w-3 -mt-1 text-gray-400" />
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col">
         <ChevronUp
           className={`h-3 w-3 ${
-            sortField === field && sortDirection === "asc"
-              ? "text-blue-600"
-              : "text-gray-300"
+            sortDirection === "asc" ? "text-blue-600" : "text-gray-300"
           }`}
         />
         <ChevronDown
           className={`h-3 w-3 -mt-1 ${
-            sortField === field && sortDirection === "desc"
-              ? "text-blue-600"
-              : "text-gray-300"
+            sortDirection === "desc" ? "text-blue-600" : "text-gray-300"
           }`}
         />
       </div>
@@ -254,7 +268,7 @@ export default function DanhSachBaoLoiPage() {
 
   // Sắp xếp dữ liệu đã lọc
   const sortedRequests = [...filteredRequests].sort((a, b) => {
-    if (!sortField) return 0;
+    if (!sortField || sortDirection === "none") return 0;
 
     let aValue: string | Date = "";
     let bValue: string | Date = "";
@@ -383,7 +397,6 @@ export default function DanhSachBaoLoiPage() {
               Theo dõi và quản lý các báo cáo lỗi từ giảng viên
             </p>
           </div>
-
         </div>
       </div>
 
@@ -543,11 +556,11 @@ export default function DanhSachBaoLoiPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full table-fixed divide-y divide-gray-200">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("requestCode")}>
                   <div className="flex items-center space-x-1">
                     <span>Mã báo lỗi</span>
@@ -555,7 +568,7 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-56 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("assetCode")}>
                   <div className="flex items-center space-x-1">
                     <span>Tài sản</span>
@@ -563,7 +576,7 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("reporterName")}>
                   <div className="flex items-center space-x-1">
                     <span>Người báo</span>
@@ -571,7 +584,7 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("errorTypeName")}>
                   <div className="flex items-center space-x-1">
                     <span>Loại lỗi</span>
@@ -579,7 +592,7 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-36 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("status")}>
                   <div className="flex items-center space-x-1">
                     <span>Trạng thái</span>
@@ -587,14 +600,14 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-28 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("createdAt")}>
                   <div className="flex items-center space-x-1">
                     <span>Ngày báo</span>
                     {getSortIcon("createdAt")}
                   </div>
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="w-20 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
@@ -602,56 +615,77 @@ export default function DanhSachBaoLoiPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {sortedRequests.map((request) => (
                 <tr key={request.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap truncate">
+                    <div
+                      className="text-sm font-medium text-gray-900 truncate"
+                      title={request.requestCode}>
                       {request.requestCode}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
+                    <div className="min-w-0">
+                      <div
+                        className="text-sm font-medium text-gray-900 truncate"
+                        title={request.assetCode}>
                         {request.assetCode}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div
+                        className="text-sm text-gray-500 truncate"
+                        title={request.assetName}>
                         {request.assetName}
                       </div>
-                      <div className="flex items-center text-xs text-gray-400 mt-1">
-                        <Building2 className="h-3 w-3 mr-1" />
-                        {request.roomName} - {request.buildingName}
+                      <div className="flex items-center text-xs text-gray-400 mt-1 min-w-0">
+                        <Building2 className="h-3 w-3 mr-1 flex-shrink-0" />
+                        <span
+                          className="truncate"
+                          title={`${request.roomName} - ${request.buildingName}`}>
+                          {request.roomName} - {request.buildingName}
+                        </span>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <User className="h-4 w-4 text-gray-400 mr-2" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
+                    <div className="flex items-center min-w-0">
+                      <User className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div
+                          className="text-sm font-medium text-gray-900 truncate"
+                          title={request.reporterName}>
                           {request.reporterName}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div
+                          className="text-sm text-gray-500 truncate"
+                          title={request.reporterRole}>
                           {request.reporterRole}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {request.errorTypeName || "Chưa xác định"}
+                  <td className="px-6 py-4 whitespace-nowrap truncate">
+                    <span
+                      className="text-sm text-gray-900 truncate"
+                      title={request.errorTypeName || "Chưa xác định"}>
+                      {request.errorTypeName || "Chưa xác định"}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {getStatusIcon(request.status)}
+                    <div className="flex items-center min-w-0">
+                      <div className="flex-shrink-0">
+                        {getStatusIcon(request.status)}
+                      </div>
                       <span
-                        className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                        className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full truncate ${getStatusBadge(
                           request.status
-                        )}`}>
+                        )}`}
+                        title={getStatusText(request.status)}>
                         {getStatusText(request.status)}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">
+                      <Calendar className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span className="text-sm text-gray-900 truncate">
                         {new Date(request.createdAt).toLocaleDateString(
                           "vi-VN"
                         )}

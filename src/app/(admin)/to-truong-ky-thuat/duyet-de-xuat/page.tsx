@@ -154,6 +154,7 @@ export default function DuyetDeXuatPage() {
       return matchesStatus && matchesPriority && matchesSearch;
     })
     .sort((a, b) => {
+      // Chỉ sắp xếp khi có sortField được chọn
       if (!sortField) return 0;
 
       let aValue: string | number | Date =
@@ -180,7 +181,13 @@ export default function DuyetDeXuatPage() {
 
   const handleSort = (field: string) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        // Reset về không sắp xếp
+        setSortField("");
+        setSortDirection("asc");
+      }
     } else {
       setSortField(field);
       setSortDirection("asc");
@@ -190,21 +197,25 @@ export default function DuyetDeXuatPage() {
   const getSortIcon = (field: string) => {
     if (sortField === field) {
       // Hiển thị icon active cho cột đang được sắp xếp
-      return sortDirection === "asc" ? (
-        <div className="flex flex-col ml-1">
-          <ChevronUp className="h-3 w-3 text-blue-600" />
-          <ChevronDown className="h-3 w-3 text-gray-300 -mt-1" />
-        </div>
-      ) : (
-        <div className="flex flex-col ml-1">
-          <ChevronUp className="h-3 w-3 text-gray-300" />
-          <ChevronDown className="h-3 w-3 text-blue-600 -mt-1" />
-        </div>
-      );
+      if (sortDirection === "asc") {
+        return (
+          <div className="flex flex-col ml-1">
+            <ChevronUp className="h-3 w-3 text-blue-600" />
+            <ChevronDown className="h-3 w-3 text-gray-300 -mt-1" />
+          </div>
+        );
+      } else {
+        return (
+          <div className="flex flex-col ml-1">
+            <ChevronUp className="h-3 w-3 text-gray-300" />
+            <ChevronDown className="h-3 w-3 text-blue-600 -mt-1" />
+          </div>
+        );
+      }
     } else {
       // Hiển thị icon mặc định cho các cột khác
       return (
-        <div className="flex flex-col ml-1 opacity-50">
+        <div className="flex flex-col ml-1 opacity-50 hover:opacity-100 transition-opacity">
           <ChevronUp className="h-3 w-3 text-gray-400" />
           <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
         </div>
