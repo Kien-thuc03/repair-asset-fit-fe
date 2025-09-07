@@ -8,6 +8,12 @@ export {
   mockRepairRequests,
   repairRequestStatusConfig,
 } from "./repairRequests";
+export {
+  mockAssetsLookup,
+  mockRepairHistoryLookup,
+  assetStatusConfig,
+  categoryIcons,
+} from "./assetsLookup";
 
 // Export component types from the main types file for convenience
 export { ComponentType, ComponentStatus } from "@/types";
