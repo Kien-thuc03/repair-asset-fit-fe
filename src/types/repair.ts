@@ -179,18 +179,50 @@ export interface Asset {
   qrCode: string;
 }
 
-// Component interface for computer assets
+// Component Type enum
+export enum ComponentType {
+  CPU = "CPU",
+  RAM = "RAM",
+  STORAGE = "STORAGE",
+  MOTHERBOARD = "MOTHERBOARD",
+  PSU = "PSU", // Power Supply Unit
+  GPU = "GPU", // Graphics Card
+  MONITOR = "MONITOR",
+  KEYBOARD = "KEYBOARD",
+  MOUSE = "MOUSE",
+  CASE = "CASE",
+  COOLING = "COOLING", // Cooling system
+  OPTICAL_DRIVE = "OPTICAL_DRIVE", // CD/DVD Drive
+  NETWORK_CARD = "NETWORK_CARD",
+  SOUND_CARD = "SOUND_CARD",
+  SPEAKER = "SPEAKER",
+  WEBCAM = "WEBCAM",
+  OTHER = "OTHER",
+}
+
+// Component Status enum
+export enum ComponentStatus {
+  INSTALLED = "INSTALLED", // Đang lắp đặt và hoạt động
+  REMOVED = "REMOVED", // Đã gỡ ra
+  MAINTENANCE = "MAINTENANCE", // Đang bảo trì
+  FAULTY = "FAULTY", // Hỏng hóc
+  REPLACED = "REPLACED", // Đã thay thế
+  PENDING_INSTALL = "PENDING_INSTALL", // Chờ lắp đặt
+  TESTING = "TESTING", // Đang kiểm tra
+}
+
+// Component interface for computer assets (updated to match database schema)
 export interface Component {
-  id: string;
-  computerAssetId: string;
-  componentType: string;
-  name: string;
-  componentSpecs?: string;
-  serialNumber?: string;
-  status: "INSTALLED" | "REMOVED" | "MAINTENANCE" | "FAULTY";
-  installedAt: string;
-  removedAt?: string;
-  notes?: string;
+  id: string; // UUID - Đây là mã định danh duy nhất cho một linh kiện cụ thể
+  computerAssetId: string; // FK đến máy tính cha
+  componentType: ComponentType; // Loại linh kiện là gì (CPU, RAM, ...)
+  name: string; // Tên/Model của linh kiện, vd: Kingston Fury Beast DDR5
+  componentSpecs?: string; // Thông số kỹ thuật chi tiết, vd: 16GB 5200MHz
+  serialNumber?: string; // Số serial của linh kiện nếu có (unique, nullable)
+  status: ComponentStatus; // Trạng thái của linh kiện này
+  installedAt: string; // Ngày lắp đặt linh kiện này vào máy (ISO timestamp)
+  removedAt?: string; // Ngày gỡ ra (khi thay thế hoặc hỏng) (nullable)
+  notes?: string; // Ghi chú bổ sung
 }
 
 // Repair history interface
@@ -255,4 +287,55 @@ export interface SimpleAsset {
   name: string;
   assetCode: string;
   roomId: string;
+}
+
+// Asset Type enum
+export enum AssetType {
+  FIXED_ASSET = "FIXED_ASSET", // Tài sản cố định
+  CONSUMABLE = "CONSUMABLE", // Vật tư tiêu hao
+  OFFICE_SUPPLIES = "OFFICE_SUPPLIES", // Đồ dùng văn phòng
+}
+
+// Asset Shape enum
+export enum AssetShape {
+  GENERIC = "GENERIC", // Tài sản thông thường
+  COMPUTER = "COMPUTER", // Máy tính
+  PRINTER = "PRINTER", // Máy in
+  NETWORK_DEVICE = "NETWORK_DEVICE", // Thiết bị mạng
+  FURNITURE = "FURNITURE", // Nội thất
+}
+
+// Asset Status enum
+export enum AssetStatus {
+  CHO_PHAN_BO = "chờ_phân_bổ", // Waiting for allocation
+  DANG_SU_DUNG = "đang_sử_dụng", // In use
+  BAO_TRI = "bảo_trì", // Under maintenance
+  HONG_HOC = "hỏng_hóc", // Broken/Damaged
+  DA_THANH_LY = "đã_thanh_lý", // Disposed
+  MAT_TICH = "mất_tích", // Missing
+}
+
+// Comprehensive Asset interface based on database schema
+export interface ComprehensiveAsset {
+  id: string; // UUID primary key
+  ktCode: string; // Mã kế toán: xx-yyyy/nn (e.g., 19-0205/00)
+  fixedCode: string; // Mã tài sản cố định xxxx.yyyy
+  name: string; // Tên tài sản
+  specs?: string; // Thông số kĩ thuật
+  entryDate: string; // Ngày nhập (ISO date string)
+  currentRoomId?: string; // Mã vị trí hiện tại
+  unit: string; // Đơn vị tính
+  quantity: number; // Số lượng: Với tài sản cố định = 1
+  origin?: string; // Xuất xứ
+  purchasePackage: number; // Gói mua
+  type: AssetType; // Loại tài sản
+  isHandover: boolean; // Flag bàn giao
+  isLocked: boolean; // Khi đã sử dụng thì không cho cập nhật lại
+  categoryId: string; // Danh mục - 4: máy tính, 3: thiết bị văn phòng, 5: máy in
+  shape: AssetShape; // Cột xác định hình thái của tài sản
+  status: AssetStatus; // Trạng thái tài sản
+  createdBy: string; // User who initiated the handover
+  createdAt: string; // timestamp ISO string
+  updatedAt: string; // timestamp ISO string
+  deletedAt?: string; // timestamp ISO string (soft delete)
 }
