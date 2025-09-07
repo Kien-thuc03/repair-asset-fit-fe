@@ -1,7 +1,15 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search, Eye, FileText, Filter } from "lucide-react";
+import {
+  ArrowLeft,
+  Search,
+  Eye,
+  FileText,
+  Filter,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 import {
   mockReplacementLists,
   ReplacementList,
@@ -18,6 +26,10 @@ export default function LapToTrinhPage() {
   );
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCreateReportModal, setShowCreateReportModal] = useState(false);
+  const [sortField, setSortField] = useState<string>("");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
+    "none"
+  );
 
   const filteredLists = replacementLists.filter((list) => {
     const matchesStatus =
@@ -30,6 +42,86 @@ export default function LapToTrinhPage() {
 
     return matchesStatus && matchesSearch;
   });
+
+  // Hàm xử lý sắp xếp 3 trạng thái
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection("none");
+        setSortField("");
+      } else {
+        setSortDirection("asc");
+      }
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Sắp xếp dữ liệu
+  const sortedLists = [...filteredLists].sort((a, b) => {
+    if (sortField === "" || sortDirection === "none") return 0;
+
+    let aValue: string | number | Date;
+    let bValue: string | number | Date;
+
+    switch (sortField) {
+      case "title":
+        aValue = a.title;
+        bValue = b.title;
+        break;
+      case "createdBy":
+        aValue = a.createdBy;
+        bValue = b.createdBy;
+        break;
+      case "totalItems":
+        aValue = a.totalItems;
+        bValue = b.totalItems;
+        break;
+      case "totalCost":
+        aValue = a.totalCost;
+        bValue = b.totalCost;
+        break;
+      case "status":
+        aValue = a.status;
+        bValue = b.status;
+        break;
+      case "createdAt":
+        aValue = new Date(a.createdAt);
+        bValue = new Date(b.createdAt);
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  // Hàm hiển thị icon sắp xếp
+  const getSortIcon = (field: string) => {
+    return (
+      <div className="flex flex-col ml-1">
+        <ChevronUp
+          className={`h-3 w-3 ${
+            sortField === field && sortDirection === "asc"
+              ? "text-blue-600"
+              : "text-gray-300"
+          }`}
+        />
+        <ChevronDown
+          className={`h-3 w-3 -mt-1 ${
+            sortField === field && sortDirection === "desc"
+              ? "text-blue-600"
+              : "text-gray-300"
+          }`}
+        />
+      </div>
+    );
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -150,7 +242,7 @@ export default function LapToTrinhPage() {
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách đề xuất đã được duyệt ({filteredLists.length})
+            Danh sách đề xuất đã được duyệt ({sortedLists.length})
           </h2>
         </div>
 
@@ -158,8 +250,8 @@ export default function LapToTrinhPage() {
           {/* Mobile Card View */}
           <div className="block sm:hidden">
             <div className="p-3 space-y-3">
-              {filteredLists.length > 0 ? (
-                filteredLists.map((list) => (
+              {sortedLists.length > 0 ? (
+                sortedLists.map((list) => (
                   <div
                     key={list.id}
                     className="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -245,22 +337,52 @@ export default function LapToTrinhPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="w-[35%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Danh sách
+                      <button
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase"
+                        onClick={() => handleSort("title")}>
+                        <span>Danh sách</span>
+                        {getSortIcon("title")}
+                      </button>
                     </th>
                     <th className="w-[12%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Người tạo
+                      <button
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase"
+                        onClick={() => handleSort("createdBy")}>
+                        <span>Người tạo</span>
+                        {getSortIcon("createdBy")}
+                      </button>
                     </th>
                     <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Thiết bị
+                      <button
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        onClick={() => handleSort("totalItems")}>
+                        <span>Thiết bị</span>
+                        {getSortIcon("totalItems")}
+                      </button>
                     </th>
                     <th className="w-[15%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Chi phí
+                      <button
+                        className="flex items-center justify-end space-x-1 hover:text-gray-700 ml-auto uppercase"
+                        onClick={() => handleSort("totalCost")}>
+                        <span>Chi phí</span>
+                        {getSortIcon("totalCost")}
+                      </button>
                     </th>
                     <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Trạng thái
+                      <button
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        onClick={() => handleSort("status")}>
+                        <span>Trạng thái</span>
+                        {getSortIcon("status")}
+                      </button>
                     </th>
                     <th className="w-[10%] hidden lg:table-cell px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ngày tạo
+                      <button
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        onClick={() => handleSort("createdAt")}>
+                        <span>Ngày tạo</span>
+                        {getSortIcon("createdAt")}
+                      </button>
                     </th>
                     <th className="w-[8%] lg:w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Thao tác
@@ -268,8 +390,8 @@ export default function LapToTrinhPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredLists.length > 0 ? (
-                    filteredLists.map((list) => (
+                  {sortedLists.length > 0 ? (
+                    sortedLists.map((list) => (
                       <tr key={list.id} className="hover:bg-gray-50">
                         <td className="px-3 py-3">
                           <div className="flex items-start">
