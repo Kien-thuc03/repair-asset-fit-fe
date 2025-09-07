@@ -11,6 +11,7 @@ export {
   repairRequestStatusConfig,
 } from "./repairRequests";
 export { mockReplacementRequests } from "./replacementRequests";
+export { mockReplacementLists, type ReplacementList } from "./replacementLists";
 export {
   mockAssetsLookup,
   mockRepairHistoryLookup,

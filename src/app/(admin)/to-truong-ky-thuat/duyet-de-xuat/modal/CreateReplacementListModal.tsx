@@ -70,7 +70,7 @@ export default function CreateReplacementListModal({
     });
 
     alert(
-      `Đã tạo danh sách "${title}" với ${selectedItems.length} thiết bị và gửi cho phòng quản trị!`
+      `Đã tạo danh sách "${title}" với ${selectedItems.length} thiết bị !`
     );
 
     setIsSubmitting(false);
@@ -286,7 +286,7 @@ export default function CreateReplacementListModal({
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />
-                  Gửi danh sách cho phòng quản trị
+                  Tạo danh sách đề xuất
                 </>
               )}
             </button>
