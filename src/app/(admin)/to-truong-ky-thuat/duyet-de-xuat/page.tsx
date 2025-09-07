@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -16,10 +15,12 @@ import {
   Computer,
   ChevronUp,
   ChevronDown,
+  ListPlus,
 } from "lucide-react";
 import { ReplacementRequestForList } from "@/types";
 import { mockReplacementRequests } from "@/lib/mockData";
-
+import CreateReplacementListModal from "./modal/CreateReplacementListModal";
+import RequestDetailModal from "./modal/RequestDetailModal";
 export default function DuyetDeXuatPage() {
   const [requests, setRequests] = useState<ReplacementRequestForList[]>(
     mockReplacementRequests
@@ -30,11 +31,11 @@ export default function DuyetDeXuatPage() {
   const [selectedRequest, setSelectedRequest] =
     useState<ReplacementRequestForList | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showCreateListModal, setShowCreateListModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
-
   const filteredRequests = requests
     .filter((request) => {
       const matchesStatus =
@@ -227,6 +228,13 @@ export default function DuyetDeXuatPage() {
     alert(`Xuất ${itemsToExport.length} bản ghi ra Excel`);
   };
 
+  // Lấy các đề xuất đã được duyệt
+  const getApprovedRequests = () => {
+    return requests.filter((request) => request.status === "approved");
+  };
+
+  const approvedRequests = getApprovedRequests();
+
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 ">
       {/* Header */}
@@ -248,8 +256,21 @@ export default function DuyetDeXuatPage() {
             </p>
           </div>
 
-          {/* Export Button */}
-          <div className="flex-shrink-0">
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+            {/* Create List Button */}
+            <button
+              onClick={() => setShowCreateListModal(true)}
+              disabled={approvedRequests.length === 0}
+              className="inline-flex items-center px-4 py-2 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 disabled:cursor-not-allowed">
+              <ListPlus className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">
+                Tạo danh sách đề xuất ({approvedRequests.length})
+              </span>
+              <span className="sm:hidden">Tạo danh sách</span>
+            </button>
+
+            {/* Export Excel Button */}
             <button
               onClick={handleExportExcel}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -662,129 +683,24 @@ export default function DuyetDeXuatPage() {
       </div>
 
       {/* Detail Modal */}
-      {showModal && selectedRequest && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-4 sm:top-20 mx-auto p-3 sm:p-5 border w-11/12 sm:w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base sm:text-lg font-medium text-gray-900">
-                  Chi tiết đề xuất #{selectedRequest.id}
-                </h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600 p-1">
-                  <XCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-                </button>
-              </div>
+      <RequestDetailModal
+        show={showModal}
+        selectedRequest={selectedRequest}
+        onClose={() => setShowModal(false)}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        getStatusBadge={getStatusBadge}
+        getStatusText={getStatusText}
+        getPriorityBadge={getPriorityBadge}
+        getPriorityText={getPriorityText}
+      />
 
-              <div className="space-y-3 sm:space-y-4 max-h-[70vh] overflow-y-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      Mã tài sản
-                    </label>
-                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
-                      {selectedRequest.assetCode}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      Tên thiết bị
-                    </label>
-                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
-                      {selectedRequest.assetName}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      Người yêu cầu
-                    </label>
-                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
-                      {selectedRequest.requestedBy}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      Đơn vị
-                    </label>
-                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
-                      {selectedRequest.unit}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                    Vị trí
-                  </label>
-                  <p className="text-xs sm:text-sm text-gray-900 mt-1">
-                    {selectedRequest.location}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                    Lý do thay thế
-                  </label>
-                  <p className="text-xs sm:text-sm text-gray-900 mt-1">
-                    {selectedRequest.reason}
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                    Mô tả chi tiết
-                  </label>
-                  <p className="text-xs sm:text-sm text-gray-900 mt-1">
-                    {selectedRequest.description}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      Chi phí ước tính
-                    </label>
-                    <p className="text-xs sm:text-sm text-gray-900 mt-1">
-                      {selectedRequest.estimatedCost.toLocaleString("vi-VN")}{" "}
-                      VNĐ
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                      Độ ưu tiên
-                    </label>
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
-                        selectedRequest.priority
-                      )} mt-1`}>
-                      {getPriorityText(selectedRequest.priority)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {selectedRequest.status === "pending" && (
-                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-6 pt-4 border-t">
-                  <button
-                    onClick={() => handleReject(selectedRequest.id)}
-                    className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500">
-                    Từ chối
-                  </button>
-                  <button
-                    onClick={() => handleApprove(selectedRequest.id)}
-                    className="w-full sm:w-auto px-4 py-2 text-xs sm:text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                    Phê duyệt
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Create Replacement List Modal */}
+      <CreateReplacementListModal
+        show={showCreateListModal}
+        onClose={() => setShowCreateListModal(false)}
+        approvedRequests={approvedRequests}
+      />
     </div>
   );
 }
