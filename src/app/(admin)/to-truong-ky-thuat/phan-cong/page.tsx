@@ -14,104 +14,16 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-import { Technician, Area } from "@/types";
-
-const mockTechnicians: Technician[] = [
-  {
-    id: "tech001",
-    name: "Nguyễn Văn A",
-    email: "vana@iuh.edu.vn",
-    phone: "0123456789",
-    status: "active",
-    assignedAreas: ["area001", "area002"],
-    currentTask: "Sửa mainboard máy tính H301-01",
-  },
-  {
-    id: "tech002",
-    name: "Trần Thị B",
-    email: "tranb@iuh.edu.vn",
-    phone: "0987654321",
-    status: "busy",
-    assignedAreas: ["area003"],
-    currentTask: "Thay RAM máy tính H205-15",
-  },
-  {
-    id: "tech003",
-    name: "Lê Văn C",
-    email: "levanc@iuh.edu.vn",
-    phone: "0456789123",
-    status: "active",
-    assignedAreas: ["area004", "area005"],
-  },
-  {
-    id: "tech004",
-    name: "Phạm Thị D",
-    email: "phamd@iuh.edu.vn",
-    phone: "0321654987",
-    status: "offline",
-    assignedAreas: [],
-  },
-  {
-    id: "tech005",
-    name: "Hoàng Văn E",
-    email: "hoange@iuh.edu.vn",
-    phone: "0789123456",
-    status: "active",
-    assignedAreas: ["area006"],
-    currentTask: "Kiểm tra nguồn điện H109-22",
-  },
-];
-
-const mockAreas: Area[] = [
-  {
-    id: "area001",
-    name: "Tòa H - Tầng 1-3",
-    building: "Tòa H",
-    floors: ["Tầng 1", "Tầng 2", "Tầng 3"],
-    assignedTechnician: "tech001",
-  },
-  {
-    id: "area002",
-    name: "Tòa H - Tầng 4-6",
-    building: "Tòa H",
-    floors: ["Tầng 4", "Tầng 5", "Tầng 6"],
-    assignedTechnician: "tech002",
-  },
-  {
-    id: "area003",
-    name: "Tòa H - Tầng 7-9",
-    building: "Tòa H",
-    floors: ["Tầng 7", "Tầng 8", "Tầng 9"],
-    assignedTechnician: "tech003",
-  },
-  {
-    id: "area004",
-    name: "Tòa H - Phòng thí nghiệm T1-T3",
-    building: "Tòa H",
-    floors: ["Lab Tầng 1", "Lab Tầng 2", "Lab Tầng 3"],
-    assignedTechnician: "tech004",
-  },
-  {
-    id: "area005",
-    name: "Tòa H - Phòng thí nghiệm T4-T6",
-    building: "Tòa H",
-    floors: ["Lab Tầng 4", "Lab Tầng 5", "Lab Tầng 6"],
-    assignedTechnician: "tech005",
-  },
-  {
-    id: "area006",
-    name: "Tòa H - Phòng thí nghiệm T7-T9",
-    building: "Tòa H",
-    floors: ["Lab Tầng 7", "Lab Tầng 8", "Lab Tầng 9"],
-  },
-];
+import { Technician } from "@/types";
+import { Room } from "@/types/unit";
+import { mockTechnicians, mockRooms } from "@/lib/mockData";
 
 export default function PhanCongPage() {
   const [technicians] = useState<Technician[]>(mockTechnicians);
-  const [areas, setAreas] = useState<Area[]>(mockAreas);
+  const [rooms, setRooms] = useState<Room[]>(mockRooms);
   const [activeTab, setActiveTab] = useState<"areas" | "technicians">("areas");
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingArea, setEditingArea] = useState<string | null>(null);
+  const [editingRoom, setEditingRoom] = useState<string | null>(null);
   const [selectedTechnician, setSelectedTechnician] = useState<string>("");
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
@@ -162,15 +74,15 @@ export default function PhanCongPage() {
     );
   };
 
-  const handleAssignTechnician = (areaId: string, technicianId: string) => {
-    setAreas((prev) =>
-      prev.map((area) =>
-        area.id === areaId
-          ? { ...area, assignedTechnician: technicianId || undefined }
-          : area
+  const handleAssignTechnician = (roomId: string, technicianId: string) => {
+    setRooms((prev) =>
+      prev.map((room) =>
+        room.id === roomId
+          ? { ...room, assignedTechnician: technicianId || undefined }
+          : room
       )
     );
-    setEditingArea(null);
+    setEditingRoom(null);
     setSelectedTechnician("");
   };
 
@@ -205,15 +117,18 @@ export default function PhanCongPage() {
     return tech?.name || "Chưa phân công";
   };
 
-  const filteredAreas = areas.filter(
-    (area) =>
+  const filteredRooms = rooms.filter(
+    (room) =>
       searchTerm === "" ||
-      area.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      area.building.toLowerCase().includes(searchTerm.toLowerCase())
+      room.roomNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (room.building &&
+        room.building.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (room.floor &&
+        room.floor.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Sắp xếp khu vực đã lọc
-  const sortedAreas = [...filteredAreas].sort((a, b) => {
+  // Sắp xếp rooms đã lọc
+  const sortedRooms = [...filteredRooms].sort((a, b) => {
     if (!sortField || sortDirection === "none") return 0;
 
     let aValue: string = "";
@@ -221,16 +136,16 @@ export default function PhanCongPage() {
 
     switch (sortField) {
       case "name":
-        aValue = a.name;
-        bValue = b.name;
+        aValue = a.roomNumber;
+        bValue = b.roomNumber;
         break;
       case "building":
-        aValue = a.building;
-        bValue = b.building;
+        aValue = a.building || "";
+        bValue = b.building || "";
         break;
       case "floors":
-        aValue = a.floors.join(", ");
-        bValue = b.floors.join(", ");
+        aValue = a.floor || "";
+        bValue = b.floor || "";
         break;
       case "technician":
         aValue = getTechnicianName(a.assignedTechnician || "");
@@ -324,7 +239,7 @@ export default function PhanCongPage() {
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">
-              Danh sách khu vực ({sortedAreas.length})
+              Danh sách khu vực ({sortedRooms.length})
             </h2>
           </div>
 
@@ -336,7 +251,7 @@ export default function PhanCongPage() {
                     className="w-64 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                     onClick={() => handleSort("name")}>
                     <div className="flex items-center space-x-1">
-                      <span>Khu vực</span>
+                      <span>Phòng</span>
                       {getSortIcon("name")}
                     </div>
                   </th>
@@ -370,13 +285,13 @@ export default function PhanCongPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {sortedAreas.map((area) => (
-                  <tr key={area.id} className="hover:bg-gray-50">
+                {sortedRooms.map((room) => (
+                  <tr key={room.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap truncate">
                       <div className="flex items-center">
                         <MapPin className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
                         <span className="text-sm font-medium text-gray-900 truncate">
-                          {area.name}
+                          {room.roomNumber}
                         </span>
                       </div>
                     </td>
@@ -384,19 +299,19 @@ export default function PhanCongPage() {
                       <div className="flex items-center">
                         <Building2 className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                         <span className="text-sm text-gray-900 truncate">
-                          {area.building}
+                          {room.building || "N/A"}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap truncate">
                       <span
                         className="text-sm text-gray-500 truncate"
-                        title={area.floors.join(", ")}>
-                        {area.floors.join(", ")}
+                        title={room.floor || ""}>
+                        {room.floor || "N/A"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {editingArea === area.id ? (
+                      {editingRoom === room.id ? (
                         <div className="flex items-center space-x-2">
                           <select
                             value={selectedTechnician}
@@ -414,7 +329,7 @@ export default function PhanCongPage() {
                           <button
                             onClick={() =>
                               handleAssignTechnician(
-                                area.id,
+                                room.id,
                                 selectedTechnician
                               )
                             }
@@ -423,7 +338,7 @@ export default function PhanCongPage() {
                           </button>
                           <button
                             onClick={() => {
-                              setEditingArea(null);
+                              setEditingRoom(null);
                               setSelectedTechnician("");
                             }}
                             className="text-gray-400 hover:text-gray-600 flex-shrink-0">
@@ -436,9 +351,9 @@ export default function PhanCongPage() {
                           <span
                             className="text-sm text-gray-900 truncate"
                             title={getTechnicianName(
-                              area.assignedTechnician || ""
+                              room.assignedTechnician || ""
                             )}>
-                            {getTechnicianName(area.assignedTechnician || "")}
+                            {getTechnicianName(room.assignedTechnician || "")}
                           </span>
                         </div>
                       )}
@@ -446,8 +361,8 @@ export default function PhanCongPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => {
-                          setEditingArea(area.id);
-                          setSelectedTechnician(area.assignedTechnician || "");
+                          setEditingRoom(room.id);
+                          setSelectedTechnician(room.assignedTechnician || "");
                         }}
                         className="text-indigo-600 hover:text-indigo-900">
                         <Edit className="h-4 w-4" />
@@ -463,8 +378,8 @@ export default function PhanCongPage() {
         /* Technicians Tab */
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredTechnicians.map((tech) => {
-            const assignedAreas = areas.filter(
-              (area) => area.assignedTechnician === tech.id
+            const assignedRooms = rooms.filter(
+              (room) => room.assignedTechnician === tech.id
             );
 
             return (
@@ -507,16 +422,16 @@ export default function PhanCongPage() {
 
                   <div className="mt-4">
                     <h4 className="text-sm font-medium text-gray-900 mb-2">
-                      Khu vực phụ trách ({assignedAreas.length})
+                      Khu vực phụ trách ({assignedRooms.length})
                     </h4>
                     <div className="space-y-1">
-                      {assignedAreas.length > 0 ? (
-                        assignedAreas.map((area) => (
+                      {assignedRooms.length > 0 ? (
+                        assignedRooms.map((room) => (
                           <div
-                            key={area.id}
+                            key={room.id}
                             className="flex items-center text-xs text-gray-600">
                             <MapPin className="h-3 w-3 mr-1" />
-                            {area.name}
+                            {room.roomNumber} - {room.floor}
                           </div>
                         ))
                       ) : (

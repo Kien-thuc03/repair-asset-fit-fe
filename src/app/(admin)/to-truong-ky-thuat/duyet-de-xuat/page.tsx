@@ -18,103 +18,12 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { ReplacementRequestForList } from "@/types";
-
-const mockRequests: ReplacementRequestForList[] = [
-  {
-    id: "REQ-001",
-    assetCode: "PC-H301-01",
-    assetName: "Máy tính Desktop Dell OptiPlex 3070",
-    requestedBy: "Nguyễn Văn A",
-    unit: "Khoa Công nghệ Thông tin",
-    location: "Tòa H - Phòng H301",
-    reason: "Hỏng mainboard Intel H310, không thể sửa chữa",
-    status: "pending",
-    priority: "high",
-    requestDate: "2024-01-15",
-    estimatedCost: 8500000,
-    description:
-      "Máy tính bị hỏng mainboard sau 4 năm sử dụng, đã kiểm tra và xác định cần thay thế mainboard mới Intel H310 hoặc tương đương.",
-  },
-  {
-    id: "REQ-002",
-    assetCode: "PC-H205-15",
-    assetName: "Máy tính Desktop HP EliteDesk 800",
-    requestedBy: "Trần Thị B",
-    unit: "Khoa Công nghệ Thông tin",
-    location: "Tòa H - Phòng H205",
-    reason: "RAM DDR4 8GB hỏng, máy không khởi động được",
-    status: "pending",
-    priority: "medium",
-    requestDate: "2024-01-14",
-    estimatedCost: 1200000,
-    description:
-      "RAM DDR4 8GB bị lỗi sau 3 năm sử dụng, máy báo lỗi memory test failed, cần thay RAM mới cùng loại.",
-  },
-  {
-    id: "REQ-003",
-    assetCode: "PC-H704-08",
-    assetName: "Máy tính Desktop Asus VivoPC",
-    requestedBy: "Lê Văn C",
-    unit: "Khoa Công nghệ Thông tin",
-    location: "Tòa H - Phòng H704",
-    reason: "Ổ cứng SSD 256GB hỏng, mất dữ liệu",
-    status: "approved",
-    priority: "high",
-    requestDate: "2024-01-12",
-    estimatedCost: 2800000,
-    description:
-      "Ổ cứng SSD Samsung 256GB bị bad sector nghiêm trọng, không thể phục hồi dữ liệu, cần thay SSD mới cùng dung lượng.",
-  },
-  {
-    id: "REQ-004",
-    assetCode: "PC-H109-22",
-    assetName: "Máy tính Desktop Lenovo ThinkCentre",
-    requestedBy: "Phạm Thị D",
-    unit: "Khoa Công nghệ Thông tin",
-    location: "Tòa H - Phòng H109",
-    reason: "Nguồn điện 500W bị cháy, có mùi khét",
-    status: "pending",
-    priority: "high",
-    requestDate: "2024-01-16",
-    estimatedCost: 1800000,
-    description:
-      "Nguồn điện Cooler Master 500W bị short mạch, có tiếng nổ nhỏ và mùi cháy, cần thay nguồn mới ngay lập tức để đảm bảo an toàn.",
-  },
-  {
-    id: "REQ-005",
-    assetCode: "PC-H508-11",
-    assetName: "Máy tính Desktop MSI Pro",
-    requestedBy: "Hoàng Văn E",
-    unit: "Khoa Công nghệ Thông tin",
-    location: "Tòa H - Phòng H508",
-    reason: "Card đồ họa GTX 1050 hỏng, không hiển thị hình ảnh",
-    status: "pending",
-    priority: "medium",
-    requestDate: "2024-01-13",
-    estimatedCost: 4200000,
-    description:
-      "Card đồ họa NVIDIA GTX 1050 2GB bị lỗi chip, màn hình không hiển thị gì, cần thay card đồ họa mới tương đương hoặc cao hơn.",
-  },
-  {
-    id: "REQ-006",
-    assetCode: "PC-H902-03",
-    assetName: "Máy tính Desktop Acer Veriton",
-    requestedBy: "Võ Thị F",
-    unit: "Khoa Công nghệ Thông tin",
-    location: "Tòa H - Phòng H902",
-    reason: "CPU Intel i5-8400 quá nóng, máy tự động tắt",
-    status: "rejected",
-    priority: "low",
-    requestDate: "2024-01-10",
-    estimatedCost: 5500000,
-    description:
-      "CPU Intel i5-8400 bị quá nhiệt do tản nhiệt hỏng, đã thay tản nhiệt mới nhưng CPU vẫn bị lỗi, cần thay CPU mới.",
-  },
-];
+import { mockReplacementRequests } from "@/lib/mockData";
 
 export default function DuyetDeXuatPage() {
-  const [requests, setRequests] =
-    useState<ReplacementRequestForList[]>(mockRequests);
+  const [requests, setRequests] = useState<ReplacementRequestForList[]>(
+    mockReplacementRequests
+  );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");

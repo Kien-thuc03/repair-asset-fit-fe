@@ -2,12 +2,15 @@
 export { errorTypes, type ErrorType } from "./errorTypes";
 export { mockAssets, comprehensiveAssets } from "./assets";
 export { mockRooms, mockSimpleRooms, type SimpleRoom } from "./rooms";
+export { mockTechnicians } from "./technicians";
 export { mockComponents } from "./components";
 export { lecturerStats, type StatItem } from "./stats";
 export {
   mockRepairRequests,
+  mockRepairRequestsForList,
   repairRequestStatusConfig,
 } from "./repairRequests";
+export { mockReplacementRequests } from "./replacementRequests";
 export {
   mockAssetsLookup,
   mockRepairHistoryLookup,

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   Search,
   Monitor,
-  Wifi,
   CheckCircle,
   AlertTriangle,
   Clock,
@@ -15,240 +14,18 @@ import {
   User,
   Wrench,
 } from "lucide-react";
-import { Asset, RepairHistory } from "@/types";
-
-const mockAssets: Asset[] = [
-  {
-    id: "ASSET001",
-    assetCode: "PC-A101-01",
-    name: "PC Dell OptiPlex 3080 - Máy 01",
-    category: "Máy tính để bàn",
-    model: "Dell OptiPlex 3080",
-    serialNumber: "DL2024001",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    status: "HOẠT_ĐỘNG",
-    purchaseDate: "2023-01-15",
-    warrantyExpiry: "2026-01-15",
-    lastMaintenanceDate: "2024-12-10",
-    assignedTo: "Phòng máy tính A101",
-    specifications: {
-      CPU: "Intel Core i5-12400",
-      RAM: "16GB DDR4",
-      "Ổ cứng": "512GB SSD",
-      "Card màn hình": "Intel UHD Graphics",
-      "Hệ điều hành": "Windows 11 Pro",
-    },
-    qrCode: "QR-PC-A101-01",
-  },
-  {
-    id: "ASSET002",
-    assetCode: "PC-A101-02",
-    name: "PC Dell OptiPlex 3080 - Máy 02",
-    category: "Máy tính để bàn",
-    model: "Dell OptiPlex 3080",
-    serialNumber: "DL2024002",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    status: "BẢO_TRÌ",
-    purchaseDate: "2023-01-15",
-    warrantyExpiry: "2026-01-15",
-    lastMaintenanceDate: "2024-12-12",
-    assignedTo: "Phòng máy tính A101",
-    specifications: {
-      CPU: "Intel Core i5-12400",
-      RAM: "16GB DDR4",
-      "Ổ cứng": "512GB SSD",
-      "Card màn hình": "Intel UHD Graphics",
-      "Hệ điều hành": "Windows 11 Pro",
-    },
-    qrCode: "QR-PC-A101-02",
-  },
-  {
-    id: "ASSET003",
-    assetCode: "PC-A101-03",
-    name: "PC HP ProDesk 400 - Máy 03",
-    category: "Máy tính để bàn",
-    model: "HP ProDesk 400 G9",
-    serialNumber: "HP2024003",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    status: "HỎNG_HÓC",
-    purchaseDate: "2023-03-20",
-    warrantyExpiry: "2026-03-20",
-    lastMaintenanceDate: "2024-11-15",
-    assignedTo: "Phòng máy tính A101",
-    specifications: {
-      CPU: "Intel Core i3-12100",
-      RAM: "8GB DDR4",
-      "Ổ cứng": "256GB SSD",
-      "Card màn hình": "Intel UHD Graphics",
-      "Hệ điều hành": "Windows 11 Pro",
-    },
-    qrCode: "QR-PC-A101-03",
-  },
-  {
-    id: "ASSET004",
-    assetCode: "PC-A101-04",
-    name: "PC Lenovo ThinkCentre - Máy 04",
-    category: "Máy tính để bàn",
-    model: "Lenovo ThinkCentre M70q",
-    serialNumber: "LV2024004",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    status: "HOẠT_ĐỘNG",
-    purchaseDate: "2023-06-10",
-    warrantyExpiry: "2025-06-10",
-    lastMaintenanceDate: "2024-12-05",
-    assignedTo: "Phòng máy tính A101",
-    specifications: {
-      CPU: "Intel Core i5-11400T",
-      RAM: "16GB DDR4",
-      "Ổ cứng": "512GB SSD",
-      "Card màn hình": "Intel UHD Graphics",
-      "Hệ điều hành": "Windows 11 Pro",
-    },
-    qrCode: "QR-PC-A101-04",
-  },
-  {
-    id: "ASSET005",
-    assetCode: "PC-A102-01",
-    name: "PC Dell Inspiron - Máy 05",
-    category: "Máy tính để bàn",
-    model: "Dell Inspiron 3020",
-    serialNumber: "DL2024005",
-    roomId: "ROOM002",
-    roomName: "Phòng máy tính A102",
-    status: "HOẠT_ĐỘNG",
-    purchaseDate: "2023-02-28",
-    warrantyExpiry: "2025-02-28",
-    lastMaintenanceDate: "2024-12-08",
-    assignedTo: "Phòng máy tính A102",
-    specifications: {
-      CPU: "Intel Core i3-13100",
-      RAM: "8GB DDR4",
-      "Ổ cứng": "256GB SSD",
-      "Card màn hình": "Intel UHD Graphics",
-      "Hệ điều hành": "Windows 11 Home",
-    },
-    qrCode: "QR-PC-A102-01",
-  },
-  {
-    id: "ASSET006",
-    assetCode: "PC-A102-02",
-    name: "PC HP Pavilion - Máy 06",
-    category: "Máy tính để bàn",
-    model: "HP Pavilion TP01",
-    serialNumber: "HP2024006",
-    roomId: "ROOM002",
-    roomName: "Phòng máy tính A102",
-    status: "HOẠT_ĐỘNG",
-    purchaseDate: "2023-04-15",
-    warrantyExpiry: "2025-04-15",
-    lastMaintenanceDate: "2024-11-20",
-    assignedTo: "Phòng máy tính A102",
-    specifications: {
-      CPU: "AMD Ryzen 5 5600G",
-      RAM: "16GB DDR4",
-      "Ổ cứng": "512GB SSD",
-      "Card màn hình": "AMD Radeon Graphics",
-      "Hệ điều hành": "Windows 11 Home",
-    },
-    qrCode: "QR-PC-A102-02",
-  },
-];
-
-const mockRepairHistory: RepairHistory[] = [
-  {
-    id: "REPAIR001",
-    assetId: "ASSET001",
-    requestCode: "YCSC-2024-0015",
-    reportDate: "2024-11-20T08:00:00Z",
-    completedDate: "2024-11-21T16:30:00Z",
-    errorType: "Lỗi phần cứng",
-    description: "RAM bị lỗi, máy tính khởi động không ổn định",
-    technicianName: "Kỹ thuật viên Minh",
-    solution: "Thay thế RAM từ 8GB lên 16GB",
-    componentChanges: [
-      {
-        componentType: "RAM",
-        oldComponent: "Kingston 8GB DDR4 2666MHz",
-        newComponent: "Kingston Fury Beast 16GB DDR4 3200MHz",
-        changeReason: "RAM cũ bị lỗi, nâng cấp dung lượng",
-      },
-    ],
-    status: "HOÀN_THÀNH",
-  },
-  {
-    id: "REPAIR002",
-    assetId: "ASSET001",
-    requestCode: "YCSC-2024-0008",
-    reportDate: "2024-10-15T09:15:00Z",
-    completedDate: "2024-10-15T14:20:00Z",
-    errorType: "Lỗi phần mềm",
-    description: "Màn hình xanh chết, hệ điều hành không khởi động được",
-    technicianName: "Kỹ thuật viên An",
-    solution: "Cài đặt lại Windows 11, cập nhật driver",
-    status: "HOÀN_THÀNH",
-  },
-  {
-    id: "REPAIR003",
-    assetId: "ASSET003",
-    requestCode: "YCSC-2024-0025",
-    reportDate: "2024-12-01T10:30:00Z",
-    completedDate: "2024-12-02T15:45:00Z",
-    errorType: "Lỗi phần cứng",
-    description: "Ổ cứng có bad sector, tốc độ truy xuất chậm",
-    technicianName: "Kỹ thuật viên Hùng",
-    solution: "Thay thế ổ cứng HDD bằng SSD mới",
-    componentChanges: [
-      {
-        componentType: "STORAGE",
-        oldComponent: "WD Blue 500GB HDD",
-        newComponent: "Samsung 980 512GB NVMe SSD",
-        changeReason: "Ổ cứng cũ có bad sector, nâng cấp SSD để tăng hiệu suất",
-      },
-    ],
-    status: "HOÀN_THÀNH",
-  },
-];
-
-const statusConfig = {
-  HOẠT_ĐỘNG: {
-    label: "Hoạt động",
-    color: "bg-green-100 text-green-800 border-green-200",
-    icon: CheckCircle,
-  },
-  BẢO_TRÌ: {
-    label: "Bảo trì",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    icon: Clock,
-  },
-  HỎNG_HÓC: {
-    label: "Hỏng hóc",
-    color: "bg-red-100 text-red-800 border-red-200",
-    icon: AlertTriangle,
-  },
-  NGỪNG_SỬ_DỤNG: {
-    label: "Ngừng sử dụng",
-    color: "bg-gray-100 text-gray-800 border-gray-200",
-    icon: Clock,
-  },
-};
-
-const categoryIcons: Record<
-  string,
-  React.ComponentType<{ className?: string }>
-> = {
-  "Máy tính": Monitor,
-  "Thiết bị trình chiếu": Monitor,
-  "Thiết bị điện": AlertTriangle,
-  "Thiết bị mạng": Wifi,
-};
+import { Asset } from "@/types";
+import {
+  mockAssetsLookup,
+  mockRepairHistoryLookup,
+  assetStatusConfig,
+  categoryIcons,
+} from "@/lib/mockData";
 
 export default function TraCuuThietBiPage() {
-  const [assets] = useState<Asset[]>(mockAssets);
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>(mockAssets);
+  const [assets] = useState<Asset[]>(mockAssetsLookup);
+  const [filteredAssets, setFilteredAssets] =
+    useState<Asset[]>(mockAssetsLookup);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -268,7 +45,9 @@ export default function TraCuuThietBiPage() {
 
   // Get repair history for selected asset
   const getRepairHistory = (assetId: string) => {
-    return mockRepairHistory.filter((repair) => repair.assetId === assetId);
+    return mockRepairHistoryLookup.filter(
+      (repair) => repair.assetId === assetId
+    );
   };
 
   // Handle QR scan
@@ -510,7 +289,7 @@ export default function TraCuuThietBiPage() {
       {/* Asset Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {filteredAssets.map((asset) => {
-          const StatusIcon = statusConfig[asset.status].icon;
+          const StatusIcon = assetStatusConfig[asset.status].icon;
           const CategoryIcon = categoryIcons[asset.category] || Monitor;
           const warrantyStatus = getWarrantyStatus(asset.warrantyExpiry);
 
@@ -532,11 +311,13 @@ export default function TraCuuThietBiPage() {
                     </div>
                   </div>
                   <div
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                      statusConfig[asset.status].color
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${
+                      assetStatusConfig[asset.status].color
                     }`}>
-                    <StatusIcon className="w-3 h-3 mr-1" />
-                    {statusConfig[asset.status].label}
+                    <StatusIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                    <span className="truncate">
+                      {assetStatusConfig[asset.status].label}
+                    </span>
                   </div>
                 </div>
 
@@ -694,9 +475,9 @@ export default function TraCuuThietBiPage() {
                         </span>
                         <div
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                            statusConfig[selectedAsset.status].color
+                            assetStatusConfig[selectedAsset.status].color
                           }`}>
-                          {statusConfig[selectedAsset.status].label}
+                          {assetStatusConfig[selectedAsset.status].label}
                         </div>
                       </div>
                     </div>

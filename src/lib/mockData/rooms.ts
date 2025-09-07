@@ -9,6 +9,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H101",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech001",
   },
   {
     id: "ROOM002",
@@ -17,6 +18,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H102",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech001",
   },
   {
     id: "ROOM003",
@@ -25,6 +27,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H103",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech001",
   },
   // Tầng 2 - Tòa H
   {
@@ -34,6 +37,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H201",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech001",
   },
   {
     id: "ROOM005",
@@ -42,6 +46,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H202",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech002",
   },
   // Tầng 3 - Tòa H
   {
@@ -51,6 +56,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H301",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech002",
   },
   {
     id: "ROOM007",
@@ -59,6 +65,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H302 - Phòng Hội thảo",
     status: RoomStatus.ACTIVE,
     unitId: "unit-2", // Phòng Quản trị
+    assignedTechnician: "tech002",
   },
   // Tầng 4 - Tòa H
   {
@@ -68,6 +75,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H401",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech002",
   },
   {
     id: "ROOM009",
@@ -85,6 +93,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H501 - Phòng Đa phương tiện",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech003",
   },
   {
     id: "ROOM011",
@@ -93,6 +102,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H502",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech003",
   },
   // Tầng 6 - Tòa H
   {
@@ -102,6 +112,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H601",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech003",
   },
   {
     id: "ROOM013",
@@ -110,6 +121,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H602",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech003",
   },
   // Tầng 7 - Tòa H
   {
@@ -119,6 +131,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H701",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech004",
   },
   {
     id: "ROOM015",
@@ -127,6 +140,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H702 - Phòng Server",
     status: RoomStatus.ACTIVE,
     unitId: "unit-2", // Phòng Quản trị
+    assignedTechnician: "tech004",
   },
   // Tầng 8 - Tòa H
   {
@@ -136,6 +150,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H801",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech005",
   },
   {
     id: "ROOM017",
@@ -144,6 +159,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H802",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech005",
   },
   // Tầng 9 - Tòa H
   {
@@ -153,6 +169,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H901",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
+    assignedTechnician: "tech005",
   },
   {
     id: "ROOM019",
@@ -161,6 +178,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H902 - Phòng Nghiên cứu",
     status: RoomStatus.ACTIVE,
     unitId: "unit-2", // Phòng Quản trị
+    // Chưa phân công kỹ thuật viên
   },
 ];
 
