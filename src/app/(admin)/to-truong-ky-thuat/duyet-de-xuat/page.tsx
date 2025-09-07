@@ -321,9 +321,9 @@ export default function DuyetDeXuatPage() {
   };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 ">
       {/* Header */}
-      <div className="mb-6 sm:mb-8">
+      <div className="mb-4 sm:mb-6">
         <Link
           href="/to-truong-ky-thuat"
           className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
