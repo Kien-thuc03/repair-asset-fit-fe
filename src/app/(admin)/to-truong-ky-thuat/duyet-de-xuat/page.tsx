@@ -17,23 +17,9 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
+import { ReplacementRequestForList } from "@/types";
 
-interface ReplacementRequest {
-  id: string;
-  assetCode: string;
-  assetName: string;
-  requestedBy: string;
-  unit: string;
-  location: string;
-  reason: string;
-  status: "pending" | "approved" | "rejected";
-  priority: "high" | "medium" | "low";
-  requestDate: string;
-  estimatedCost: number;
-  description: string;
-}
-
-const mockRequests: ReplacementRequest[] = [
+const mockRequests: ReplacementRequestForList[] = [
   {
     id: "REQ-001",
     assetCode: "PC-H301-01",
@@ -127,12 +113,13 @@ const mockRequests: ReplacementRequest[] = [
 ];
 
 export default function DuyetDeXuatPage() {
-  const [requests, setRequests] = useState<ReplacementRequest[]>(mockRequests);
+  const [requests, setRequests] =
+    useState<ReplacementRequestForList[]>(mockRequests);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRequest, setSelectedRequest] =
-    useState<ReplacementRequest | null>(null);
+    useState<ReplacementRequestForList | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -158,9 +145,9 @@ export default function DuyetDeXuatPage() {
       if (!sortField) return 0;
 
       let aValue: string | number | Date =
-        a[sortField as keyof ReplacementRequest];
+        a[sortField as keyof ReplacementRequestForList];
       let bValue: string | number | Date =
-        b[sortField as keyof ReplacementRequest];
+        b[sortField as keyof ReplacementRequestForList];
 
       // Handle date sorting
       if (sortField === "requestDate") {

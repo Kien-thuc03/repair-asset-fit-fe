@@ -17,35 +17,7 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-
-// Local interface cho trang này theo database schema
-interface RepairRequestForList {
-  id: string;
-  requestCode: string; // Mã yêu cầu tự tăng: YCSC-2025-0001
-  assetId: string;
-  assetCode: string; // Mã tài sản QR code được in từ bảng assets
-  assetName: string;
-  componentId?: string;
-  componentName?: string; // Tên linh kiện cụ thể bị lỗi
-  reporterId: string;
-  reporterName: string; // Tên người báo lỗi
-  reporterRole: string; // Vai trò: Giảng viên/KTV
-  assignedTechnicianId?: string;
-  assignedTechnicianName?: string;
-  roomId: string;
-  roomName: string; // Tên phòng máy
-  buildingName: string; // Tên tòa nhà
-  errorTypeId?: string;
-  errorTypeName?: string; // Tên loại lỗi
-  description: string; // Mô tả chi tiết lỗi
-  mediaUrls?: string[]; // Mảng URL ảnh/video minh họa
-  status: "CHỜ_TIẾP_NHẬN" | "ĐANG_XỬ_LÝ" | "HOÀN_THÀNH" | "HỦY_BỎ";
-  resolutionNotes?: string; // Ghi chú KTV về kết quả xử lý
-  createdAt: string; // Thời điểm báo lỗi
-  acceptedAt?: string; // Thời điểm KTV tiếp nhận
-  completedAt?: string; // Thời điểm hoàn tất
-  unit: string; // Đơn vị/Khoa
-}
+import { RepairRequestForList } from "@/types";
 
 const mockRepairRequests: RepairRequestForList[] = [
   {

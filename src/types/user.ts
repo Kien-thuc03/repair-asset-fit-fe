@@ -2,18 +2,18 @@ import { UserRole } from "./repair";
 
 // Định nghĩa trạng thái người dùng
 export enum UserStatus {
-  ACTIVE = 'ACTIVE',       // Hoạt động
-  INACTIVE = 'INACTIVE'    // Không hoạt động
+  ACTIVE = "ACTIVE", // Hoạt động
+  INACTIVE = "INACTIVE", // Không hoạt động
 }
 
 // Interface cho người dùng đầy đủ từ database
 export interface UserEntity {
   id: string;
-  username: string;        // Tài khoản (mã nhân viên)
+  username: string; // Tài khoản (mã nhân viên)
   password: string;
   fullName: string;
   email?: string;
-  unitId?: string;         // ID đơn vị 
+  unitId?: string; // ID đơn vị
   phoneNumber?: string;
   birthDate?: Date;
   status?: UserStatus;
@@ -29,7 +29,7 @@ export interface UserRole_Relation {
 }
 
 // Interface người dùng đầy đủ thông tin để hiển thị
-export interface UserWithRoles extends Omit<UserEntity, 'password'> {
+export interface UserWithRoles extends Omit<UserEntity, "password"> {
   roles: UserRole[];
   activeRole: UserRole;
 }
@@ -43,5 +43,16 @@ export interface AuthenticatedUser {
   unitId?: string;
   roles: UserRole[];
   activeRole: UserRole;
-  department?: string;     // Legacy field for backward compatibility
+  department?: string; // Legacy field for backward compatibility
+}
+
+// Interface cho kỹ thuật viên trong quản lý phân công
+export interface Technician {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: "active" | "busy" | "offline";
+  assignedAreas: string[];
+  currentTask?: string;
 }

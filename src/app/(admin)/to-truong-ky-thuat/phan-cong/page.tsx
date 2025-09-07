@@ -14,24 +14,7 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-
-interface Technician {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  status: "active" | "busy" | "offline";
-  assignedAreas: string[];
-  currentTask?: string;
-}
-
-interface Area {
-  id: string;
-  name: string;
-  building: string;
-  floors: string[];
-  assignedTechnician?: string;
-}
+import { Technician, Area } from "@/types";
 
 const mockTechnicians: Technician[] = [
   {

@@ -7,6 +7,51 @@ export enum UserRole {
   QTV_KHOA = "QTV_KHOA", // Quản trị viên Khoa
 }
 
+// Interface cho danh sách báo lỗi theo database schema
+export interface RepairRequestForList {
+  id: string;
+  requestCode: string; // Mã yêu cầu tự tăng: YCSC-2025-0001
+  assetId: string;
+  assetCode: string; // Mã tài sản QR code được in từ bảng assets
+  assetName: string;
+  componentId?: string;
+  componentName?: string; // Tên linh kiện cụ thể bị lỗi
+  reporterId: string;
+  reporterName: string; // Tên người báo lỗi
+  reporterRole: string; // Vai trò: Giảng viên/KTV
+  assignedTechnicianId?: string;
+  assignedTechnicianName?: string;
+  roomId: string;
+  roomName: string; // Tên phòng máy
+  buildingName: string; // Tên tòa nhà
+  errorTypeId?: string;
+  errorTypeName?: string; // Tên loại lỗi
+  description: string; // Mô tả chi tiết lỗi
+  mediaUrls?: string[]; // Mảng URL ảnh/video minh họa
+  status: "CHỜ_TIẾP_NHẬN" | "ĐANG_XỬ_LÝ" | "HOÀN_THÀNH" | "HỦY_BỎ";
+  resolutionNotes?: string; // Ghi chú KTV về kết quả xử lý
+  createdAt: string; // Thời điểm báo lỗi
+  acceptedAt?: string; // Thời điểm KTV tiếp nhận
+  completedAt?: string; // Thời điểm hoàn tất
+  unit: string; // Đơn vị/Khoa
+}
+
+// Interface cho danh sách đề xuất thay thế trong trang duyệt đề xuất
+export interface ReplacementRequestForList {
+  id: string;
+  assetCode: string;
+  assetName: string;
+  requestedBy: string;
+  unit: string;
+  location: string;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  priority: "high" | "medium" | "low";
+  requestDate: string;
+  estimatedCost: number;
+  description: string;
+}
+
 // Định nghĩa thông tin chi tiết về vai trò
 export const RoleInfo = {
   [UserRole.GIANG_VIEN]: {

@@ -1,14 +1,14 @@
 // Trạng thái của đơn vị
 export enum UnitStatus {
-  ACTIVE = 'ACTIVE',     // Đang hoạt động
-  INACTIVE = 'INACTIVE'  // Không hoạt động
+  ACTIVE = "ACTIVE", // Đang hoạt động
+  INACTIVE = "INACTIVE", // Không hoạt động
 }
 
 // Loại đơn vị
 export enum UnitType {
-  PHONG_KE_HOACH_DAU_TU = 'phòng_kế_hoạch_đầu_tư',
-  PHONG_QUAN_TRI = 'phòng_quản_trị',
-  DON_VI_SU_DUNG = 'đơn_vị_sử_dụng'
+  PHONG_KE_HOACH_DAU_TU = "phòng_kế_hoạch_đầu_tư",
+  PHONG_QUAN_TRI = "phòng_quản_trị",
+  DON_VI_SU_DUNG = "đơn_vị_sử_dụng",
 }
 
 // Interface cho đơn vị
@@ -28,8 +28,8 @@ export interface Unit {
 
 // Interface cho phòng
 export enum RoomStatus {
-  ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE'
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
 }
 
 export interface Room {
@@ -39,4 +39,13 @@ export interface Room {
   roomNumber: string;
   status: RoomStatus;
   unitId?: string;
+}
+
+// Interface cho khu vực phân công kỹ thuật viên
+export interface Area {
+  id: string;
+  name: string;
+  building: string;
+  floors: string[];
+  assignedTechnician?: string;
 }
