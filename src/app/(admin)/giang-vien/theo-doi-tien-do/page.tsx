@@ -1,134 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Eye,
-  Search,
-  X,
-  ChevronUp,
-  ChevronDown,
-} from "lucide-react";
+import { Clock, Eye, Search, X, ChevronUp, ChevronDown } from "lucide-react";
 import { EnhancedRepairRequest as RepairRequest } from "@/types";
-
-const mockRequests: RepairRequest[] = [
-  {
-    id: "req-001",
-    requestCode: "YCSC-2025-0001",
-    assetId: "ASSET001",
-    assetName: "PC Dell OptiPlex 3080 - Máy 01",
-    assetCode: "PC-A101-01",
-    componentId: "COMP001",
-    componentName: "CPU",
-    reporterId: "user-001",
-    reporterName: "Nguyễn Văn A",
-    assignedTechnicianId: "tech-001",
-    assignedTechnicianName: "Kỹ thuật viên Minh",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    errorTypeId: "ET001",
-    errorTypeName: "Không khởi động được",
-    description:
-      "Máy tính không khởi động được, có tiếng beep liên tục khi bấm nút nguồn. Đèn LED mainboard vẫn sáng bình thường.",
-    status: "ĐANG_XỬ_LÝ",
-    createdAt: "2025-01-15T08:30:00Z",
-    acceptedAt: "2025-01-16T09:15:00Z",
-  },
-  {
-    id: "req-002",
-    requestCode: "YCSC-2025-0002",
-    assetId: "ASSET002",
-    assetName: "PC Dell OptiPlex 3080 - Máy 02",
-    assetCode: "PC-A101-02",
-    componentId: "COMP015",
-    componentName: "Màn hình",
-    reporterId: "user-001",
-    reporterName: "Nguyễn Văn A",
-    assignedTechnicianId: "tech-002",
-    assignedTechnicianName: "Kỹ thuật viên Hùng",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    errorTypeId: "ET002",
-    errorTypeName: "Màn hình không hiển thị",
-    description:
-      "Màn hình không hiển thị hình ảnh, đèn nguồn vẫn bật nhưng màn hình đen. Máy tính khởi động bình thường.",
-    status: "HOÀN_THÀNH",
-    resolutionNotes:
-      "Đã thay thế cáp VGA và cập nhật driver card màn hình. Màn hình hoạt động bình thường.",
-    createdAt: "2025-01-10T10:15:00Z",
-    acceptedAt: "2025-01-10T14:20:00Z",
-    completedAt: "2025-01-12T16:45:00Z",
-  },
-  {
-    id: "req-003",
-    requestCode: "YCSC-2025-0003",
-    assetId: "ASSET003",
-    assetName: "PC HP ProDesk 400 - Máy 03",
-    assetCode: "PC-A101-03",
-    reporterId: "user-001",
-    reporterName: "Nguyễn Văn A",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    errorTypeId: "ET005",
-    errorTypeName: "Chạy chậm",
-    description:
-      "Máy tính khởi động và chạy rất chậm, mở ứng dụng lâu, thường xuyên bị đơ.",
-    status: "CHỜ_TIẾP_NHẬN",
-    createdAt: "2025-01-16T14:00:00Z",
-  },
-  {
-    id: "req-004",
-    requestCode: "YCSC-2025-0004",
-    assetId: "ASSET005",
-    assetName: "PC Dell Inspiron - Máy 05",
-    assetCode: "PC-A102-01",
-    componentId: "COMP008",
-    componentName: "Bàn phím",
-    reporterId: "user-002",
-    reporterName: "Trần Thị B",
-    assignedTechnicianId: "tech-001",
-    assignedTechnicianName: "Kỹ thuật viên Minh",
-    roomId: "ROOM002",
-    roomName: "Phòng máy tính A102",
-    errorTypeId: "ET006",
-    errorTypeName: "Lỗi bàn phím/chuột",
-    description:
-      "Một số phím trên bàn phím không hoạt động, đặc biệt là phím Space và Enter.",
-    status: "ĐANG_XỬ_LÝ",
-    createdAt: "2025-01-14T09:20:00Z",
-    acceptedAt: "2025-01-14T15:30:00Z",
-  },
-];
-
-const statusConfig = {
-  CHỜ_TIẾP_NHẬN: {
-    label: "Chờ tiếp nhận",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    icon: Clock,
-  },
-  ĐANG_XỬ_LÝ: {
-    label: "Đang xử lý",
-    color: "bg-blue-100 text-blue-800 border-blue-200",
-    icon: AlertTriangle,
-  },
-  HOÀN_THÀNH: {
-    label: "Hoàn thành",
-    color: "bg-green-100 text-green-800 border-green-200",
-    icon: CheckCircle,
-  },
-  HỦY_BỎ: {
-    label: "Hủy bỏ",
-    color: "bg-gray-100 text-gray-800 border-gray-200",
-    icon: X,
-  },
-};
+import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
 
 export default function TheoDaoTienDoPage() {
-  const [requests] = useState<RepairRequest[]>(mockRequests);
+  const [requests] = useState<RepairRequest[]>(mockRepairRequests);
   const [filteredRequests, setFilteredRequests] =
-    useState<RepairRequest[]>(mockRequests);
+    useState<RepairRequest[]>(mockRepairRequests);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedRequest, setSelectedRequest] = useState<RepairRequest | null>(
@@ -336,7 +216,8 @@ export default function TheoDaoTienDoPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredRequests.map((request) => {
-                const StatusIcon = statusConfig[request.status].icon;
+                const StatusIcon =
+                  repairRequestStatusConfig[request.status].icon;
                 return (
                   <tr key={request.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 text-sm font-medium text-gray-900">
@@ -384,11 +265,11 @@ export default function TheoDaoTienDoPage() {
                     <td className="px-4 py-4">
                       <div
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
-                          statusConfig[request.status].color
+                          repairRequestStatusConfig[request.status].color
                         }`}>
                         <StatusIcon className="w-3 h-3 mr-1 flex-shrink-0" />
                         <span className="truncate">
-                          {statusConfig[request.status].label}
+                          {repairRequestStatusConfig[request.status].label}
                         </span>
                       </div>
                     </td>
@@ -428,7 +309,7 @@ export default function TheoDaoTienDoPage() {
         <div className="lg:hidden">
           <div className="space-y-4 p-4">
             {filteredRequests.map((request) => {
-              const StatusIcon = statusConfig[request.status].icon;
+              const StatusIcon = repairRequestStatusConfig[request.status].icon;
               return (
                 <div
                   key={request.id}
@@ -447,10 +328,10 @@ export default function TheoDaoTienDoPage() {
                     </div>
                     <div
                       className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
-                        statusConfig[request.status].color
+                        repairRequestStatusConfig[request.status].color
                       }`}>
                       <StatusIcon className="w-3 h-3 mr-1" />
-                      {statusConfig[request.status].label}
+                      {repairRequestStatusConfig[request.status].label}
                     </div>
                   </div>
 
@@ -575,9 +456,9 @@ export default function TheoDaoTienDoPage() {
                     </label>
                     <div
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border mt-1 ${
-                        statusConfig[selectedRequest.status].color
+                        repairRequestStatusConfig[selectedRequest.status].color
                       }`}>
-                      {statusConfig[selectedRequest.status].label}
+                      {repairRequestStatusConfig[selectedRequest.status].label}
                     </div>
                   </div>
                 </div>

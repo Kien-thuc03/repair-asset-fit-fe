@@ -4,6 +4,10 @@ export { mockAssets, comprehensiveAssets } from "./assets";
 export { mockRooms, mockSimpleRooms, type SimpleRoom } from "./rooms";
 export { mockComponents } from "./components";
 export { lecturerStats, type StatItem } from "./stats";
+export {
+  mockRepairRequests,
+  repairRequestStatusConfig,
+} from "./repairRequests";
 
 // Export component types from the main types file for convenience
 export { ComponentType, ComponentStatus } from "@/types";
