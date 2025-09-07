@@ -532,11 +532,11 @@ export default function DuyetDeXuatPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden sm:block overflow-x-auto overflow-y-auto flex-1">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="hidden sm:block flex-1 overflow-y-auto">
+            <table className="w-full table-fixed divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr className="h-10 sm:h-12">
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left w-12">
+                  <th className="w-12 px-2 py-2 sm:py-3 text-left">
                     <input
                       type="checkbox"
                       className="h-4 w-4 text-blue-600 rounded"
@@ -548,58 +548,54 @@ export default function DuyetDeXuatPage() {
                     />
                   </th>
                   <th
-                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="w-28 sm:w-32 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("assetCode")}>
                     <div className="flex items-center">
-                      <span className="hidden lg:inline">Tài sản</span>
-                      <span className="lg:hidden">TS</span>
+                      <span className="truncate">Tài sản</span>
                       {getSortIcon("assetCode")}
                     </div>
                   </th>
                   <th
-                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="w-24 sm:w-28 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("requestedBy")}>
                     <div className="flex items-center">
-                      <span className="hidden lg:inline">Người yêu cầu</span>
-                      <span className="lg:hidden">Người YC</span>
+                      <span className="truncate">Người YC</span>
                       {getSortIcon("requestedBy")}
                     </div>
                   </th>
                   <th
-                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 hidden md:table-cell"
+                    className="w-28 sm:w-32 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("location")}>
                     <div className="flex items-center">
-                      Vị trí
+                      <span className="truncate">Vị trí</span>
                       {getSortIcon("location")}
                     </div>
                   </th>
                   <th
-                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="w-20 sm:w-24 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("priority")}>
                     <div className="flex items-center">
-                      <span className="hidden lg:inline">Độ ưu tiên</span>
-                      <span className="lg:hidden">UT</span>
+                      <span className="truncate">Ưu tiên</span>
                       {getSortIcon("priority")}
                     </div>
                   </th>
                   <th
-                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="w-20 sm:w-24 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("status")}>
                     <div className="flex items-center">
-                      <span className="hidden lg:inline">Trạng thái</span>
-                      <span className="lg:hidden">TT</span>
+                      <span className="truncate">Trạng thái</span>
                       {getSortIcon("status")}
                     </div>
                   </th>
                   <th
-                    className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 hidden lg:table-cell"
+                    className="w-24 sm:w-28 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("requestDate")}>
                     <div className="flex items-center">
-                      Ngày yêu cầu
+                      <span className="truncate">Ngày YC</span>
                       {getSortIcon("requestDate")}
                     </div>
                   </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="w-20 px-2 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Thao tác
                   </th>
                 </tr>
@@ -609,8 +605,8 @@ export default function DuyetDeXuatPage() {
                   filteredRequests.map((request) => (
                     <tr
                       key={request.id}
-                      className="hover:bg-gray-50 h-[60px] sm:h-[78px]">
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap w-12">
+                      className="hover:bg-gray-50 h-16 sm:h-20">
+                      <td className="w-12 px-2 py-2 sm:py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
                           className="h-4 w-4 text-blue-600 rounded"
@@ -618,105 +614,102 @@ export default function DuyetDeXuatPage() {
                           onChange={() => handleSelectItem(request.id)}
                         />
                       </td>
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
+                      <td className="w-28 sm:w-32 px-2 py-2 sm:py-4">
                         <div className="flex items-center">
-                          <Computer className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400 mr-2 sm:mr-3 flex-shrink-0" />
-                          <div className="min-w-0">
-                            <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                          <Computer className="h-5 w-5 text-gray-400 mr-1 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium text-gray-900 truncate">
                               {request.assetCode}
                             </div>
                             <div className="text-xs text-gray-500 truncate">
-                              {request.assetName}
+                              {request.assetName
+                                .split(" ")
+                                .slice(0, 2)
+                                .join(" ")}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
+                      <td className="w-24 sm:w-28 px-2 py-2 sm:py-4">
                         <div className="flex items-center">
-                          <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2 flex-shrink-0" />
-                          <div className="min-w-0">
-                            <div className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                          <User className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-medium text-gray-900 truncate">
                               {request.requestedBy}
                             </div>
-                            <div className="text-xs text-gray-500 truncate lg:block hidden">
-                              {request.unit}
+                            <div className="text-xs text-gray-500 truncate">
+                              {request.unit.split(" ").slice(-2).join(" ")}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px] hidden md:table-cell">
+                      <td className="w-28 sm:w-32 px-2 py-2 sm:py-4">
                         <div className="flex items-center">
-                          <Building2 className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                          <span className="text-sm text-gray-900 truncate">
+                          <Building2 className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
+                          <span className="text-xs text-gray-900 truncate">
                             {request.location}
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
+                      <td className="w-20 sm:w-24 px-2 py-2 sm:py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
+                          className={`inline-flex px-1 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
                             request.priority
                           )}`}>
-                          <span className="hidden sm:inline">
-                            {getPriorityText(request.priority)}
-                          </span>
-                          <span className="sm:hidden">
-                            {request.priority === "high"
-                              ? "C"
-                              : request.priority === "medium"
-                              ? "TB"
-                              : "T"}
-                          </span>
+                          {request.priority === "high"
+                            ? "Cao"
+                            : request.priority === "medium"
+                            ? "TB"
+                            : "Thấp"}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px]">
+                      <td className="w-20 sm:w-24 px-2 py-2 sm:py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                          className={`inline-flex px-1 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
                             request.status
                           )}`}>
-                          <span className="hidden sm:inline">
-                            {getStatusText(request.status)}
-                          </span>
-                          <span className="sm:hidden">
-                            {request.status === "pending"
-                              ? "CD"
-                              : request.status === "approved"
-                              ? "DD"
-                              : "TC"}
-                          </span>
+                          {request.status === "pending"
+                            ? "Chờ"
+                            : request.status === "approved"
+                            ? "Duyệt"
+                            : "Từ chối"}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap h-[60px] sm:h-[78px] hidden lg:table-cell">
+                      <td className="w-24 sm:w-28 px-2 py-2 sm:py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <Calendar className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                          <span className="text-sm text-gray-900">
+                          <Calendar className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
+                          <span className="text-xs text-gray-900">
                             {new Date(request.requestDate).toLocaleDateString(
-                              "vi-VN"
+                              "vi-VN",
+                              { day: "2-digit", month: "2-digit" }
                             )}
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-right text-sm font-medium h-[60px] sm:h-[78px]">
-                        <div className="flex items-center justify-end space-x-1 sm:space-x-2">
+                      <td className="w-20 px-2 py-2 sm:py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end space-x-1">
                           <button
                             onClick={() => {
                               setSelectedRequest(request);
                               setShowModal(true);
                             }}
-                            className="text-indigo-600 hover:text-indigo-900 p-1">
-                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                            className="text-indigo-600 hover:text-indigo-900 p-1"
+                            title="Xem chi tiết">
+                            <Eye className="h-3 w-3" />
                           </button>
                           {request.status === "pending" && (
                             <>
                               <button
                                 onClick={() => handleApprove(request.id)}
-                                className="text-green-600 hover:text-green-900 p-1">
-                                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                className="text-green-600 hover:text-green-900 p-1"
+                                title="Phê duyệt">
+                                <CheckCircle className="h-3 w-3" />
                               </button>
                               <button
                                 onClick={() => handleReject(request.id)}
-                                className="text-red-600 hover:text-red-900 p-1">
-                                <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                                className="text-red-600 hover:text-red-900 p-1"
+                                title="Từ chối">
+                                <XCircle className="h-3 w-3" />
                               </button>
                             </>
                           )}
@@ -725,12 +718,12 @@ export default function DuyetDeXuatPage() {
                     </tr>
                   ))
                 ) : (
-                  <tr className="h-[60px] sm:h-[78px]">
-                    <td colSpan={8} className="h-[60px] sm:h-[78px]">
-                      <div className="h-[60px] sm:h-[78px] flex items-center justify-center">
+                  <tr className="h-16 sm:h-20">
+                    <td colSpan={8} className="h-16 sm:h-20">
+                      <div className="h-16 sm:h-20 flex items-center justify-center">
                         <div className="flex flex-col items-center">
-                          <Search className="h-6 w-6 sm:h-8 sm:w-8 text-gray-300 mb-2" />
-                          <h3 className="text-xs sm:text-sm font-medium text-gray-900 mb-1">
+                          <Search className="h-6 w-6 text-gray-300 mb-2" />
+                          <h3 className="text-xs font-medium text-gray-900 mb-1">
                             Không tìm thấy kết quả
                           </h3>
                           <p className="text-xs text-gray-500">

@@ -9,7 +9,6 @@ import {
   AlertTriangle,
   Clock,
   Eye,
-  QrCode,
   X,
   Camera,
   Calendar,
