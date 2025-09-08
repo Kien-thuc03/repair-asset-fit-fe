@@ -43,7 +43,7 @@ export default function KyThuatVienDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard Kỹ thuật viên</h1>
         <p className="mt-2 text-gray-600">
-          Chào mừng {user?.name}! Quản lý công việc sửa chữa của bạn.
+          Chào mừng {user?.fullName}! Quản lý công việc sửa chữa của bạn.
         </p>
       </div>
 
