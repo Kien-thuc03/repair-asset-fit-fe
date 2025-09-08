@@ -16,12 +16,14 @@ interface CreateReplacementListModalProps {
   show: boolean;
   onClose: () => void;
   approvedRequests: ReplacementRequestForList[];
+  onSuccess?: (count: number) => void;
 }
 
 export default function CreateReplacementListModal({
   show,
   onClose,
   approvedRequests,
+  onSuccess,
 }: CreateReplacementListModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -69,12 +71,14 @@ export default function CreateReplacementListModal({
       createdAt: new Date().toISOString(),
     });
 
-    alert(
-      `Đã tạo danh sách "${title}" với ${selectedItems.length} thiết bị !`
-    );
-
     setIsSubmitting(false);
     onClose();
+
+    // Call success callback with the count of items
+    if (onSuccess) {
+      onSuccess(selectedItems.length);
+    }
+
     // Reset form
     setTitle("");
     setDescription("");
