@@ -351,8 +351,8 @@ export default function BaoCaoLoiPage() {
                               ? "bg-blue-200 text-blue-900 border-2 border-blue-400 transform scale-105"
                               : component.status === "FAULTY"
                               ? "bg-red-100 text-red-800 border border-red-200"
-                              : component.status === "MAINTENANCE"
-                              ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                              : component.status === "REMOVED"
+                              ? "bg-gray-100 text-gray-800 border border-gray-200"
                               : "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
                           }`}>
                           <div className="font-medium truncate flex items-center justify-between">
@@ -387,16 +387,16 @@ export default function BaoCaoLoiPage() {
                                   ? "bg-green-200"
                                   : component.status === "FAULTY"
                                   ? "bg-red-200"
-                                  : component.status === "MAINTENANCE"
-                                  ? "bg-yellow-200"
+                                  : component.status === "REMOVED"
+                                  ? "bg-gray-200"
                                   : "bg-gray-200"
                               }`}>
                               {component.status === "INSTALLED"
                                 ? "Hoạt động"
                                 : component.status === "FAULTY"
                                 ? "Có lỗi"
-                                : component.status === "MAINTENANCE"
-                                ? "Bảo trì"
+                                : component.status === "REMOVED"
+                                ? "Đã gỡ"
                                 : component.status}
                             </span>
                             {!canSelect && (
