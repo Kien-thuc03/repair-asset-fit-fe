@@ -2,6 +2,8 @@
 import { useState, useRef } from "react";
 import { XCircle, FileText, Printer, Save } from "lucide-react";
 import { ReplacementList } from "@/lib/mockData/replacementLists";
+import SaveDraftSuccessModal from "./SaveDraftSuccessModal";
+import SubmitReportSuccessModal from "./SubmitReportSuccessModal";
 
 interface CreateReportModalProps {
   show: boolean;
@@ -25,6 +27,9 @@ export default function CreateReportModal({
     director: "TS. Lê Nhất Duy",
     rector: "TS. Phan Hồng Hải",
   });
+
+  const [showSaveDraftModal, setShowSaveDraftModal] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -106,7 +111,7 @@ Trân trọng kính trình.`;
       reportData,
       createdAt: new Date().toISOString(),
     });
-    alert("Đã lưu tờ trình thành công!");
+    setShowSaveDraftModal(true);
   };
 
   const handleSubmit = () => {
@@ -115,8 +120,7 @@ Trân trọng kính trình.`;
       reportData,
       submittedAt: new Date().toISOString(),
     });
-    alert("Đã nộp tờ trình thành công!");
-    onClose();
+    setShowSubmitModal(true);
   };
 
   if (!show || !selectedList) return null;
@@ -426,6 +430,19 @@ Trân trọng kính trình.`;
           </div>
         </div>
       </div>
+
+      {/* Modal notifications */}
+      <SaveDraftSuccessModal
+        isOpen={showSaveDraftModal}
+        onClose={() => setShowSaveDraftModal(false)}
+      />
+      <SubmitReportSuccessModal
+        isOpen={showSubmitModal}
+        onClose={() => {
+          setShowSubmitModal(false);
+          onClose(); // Close the main modal after successful submission
+        }}
+      />
     </div>
   );
 }
