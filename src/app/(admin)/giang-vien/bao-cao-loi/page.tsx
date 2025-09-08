@@ -3,319 +3,12 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle, Camera, Send, QrCode } from "lucide-react";
 import { ReportForm, SimpleAsset as Asset, Component } from "@/types";
-
-const errorTypes = [
-  { id: "ET001", name: "Không khởi động được" },
-  { id: "ET002", name: "Màn hình không hiển thị" },
-  { id: "ET003", name: "Lỗi phần mềm" },
-  { id: "ET004", name: "Mất âm thanh" },
-  { id: "ET005", name: "Chạy chậm" },
-  { id: "ET006", name: "Lỗi bàn phím/chuột" },
-  { id: "ET007", name: "Lỗi kết nối mạng" },
-  { id: "ET008", name: "Khác" },
-];
-
-const mockAssets: Asset[] = [
-  // Phòng A101
-  {
-    id: "ASSET001",
-    name: "PC Dell OptiPlex 3080 - Máy 01",
-    assetCode: "PC-A101-01",
-    roomId: "ROOM001",
-  },
-  {
-    id: "ASSET002",
-    name: "PC Dell OptiPlex 3080 - Máy 02",
-    assetCode: "PC-A101-02",
-    roomId: "ROOM001",
-  },
-  {
-    id: "ASSET003",
-    name: "PC HP ProDesk 400 - Máy 03",
-    assetCode: "PC-A101-03",
-    roomId: "ROOM001",
-  },
-  // Phòng A102
-  {
-    id: "ASSET004",
-    name: "PC Lenovo ThinkCentre - Máy 01",
-    assetCode: "PC-A102-01",
-    roomId: "ROOM002",
-  },
-  {
-    id: "ASSET005",
-    name: "PC Dell Inspiron - Máy 02",
-    assetCode: "PC-A102-02",
-    roomId: "ROOM002",
-  },
-  {
-    id: "ASSET006",
-    name: "PC HP Pavilion - Máy 03",
-    assetCode: "PC-A102-03",
-    roomId: "ROOM002",
-  },
-  // Phòng A103
-  {
-    id: "ASSET007",
-    name: "PC ASUS VivoBook - Máy 01",
-    assetCode: "PC-A103-01",
-    roomId: "ROOM003",
-  },
-  {
-    id: "ASSET008",
-    name: "PC Acer Aspire - Máy 02",
-    assetCode: "PC-A103-02",
-    roomId: "ROOM003",
-  },
-  // Phòng B201
-  {
-    id: "ASSET009",
-    name: "PC Dell Vostro - Máy 01",
-    assetCode: "PC-B201-01",
-    roomId: "ROOM004",
-  },
-  {
-    id: "ASSET010",
-    name: "PC HP EliteDesk - Máy 02",
-    assetCode: "PC-B201-02",
-    roomId: "ROOM004",
-  },
-  // Phòng B202
-  {
-    id: "ASSET011",
-    name: "PC Lenovo IdeaCentre - Máy 01",
-    assetCode: "PC-B202-01",
-    roomId: "ROOM005",
-  },
-  {
-    id: "ASSET012",
-    name: "PC MSI Modern - Máy 02",
-    assetCode: "PC-B202-02",
-    roomId: "ROOM005",
-  },
-];
-
-const mockRooms = [
-  { id: "ROOM001", name: "Phòng máy tính A101" },
-  { id: "ROOM002", name: "Phòng máy tính A102" },
-  { id: "ROOM003", name: "Phòng máy tính A103" },
-  { id: "ROOM004", name: "Phòng máy tính B201" },
-  { id: "ROOM005", name: "Phòng máy tính B202" },
-];
-
-const mockComponents: Component[] = [
-  // ASSET001 - PC Dell OptiPlex 3080 - Máy 01
-  {
-    id: "COMP001",
-    computerAssetId: "ASSET001",
-    componentType: "CPU",
-    name: "Intel Core i5-12400",
-    componentSpecs: "6 cores, 12 threads, 2.5GHz base, 4.4GHz boost",
-    serialNumber: "CPU001",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP002",
-    computerAssetId: "ASSET001",
-    componentType: "RAM",
-    name: "Kingston Fury Beast DDR4",
-    componentSpecs: "16GB 3200MHz",
-    serialNumber: "RAM001",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP003",
-    computerAssetId: "ASSET001",
-    componentType: "STORAGE",
-    name: "Samsung 980 SSD",
-    componentSpecs: "512GB NVMe M.2",
-    serialNumber: "SSD001",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP004",
-    computerAssetId: "ASSET001",
-    componentType: "MOTHERBOARD",
-    name: "Dell OptiPlex 3080 Motherboard",
-    componentSpecs: "Intel B460 chipset",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP005",
-    computerAssetId: "ASSET001",
-    componentType: "PSU",
-    name: "Dell 200W PSU",
-    componentSpecs: "200W 80+ Bronze",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP006",
-    computerAssetId: "ASSET001",
-    componentType: "MONITOR",
-    name: "Dell P2214H",
-    componentSpecs: "22 inch 1920x1080 LED",
-    serialNumber: "MON001",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP007",
-    computerAssetId: "ASSET001",
-    componentType: "KEYBOARD",
-    name: "Dell KB216",
-    componentSpecs: "USB Wired Keyboard",
-    serialNumber: "KB001",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP008",
-    computerAssetId: "ASSET001",
-    componentType: "MOUSE",
-    name: "Dell MS116",
-    componentSpecs: "USB Optical Mouse",
-    serialNumber: "MS001",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP009",
-    computerAssetId: "ASSET001",
-    componentType: "CASE",
-    name: "Dell OptiPlex 3080 Case",
-    componentSpecs: "Mini Tower",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-
-  // ASSET002 - PC Dell OptiPlex 3080 - Máy 02
-  {
-    id: "COMP011",
-    computerAssetId: "ASSET002",
-    componentType: "CPU",
-    name: "Intel Core i5-12400",
-    componentSpecs: "6 cores, 12 threads, 2.5GHz base, 4.4GHz boost",
-    serialNumber: "CPU002",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP012",
-    computerAssetId: "ASSET002",
-    componentType: "RAM",
-    name: "Kingston Fury Beast DDR4",
-    componentSpecs: "16GB 3200MHz",
-    serialNumber: "RAM002",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP013",
-    computerAssetId: "ASSET002",
-    componentType: "STORAGE",
-    name: "Samsung 980 SSD",
-    componentSpecs: "512GB NVMe M.2",
-    serialNumber: "SSD002",
-    status: "FAULTY",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP014",
-    computerAssetId: "ASSET002",
-    componentType: "MOTHERBOARD",
-    name: "Dell OptiPlex 3080 Motherboard",
-    componentSpecs: "Intel B460 chipset",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP015",
-    computerAssetId: "ASSET002",
-    componentType: "MONITOR",
-    name: "Dell P2214H",
-    componentSpecs: "22 inch 1920x1080 LED",
-    serialNumber: "MON002",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP016",
-    computerAssetId: "ASSET002",
-    componentType: "KEYBOARD",
-    name: "Dell KB216",
-    componentSpecs: "USB Wired Keyboard",
-    serialNumber: "KB002",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-  {
-    id: "COMP017",
-    computerAssetId: "ASSET002",
-    componentType: "MOUSE",
-    name: "Dell MS116",
-    componentSpecs: "USB Optical Mouse",
-    serialNumber: "MS002",
-    status: "INSTALLED",
-    installedAt: "2023-01-15T00:00:00Z",
-  },
-
-  // ASSET003 - PC HP ProDesk 400 - Máy 03
-  {
-    id: "COMP021",
-    computerAssetId: "ASSET003",
-    componentType: "CPU",
-    name: "Intel Core i3-12100",
-    componentSpecs: "4 cores, 8 threads, 3.3GHz base, 4.3GHz boost",
-    serialNumber: "CPU003",
-    status: "INSTALLED",
-    installedAt: "2023-03-20T00:00:00Z",
-  },
-  {
-    id: "COMP022",
-    computerAssetId: "ASSET003",
-    componentType: "RAM",
-    name: "Crucial DDR4",
-    componentSpecs: "8GB 2666MHz",
-    serialNumber: "RAM003",
-    status: "INSTALLED",
-    installedAt: "2023-03-20T00:00:00Z",
-  },
-  {
-    id: "COMP023",
-    computerAssetId: "ASSET003",
-    componentType: "STORAGE",
-    name: "WD Blue SSD",
-    componentSpecs: "256GB SATA",
-    serialNumber: "SSD003",
-    status: "INSTALLED",
-    installedAt: "2023-03-20T00:00:00Z",
-  },
-  {
-    id: "COMP024",
-    computerAssetId: "ASSET003",
-    componentType: "MONITOR",
-    name: "HP P22v G4",
-    componentSpecs: "21.5 inch 1920x1080 IPS",
-    serialNumber: "MON003",
-    status: "FAULTY",
-    installedAt: "2023-03-20T00:00:00Z",
-  },
-  {
-    id: "COMP025",
-    computerAssetId: "ASSET003",
-    componentType: "KEYBOARD",
-    name: "HP Standard Keyboard",
-    componentSpecs: "USB Wired Keyboard",
-    serialNumber: "KB003",
-    status: "INSTALLED",
-    installedAt: "2023-03-20T00:00:00Z",
-  },
-];
+import {
+  errorTypes,
+  mockAssets,
+  mockSimpleRooms,
+  mockComponents,
+} from "@/lib/mockData";
 
 export default function BaoCaoLoiPage() {
   const [formData, setFormData] = useState<ReportForm>({
@@ -330,6 +23,9 @@ export default function BaoCaoLoiPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [filteredComponents, setFilteredComponents] = useState<Component[]>([]);
+  const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>(
+    []
+  );
   const [isMobile, setIsMobile] = useState(false);
 
   // Debug filteredComponents changes
@@ -366,12 +62,14 @@ export default function BaoCaoLoiPage() {
       description: "",
       mediaFiles: [],
     });
+    setSelectedComponentIds([]);
     setFilteredAssets([]);
     setFilteredComponents([]);
   };
 
   const handleRoomChange = (roomId: string) => {
     setFormData((prev) => ({ ...prev, roomId, assetId: "", componentId: "" }));
+    setSelectedComponentIds([]);
     // Lọc thiết bị theo phòng đã chọn
     const roomAssets = mockAssets.filter((asset) => asset.roomId === roomId);
     setFilteredAssets(roomAssets);
@@ -380,6 +78,7 @@ export default function BaoCaoLoiPage() {
 
   const handleAssetChange = (assetId: string) => {
     setFormData((prev) => ({ ...prev, assetId, componentId: "" }));
+    setSelectedComponentIds([]);
     setFilteredComponents(
       mockComponents.filter((comp) => comp.computerAssetId === assetId)
     );
@@ -393,7 +92,7 @@ export default function BaoCaoLoiPage() {
 
     if (asset) {
       // Tự động điền thông tin từ QR code
-      const room = mockRooms.find((room) => room.id === asset.roomId);
+      const room = mockSimpleRooms.find((room) => room.id === asset.roomId);
       console.log("Found room:", room);
 
       if (room) {
@@ -495,7 +194,7 @@ export default function BaoCaoLoiPage() {
                 onChange={(e) => handleRoomChange(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 <option value="">Chọn phòng</option>
-                {mockRooms.map((room) => (
+                {mockSimpleRooms.map((room) => (
                   <option key={room.id} value={room.id}>
                     {room.name}
                   </option>
@@ -530,12 +229,10 @@ export default function BaoCaoLoiPage() {
               </select>
             </div>
 
-            {/* Component Selection - Hiển thị tự động sau khi chọn máy */}
+            {/* Component Selection - Click trực tiếp vào linh kiện */}
             <div className="sm:col-span-2">
-              <label
-                htmlFor="componentId"
-                className="block text-sm font-medium text-gray-700">
-                Linh kiện cụ thể gặp lỗi (tùy chọn)
+              <label className="block text-sm font-medium text-gray-700">
+                Chọn linh kiện gặp lỗi (có thể chọn nhiều)
               </label>
               {!formData.assetId ? (
                 <p className="mt-1 text-sm text-gray-500 italic">
@@ -546,50 +243,113 @@ export default function BaoCaoLoiPage() {
                   Không có linh kiện nào được tìm thấy cho thiết bị này
                 </p>
               ) : (
-                <>
-                  <select
-                    id="componentId"
-                    value={formData.componentId}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        componentId: e.target.value,
-                      }))
-                    }
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">
-                      Chọn linh kiện cụ thể (nếu biết rõ)
-                    </option>
-                    {filteredComponents.map((component) => (
-                      <option key={component.id} value={component.id}>
-                        {component.componentType} - {component.name}
-                        {component.componentSpecs &&
-                          ` (${component.componentSpecs})`}
-                        {component.status === "FAULTY" && " - ⚠️ Đã báo lỗi"}
-                        {component.status === "MAINTENANCE" &&
-                          " - 🔧 Đang bảo trì"}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Hiển thị danh sách tất cả linh kiện trong máy để tham khảo */}
-                  <div className="mt-3 p-3 bg-gray-50 rounded-md">
-                    <p className="text-sm font-medium text-gray-700 mb-2">
-                      Tất cả linh kiện trong máy này:
+                <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-medium text-gray-700">
+                      Click vào linh kiện gặp lỗi:
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      {filteredComponents.map((component) => (
+                    {selectedComponentIds.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedComponentIds([]);
+                          setFormData((prev) => ({
+                            ...prev,
+                            componentId: "",
+                          }));
+                        }}
+                        className="text-xs text-red-600 hover:text-red-800 underline">
+                        Bỏ chọn tất cả ({selectedComponentIds.length})
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Hiển thị linh kiện đã chọn */}
+                  {selectedComponentIds.length > 0 && (
+                    <div className="mb-3 p-2 bg-blue-100 border border-blue-300 rounded">
+                      <p className="text-sm font-medium text-blue-900 mb-2">
+                        ✓ Đã chọn {selectedComponentIds.length} linh kiện:
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedComponentIds.map((componentId) => {
+                          const component = filteredComponents.find(
+                            (c) => c.id === componentId
+                          );
+                          return (
+                            <span
+                              key={componentId}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-900">
+                              {component?.componentType}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newSelectedIds =
+                                    selectedComponentIds.filter(
+                                      (id) => id !== componentId
+                                    );
+                                  setSelectedComponentIds(newSelectedIds);
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    componentId:
+                                      newSelectedIds.length > 0
+                                        ? newSelectedIds[0]
+                                        : "",
+                                  }));
+                                }}
+                                className="ml-1 text-blue-700 hover:text-blue-900">
+                                ×
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    {filteredComponents.map((component) => {
+                      const isSelected = selectedComponentIds.includes(
+                        component.id
+                      );
+                      return (
                         <div
                           key={component.id}
-                          className={`p-2 rounded ${
-                            component.status === "FAULTY"
-                              ? "bg-red-100 text-red-800 border border-red-200"
+                          onClick={() => {
+                            let newSelectedIds;
+                            if (isSelected) {
+                              newSelectedIds = selectedComponentIds.filter(
+                                (id) => id !== component.id
+                              );
+                            } else {
+                              newSelectedIds = [
+                                ...selectedComponentIds,
+                                component.id,
+                              ];
+                            }
+                            setSelectedComponentIds(newSelectedIds);
+                            setFormData((prev) => ({
+                              ...prev,
+                              componentId:
+                                newSelectedIds.length > 0
+                                  ? newSelectedIds[0]
+                                  : "",
+                            }));
+                          }}
+                          className={`p-2 rounded cursor-pointer transition-all duration-200 hover:shadow-md ${
+                            isSelected
+                              ? "bg-blue-200 text-blue-900 border-2 border-blue-400 transform scale-105"
+                              : component.status === "FAULTY"
+                              ? "bg-red-100 text-red-800 border border-red-200 hover:bg-red-200"
                               : component.status === "MAINTENANCE"
-                              ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                              : "bg-green-100 text-green-800 border border-green-200"
+                              ? "bg-yellow-100 text-yellow-800 border border-yellow-200 hover:bg-yellow-200"
+                              : "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
                           }`}>
-                          <div className="font-medium truncate">
-                            {component.componentType}
+                          <div className="font-medium truncate flex items-center justify-between">
+                            <span>{component.componentType}</span>
+                            {isSelected && (
+                              <span className="text-blue-600 font-bold">✓</span>
+                            )}
                           </div>
                           <div className="text-gray-600 truncate">
                             {component.name}
@@ -602,7 +362,9 @@ export default function BaoCaoLoiPage() {
                           <div className="mt-1">
                             <span
                               className={`px-1 py-0.5 rounded text-xs ${
-                                component.status === "INSTALLED"
+                                isSelected
+                                  ? "bg-blue-300"
+                                  : component.status === "INSTALLED"
                                   ? "bg-green-200"
                                   : component.status === "FAULTY"
                                   ? "bg-red-200"
@@ -620,10 +382,15 @@ export default function BaoCaoLoiPage() {
                             </span>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                </>
+
+                  <p className="text-xs text-gray-500 mt-2 italic">
+                    💡 Tip: Click vào linh kiện để chọn/bỏ chọn. Có thể chọn
+                    nhiều linh kiện cùng lúc.
+                  </p>
+                </div>
               )}
             </div>
           </div>

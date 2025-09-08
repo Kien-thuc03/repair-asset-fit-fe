@@ -1,134 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Eye,
-  Search,
-  X,
-  ChevronUp,
-  ChevronDown,
-} from "lucide-react";
+import { Clock, Eye, Search, X, ChevronUp, ChevronDown } from "lucide-react";
 import { EnhancedRepairRequest as RepairRequest } from "@/types";
-
-const mockRequests: RepairRequest[] = [
-  {
-    id: "req-001",
-    requestCode: "YCSC-2025-0001",
-    assetId: "ASSET001",
-    assetName: "PC Dell OptiPlex 3080 - Máy 01",
-    assetCode: "PC-A101-01",
-    componentId: "COMP001",
-    componentName: "CPU",
-    reporterId: "user-001",
-    reporterName: "Nguyễn Văn A",
-    assignedTechnicianId: "tech-001",
-    assignedTechnicianName: "Kỹ thuật viên Minh",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    errorTypeId: "ET001",
-    errorTypeName: "Không khởi động được",
-    description:
-      "Máy tính không khởi động được, có tiếng beep liên tục khi bấm nút nguồn. Đèn LED mainboard vẫn sáng bình thường.",
-    status: "ĐANG_XỬ_LÝ",
-    createdAt: "2025-01-15T08:30:00Z",
-    acceptedAt: "2025-01-16T09:15:00Z",
-  },
-  {
-    id: "req-002",
-    requestCode: "YCSC-2025-0002",
-    assetId: "ASSET002",
-    assetName: "PC Dell OptiPlex 3080 - Máy 02",
-    assetCode: "PC-A101-02",
-    componentId: "COMP015",
-    componentName: "Màn hình",
-    reporterId: "user-001",
-    reporterName: "Nguyễn Văn A",
-    assignedTechnicianId: "tech-002",
-    assignedTechnicianName: "Kỹ thuật viên Hùng",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    errorTypeId: "ET002",
-    errorTypeName: "Màn hình không hiển thị",
-    description:
-      "Màn hình không hiển thị hình ảnh, đèn nguồn vẫn bật nhưng màn hình đen. Máy tính khởi động bình thường.",
-    status: "HOÀN_THÀNH",
-    resolutionNotes:
-      "Đã thay thế cáp VGA và cập nhật driver card màn hình. Màn hình hoạt động bình thường.",
-    createdAt: "2025-01-10T10:15:00Z",
-    acceptedAt: "2025-01-10T14:20:00Z",
-    completedAt: "2025-01-12T16:45:00Z",
-  },
-  {
-    id: "req-003",
-    requestCode: "YCSC-2025-0003",
-    assetId: "ASSET003",
-    assetName: "PC HP ProDesk 400 - Máy 03",
-    assetCode: "PC-A101-03",
-    reporterId: "user-001",
-    reporterName: "Nguyễn Văn A",
-    roomId: "ROOM001",
-    roomName: "Phòng máy tính A101",
-    errorTypeId: "ET005",
-    errorTypeName: "Chạy chậm",
-    description:
-      "Máy tính khởi động và chạy rất chậm, mở ứng dụng lâu, thường xuyên bị đơ.",
-    status: "CHỜ_TIẾP_NHẬN",
-    createdAt: "2025-01-16T14:00:00Z",
-  },
-  {
-    id: "req-004",
-    requestCode: "YCSC-2025-0004",
-    assetId: "ASSET005",
-    assetName: "PC Dell Inspiron - Máy 05",
-    assetCode: "PC-A102-01",
-    componentId: "COMP008",
-    componentName: "Bàn phím",
-    reporterId: "user-002",
-    reporterName: "Trần Thị B",
-    assignedTechnicianId: "tech-001",
-    assignedTechnicianName: "Kỹ thuật viên Minh",
-    roomId: "ROOM002",
-    roomName: "Phòng máy tính A102",
-    errorTypeId: "ET006",
-    errorTypeName: "Lỗi bàn phím/chuột",
-    description:
-      "Một số phím trên bàn phím không hoạt động, đặc biệt là phím Space và Enter.",
-    status: "ĐANG_XỬ_LÝ",
-    createdAt: "2025-01-14T09:20:00Z",
-    acceptedAt: "2025-01-14T15:30:00Z",
-  },
-];
-
-const statusConfig = {
-  CHỜ_TIẾP_NHẬN: {
-    label: "Chờ tiếp nhận",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    icon: Clock,
-  },
-  ĐANG_XỬ_LÝ: {
-    label: "Đang xử lý",
-    color: "bg-blue-100 text-blue-800 border-blue-200",
-    icon: AlertTriangle,
-  },
-  HOÀN_THÀNH: {
-    label: "Hoàn thành",
-    color: "bg-green-100 text-green-800 border-green-200",
-    icon: CheckCircle,
-  },
-  HỦY_BỎ: {
-    label: "Hủy bỏ",
-    color: "bg-gray-100 text-gray-800 border-gray-200",
-    icon: X,
-  },
-};
+import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
 
 export default function TheoDaoTienDoPage() {
-  const [requests] = useState<RepairRequest[]>(mockRequests);
+  const [requests] = useState<RepairRequest[]>(mockRepairRequests);
   const [filteredRequests, setFilteredRequests] =
-    useState<RepairRequest[]>(mockRequests);
+    useState<RepairRequest[]>(mockRepairRequests);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedRequest, setSelectedRequest] = useState<RepairRequest | null>(
@@ -137,12 +17,21 @@ export default function TheoDaoTienDoPage() {
 
   // Sorting state
   const [sortField, setSortField] = useState<keyof RepairRequest | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+    "asc"
+  );
 
   // Handle sorting
   const handleSort = (field: keyof RepairRequest) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortField(null);
+      } else {
+        setSortDirection("asc");
+      }
     } else {
       setSortField(field);
       setSortDirection("asc");
@@ -169,7 +58,7 @@ export default function TheoDaoTienDoPage() {
     }
 
     // Apply sorting
-    if (sortField) {
+    if (sortField && sortDirection) {
       filtered.sort((a, b) => {
         const aValue: string | undefined = a[sortField] as string | undefined;
         const bValue: string | undefined = b[sortField] as string | undefined;
@@ -220,7 +109,7 @@ export default function TheoDaoTienDoPage() {
     children: React.ReactNode;
   }) => (
     <th
-      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
+      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
       onClick={() => handleSort(field)}>
       <div className="flex items-center space-x-1">
         <span>{children}</span>
@@ -245,7 +134,7 @@ export default function TheoDaoTienDoPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen">
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center space-x-3">
@@ -306,7 +195,8 @@ export default function TheoDaoTienDoPage() {
           </h3>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table */}
+        <div className="hidden lg:block">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -319,61 +209,93 @@ export default function TheoDaoTienDoPage() {
                   Người xử lý
                 </SortableHeader>
                 <SortableHeader field="createdAt">Ngày tạo</SortableHeader>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredRequests.map((request) => {
-                const StatusIcon = statusConfig[request.status].icon;
+                const StatusIcon =
+                  repairRequestStatusConfig[request.status].icon;
                 return (
                   <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {request.requestCode}
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                      <div
+                        className="max-w-[120px] truncate"
+                        title={request.requestCode}>
+                        {request.requestCode}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
+                    <td className="px-4 py-4">
+                      <div className="max-w-[160px]">
+                        <div
+                          className="text-sm font-medium text-gray-900 truncate"
+                          title={request.assetName}>
                           {request.assetName}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div
+                          className="text-xs text-gray-500 truncate"
+                          title={request.assetCode}>
                           {request.assetCode}
                         </div>
                         {request.componentName && (
-                          <div className="text-xs text-gray-400">
-                            Linh kiện: {request.componentName}
+                          <div
+                            className="text-xs text-gray-400 truncate"
+                            title={`Linh kiện: ${request.componentName}`}>
+                            LK: {request.componentName}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.roomName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.errorTypeName || "Chưa phân loại"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 text-sm text-gray-500">
                       <div
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          statusConfig[request.status].color
-                        }`}>
-                        <StatusIcon className="w-3 h-3 mr-1" />
-                        {statusConfig[request.status].label}
+                        className="max-w-[100px] truncate"
+                        title={request.roomName}>
+                        {request.roomName}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {request.assignedTechnicianName || "Chưa tiếp nhận"}
+                    <td className="px-4 py-4 text-sm text-gray-500">
+                      <div
+                        className="max-w-[120px] truncate"
+                        title={request.errorTypeName || "Chưa phân loại"}>
+                        {request.errorTypeName || "Chưa phân loại"}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(request.createdAt)}
+                    <td className="px-4 py-4">
+                      <div
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
+                          repairRequestStatusConfig[request.status].color
+                        }`}>
+                        <StatusIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">
+                          {repairRequestStatusConfig[request.status].label}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-4 py-4 text-sm text-gray-500">
+                      <div
+                        className="max-w-[120px] truncate"
+                        title={
+                          request.assignedTechnicianName || "Chưa tiếp nhận"
+                        }>
+                        {request.assignedTechnicianName || "Chưa tiếp nhận"}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-500">
+                      <div
+                        className="max-w-[100px] truncate"
+                        title={formatDate(request.createdAt)}>
+                        {new Date(request.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 text-right text-sm font-medium">
                       <button
                         onClick={() => setSelectedRequest(request)}
                         className="text-blue-600 hover:text-blue-900 inline-flex items-center">
-                        <Eye className="w-4 h-4 mr-1" />
-                        Chi tiết
+                        <Eye className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>
@@ -381,6 +303,85 @@ export default function TheoDaoTienDoPage() {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile/Tablet Cards */}
+        <div className="lg:hidden">
+          <div className="space-y-4 p-4">
+            {filteredRequests.map((request) => {
+              const StatusIcon = repairRequestStatusConfig[request.status].icon;
+              return (
+                <div
+                  key={request.id}
+                  className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                        {request.requestCode}
+                      </h4>
+                      <p className="text-sm text-gray-600 truncate">
+                        {request.assetName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {request.assetCode}
+                      </p>
+                    </div>
+                    <div
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
+                        repairRequestStatusConfig[request.status].color
+                      }`}>
+                      <StatusIcon className="w-3 h-3 mr-1" />
+                      {repairRequestStatusConfig[request.status].label}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Phòng:</span>
+                      <p className="text-gray-900 truncate">
+                        {request.roomName}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Loại lỗi:</span>
+                      <p className="text-gray-900 truncate">
+                        {request.errorTypeName || "Chưa phân loại"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Người xử lý:</span>
+                      <p className="text-gray-900 truncate">
+                        {request.assignedTechnicianName || "Chưa tiếp nhận"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Ngày tạo:</span>
+                      <p className="text-gray-900">
+                        {new Date(request.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {request.componentName && (
+                    <div className="text-xs text-gray-400">
+                      Linh kiện: {request.componentName}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setSelectedRequest(request)}
+                      className="text-blue-600 hover:text-blue-900 inline-flex items-center text-sm">
+                      <Eye className="w-4 h-4 mr-1" />
+                      Chi tiết
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {filteredRequests.length === 0 && (
@@ -395,6 +396,9 @@ export default function TheoDaoTienDoPage() {
           </div>
         )}
       </div>
+
+      {/* Spacer to ensure minimum height and consistent scrollbar */}
+      <div className="min-h-[200px]"></div>
 
       {/* Request Detail Modal */}
       {selectedRequest && (
@@ -452,9 +456,9 @@ export default function TheoDaoTienDoPage() {
                     </label>
                     <div
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border mt-1 ${
-                        statusConfig[selectedRequest.status].color
+                        repairRequestStatusConfig[selectedRequest.status].color
                       }`}>
-                      {statusConfig[selectedRequest.status].label}
+                      {repairRequestStatusConfig[selectedRequest.status].label}
                     </div>
                   </div>
                 </div>

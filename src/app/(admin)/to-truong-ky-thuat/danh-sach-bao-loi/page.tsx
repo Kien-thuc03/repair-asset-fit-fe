@@ -14,187 +14,16 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Download,
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-
-// Local interface cho trang này theo database schema
-interface RepairRequestForList {
-  id: string;
-  requestCode: string; // Mã yêu cầu tự tăng: YCSC-2025-0001
-  assetId: string;
-  assetCode: string; // Mã tài sản QR code được in từ bảng assets
-  assetName: string;
-  componentId?: string;
-  componentName?: string; // Tên linh kiện cụ thể bị lỗi
-  reporterId: string;
-  reporterName: string; // Tên người báo lỗi
-  reporterRole: string; // Vai trò: Giảng viên/KTV
-  assignedTechnicianId?: string;
-  assignedTechnicianName?: string;
-  roomId: string;
-  roomName: string; // Tên phòng máy
-  buildingName: string; // Tên tòa nhà
-  errorTypeId?: string;
-  errorTypeName?: string; // Tên loại lỗi
-  description: string; // Mô tả chi tiết lỗi
-  mediaUrls?: string[]; // Mảng URL ảnh/video minh họa
-  status: "CHỜ_TIẾP_NHẬN" | "ĐANG_XỬ_LÝ" | "HOÀN_THÀNH" | "HỦY_BỎ";
-  resolutionNotes?: string; // Ghi chú KTV về kết quả xử lý
-  createdAt: string; // Thời điểm báo lỗi
-  acceptedAt?: string; // Thời điểm KTV tiếp nhận
-  completedAt?: string; // Thời điểm hoàn tất
-  unit: string; // Đơn vị/Khoa
-}
-
-const mockRepairRequests: RepairRequestForList[] = [
-  {
-    id: "req-001",
-    requestCode: "YCSC-2025-0001",
-    assetId: "asset-001",
-    assetCode: "PC-H301-01",
-    assetName: "Máy tính Dell OptiPlex 3070",
-    componentId: "comp-001",
-    componentName: "Nguồn điện 500W",
-    reporterId: "user-001",
-    reporterName: "Nguyễn Văn A",
-    reporterRole: "Giảng viên",
-    assignedTechnicianId: "tech-001",
-    assignedTechnicianName: "Trần Thị B",
-    roomId: "room-001",
-    roomName: "H301",
-    buildingName: "Tòa H",
-    errorTypeId: "error-001",
-    errorTypeName: "Hỏng nguồn điện",
-    description:
-      "Máy tính không khởi động được, có mùi cháy từ nguồn điện 500W, cần thay thay nguồn mới ngay lập tức",
-    mediaUrls: ["image1.jpg", "image2.jpg"],
-    status: "CHỜ_TIẾP_NHẬN",
-    resolutionNotes: "",
-    createdAt: "2024-01-15T08:30:00",
-    acceptedAt: "",
-    completedAt: "",
-    unit: "Khoa Công nghệ Thông tin",
-  },
-  {
-    id: "req-002",
-    requestCode: "YCSC-2025-0002",
-    assetId: "asset-002",
-    assetCode: "PC-H205-15",
-    assetName: "Máy tính HP EliteDesk 800",
-    componentId: "comp-002",
-    componentName: "RAM DDR4 8GB",
-    reporterId: "user-002",
-    reporterName: "Lê Văn C",
-    reporterRole: "Giảng viên",
-    assignedTechnicianId: "tech-002",
-    assignedTechnicianName: "Phạm Văn D",
-    roomId: "room-002",
-    roomName: "H205",
-    buildingName: "Tòa H",
-    errorTypeId: "error-002",
-    errorTypeName: "Lỗi RAM",
-    description: "RAM DDR4 8GB bị lỗi, máy không khởi động được, màn hình đen",
-    mediaUrls: ["ram_error.jpg"],
-    status: "ĐANG_XỬ_LÝ",
-    resolutionNotes: "Đã kiểm tra RAM, đang chờ linh kiện mới",
-    createdAt: "2024-01-14T14:15:00",
-    acceptedAt: "2024-01-14T15:00:00",
-    completedAt: "",
-    unit: "Khoa Công nghệ Thông tin",
-  },
-  {
-    id: "req-003",
-    requestCode: "YCSC-2025-0003",
-    assetId: "asset-003",
-    assetCode: "PC-H704-08",
-    assetName: "Máy tính Asus VivoPC",
-    componentId: "comp-003",
-    componentName: "SSD 256GB",
-    reporterId: "user-003",
-    reporterName: "Hoàng Thị E",
-    reporterRole: "Giảng viên",
-    assignedTechnicianId: "tech-003",
-    assignedTechnicianName: "Nguyễn Văn F",
-    roomId: "room-003",
-    roomName: "H704",
-    buildingName: "Tòa H",
-    errorTypeId: "error-003",
-    errorTypeName: "Lỗi ổ cứng",
-    description:
-      "Ổ cứng SSD 256GB bị bad sector nghiêm trọng, mất dữ liệu, không thể truy cập",
-    mediaUrls: ["ssd_error.jpg"],
-    status: "HOÀN_THÀNH",
-    resolutionNotes:
-      "Đã thay SSD mới Samsung 256GB, phục hồi dữ liệu thành công từ backup",
-    createdAt: "2024-01-12T09:00:00",
-    acceptedAt: "2024-01-12T10:00:00",
-    completedAt: "2024-01-13T16:00:00",
-    unit: "Khoa Công nghệ Thông tin",
-  },
-  {
-    id: "req-004",
-    requestCode: "YCSC-2025-0004",
-    assetId: "asset-004",
-    assetCode: "PC-H508-11",
-    assetName: "Máy tính MSI Pro",
-    componentId: "comp-004",
-    componentName: "Card đồ họa GTX 1050",
-    reporterId: "user-004",
-    reporterName: "Võ Thị F",
-    reporterRole: "KTV",
-    assignedTechnicianId: "tech-004",
-    assignedTechnicianName: "Hoàng Văn E",
-    roomId: "room-004",
-    roomName: "H508",
-    buildingName: "Tòa H",
-    errorTypeId: "error-004",
-    errorTypeName: "Lỗi card đồ họa",
-    description:
-      "Card đồ họa NVIDIA GTX 1050 2GB bị lỗi chip, màn hình không hiển thị hình ảnh",
-    mediaUrls: ["gpu_error.jpg", "screen_black.jpg"],
-    status: "CHỜ_TIẾP_NHẬN",
-    resolutionNotes: "",
-    createdAt: "2024-01-13T11:20:00",
-    acceptedAt: "",
-    completedAt: "",
-    unit: "Khoa Công nghệ Thông tin",
-  },
-  {
-    id: "req-005",
-    requestCode: "YCSC-2025-0005",
-    assetId: "asset-005",
-    assetCode: "PC-H109-22",
-    assetName: "Máy tính Lenovo ThinkCentre",
-    componentId: "comp-005",
-    componentName: "CPU Intel i5-8400",
-    reporterId: "user-005",
-    reporterName: "Phạm Thị D",
-    reporterRole: "Giảng viên",
-    assignedTechnicianId: "tech-005",
-    assignedTechnicianName: "Lê Văn C",
-    roomId: "room-005",
-    roomName: "H109",
-    buildingName: "Tòa H",
-    errorTypeId: "error-005",
-    errorTypeName: "Lỗi CPU",
-    description:
-      "CPU Intel i5-8400 bị quá nhiệt, máy tự động tắt liên tục sau 5-10 phút sử dụng",
-    mediaUrls: ["cpu_temp.jpg"],
-    status: "ĐANG_XỬ_LÝ",
-    resolutionNotes:
-      "Đang thay tản nhiệt mới và kiểm tra CPU, có thể cần thay CPU",
-    createdAt: "2024-01-16T07:45:00",
-    acceptedAt: "2024-01-16T08:30:00",
-    completedAt: "",
-    unit: "Khoa Công nghệ Thông tin",
-  },
-];
+import { RepairRequestForList } from "@/types";
+import { mockRepairRequestsForList } from "@/lib/mockData";
 
 export default function DanhSachBaoLoiPage() {
-  const [requests, setRequests] =
-    useState<RepairRequestForList[]>(mockRepairRequests);
+  const [requests, setRequests] = useState<RepairRequestForList[]>(
+    mockRepairRequestsForList
+  );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedErrorType, setSelectedErrorType] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -202,34 +31,48 @@ export default function DanhSachBaoLoiPage() {
     useState<RepairRequestForList | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
+    "none"
+  );
 
-  // Hàm xử lý sắp xếp
+  // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: string) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection("none");
+        setSortField("");
+      } else {
+        setSortDirection("asc");
+      }
     } else {
       setSortField(field);
       setSortDirection("asc");
     }
   };
 
-  // Hàm lấy icon sắp xếp
+  // Hàm lấy icon sắp xếp với trạng thái rõ ràng hơn
   const getSortIcon = (field: string) => {
+    if (sortField !== field || sortDirection === "none") {
+      return (
+        <div className="flex flex-col opacity-50 group-hover:opacity-75 transition-opacity">
+          <ChevronUp className="h-3 w-3 text-gray-400" />
+          <ChevronDown className="h-3 w-3 -mt-1 text-gray-400" />
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col">
         <ChevronUp
           className={`h-3 w-3 ${
-            sortField === field && sortDirection === "asc"
-              ? "text-blue-600"
-              : "text-gray-300"
+            sortDirection === "asc" ? "text-blue-600" : "text-gray-300"
           }`}
         />
         <ChevronDown
           className={`h-3 w-3 -mt-1 ${
-            sortField === field && sortDirection === "desc"
-              ? "text-blue-600"
-              : "text-gray-300"
+            sortDirection === "desc" ? "text-blue-600" : "text-gray-300"
           }`}
         />
       </div>
@@ -255,7 +98,7 @@ export default function DanhSachBaoLoiPage() {
 
   // Sắp xếp dữ liệu đã lọc
   const sortedRequests = [...filteredRequests].sort((a, b) => {
-    if (!sortField) return 0;
+    if (!sortField || sortDirection === "none") return 0;
 
     let aValue: string | Date = "";
     let bValue: string | Date = "";
@@ -365,7 +208,7 @@ export default function DanhSachBaoLoiPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-2">
       {/* Header */}
       <div className="mb-8">
         <Link
@@ -384,7 +227,6 @@ export default function DanhSachBaoLoiPage() {
               Theo dõi và quản lý các báo cáo lỗi từ giảng viên
             </p>
           </div>
-
         </div>
       </div>
 
@@ -544,11 +386,11 @@ export default function DanhSachBaoLoiPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full table-fixed divide-y divide-gray-200">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("requestCode")}>
                   <div className="flex items-center space-x-1">
                     <span>Mã báo lỗi</span>
@@ -556,7 +398,7 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-56 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("assetCode")}>
                   <div className="flex items-center space-x-1">
                     <span>Tài sản</span>
@@ -564,7 +406,7 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("reporterName")}>
                   <div className="flex items-center space-x-1">
                     <span>Người báo</span>
@@ -572,7 +414,7 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("errorTypeName")}>
                   <div className="flex items-center space-x-1">
                     <span>Loại lỗi</span>
@@ -580,7 +422,7 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-36 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("status")}>
                   <div className="flex items-center space-x-1">
                     <span>Trạng thái</span>
@@ -588,14 +430,14 @@ export default function DanhSachBaoLoiPage() {
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="w-28 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                   onClick={() => handleSort("createdAt")}>
                   <div className="flex items-center space-x-1">
                     <span>Ngày báo</span>
                     {getSortIcon("createdAt")}
                   </div>
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="w-20 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
@@ -603,56 +445,77 @@ export default function DanhSachBaoLoiPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {sortedRequests.map((request) => (
                 <tr key={request.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap truncate">
+                    <div
+                      className="text-sm font-medium text-gray-900 truncate"
+                      title={request.requestCode}>
                       {request.requestCode}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
+                    <div className="min-w-0">
+                      <div
+                        className="text-sm font-medium text-gray-900 truncate"
+                        title={request.assetCode}>
                         {request.assetCode}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div
+                        className="text-sm text-gray-500 truncate"
+                        title={request.assetName}>
                         {request.assetName}
                       </div>
-                      <div className="flex items-center text-xs text-gray-400 mt-1">
-                        <Building2 className="h-3 w-3 mr-1" />
-                        {request.roomName} - {request.buildingName}
+                      <div className="flex items-center text-xs text-gray-400 mt-1 min-w-0">
+                        <Building2 className="h-3 w-3 mr-1 flex-shrink-0" />
+                        <span
+                          className="truncate"
+                          title={`${request.roomName} - ${request.buildingName}`}>
+                          {request.roomName} - {request.buildingName}
+                        </span>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <User className="h-4 w-4 text-gray-400 mr-2" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
+                    <div className="flex items-center min-w-0">
+                      <User className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div
+                          className="text-sm font-medium text-gray-900 truncate"
+                          title={request.reporterName}>
                           {request.reporterName}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div
+                          className="text-sm text-gray-500 truncate"
+                          title={request.reporterRole}>
                           {request.reporterRole}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {request.errorTypeName || "Chưa xác định"}
+                  <td className="px-6 py-4 whitespace-nowrap truncate">
+                    <span
+                      className="text-sm text-gray-900 truncate"
+                      title={request.errorTypeName || "Chưa xác định"}>
+                      {request.errorTypeName || "Chưa xác định"}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {getStatusIcon(request.status)}
+                    <div className="flex items-center min-w-0">
+                      <div className="flex-shrink-0">
+                        {getStatusIcon(request.status)}
+                      </div>
                       <span
-                        className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                        className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full truncate ${getStatusBadge(
                           request.status
-                        )}`}>
+                        )}`}
+                        title={getStatusText(request.status)}>
                         {getStatusText(request.status)}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">
+                      <Calendar className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                      <span className="text-sm text-gray-900 truncate">
                         {new Date(request.createdAt).toLocaleDateString(
                           "vi-VN"
                         )}

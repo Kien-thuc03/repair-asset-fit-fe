@@ -1,49 +1,9 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  AlertTriangle,
-  Clock,
-  CheckCircle,
-  FileText,
-  Search,
-} from "lucide-react";
+import { AlertTriangle, Clock, Search } from "lucide-react";
 import Link from "next/link";
-
-const stats = [
-  {
-    name: "Báo cáo đã gửi",
-    value: "12",
-    change: "+2 tuần này",
-    changeType: "positive",
-    icon: FileText,
-    color: "bg-blue-500",
-  },
-  {
-    name: "Đang xử lý",
-    value: "3",
-    change: "1 khẩn cấp",
-    changeType: "warning",
-    icon: Clock,
-    color: "bg-yellow-500",
-  },
-  {
-    name: "Đã hoàn thành",
-    value: "8",
-    change: "+3 tuần này",
-    changeType: "positive",
-    icon: CheckCircle,
-    color: "bg-green-500",
-  },
-  {
-    name: "Cần theo dõi",
-    value: "1",
-    change: "Quá hạn",
-    changeType: "negative",
-    icon: AlertTriangle,
-    color: "bg-red-500",
-  },
-];
+import { lecturerStats } from "@/lib/mockData/stats";
 
 export default function GiangVienDashboard() {
   const { user } = useAuth();
@@ -62,7 +22,7 @@ export default function GiangVienDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((item) => (
+        {lecturerStats.map((item) => (
           <div
             key={item.name}
             className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6">
@@ -77,18 +37,6 @@ export default function GiangVienDashboard() {
             <div className="ml-16 flex items-baseline">
               <p className="text-2xl font-semibold text-gray-900">
                 {item.value}
-              </p>
-              <p
-                className={`ml-2 flex items-baseline text-sm font-semibold ${
-                  item.changeType === "positive"
-                    ? "text-green-600"
-                    : item.changeType === "negative"
-                    ? "text-red-600"
-                    : item.changeType === "warning"
-                    ? "text-yellow-600"
-                    : "text-gray-600"
-                }`}>
-                {item.change}
               </p>
             </div>
           </div>
