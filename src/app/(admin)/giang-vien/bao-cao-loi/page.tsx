@@ -9,6 +9,7 @@ import {
   mockSimpleRooms,
   mockComponents,
 } from "@/lib/mockData";
+import SuccessModal from "./modal/SuccessModal";
 
 export default function BaoCaoLoiPage() {
   const [formData, setFormData] = useState<ReportForm>({
@@ -27,6 +28,7 @@ export default function BaoCaoLoiPage() {
     []
   );
   const [isMobile, setIsMobile] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Debug filteredComponents changes
   useEffect(() => {
@@ -50,8 +52,8 @@ export default function BaoCaoLoiPage() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 2000));
 
-    alert("Báo cáo đã được gửi thành công!");
     setIsSubmitting(false);
+    setShowSuccessModal(true);
 
     // Reset form
     setFormData({
@@ -555,6 +557,14 @@ export default function BaoCaoLoiPage() {
           </div>
         </form>
       </div>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Báo cáo lỗi đã được gửi thành công!"
+        message="Cảm ơn bạn đã báo cáo lỗi. Chúng tôi sẽ xem xét và xử lý trong thời gian sớm nhất. Bạn có thể theo dõi tiến độ xử lý trong phần 'Theo dõi tiến độ'."
+      />
     </div>
   );
 }
