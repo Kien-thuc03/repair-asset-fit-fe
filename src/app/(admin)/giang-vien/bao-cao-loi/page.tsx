@@ -312,44 +312,63 @@ export default function BaoCaoLoiPage() {
                       const isSelected = selectedComponentIds.includes(
                         component.id
                       );
+                      const canSelect = component.status === "INSTALLED";
                       return (
                         <div
                           key={component.id}
-                          onClick={() => {
-                            let newSelectedIds;
-                            if (isSelected) {
-                              newSelectedIds = selectedComponentIds.filter(
-                                (id) => id !== component.id
-                              );
-                            } else {
-                              newSelectedIds = [
-                                ...selectedComponentIds,
-                                component.id,
-                              ];
-                            }
-                            setSelectedComponentIds(newSelectedIds);
-                            setFormData((prev) => ({
-                              ...prev,
-                              componentId:
-                                newSelectedIds.length > 0
-                                  ? newSelectedIds[0]
-                                  : "",
-                            }));
-                          }}
-                          className={`p-2 rounded cursor-pointer transition-all duration-200 hover:shadow-md ${
+                          onClick={
+                            canSelect
+                              ? () => {
+                                  let newSelectedIds;
+                                  if (isSelected) {
+                                    newSelectedIds =
+                                      selectedComponentIds.filter(
+                                        (id) => id !== component.id
+                                      );
+                                  } else {
+                                    newSelectedIds = [
+                                      ...selectedComponentIds,
+                                      component.id,
+                                    ];
+                                  }
+                                  setSelectedComponentIds(newSelectedIds);
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    componentId:
+                                      newSelectedIds.length > 0
+                                        ? newSelectedIds[0]
+                                        : "",
+                                  }));
+                                }
+                              : undefined
+                          }
+                          className={`p-2 rounded transition-all duration-200 ${
+                            !canSelect
+                              ? "cursor-not-allowed opacity-60"
+                              : "cursor-pointer hover:shadow-md"
+                          } ${
                             isSelected
                               ? "bg-blue-200 text-blue-900 border-2 border-blue-400 transform scale-105"
                               : component.status === "FAULTY"
-                              ? "bg-red-100 text-red-800 border border-red-200 hover:bg-red-200"
+                              ? "bg-red-100 text-red-800 border border-red-200"
                               : component.status === "MAINTENANCE"
-                              ? "bg-yellow-100 text-yellow-800 border border-yellow-200 hover:bg-yellow-200"
+                              ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
                               : "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
                           }`}>
                           <div className="font-medium truncate flex items-center justify-between">
                             <span>{component.componentType}</span>
-                            {isSelected && (
-                              <span className="text-blue-600 font-bold">✓</span>
-                            )}
+                            <div className="flex items-center space-x-1">
+                              {!canSelect && (
+                                <span className="text-gray-500 text-xs">
+                                  🚫
+                                </span>
+                              )}
+                              {isSelected && (
+                                <span className="text-blue-600 font-bold">
+                                  ✓
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="text-gray-600 truncate">
                             {component.name}
@@ -359,7 +378,7 @@ export default function BaoCaoLoiPage() {
                               {component.componentSpecs}
                             </div>
                           )}
-                          <div className="mt-1">
+                          <div className="mt-1 flex items-center justify-between">
                             <span
                               className={`px-1 py-0.5 rounded text-xs ${
                                 isSelected
@@ -380,6 +399,11 @@ export default function BaoCaoLoiPage() {
                                 ? "Bảo trì"
                                 : component.status}
                             </span>
+                            {!canSelect && (
+                              <span className="text-xs text-gray-500">
+                                Không thể chọn
+                              </span>
+                            )}
                           </div>
                         </div>
                       );
@@ -387,8 +411,9 @@ export default function BaoCaoLoiPage() {
                   </div>
 
                   <p className="text-xs text-gray-500 mt-2 italic">
-                    💡 Tip: Click vào linh kiện để chọn/bỏ chọn. Có thể chọn
-                    nhiều linh kiện cùng lúc.
+                    💡 Tip: Chỉ có thể chọn các linh kiện đang hoạt động để báo
+                    lỗi. Các linh kiện đã có lỗi hoặc đang bảo trì sẽ không thể
+                    chọn.
                   </p>
                 </div>
               )}
