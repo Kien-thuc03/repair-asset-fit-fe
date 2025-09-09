@@ -59,7 +59,10 @@ export const mockRepairRequests: RepairRequest[] = [
     errorTypeName: "Hỏng nguồn điện",
     description:
       "Máy tính không khởi động được, có mùi cháy từ nguồn điện 500W, cần thay thay nguồn mới ngay lập tức",
-    mediaUrls: ["https://vr360.vn/nguyen-nhan-khien-may-tinh-khong-the-khoi-dong-vao-windows/", "https://ictsaigon.com.vn/may-tinh-khong-khoi-dong-duoc?srsltid=AfmBOorO1vWsLMm9cyKRx89iLm-_DRB6vsS2qYt8aK0AvBr9UqaZlxCq"],
+    mediaUrls: [
+      "https://vr360.vn/wp-content/uploads/2015/07/nguyen-nhan-khien-may-tinh-khong-the-khoi-dong-vao-windows-300x138.jpg",
+      "https://ictsaigon.com.vn/storage/news/may-tinh-khong-khoi-dong-duoc/may-tinh-khong-khoi-dong-duoc-8.webp"
+    ],
     status: RepairStatus.CHỜ_TIẾP_NHẬN,
     resolutionNotes: "",
     createdAt: "2024-01-15T08:30:00",
@@ -87,7 +90,7 @@ export const mockRepairRequests: RepairRequest[] = [
     errorTypeId: "error-002",
     errorTypeName: "Lỗi RAM",
     description: "RAM DDR4 8GB bị lỗi, máy không khởi động được, màn hình đen",
-    mediaUrls: ["ram_error.jpg"],
+    mediaUrls: ["https://images.unsplash.com/photo-1562747336-ba3daa59b2e2?w=400&h=300&fit=crop"],
     status: RepairStatus.ĐANG_XỬ_LÝ,
     resolutionNotes: "Đã kiểm tra RAM, đang chờ linh kiện mới",
     createdAt: "2024-01-14T14:15:00",
@@ -146,7 +149,10 @@ export const mockRepairRequests: RepairRequest[] = [
     errorTypeName: "Lỗi card đồ họa",
     description:
       "Card đồ họa NVIDIA GTX 1050 2GB bị lỗi chip, màn hình không hiển thị hình ảnh",
-    mediaUrls: ["gpu_error.jpg", "screen_black.jpg"],
+    mediaUrls: [
+      "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=300&fit=crop",
+      "https://images.unsplash.com/photo-1551808525-51a94da548ce?w=400&h=300&fit=crop"
+    ],
     status: RepairStatus.CHỜ_TIẾP_NHẬN,
     resolutionNotes: "",
     createdAt: "2024-01-13T11:20:00",

@@ -1,6 +1,7 @@
 'use client'
 
 import { RepairRequest } from '@/types'
+import { ImageViewer } from '@/components/ui'
 
 interface Props {
 	req: RepairRequest
@@ -41,12 +42,8 @@ export default function InfoCard({ req }: Props) {
 				</div>
 				{req.mediaUrls?.length ? (
 					<div className="md:col-span-2">
-						<p className="text-gray-500">Tệp đính kèm</p>
-						<div className="mt-2 flex flex-wrap gap-2">
-							{req.mediaUrls.map((url) => (
-								<span key={url} className="text-xs text-blue-600 underline">{url}</span>
-							))}
-						</div>
+						<p className="text-gray-500 mb-2">Tệp đính kèm ({req.mediaUrls.length} ảnh)</p>
+						<ImageViewer images={req.mediaUrls} />
 					</div>
 				) : null}
 			</div>
