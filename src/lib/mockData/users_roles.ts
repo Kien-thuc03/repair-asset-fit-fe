@@ -27,4 +27,7 @@ export const userRoles = [
   // Giảng viên kiêm QTV
   { userId: "user-6", roleId: getRoleIdByCode(UserRole.GIANG_VIEN) },
   { userId: "user-6", roleId: getRoleIdByCode(UserRole.QTV_KHOA) },
+  { userId: "user-6", roleId: getRoleIdByCode(UserRole.PHONG_QUAN_TRI) },
+  { userId: "user-6", roleId: getRoleIdByCode(UserRole.TO_TRUONG_KY_THUAT) },
+  { userId: "user-6", roleId: getRoleIdByCode(UserRole.KY_THUAT_VIEN) },
 ];

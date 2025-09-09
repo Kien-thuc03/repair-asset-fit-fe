@@ -8,6 +8,7 @@ import {
   mockAssets,
   mockSimpleRooms,
   mockComponents,
+  mockComputers,
 } from "@/lib/mockData";
 import SuccessModal from "./modal/SuccessModal";
 
@@ -108,10 +109,12 @@ export default function BaoCaoLoiPage() {
           const components = mockComponents.filter(
             (comp) => comp.computerAssetId === asset.id
           );
+          const computer = mockComputers.find((comp) => comp.assetId === asset.id);
+          const machineLabel = computer?.machineLabel || "N/A";
           console.log("Filtered components after QR scan:", components);
 
           alert(
-            `Đã quét thành công!\nMáy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}`
+            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}`
           );
         }, 100);
       }
@@ -223,11 +226,15 @@ export default function BaoCaoLoiPage() {
                     ? "Vui lòng chọn phòng trước"
                     : "Chọn thiết bị"}
                 </option>
-                {filteredAssets.map((asset) => (
-                  <option key={asset.id} value={asset.id}>
-                    {asset.name} ({asset.assetCode})
-                  </option>
-                ))}
+                {filteredAssets.map((asset) => {
+                  const computer = mockComputers.find((comp) => comp.assetId === asset.id);
+                  const machineLabel = computer?.machineLabel || "N/A";
+                  return (
+                    <option key={asset.id} value={asset.id}>
+                      Máy {machineLabel} - {asset.name} ({asset.assetCode})
+                    </option>
+                  );
+                })}
               </select>
             </div>
 

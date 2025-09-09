@@ -1,4 +1,4 @@
-import { Asset, RepairHistory } from "@/types";
+import { Asset, RepairHistory, AssetStatus, RepairStatus } from "@/types";
 import { CheckCircle, Clock, AlertTriangle, Monitor, Wifi } from "lucide-react";
 
 export const mockAssetsLookup: Asset[] = [
@@ -11,7 +11,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "DL2024001",
     roomId: "ROOM001",
     roomName: "Phòng máy tính H101 - Tòa H",
-    status: "HOẠT_ĐỘNG",
+    status: AssetStatus.DANG_SU_DUNG,
     purchaseDate: "2023-01-15",
     warrantyExpiry: "2026-01-15",
     lastMaintenanceDate: "2024-12-10",
@@ -34,7 +34,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "DL2024002",
     roomId: "ROOM001",
     roomName: "Phòng máy tính H101 - Tòa H",
-    status: "BẢO_TRÌ",
+    status: AssetStatus.HU_HONG,
     purchaseDate: "2023-01-15",
     warrantyExpiry: "2026-01-15",
     lastMaintenanceDate: "2024-12-12",
@@ -57,7 +57,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "HP2024003",
     roomId: "ROOM001",
     roomName: "Phòng máy tính H101 - Tòa H",
-    status: "HỎNG_HÓC",
+    status: AssetStatus.HU_HONG,
     purchaseDate: "2023-03-20",
     warrantyExpiry: "2026-03-20",
     lastMaintenanceDate: "2024-11-15",
@@ -80,7 +80,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "LV2024004",
     roomId: "ROOM001",
     roomName: "Phòng máy tính H101 - Tòa H",
-    status: "HOẠT_ĐỘNG",
+    status: AssetStatus.DANG_SU_DUNG,
     purchaseDate: "2023-06-10",
     warrantyExpiry: "2025-06-10",
     lastMaintenanceDate: "2024-12-05",
@@ -103,7 +103,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "DL2024005",
     roomId: "ROOM002",
     roomName: "Phòng máy tính H102 - Tòa H",
-    status: "HOẠT_ĐỘNG",
+    status: AssetStatus.DANG_SU_DUNG,
     purchaseDate: "2023-02-28",
     warrantyExpiry: "2025-02-28",
     lastMaintenanceDate: "2024-12-08",
@@ -126,7 +126,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "HP2024006",
     roomId: "ROOM002",
     roomName: "Phòng máy tính H102 - Tòa H",
-    status: "HOẠT_ĐỘNG",
+    status: AssetStatus.DANG_SU_DUNG,
     purchaseDate: "2023-04-15",
     warrantyExpiry: "2025-04-15",
     lastMaintenanceDate: "2024-11-20",
@@ -149,7 +149,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "AS2024007",
     roomId: "ROOM006",
     roomName: "Phòng máy tính H301 - Tòa H",
-    status: "HOẠT_ĐỘNG",
+    status: AssetStatus.DANG_SU_DUNG,
     purchaseDate: "2023-05-20",
     warrantyExpiry: "2025-05-20",
     lastMaintenanceDate: "2024-11-25",
@@ -172,7 +172,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "MSI2024008",
     roomId: "ROOM008",
     roomName: "Phòng máy tính H401 - Tòa H",
-    status: "BẢO_TRÌ",
+    status: AssetStatus.HU_HONG,
     purchaseDate: "2023-08-10",
     warrantyExpiry: "2025-08-10",
     lastMaintenanceDate: "2024-12-01",
@@ -195,7 +195,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "HP2024009",
     roomId: "ROOM010",
     roomName: "Phòng Đa phương tiện H501 - Tòa H",
-    status: "HOẠT_ĐỘNG",
+    status: AssetStatus.DANG_SU_DUNG,
     purchaseDate: "2023-09-15",
     warrantyExpiry: "2025-09-15",
     lastMaintenanceDate: "2024-12-05",
@@ -218,7 +218,7 @@ export const mockAssetsLookup: Asset[] = [
     serialNumber: "SV2024010",
     roomId: "ROOM015",
     roomName: "Phòng Server H702 - Tòa H",
-    status: "HOẠT_ĐỘNG",
+    status: AssetStatus.DANG_SU_DUNG,
     purchaseDate: "2023-07-25",
     warrantyExpiry: "2026-07-25",
     lastMaintenanceDate: "2024-12-15",
@@ -253,7 +253,7 @@ export const mockRepairHistoryLookup: RepairHistory[] = [
         changeReason: "RAM cũ bị lỗi, nâng cấp dung lượng",
       },
     ],
-    status: "HOÀN_THÀNH",
+    status: RepairStatus.ĐÃ_HOÀN_THÀNH,
   },
   {
     id: "REPAIR002",
@@ -265,7 +265,7 @@ export const mockRepairHistoryLookup: RepairHistory[] = [
     description: "Màn hình xanh chết, hệ điều hành không khởi động được",
     technicianName: "Kỹ thuật viên An",
     solution: "Cài đặt lại Windows 11, cập nhật driver",
-    status: "HOÀN_THÀNH",
+    status: RepairStatus.ĐÃ_HOÀN_THÀNH,
   },
   {
     id: "REPAIR003",
@@ -285,7 +285,7 @@ export const mockRepairHistoryLookup: RepairHistory[] = [
         changeReason: "Ổ cứng cũ có bad sector, nâng cấp SSD để tăng hiệu suất",
       },
     ],
-    status: "HOÀN_THÀNH",
+    status: RepairStatus.ĐÃ_HOÀN_THÀNH,
   },
   {
     id: "REPAIR004",
@@ -297,7 +297,7 @@ export const mockRepairHistoryLookup: RepairHistory[] = [
     description: "Phần mềm Adobe không hoạt động, lỗi license",
     technicianName: "Kỹ thuật viên An",
     solution: "Cập nhật license Adobe Creative Suite, cài đặt lại phần mềm",
-    status: "HOÀN_THÀNH",
+    status: RepairStatus.ĐÃ_HOÀN_THÀNH,
   },
   {
     id: "REPAIR005",
@@ -309,7 +309,7 @@ export const mockRepairHistoryLookup: RepairHistory[] = [
     description: "Card màn hình bị quá nhiệt, máy tự tắt khi chạy game",
     technicianName: "Kỹ thuật viên Hùng",
     solution: "Đang chờ linh kiện thay thế card màn hình",
-    status: "ĐANG_XỬ_LÝ",
+    status: RepairStatus.ĐANG_XỬ_LÝ,
   },
   {
     id: "REPAIR006",
@@ -323,27 +323,27 @@ export const mockRepairHistoryLookup: RepairHistory[] = [
     technicianName: "Kỹ thuật viên Minh",
     solution:
       "Cập nhật Windows Server 2022, cài đặt security updates, kiểm tra RAID array",
-    status: "HOÀN_THÀNH",
+    status: RepairStatus.ĐÃ_HOÀN_THÀNH,
   },
 ];
 
 export const assetStatusConfig = {
-  HOẠT_ĐỘNG: {
+  DANG_SU_DUNG: {
     label: "Hoạt động",
     color: "bg-green-100 text-green-800 border-green-200",
     icon: CheckCircle,
   },
-  BẢO_TRÌ: {
+  BAO_TRI: {
     label: "Bảo trì",
     color: "bg-yellow-100 text-yellow-800 border-yellow-200",
     icon: Clock,
   },
-  HỎNG_HÓC: {
+  HONG_HOC: {
     label: "Hỏng hóc",
     color: "bg-red-100 text-red-800 border-red-200",
     icon: AlertTriangle,
   },
-  NGỪNG_SỬ_DỤNG: {
+  NGUNG_SU_DUNG: {
     label: "Ngừng sử dụng",
     color: "bg-gray-100 text-gray-800 border-gray-200",
     icon: Clock,

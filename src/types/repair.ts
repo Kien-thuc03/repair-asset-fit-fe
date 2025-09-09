@@ -7,8 +7,17 @@ export enum UserRole {
   QTV_KHOA = "QTV_KHOA", // Quản trị viên Khoa
 }
 
-// Interface cho danh sách báo lỗi theo database schema
-export interface RepairRequestForList {
+// Interface cho bảng Computers - liên kết với assets
+export interface Computer {
+  id: string; // UUID primary key
+  assetId: string; // FK to assets.id (unique, not null)
+  roomId: string; // FK to rooms.id
+  machineLabel: string; // Số máy (e.g., "01", "02", "03")
+  notes?: string; // Ghi chú
+}
+
+// Interface cho yêu cầu sửa chữa
+export interface RepairRequest {
   id: string;
   requestCode: string; // Mã yêu cầu tự tăng: YCSC-2025-0001
   assetId: string;
@@ -23,12 +32,13 @@ export interface RepairRequestForList {
   assignedTechnicianName?: string;
   roomId: string;
   roomName: string; // Tên phòng máy
+  machineLabel: string; // Số máy từ bảng computers
   buildingName: string; // Tên tòa nhà
   errorTypeId?: string;
   errorTypeName?: string; // Tên loại lỗi
   description: string; // Mô tả chi tiết lỗi
   mediaUrls?: string[]; // Mảng URL ảnh/video minh họa
-  status: "CHỜ_TIẾP_NHẬN" | "ĐANG_XỬ_LÝ" | "HOÀN_THÀNH" | "HỦY_BỎ";
+  status: RepairStatus;
   resolutionNotes?: string; // Ghi chú KTV về kết quả xử lý
   createdAt: string; // Thời điểm báo lỗi
   acceptedAt?: string; // Thời điểm KTV tiếp nhận
@@ -46,7 +56,6 @@ export interface ReplacementRequestForList {
   location: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
-  priority: "high" | "medium" | "low";
   requestDate: string;
   estimatedCost: number;
   description: string;
@@ -112,28 +121,13 @@ export const RoleInfo = {
 } as const;
 
 // Định nghĩa trạng thái báo cáo lỗi
-export enum ReportStatus {
-  PENDING = "PENDING", // Chờ tiếp nhận
-  IN_PROGRESS = "IN_PROGRESS", // Đang xử lý
-  COMPLETED = "COMPLETED", // Đã hoàn thành
-  REJECTED = "REJECTED", // Bị từ chối
-  CANCELLED = "CANCELLED", // Đã hủy
-}
-
-// Định nghĩa mức độ ưu tiên
-export enum Priority {
-  LOW = "LOW", // Thấp
-  MEDIUM = "MEDIUM", // Trung bình
-  HIGH = "HIGH", // Cao
-  URGENT = "URGENT", // Khẩn cấp
-}
-
-// Định nghĩa trạng thái thiết bị
-export enum EquipmentStatus {
-  ACTIVE = "ACTIVE", // Hoạt động
-  UNDER_REPAIR = "UNDER_REPAIR", // Đang sửa chữa
-  BROKEN = "BROKEN", // Hỏng
-  RETIRED = "RETIRED", // Đã thanh lý
+export enum RepairStatus {
+  CHỜ_TIẾP_NHẬN = "CHỜ_TIẾP_NHẬN",     // Giảng viên vừa tạo, chờ KTV tiếp nhận
+  ĐÃ_TIẾP_NHẬN = "ĐÃ_TIẾP_NHẬN",      // KTV đã xác nhận sẽ xử lý
+  ĐANG_XỬ_LÝ = "ĐANG_XỬ_LÝ",        // KTV đang trong quá trình kiểm tra, sửa chữa
+  CHỜ_THAY_THẾ = "CHỜ_THAY_THẾ",      // Lỗi phần cứng, đã tạo đề xuất thay thế và đang chờ duyệt/mua sắm
+  ĐÃ_HOÀN_THÀNH = "ĐÃ_HOÀN_THÀNH",     // Đã sửa chữa hoặc thay thế xong
+  ĐÃ_HỦY = "ĐÃ_HỦY",            // Yêu cầu bị hủy
 }
 
 // Type cho user
@@ -155,14 +149,22 @@ export interface ErrorReport {
   description: string;
   equipmentId: string;
   location: string;
-  priority: Priority;
-  status: ReportStatus;
+  status: RepairStatus;
   reporterId: string;
   assignedTechnicianId?: string;
   createdAt: Date;
   updatedAt: Date;
   images?: string[];
   feedback?: string;
+}
+
+export enum ReplacementStatus {
+  CHỜ_TỔ_TRƯỞNG_DUYỆT = "CHỜ_TỔ_TRƯỞNG_DUYỆT",
+  CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH",          // Chờ Phòng Quản trị cử người xuống xác minh thực tế
+  CHỜ_QTV_KHOA_DUYỆT = "CHỜ_QTV_KHOA_DUYỆT",
+  ĐÃ_DUYỆT = "ĐÃ_DUYỆT",              // Đã được duyệt, chờ mua sắm
+  ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI",
+  ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM",   // Đã có thiết bị mới
 }
 
 // Type cho đề xuất thay thế
@@ -172,35 +174,20 @@ export interface ReplacementRequest {
   reason: string;
   estimatedCost: number;
   technicianId: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: ReplacementStatus;
   approvedBy?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// Legacy interfaces for backward compatibility
-export interface RepairRequest {
-  id: string;
-  assetId: string;
-  assetName: string;
-  description: string;
-  status: "pending" | "in_progress" | "completed" | "rejected";
-  requestedBy: string;
-  requestedAt: string;
-  assignedTo?: string;
-  completedAt?: string;
-  notes?: string;
-}
-
 export interface RepairInput {
   assetId: string;
   description: string;
-  priority: "low" | "medium" | "high" | "critical";
 }
 
 export interface RepairFilter {
   search?: string;
-  status?: "pending" | "in_progress" | "completed" | "rejected";
+  status?: RepairStatus;
   startDate?: string;
   endDate?: string;
 }
@@ -215,7 +202,7 @@ export interface Asset {
   serialNumber: string;
   roomId: string;
   roomName: string;
-  status: "HOẠT_ĐỘNG" | "BẢO_TRÌ" | "HỎNG_HÓC" | "NGỪNG_SỬ_DỤNG";
+  status: AssetStatus;
   purchaseDate: string;
   warrantyExpiry: string;
   lastMaintenanceDate?: string;
@@ -247,9 +234,9 @@ export enum ComponentType {
 
 // Component Status enum
 export enum ComponentStatus {
-  INSTALLED = "INSTALLED", // Đang lắp đặt và hoạt động
-  REMOVED = "REMOVED", // Đã gỡ ra
+  INSTALLED = "INSTALLED", // Đang được lắp đặt và hoạt động
   FAULTY = "FAULTY", // Hỏng hóc
+  REMOVED = "REMOVED", // Đã gỡ ra
 }
 
 // Component interface for computer assets (updated to match database schema)
@@ -283,34 +270,9 @@ export interface RepairHistory {
     newComponent: string;
     changeReason: string;
   }[];
-  status: "HOÀN_THÀNH" | "ĐANG_XỬ_LÝ" | "HỦY_BỎ";
+  status: RepairStatus;
 }
 
-// Enhanced repair request interface
-export interface EnhancedRepairRequest {
-  id: string;
-  requestCode: string;
-  assetId: string;
-  assetName: string;
-  assetCode: string;
-  componentId?: string;
-  componentName?: string;
-  reporterId: string;
-  reporterName: string;
-  assignedTechnicianId?: string;
-  assignedTechnicianName?: string;
-  roomId: string;
-  roomName: string;
-  errorTypeId?: string;
-  errorTypeName?: string;
-  description: string;
-  mediaUrls?: string[];
-  status: "CHỜ_TIẾP_NHẬN" | "ĐANG_XỬ_LÝ" | "HOÀN_THÀNH" | "HỦY_BỎ";
-  resolutionNotes?: string;
-  createdAt: string;
-  acceptedAt?: string;
-  completedAt?: string;
-}
 
 // Report form interface
 export interface ReportForm {
@@ -341,19 +303,17 @@ export enum AssetType {
 export enum AssetShape {
   GENERIC = "GENERIC", // Tài sản thông thường
   COMPUTER = "COMPUTER", // Máy tính
-  PRINTER = "PRINTER", // Máy in
-  NETWORK_DEVICE = "NETWORK_DEVICE", // Thiết bị mạng
-  FURNITURE = "FURNITURE", // Nội thất
 }
 
 // Asset Status enum
 export enum AssetStatus {
-  CHO_PHAN_BO = "chờ_phân_bổ", // Waiting for allocation
-  DANG_SU_DUNG = "đang_sử_dụng", // In use
-  BAO_TRI = "bảo_trì", // Under maintenance
-  HONG_HOC = "hỏng_hóc", // Broken/Damaged
-  DA_THANH_LY = "đã_thanh_lý", // Disposed
-  MAT_TICH = "mất_tích", // Missing
+  DANG_SU_DUNG = "đang_sử_dụng",
+  CHO_BAN_GIAO = "chờ_bàn_giao",
+  CHO_TIEP_NHAN = "chờ_tiếp_nhận",
+  HU_HONG = "hư_hỏng",
+  MAT_TICH = "mất_tích",
+  DE_XUAT_THANH_LY = "đề_xuất_thanh_lý",
+  DA_THANH_LY = "đã_thanh_lý",
 }
 
 // Comprehensive Asset interface based on database schema
