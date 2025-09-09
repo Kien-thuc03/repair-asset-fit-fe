@@ -1,9 +1,9 @@
 'use client'
 
-import { EnhancedRepairRequest } from '@/types'
+import { RepairRequest } from '@/types'
 
 interface Props {
-	req: EnhancedRepairRequest
+	req: RepairRequest
 }
 
 export default function InfoCard({ req }: Props) {
