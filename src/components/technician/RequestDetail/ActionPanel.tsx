@@ -1,6 +1,6 @@
 'use client'
 
-import { EnhancedRepairRequest, RepairStatus } from '@/types'
+import { RepairStatus } from '@/types'
 import { useState } from 'react'
 
 interface Props {

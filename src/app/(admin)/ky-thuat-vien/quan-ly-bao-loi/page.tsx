@@ -1,15 +1,19 @@
 "use client"
 
-import { useMemo, useState } from 'react'
-import { mockRepairRequestsForList } from '@/lib/mockData/repairRequests'
+import { useCallback, useMemo, useState } from 'react'
+import { mockRepairRequests } from '@/lib/mockData/repairRequests'
 import RequestsFilters from '@/components/technician/RequestsList/RequestsFilters'
 import RequestsTable from '@/components/technician/RequestsList/RequestsTable'
 
 export default function DanhSachBaoLoiPage() {
 	const [filters, setFilters] = useState<{ q: string; status: string; dateFrom: string; dateTo: string }>({ q: '', status: '', dateFrom: '', dateTo: '' })
 
+	const handleFilter = useCallback((newFilters: { q: string; status: string; dateFrom: string; dateTo: string }) => {
+		setFilters(newFilters)
+	}, [])
+
 	const data = useMemo(() => {
-		return mockRepairRequestsForList.filter((r) => {
+		return mockRepairRequests.filter((r) => {
 			const matchesQ = filters.q
 				? [r.requestCode, r.assetName, r.roomName, r.buildingName, r.assetCode]
 					.filter(Boolean)
@@ -32,7 +36,7 @@ export default function DanhSachBaoLoiPage() {
 				<p className="mt-2 text-gray-600">Theo dõi, tìm kiếm và lọc các báo lỗi.</p>
 			</div>
 
-			<RequestsFilters onFilter={setFilters} />
+			<RequestsFilters onFilter={handleFilter} />
 			<RequestsTable data={data} />
 		</div>
 	)

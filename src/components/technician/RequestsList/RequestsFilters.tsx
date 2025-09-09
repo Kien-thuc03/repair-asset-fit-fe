@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Search } from 'lucide-react'
 
 interface Props {
 	onFilter: (params: { q: string; status: string; dateFrom: string; dateTo: string }) => void
@@ -20,24 +21,36 @@ export default function RequestsFilters({ onFilter }: Props) {
 	const [dateFrom, setDateFrom] = useState('')
 	const [dateTo, setDateTo] = useState('')
 
+	// Real-time filtering effect
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			onFilter({ q, status, dateFrom, dateTo })
+		}, 300) // 300ms debounce for search input
+
+		return () => clearTimeout(timer)
+	}, [q, status, dateFrom, dateTo, onFilter])
+
 	return (
-		<div className="bg-white shadow rounded-lg p-4 grid grid-cols-1 gap-4 md:grid-cols-5">
+		<div className="bg-white shadow rounded-lg p-4 grid grid-cols-1 gap-4 md:grid-cols-4">
 			<div className="md:col-span-2">
-				<label className="block text-sm font-medium text-gray-700">Tìm kiếm</label>
-				<input
-					type="text"
-					value={q}
-					onChange={(e) => setQ(e.target.value)}
-					placeholder="Mã yêu cầu, tên tài sản, vị trí"
-					className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-				/>
+				<label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
+				<div className="relative">
+					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+					<input
+						type="text"
+						value={q}
+						onChange={(e) => setQ(e.target.value)}
+						placeholder="Mã yêu cầu, tên tài sản, vị trí..."
+						className="pl-10 block w-full h-8 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+					/>
+				</div>
 			</div>
 			<div>
-				<label className="block text-sm font-medium text-gray-700">Trạng thái</label>
+				<label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
 				<select
 					value={status}
 					onChange={(e) => setStatus(e.target.value)}
-					className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+					className="block w-full h-8 px-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
 					title="Chọn trạng thái yêu cầu"
 				>
 					{statuses.map((s) => (
@@ -45,35 +58,27 @@ export default function RequestsFilters({ onFilter }: Props) {
 					))}
 				</select>
 			</div>
-			<div>
-				<label className="block text-sm font-medium text-gray-700">Từ ngày</label>
-				<input
-					type="date"
-					value={dateFrom}
-					onChange={(e) => setDateFrom(e.target.value)}
-					className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-					title="Chọn ngày bắt đầu"
-					placeholder="yyyy-mm-dd"
-				/>
-			</div>
-			<div>
-				<label className="block text-sm font-medium text-gray-700">Đến ngày</label>
-				<input
-					type="date"
-					value={dateTo}
-					onChange={(e) => setDateTo(e.target.value)}
-					className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-					title="Chọn ngày kết thúc"
-					placeholder="yyyy-mm-dd"
-				/>
-			</div>
-			<div className="flex items-end">
-				<button
-					onClick={() => onFilter({ q, status, dateFrom, dateTo })}
-					className="w-full inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-				>
-					Áp dụng
-				</button>
+			<div className="grid grid-cols-2 gap-2">
+				<div>
+					<label className="block text-sm font-medium text-gray-700 mb-1">Từ ngày</label>
+					<input
+						type="date"
+						value={dateFrom}
+						onChange={(e) => setDateFrom(e.target.value)}
+						className="block w-full h-8 px-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+						title="Chọn ngày bắt đầu"
+					/>
+				</div>
+				<div>
+					<label className="block text-sm font-medium text-gray-700 mb-1">Đến ngày</label>
+					<input
+						type="date"
+						value={dateTo}
+						onChange={(e) => setDateTo(e.target.value)}
+						className="block w-full h-8 px-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+						title="Chọn ngày kết thúc"
+					/>
+				</div>
 			</div>
 		</div>
 	)

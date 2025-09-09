@@ -7,8 +7,17 @@ export enum UserRole {
   QTV_KHOA = "QTV_KHOA", // Quản trị viên Khoa
 }
 
-// Interface cho danh sách báo lỗi theo database schema
-export interface RepairRequestForList {
+// Interface cho bảng Computers - liên kết với assets
+export interface Computer {
+  id: string; // UUID primary key
+  assetId: string; // FK to assets.id (unique, not null)
+  roomId: string; // FK to rooms.id
+  machineLabel: string; // Số máy (e.g., "01", "02", "03")
+  notes?: string; // Ghi chú
+}
+
+// Interface cho yêu cầu sửa chữa
+export interface RepairRequest {
   id: string;
   requestCode: string; // Mã yêu cầu tự tăng: YCSC-2025-0001
   assetId: string;
@@ -23,6 +32,7 @@ export interface RepairRequestForList {
   assignedTechnicianName?: string;
   roomId: string;
   roomName: string; // Tên phòng máy
+  machineLabel: string; // Số máy từ bảng computers
   buildingName: string; // Tên tòa nhà
   errorTypeId?: string;
   errorTypeName?: string; // Tên loại lỗi
@@ -120,25 +130,6 @@ export enum RepairStatus {
   ĐÃ_HỦY = "ĐÃ_HỦY",            // Yêu cầu bị hủy
 }
 
-// Định nghĩa mức độ ưu tiên
-export enum Priority {
-  LOW = "LOW", // Thấp
-  MEDIUM = "MEDIUM", // Trung bình
-  HIGH = "HIGH", // Cao
-  URGENT = "URGENT", // Khẩn cấp
-}
-
-// Định nghĩa trạng thái thiết bị
-export enum AssetStatus {
-  ĐANG_SỬ_DỤNG = "ĐANG_SỬ_DỤNG",
-  CHỜ_BÀN_GIAO = "CHỜ_BÀN_GIAO",
-  CHỜ_TIẾP_NHẬN = "CHỜ_TIẾP_NHẬN",
-  HƯ_HỎNG = "HƯ_HỎNG",
-  ĐÃ_MẤT = "ĐÃ_MẤT",
-  ĐỀ_XUẤT_THANH_LÝ = "ĐỀ_XUẤT_THANH_LÝ",
-  ĐÃ_THANH_LÝ = "ĐÃ_THANH_LÝ",
-}
-
 // Type cho user
 export interface User {
   id: string;
@@ -158,7 +149,6 @@ export interface ErrorReport {
   description: string;
   equipmentId: string;
   location: string;
-  priority: Priority;
   status: RepairStatus;
   reporterId: string;
   assignedTechnicianId?: string;
@@ -188,20 +178,6 @@ export interface ReplacementRequest {
   approvedBy?: string;
   createdAt: Date;
   updatedAt: Date;
-}
-
-// Legacy interfaces for backward compatibility
-export interface RepairRequest {
-  id: string;
-  assetId: string;
-  assetName: string;
-  description: string;
-  status: RepairStatus;
-  requestedBy: string;
-  requestedAt: string;
-  assignedTo?: string;
-  completedAt?: string;
-  notes?: string;
 }
 
 export interface RepairInput {
@@ -258,13 +234,9 @@ export enum ComponentType {
 
 // Component Status enum
 export enum ComponentStatus {
-  INSTALLED = "INSTALLED", // Đang lắp đặt và hoạt động
-  REMOVED = "REMOVED", // Đã gỡ ra
-  MAINTENANCE = "MAINTENANCE", // Đang bảo trì
+  INSTALLED = "INSTALLED", // Đang được lắp đặt và hoạt động
   FAULTY = "FAULTY", // Hỏng hóc
-  REPLACED = "REPLACED", // Đã thay thế
-  PENDING_INSTALL = "PENDING_INSTALL", // Chờ lắp đặt
-  TESTING = "TESTING", // Đang kiểm tra
+  REMOVED = "REMOVED", // Đã gỡ ra
 }
 
 // Component interface for computer assets (updated to match database schema)
@@ -301,31 +273,6 @@ export interface RepairHistory {
   status: RepairStatus;
 }
 
-// Enhanced repair request interface
-export interface EnhancedRepairRequest {
-  id: string;
-  requestCode: string;
-  assetId: string;
-  assetName: string;
-  assetCode: string;
-  componentId?: string;
-  componentName?: string;
-  reporterId: string;
-  reporterName: string;
-  assignedTechnicianId?: string;
-  assignedTechnicianName?: string;
-  roomId: string;
-  roomName: string;
-  errorTypeId?: string;
-  errorTypeName?: string;
-  description: string;
-  mediaUrls?: string[];
-  status: RepairStatus;
-  resolutionNotes?: string;
-  createdAt: string;
-  acceptedAt?: string;
-  completedAt?: string;
-}
 
 // Report form interface
 export interface ReportForm {
@@ -356,19 +303,17 @@ export enum AssetType {
 export enum AssetShape {
   GENERIC = "GENERIC", // Tài sản thông thường
   COMPUTER = "COMPUTER", // Máy tính
-  PRINTER = "PRINTER", // Máy in
-  NETWORK_DEVICE = "NETWORK_DEVICE", // Thiết bị mạng
-  FURNITURE = "FURNITURE", // Nội thất
 }
 
 // Asset Status enum
 export enum AssetStatus {
-  CHO_PHAN_BO = "chờ_phân_bổ", // Waiting for allocation
-  DANG_SU_DUNG = "đang_sử_dụng", // In use
-  BAO_TRI = "bảo_trì", // Under maintenance
-  HONG_HOC = "hỏng_hóc", // Broken/Damaged
-  DA_THANH_LY = "đã_thanh_lý", // Disposed
-  MAT_TICH = "mất_tích", // Missing
+  DANG_SU_DUNG = "đang_sử_dụng",
+  CHO_BAN_GIAO = "chờ_bàn_giao",
+  CHO_TIEP_NHAN = "chờ_tiếp_nhận",
+  HU_HONG = "hư_hỏng",
+  MAT_TICH = "mất_tích",
+  DE_XUAT_THANH_LY = "đề_xuất_thanh_lý",
+  DA_THANH_LY = "đã_thanh_lý",
 }
 
 // Comprehensive Asset interface based on database schema

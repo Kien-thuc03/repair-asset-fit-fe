@@ -1,10 +1,10 @@
 'use client'
 
-import { mockRepairRequestsForList, repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
+import { mockRepairRequests, repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
 import Link from 'next/link'
 
 export default function RecentRequests() {
-	const items = mockRepairRequestsForList
+	const items = mockRepairRequests
 		.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 		.slice(0, 6)
 
