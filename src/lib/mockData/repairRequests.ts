@@ -1,5 +1,5 @@
-import { EnhancedRepairRequest, RepairRequestForList } from "@/types";
-import { Clock, CheckCircle, AlertTriangle, X } from "lucide-react";
+import { EnhancedRepairRequest, RepairRequestForList, RepairStatus } from "@/types";
+import { Clock, CheckCircle, AlertTriangle, X, FileCheck } from "lucide-react";
 
 export const mockRepairRequests: EnhancedRepairRequest[] = [
   {
@@ -20,7 +20,7 @@ export const mockRepairRequests: EnhancedRepairRequest[] = [
     errorTypeName: "Không khởi động được",
     description:
       "Máy tính không khởi động được, có tiếng beep liên tục khi bấm nút nguồn. Đèn LED mainboard vẫn sáng bình thường.",
-    status: "ĐANG_XỬ_LÝ",
+    status: RepairStatus.ĐANG_XỬ_LÝ,
     createdAt: "2025-01-15T08:30:00Z",
     acceptedAt: "2025-01-16T09:15:00Z",
   },
@@ -42,7 +42,7 @@ export const mockRepairRequests: EnhancedRepairRequest[] = [
     errorTypeName: "Màn hình không hiển thị",
     description:
       "Màn hình không hiển thị hình ảnh, đèn nguồn vẫn bật nhưng màn hình đen. Máy tính khởi động bình thường.",
-    status: "HOÀN_THÀNH",
+    status: RepairStatus.ĐÃ_HOÀN_THÀNH,
     resolutionNotes:
       "Đã thay thế cáp VGA và cập nhật driver card màn hình. Màn hình hoạt động bình thường.",
     createdAt: "2025-01-10T10:15:00Z",
@@ -63,7 +63,7 @@ export const mockRepairRequests: EnhancedRepairRequest[] = [
     errorTypeName: "Chạy chậm",
     description:
       "Máy tính khởi động và chạy rất chậm, mở ứng dụng lâu, thường xuyên bị đơ.",
-    status: "CHỜ_TIẾP_NHẬN",
+    status: RepairStatus.CHỜ_TIẾP_NHẬN,
     createdAt: "2025-01-16T14:00:00Z",
   },
   {
@@ -84,7 +84,7 @@ export const mockRepairRequests: EnhancedRepairRequest[] = [
     errorTypeName: "Lỗi bàn phím/chuột",
     description:
       "Một số phím trên bàn phím không hoạt động, đặc biệt là phím Space và Enter.",
-    status: "ĐANG_XỬ_LÝ",
+    status: RepairStatus.ĐANG_XỬ_LÝ,
     createdAt: "2025-01-14T09:20:00Z",
     acceptedAt: "2025-01-14T15:30:00Z",
   },
@@ -106,7 +106,7 @@ export const mockRepairRequests: EnhancedRepairRequest[] = [
     errorTypeName: "Lỗi phần mềm",
     description:
       "Máy tính bị tự động khởi động lại liên tục, xuất hiện màn hình xanh (Blue Screen) khi chạy ứng dụng nặng.",
-    status: "ĐANG_XỬ_LÝ",
+    status: RepairStatus.ĐANG_XỬ_LÝ,
     createdAt: "2025-01-18T10:45:00Z",
     acceptedAt: "2025-01-18T14:30:00Z",
   },
@@ -126,35 +126,45 @@ export const mockRepairRequests: EnhancedRepairRequest[] = [
     errorTypeName: "Lỗi phần cứng",
     description:
       "Ổ cứng có tiếng kêu bất thường, máy khởi động chậm và thường xuyên bị treo khi truy xuất dữ liệu.",
-    status: "CHỜ_TIẾP_NHẬN",
+    status: RepairStatus.CHỜ_TIẾP_NHẬN,
     createdAt: "2025-01-19T09:20:00Z",
   },
 ];
 
 export const repairRequestStatusConfig = {
-  CHỜ_TIẾP_NHẬN: {
+  [RepairStatus.CHỜ_TIẾP_NHẬN]: {
     label: "Chờ tiếp nhận",
     color: "bg-yellow-100 text-yellow-800 border-yellow-200",
     icon: Clock,
   },
-  ĐANG_XỬ_LÝ: {
+  [RepairStatus.ĐÃ_TIẾP_NHẬN]: {
+    label: "Đã tiếp nhận",
+    color: "bg-blue-100 text-blue-800 border-blue-200",
+    icon: AlertTriangle,
+  },
+  [RepairStatus.ĐANG_XỬ_LÝ]: {
     label: "Đang xử lý",
     color: "bg-blue-100 text-blue-800 border-blue-200",
     icon: AlertTriangle,
   },
-  HOÀN_THÀNH: {
+  [RepairStatus.CHỜ_THAY_THẾ]: {
+    label: "Chờ thay thế",
+    color: "bg-purple-100 text-purple-800 border-purple-200",
+    icon: FileCheck,
+  },
+  [RepairStatus.ĐÃ_HOÀN_THÀNH]: {
     label: "Hoàn thành",
     color: "bg-green-100 text-green-800 border-green-200",
     icon: CheckCircle,
   },
-  HỦY_BỎ: {
+  [RepairStatus.ĐÃ_HỦY]: {
     label: "Hủy bỏ",
     color: "bg-gray-100 text-gray-800 border-gray-200",
     icon: X,
   },
 };
 
-// Data for repair requests list (for danh-sach-bao-loi page)
+// Data for repair requests list (for quan-ly-bao-loi page)
 export const mockRepairRequestsForList: RepairRequestForList[] = [
   {
     id: "req-001",
@@ -177,7 +187,7 @@ export const mockRepairRequestsForList: RepairRequestForList[] = [
     description:
       "Máy tính không khởi động được, có mùi cháy từ nguồn điện 500W, cần thay thay nguồn mới ngay lập tức",
     mediaUrls: ["image1.jpg", "image2.jpg"],
-    status: "CHỜ_TIẾP_NHẬN",
+    status: RepairStatus.CHỜ_TIẾP_NHẬN,
     resolutionNotes: "",
     createdAt: "2024-01-15T08:30:00",
     acceptedAt: "",
@@ -204,7 +214,7 @@ export const mockRepairRequestsForList: RepairRequestForList[] = [
     errorTypeName: "Lỗi RAM",
     description: "RAM DDR4 8GB bị lỗi, máy không khởi động được, màn hình đen",
     mediaUrls: ["ram_error.jpg"],
-    status: "ĐANG_XỬ_LÝ",
+    status: RepairStatus.ĐANG_XỬ_LÝ,
     resolutionNotes: "Đã kiểm tra RAM, đang chờ linh kiện mới",
     createdAt: "2024-01-14T14:15:00",
     acceptedAt: "2024-01-14T15:00:00",
@@ -232,7 +242,7 @@ export const mockRepairRequestsForList: RepairRequestForList[] = [
     description:
       "Ổ cứng SSD 256GB bị bad sector nghiêm trọng, mất dữ liệu, không thể truy cập",
     mediaUrls: ["ssd_error.jpg"],
-    status: "HOÀN_THÀNH",
+    status: RepairStatus.ĐÃ_HOÀN_THÀNH,
     resolutionNotes:
       "Đã thay SSD mới Samsung 256GB, phục hồi dữ liệu thành công từ backup",
     createdAt: "2024-01-12T09:00:00",
@@ -261,7 +271,7 @@ export const mockRepairRequestsForList: RepairRequestForList[] = [
     description:
       "Card đồ họa NVIDIA GTX 1050 2GB bị lỗi chip, màn hình không hiển thị hình ảnh",
     mediaUrls: ["gpu_error.jpg", "screen_black.jpg"],
-    status: "CHỜ_TIẾP_NHẬN",
+    status: RepairStatus.CHỜ_TIẾP_NHẬN,
     resolutionNotes: "",
     createdAt: "2024-01-13T11:20:00",
     acceptedAt: "",
@@ -289,7 +299,7 @@ export const mockRepairRequestsForList: RepairRequestForList[] = [
     description:
       "CPU Intel i5-8400 bị quá nhiệt, máy tự động tắt liên tục sau 5-10 phút sử dụng",
     mediaUrls: ["cpu_temp.jpg"],
-    status: "ĐANG_XỬ_LÝ",
+    status: RepairStatus.ĐANG_XỬ_LÝ,
     resolutionNotes:
       "Đang thay tản nhiệt mới và kiểm tra CPU, có thể cần thay CPU",
     createdAt: "2024-01-16T07:45:00",

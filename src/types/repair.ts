@@ -28,7 +28,7 @@ export interface RepairRequestForList {
   errorTypeName?: string; // Tên loại lỗi
   description: string; // Mô tả chi tiết lỗi
   mediaUrls?: string[]; // Mảng URL ảnh/video minh họa
-  status: "CHỜ_TIẾP_NHẬN" | "ĐANG_XỬ_LÝ" | "HOÀN_THÀNH" | "HỦY_BỎ";
+  status: RepairStatus;
   resolutionNotes?: string; // Ghi chú KTV về kết quả xử lý
   createdAt: string; // Thời điểm báo lỗi
   acceptedAt?: string; // Thời điểm KTV tiếp nhận
@@ -46,7 +46,6 @@ export interface ReplacementRequestForList {
   location: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
-  priority: "high" | "medium" | "low";
   requestDate: string;
   estimatedCost: number;
   description: string;
@@ -112,12 +111,13 @@ export const RoleInfo = {
 } as const;
 
 // Định nghĩa trạng thái báo cáo lỗi
-export enum ReportStatus {
-  PENDING = "PENDING", // Chờ tiếp nhận
-  IN_PROGRESS = "IN_PROGRESS", // Đang xử lý
-  COMPLETED = "COMPLETED", // Đã hoàn thành
-  REJECTED = "REJECTED", // Bị từ chối
-  CANCELLED = "CANCELLED", // Đã hủy
+export enum RepairStatus {
+  CHỜ_TIẾP_NHẬN = "CHỜ_TIẾP_NHẬN",     // Giảng viên vừa tạo, chờ KTV tiếp nhận
+  ĐÃ_TIẾP_NHẬN = "ĐÃ_TIẾP_NHẬN",      // KTV đã xác nhận sẽ xử lý
+  ĐANG_XỬ_LÝ = "ĐANG_XỬ_LÝ",        // KTV đang trong quá trình kiểm tra, sửa chữa
+  CHỜ_THAY_THẾ = "CHỜ_THAY_THẾ",      // Lỗi phần cứng, đã tạo đề xuất thay thế và đang chờ duyệt/mua sắm
+  ĐÃ_HOÀN_THÀNH = "ĐÃ_HOÀN_THÀNH",     // Đã sửa chữa hoặc thay thế xong
+  ĐÃ_HỦY = "ĐÃ_HỦY",            // Yêu cầu bị hủy
 }
 
 // Định nghĩa mức độ ưu tiên
@@ -129,11 +129,14 @@ export enum Priority {
 }
 
 // Định nghĩa trạng thái thiết bị
-export enum EquipmentStatus {
-  ACTIVE = "ACTIVE", // Hoạt động
-  UNDER_REPAIR = "UNDER_REPAIR", // Đang sửa chữa
-  BROKEN = "BROKEN", // Hỏng
-  RETIRED = "RETIRED", // Đã thanh lý
+export enum AssetStatus {
+  ĐANG_SỬ_DỤNG = "ĐANG_SỬ_DỤNG",
+  CHỜ_BÀN_GIAO = "CHỜ_BÀN_GIAO",
+  CHỜ_TIẾP_NHẬN = "CHỜ_TIẾP_NHẬN",
+  HƯ_HỎNG = "HƯ_HỎNG",
+  ĐÃ_MẤT = "ĐÃ_MẤT",
+  ĐỀ_XUẤT_THANH_LÝ = "ĐỀ_XUẤT_THANH_LÝ",
+  ĐÃ_THANH_LÝ = "ĐÃ_THANH_LÝ",
 }
 
 // Type cho user
@@ -156,13 +159,22 @@ export interface ErrorReport {
   equipmentId: string;
   location: string;
   priority: Priority;
-  status: ReportStatus;
+  status: RepairStatus;
   reporterId: string;
   assignedTechnicianId?: string;
   createdAt: Date;
   updatedAt: Date;
   images?: string[];
   feedback?: string;
+}
+
+export enum ReplacementStatus {
+  CHỜ_TỔ_TRƯỞNG_DUYỆT = "CHỜ_TỔ_TRƯỞNG_DUYỆT",
+  CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH",          // Chờ Phòng Quản trị cử người xuống xác minh thực tế
+  CHỜ_QTV_KHOA_DUYỆT = "CHỜ_QTV_KHOA_DUYỆT",
+  ĐÃ_DUYỆT = "ĐÃ_DUYỆT",              // Đã được duyệt, chờ mua sắm
+  ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI",
+  ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM",   // Đã có thiết bị mới
 }
 
 // Type cho đề xuất thay thế
@@ -172,7 +184,7 @@ export interface ReplacementRequest {
   reason: string;
   estimatedCost: number;
   technicianId: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: ReplacementStatus;
   approvedBy?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -184,7 +196,7 @@ export interface RepairRequest {
   assetId: string;
   assetName: string;
   description: string;
-  status: "pending" | "in_progress" | "completed" | "rejected";
+  status: RepairStatus;
   requestedBy: string;
   requestedAt: string;
   assignedTo?: string;
@@ -195,12 +207,11 @@ export interface RepairRequest {
 export interface RepairInput {
   assetId: string;
   description: string;
-  priority: "low" | "medium" | "high" | "critical";
 }
 
 export interface RepairFilter {
   search?: string;
-  status?: "pending" | "in_progress" | "completed" | "rejected";
+  status?: RepairStatus;
   startDate?: string;
   endDate?: string;
 }
@@ -215,7 +226,7 @@ export interface Asset {
   serialNumber: string;
   roomId: string;
   roomName: string;
-  status: "HOẠT_ĐỘNG" | "BẢO_TRÌ" | "HỎNG_HÓC" | "NGỪNG_SỬ_DỤNG";
+  status: AssetStatus;
   purchaseDate: string;
   warrantyExpiry: string;
   lastMaintenanceDate?: string;
@@ -287,7 +298,7 @@ export interface RepairHistory {
     newComponent: string;
     changeReason: string;
   }[];
-  status: "HOÀN_THÀNH" | "ĐANG_XỬ_LÝ" | "HỦY_BỎ";
+  status: RepairStatus;
 }
 
 // Enhanced repair request interface
@@ -309,7 +320,7 @@ export interface EnhancedRepairRequest {
   errorTypeName?: string;
   description: string;
   mediaUrls?: string[];
-  status: "CHỜ_TIẾP_NHẬN" | "ĐANG_XỬ_LÝ" | "HOÀN_THÀNH" | "HỦY_BỎ";
+  status: RepairStatus;
   resolutionNotes?: string;
   createdAt: string;
   acceptedAt?: string;

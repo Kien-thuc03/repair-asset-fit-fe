@@ -66,8 +66,8 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: LayoutDashboard,
       },
       {
-        name: "Xử lý lỗi",
-        href: "/ky-thuat-vien/xu-ly-loi",
+        name: "Quản lý báo lỗi",
+        href: "/ky-thuat-vien/quan-ly-bao-loi",
         icon: Wrench,
       },
       {

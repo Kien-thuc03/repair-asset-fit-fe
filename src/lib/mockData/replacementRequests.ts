@@ -10,7 +10,6 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     location: "Tòa H - Phòng H301",
     reason: "Hỏng mainboard Intel H310, không thể sửa chữa",
     status: "pending",
-    priority: "high",
     requestDate: "2024-01-15",
     estimatedCost: 8500000,
     description:
@@ -25,7 +24,6 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     location: "Tòa H - Phòng H205",
     reason: "RAM DDR4 8GB hỏng, máy không khởi động được",
     status: "pending",
-    priority: "medium",
     requestDate: "2024-01-14",
     estimatedCost: 1200000,
     description:
@@ -40,7 +38,6 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     location: "Tòa H - Phòng H704",
     reason: "Ổ cứng SSD 256GB hỏng, mất dữ liệu",
     status: "approved",
-    priority: "high",
     requestDate: "2024-01-12",
     estimatedCost: 2800000,
     description:
@@ -55,7 +52,6 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     location: "Tòa H - Phòng H109",
     reason: "Nguồn điện 500W bị cháy, có mùi khét",
     status: "pending",
-    priority: "high",
     requestDate: "2024-01-16",
     estimatedCost: 1800000,
     description:
@@ -70,7 +66,6 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     location: "Tòa H - Phòng H508",
     reason: "Card đồ họa GTX 1050 hỏng, không hiển thị hình ảnh",
     status: "pending",
-    priority: "medium",
     requestDate: "2024-01-13",
     estimatedCost: 4200000,
     description:
@@ -85,7 +80,6 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     location: "Tòa H - Phòng H902",
     reason: "CPU Intel i5-8400 quá nóng, máy tự động tắt",
     status: "rejected",
-    priority: "low",
     requestDate: "2024-01-10",
     estimatedCost: 5500000,
     description:
