@@ -1,6 +1,8 @@
 "use client";
+import { useState } from "react";
 import { FileText, Calendar, User, Building2, Computer, X } from "lucide-react";
 import { ReplacementList } from "@/lib/mockData/replacementLists";
+import CreateReportSuccessModal from "./CreateReportSuccessModal";
 
 interface ListDetailModalProps {
   show: boolean;
@@ -15,11 +17,12 @@ export default function ListDetailModal({
   selectedList,
   onCreateReport,
 }: ListDetailModalProps) {
+  const [showCreateReportModal, setShowCreateReportModal] = useState(false);
+
   if (!show || !selectedList) return null;
 
   const handleCreateReport = () => {
-    onClose();
-    onCreateReport(selectedList.id);
+    setShowCreateReportModal(true);
   };
 
   return (
@@ -137,6 +140,18 @@ export default function ListDetailModal({
           </div>
         </div>
       </div>
+
+      {/* Modal notification */}
+      <CreateReportSuccessModal
+        isOpen={showCreateReportModal}
+        onClose={() => {
+          setShowCreateReportModal(false);
+          onClose();
+          onCreateReport(selectedList.id);
+        }}
+        listTitle={selectedList.title}
+        equipmentCount={selectedList.totalItems}
+      />
     </div>
   );
 }

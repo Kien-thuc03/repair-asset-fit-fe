@@ -249,11 +249,7 @@ export enum ComponentType {
 export enum ComponentStatus {
   INSTALLED = "INSTALLED", // Đang lắp đặt và hoạt động
   REMOVED = "REMOVED", // Đã gỡ ra
-  MAINTENANCE = "MAINTENANCE", // Đang bảo trì
   FAULTY = "FAULTY", // Hỏng hóc
-  REPLACED = "REPLACED", // Đã thay thế
-  PENDING_INSTALL = "PENDING_INSTALL", // Chờ lắp đặt
-  TESTING = "TESTING", // Đang kiểm tra
 }
 
 // Component interface for computer assets (updated to match database schema)
