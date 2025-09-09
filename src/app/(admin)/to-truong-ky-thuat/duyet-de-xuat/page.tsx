@@ -21,6 +21,9 @@ import { ReplacementRequestForList } from "@/types";
 import { mockReplacementRequests } from "@/lib/mockData";
 import CreateReplacementListModal from "./modal/CreateReplacementListModal";
 import RequestDetailModal from "./modal/RequestDetailModal";
+import CreateListSuccessModal from "./modal/CreateListSuccessModal";
+import ExportExcelSuccessModal from "./modal/ExportExcelSuccessModal";
+import ExportExcelErrorModal from "./modal/ExportExcelErrorModal";
 export default function DuyetDeXuatPage() {
   const [requests, setRequests] = useState<ReplacementRequestForList[]>(
     mockReplacementRequests
@@ -32,6 +35,11 @@ export default function DuyetDeXuatPage() {
     useState<ReplacementRequestForList | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showCreateListModal, setShowCreateListModal] = useState(false);
+  const [showCreateListSuccessModal, setShowCreateListSuccessModal] =
+    useState(false);
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -223,9 +231,15 @@ export default function DuyetDeXuatPage() {
         ? filteredRequests.filter((req) => selectedItems.includes(req.id))
         : filteredRequests;
 
+    if (itemsToExport.length === 0) {
+      setShowExportErrorModal(true);
+      return;
+    }
+
     console.log("Xuất Excel:", itemsToExport);
     // TODO: Implement actual Excel export logic
-    alert(`Xuất ${itemsToExport.length} bản ghi ra Excel`);
+    setExportCount(itemsToExport.length);
+    setShowExportSuccessModal(true);
   };
 
   // Lấy các đề xuất đã được duyệt
@@ -700,6 +714,28 @@ export default function DuyetDeXuatPage() {
         show={showCreateListModal}
         onClose={() => setShowCreateListModal(false)}
         approvedRequests={approvedRequests}
+        onSuccess={(count) => {
+          setExportCount(count);
+          setShowCreateListSuccessModal(true);
+        }}
+      />
+
+      {/* Success Modals */}
+      <CreateListSuccessModal
+        isOpen={showCreateListSuccessModal}
+        onClose={() => setShowCreateListSuccessModal(false)}
+        listCount={exportCount}
+      />
+
+      <ExportExcelSuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        exportCount={exportCount}
+      />
+
+      <ExportExcelErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
       />
     </div>
   );
