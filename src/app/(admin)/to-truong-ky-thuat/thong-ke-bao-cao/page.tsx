@@ -32,8 +32,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  AreaChart,
-  Area,
 } from "recharts";
 import {
   TrendingUp,
@@ -50,6 +48,8 @@ import {
   weeklyTrendData,
   detailedTableData,
   activityTimelineData,
+  technicianPerformanceData,
+  equipmentStatsData,
 } from "@/lib/mockData";
 
 const { RangePicker } = DatePicker;
@@ -76,9 +76,10 @@ const getIcon = (iconType: string) => {
 
 const columns = [
   {
-    title: "Khoa/Phòng ban",
+    title: "Tầng/Khu vực",
     dataIndex: "department",
     key: "department",
+    width: 150,
   },
   {
     title: "Tổng báo cáo",
@@ -86,6 +87,8 @@ const columns = [
     key: "totalReports",
     sorter: (a: DepartmentStats, b: DepartmentStats) =>
       a.totalReports - b.totalReports,
+    align: "center" as const,
+    width: 120,
   },
   {
     title: "Hoàn thành",
@@ -93,17 +96,23 @@ const columns = [
     key: "completed",
     sorter: (a: DepartmentStats, b: DepartmentStats) =>
       a.completed - b.completed,
+    align: "center" as const,
+    width: 100,
   },
   {
     title: "Đang xử lý",
     dataIndex: "pending",
     key: "pending",
     sorter: (a: DepartmentStats, b: DepartmentStats) => a.pending - b.pending,
+    align: "center" as const,
+    width: 100,
   },
   {
     title: "Thời gian TB",
     dataIndex: "avgTime",
     key: "avgTime",
+    align: "center" as const,
+    width: 120,
   },
   {
     title: "Hiệu suất (%)",
@@ -111,31 +120,37 @@ const columns = [
     key: "efficiency",
     sorter: (a: DepartmentStats, b: DepartmentStats) =>
       a.efficiency - b.efficiency,
+    align: "center" as const,
+    width: 150,
     render: (value: number) => (
-      <Progress
-        percent={value}
-        size="small"
-        status={value >= 85 ? "success" : value >= 70 ? "normal" : "exception"}
-        showInfo={false}
-      />
+      <div>
+        <Progress
+          percent={value}
+          size="small"
+          status={
+            value >= 95 ? "success" : value >= 90 ? "normal" : "exception"
+          }
+          showInfo={false}
+        />
+        <span className="text-xs text-gray-600 mt-1">{value.toFixed(1)}%</span>
+      </div>
     ),
   },
   {
-    title: "Trạng thái",
+    title: "Đánh giá",
     dataIndex: "status",
     key: "status",
-    render: (status: string) => (
-      <Tag
-        color={
-          status === "Tốt"
-            ? "green"
-            : status === "Trung bình"
-            ? "orange"
-            : "red"
-        }>
-        {status}
-      </Tag>
-    ),
+    align: "center" as const,
+    width: 100,
+    render: (status: string) => {
+      let color = "default";
+      if (status === "Xuất sắc") color = "purple";
+      else if (status === "Tốt") color = "green";
+      else if (status === "Khá") color = "orange";
+      else if (status === "Trung bình") color = "red";
+
+      return <Tag color={color}>{status}</Tag>;
+    },
   },
 ];
 
@@ -170,11 +185,11 @@ const StatsReportsPage = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
         <Title level={2} className="mb-2">
-          Thống kê báo cáo
+          Thống kê báo cáo - Khoa CNTT
         </Title>
         <Text type="secondary">
-          Xem các loại thống kê khác nhau (thiết bị, tiến độ, loại lỗi) và xuất
-          báo cáo tổng hợp
+          Thống kê các báo lỗi thiết bị trong các tầng tòa H - Khoa Công nghệ
+          Thông tin
         </Text>
       </div>
 
@@ -277,17 +292,18 @@ const StatsReportsPage = () => {
 
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={16}>
-              <Card title="Chi tiết theo khoa/phòng ban">
+              <Card title="Chi tiết theo tầng - Tòa H">
                 <Table
                   columns={columns}
                   dataSource={detailedTableData}
                   pagination={false}
                   size="middle"
+                  scroll={{ x: 800 }}
                 />
               </Card>
             </Col>
             <Col xs={24} lg={8}>
-              <Card title="Timeline hoạt động">
+              <Card title="Hoạt động gần đây - Khoa CNTT">
                 <Timeline>
                   {activityTimelineData.map((activity, index) => (
                     <Timeline.Item key={index} color={activity.color}>
@@ -343,19 +359,19 @@ const StatsReportsPage = () => {
         <TabPane tab="Hiệu suất" key="performance">
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={12}>
-              <Card title="Hiệu suất theo khoa">
+              <Card title="Hiệu suất theo tầng - Tòa H">
                 {detailedTableData.map((dept, index) => (
                   <div key={index} className="mb-4">
                     <div className="flex justify-between items-center mb-1">
                       <Text>{dept.department}</Text>
-                      <Text strong>{dept.efficiency}%</Text>
+                      <Text strong>{dept.efficiency.toFixed(1)}%</Text>
                     </div>
                     <Progress
                       percent={dept.efficiency}
                       status={
-                        dept.efficiency >= 85
+                        dept.efficiency >= 95
                           ? "success"
-                          : dept.efficiency >= 70
+                          : dept.efficiency >= 90
                           ? "normal"
                           : "exception"
                       }
@@ -367,28 +383,71 @@ const StatsReportsPage = () => {
             </Col>
             <Col xs={24} lg={12}>
               <Card title="Thống kê kỹ thuật viên">
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Area
-                      type="monotone"
-                      dataKey="completed"
-                      stackId="1"
-                      stroke="#52c41a"
-                      fill="#52c41a"
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="pending"
-                      stackId="1"
-                      stroke="#faad14"
-                      fill="#faad14"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <div className="space-y-4">
+                  {technicianPerformanceData.map((tech, index) => (
+                    <div key={index} className="border-b pb-4 last:border-b-0">
+                      <div className="flex justify-between items-center mb-2">
+                        <Text strong>{tech.name}</Text>
+                        <Tag color="blue">{tech.efficiency.toFixed(1)}%</Tag>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-sm text-gray-600">
+                        <div>Hoàn thành: {tech.completed}</div>
+                        <div>Đang xử lý: {tech.pending}</div>
+                        <div>TB: {tech.avgTime} ngày</div>
+                      </div>
+                      <Progress
+                        percent={tech.efficiency}
+                        size="small"
+                        status={
+                          tech.efficiency >= 95
+                            ? "success"
+                            : tech.efficiency >= 90
+                            ? "normal"
+                            : "exception"
+                        }
+                        showInfo={false}
+                        className="mt-2"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]} className="mt-4">
+            <Col xs={24}>
+              <Card title="Thống kê thiết bị - Khoa CNTT">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {equipmentStatsData.map((equipment, index) => (
+                    <div
+                      key={index}
+                      className="text-center p-4 border rounded-lg">
+                      <div className="text-lg font-semibold text-gray-800">
+                        {equipment.category}
+                      </div>
+                      <div className="text-2xl font-bold text-blue-600 my-2">
+                        {equipment.total}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Lỗi: {equipment.faulty} ({equipment.percentage}%)
+                      </div>
+                      <Progress
+                        percent={100 - equipment.percentage}
+                        size="small"
+                        status={
+                          equipment.percentage <= 5
+                            ? "success"
+                            : equipment.percentage <= 10
+                            ? "normal"
+                            : "exception"
+                        }
+                        showInfo={false}
+                        className="mt-2"
+                      />
+                    </div>
+                  ))}
+                </div>
               </Card>
             </Col>
           </Row>
@@ -407,6 +466,7 @@ const StatsReportsPage = () => {
                 showTotal: (total, range) =>
                   `${range[0]}-${range[1]} của ${total} mục`,
               }}
+              scroll={{ x: 800 }}
             />
           </Card>
         </TabPane>

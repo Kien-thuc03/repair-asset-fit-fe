@@ -6,7 +6,7 @@ export interface DepartmentStats {
   pending: number;
   avgTime: string;
   efficiency: number;
-  status: string;
+  status: "Xuất sắc" | "Tốt" | "Khá" | "Trung bình" | "Kém";
 }
 
 export interface MonthlyData {
