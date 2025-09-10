@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -37,6 +37,39 @@ export default function DanhSachBaoLoiPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Inject CSS vào head để xử lý scrollbar cho toàn trang
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      html {
+        scrollbar-gutter: stable;
+        overflow-y: scroll; /* Fallback cho trình duyệt không hỗ trợ scrollbar-gutter */
+      }
+      
+      body {
+        min-height: 100vh; /* Đảm bảo body luôn có chiều cao tối thiểu */
+      }
+      
+      /* Hỗ trợ cho trình duyệt hiện đại */
+      @supports (scrollbar-gutter: stable) {
+        html {
+          overflow-y: auto; /* Reset overflow khi đã có scrollbar-gutter */
+        }
+      }
+      
+      /* Đảm bảo container luôn có đủ chiều cao */
+      .main-content {
+        min-height: calc(100vh - 2rem);
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Cleanup khi component unmount
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: string) => {
@@ -179,7 +212,11 @@ export default function DanhSachBaoLoiPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-2">
+    <div
+      className="container mx-auto px-4 py-2 main-content"
+      style={{
+        scrollbarGutter: "stable",
+      }}>
       {/* Header */}
       <div className="mb-8">
         <Link
@@ -367,7 +404,7 @@ export default function DanhSachBaoLoiPage() {
           </h2>
         </div>
 
-        <div className="overflow-hidden">
+        <div className="overflow-hidden" style={{ minHeight: "600px" }}>
           <div className="overflow-hidden">
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
