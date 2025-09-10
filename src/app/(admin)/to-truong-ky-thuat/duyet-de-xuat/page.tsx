@@ -171,6 +171,27 @@ export default function DuyetDeXuatPage() {
   const getPriorityBadge = () => "bg-gray-100 text-gray-800";
   const getPriorityText = () => "N/A";
 
+  // Hàm xác định vai trò dựa trên tên người yêu cầu
+  const getUserRole = (requestedBy: string) => {
+    // Mapping cụ thể theo dữ liệu mock để đồng bộ với trang danh sách báo lỗi
+    switch (requestedBy) {
+      case "Võ Thị F":
+        return "KTV";
+      case "Phạm Thị D":
+        return "Giảng viên";
+      case "Hoàng Văn E":
+        return "Giảng viên";
+      case "Nguyễn Văn A":
+        return "Giảng viên";
+      case "Trần Thị B":
+        return "Giảng viên";
+      case "Lê Văn C":
+        return "Giảng viên";
+      default:
+        return "Giảng viên";
+    }
+  };
+
   // Xử lý checkbox
   const handleSelectItem = (itemId: string) => {
     setSelectedItems((prev) => {
@@ -388,6 +409,9 @@ export default function DuyetDeXuatPage() {
                         <div className="text-gray-900 font-medium">
                           {request.requestedBy}
                         </div>
+                        <div className="text-gray-500 text-xs">
+                          {getUserRole(request.requestedBy)}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-500">Vị trí</div>
@@ -532,7 +556,7 @@ export default function DuyetDeXuatPage() {
                               {request.requestedBy}
                             </div>
                             <div className="text-xs text-gray-500 truncate">
-                              {request.unit.split(" ").slice(-2).join(" ")}
+                              {getUserRole(request.requestedBy)}
                             </div>
                           </div>
                         </div>
