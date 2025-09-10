@@ -367,157 +367,173 @@ export default function DanhSachBaoLoiPage() {
           </h2>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-fixed divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0 z-10">
-              <tr>
-                <th
-                  className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("requestCode")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Mã báo lỗi</span>
-                    {getSortIcon("requestCode")}
-                  </div>
-                </th>
-                <th
-                  className="w-56 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("assetCode")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Tài sản</span>
-                    {getSortIcon("assetCode")}
-                  </div>
-                </th>
-                <th
-                  className="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("reporterName")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Người báo</span>
-                    {getSortIcon("reporterName")}
-                  </div>
-                </th>
-                <th
-                  className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("errorTypeName")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Loại lỗi</span>
-                    {getSortIcon("errorTypeName")}
-                  </div>
-                </th>
-                <th
-                  className="w-36 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("status")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Trạng thái</span>
-                    {getSortIcon("status")}
-                  </div>
-                </th>
-                <th
-                  className="w-28 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("createdAt")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Ngày báo</span>
-                    {getSortIcon("createdAt")}
-                  </div>
-                </th>
-                <th className="w-20 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {sortedRequests.map((request) => (
-                <tr key={request.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap truncate">
-                    <div
-                      className="text-sm font-medium text-gray-900 truncate"
-                      title={request.requestCode}>
-                      {request.requestCode}
+        <div className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-fixed divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => handleSort("requestCode")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Mã báo lỗi</span>
+                      {getSortIcon("requestCode")}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="min-w-0">
-                      <div
-                        className="text-sm font-medium text-gray-900 truncate"
-                        title={request.assetCode}>
-                        {request.assetCode}
-                      </div>
-                      <div
-                        className="text-sm text-gray-500 truncate"
-                        title={request.assetName}>
-                        {request.assetName}
-                      </div>
-                      <div className="flex items-center text-xs text-gray-400 mt-1 min-w-0">
-                        <Building2 className="h-3 w-3 mr-1 flex-shrink-0" />
-                        <span
-                          className="truncate"
-                          title={`${request.roomName} - ${request.buildingName}`}>
-                          {request.roomName} - {request.buildingName}
-                        </span>
-                      </div>
+                  </th>
+                  <th
+                    className="w-56 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => handleSort("assetCode")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Tài sản</span>
+                      {getSortIcon("assetCode")}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center min-w-0">
-                      <User className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                      <div className="min-w-0">
+                  </th>
+                  <th
+                    className="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => handleSort("reporterName")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Người báo</span>
+                      {getSortIcon("reporterName")}
+                    </div>
+                  </th>
+                  <th
+                    className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => handleSort("errorTypeName")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Loại lỗi</span>
+                      {getSortIcon("errorTypeName")}
+                    </div>
+                  </th>
+                  <th
+                    className="w-36 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => handleSort("status")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Trạng thái</span>
+                      {getSortIcon("status")}
+                    </div>
+                  </th>
+                  <th
+                    className="w-28 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => handleSort("createdAt")}>
+                    <div className="flex items-center space-x-1">
+                      <span>Ngày báo</span>
+                      {getSortIcon("createdAt")}
+                    </div>
+                  </th>
+                  <th className="w-20 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Thao tác
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {sortedRequests.length > 0 ? (
+                  sortedRequests.map((request) => (
+                    <tr key={request.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap truncate">
                         <div
                           className="text-sm font-medium text-gray-900 truncate"
-                          title={request.reporterName}>
-                          {request.reporterName}
+                          title={request.requestCode}>
+                          {request.requestCode}
                         </div>
-                        <div
-                          className="text-sm text-gray-500 truncate"
-                          title={request.reporterRole}>
-                          {request.reporterRole}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="min-w-0">
+                          <div
+                            className="text-sm font-medium text-gray-900 truncate"
+                            title={request.assetCode}>
+                            {request.assetCode}
+                          </div>
+                          <div
+                            className="text-sm text-gray-500 truncate"
+                            title={request.assetName}>
+                            {request.assetName}
+                          </div>
+                          <div className="flex items-center text-xs text-gray-400 mt-1 min-w-0">
+                            <Building2 className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span
+                              className="truncate"
+                              title={`${request.roomName} - ${request.buildingName}`}>
+                              {request.roomName} - {request.buildingName}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap truncate">
-                    <span
-                      className="text-sm text-gray-900 truncate"
-                      title={request.errorTypeName || "Chưa xác định"}>
-                      {request.errorTypeName || "Chưa xác định"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center min-w-0">
-                      <div className="flex-shrink-0">
-                        {getStatusIcon(request.status)}
-                      </div>
-                      <span
-                        className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full truncate ${getStatusBadge(
-                          request.status
-                        )}`}
-                        title={getStatusText(request.status)}>
-                        {getStatusText(request.status)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                      <span className="text-sm text-gray-900 truncate">
-                        {new Date(request.createdAt).toLocaleDateString(
-                          "vi-VN"
-                        )}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => {
-                        setSelectedRequest(request);
-                        setShowModal(true);
-                      }}
-                      className="text-indigo-600 hover:text-indigo-900">
-                      <Eye className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center min-w-0">
+                          <User className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <div
+                              className="text-sm font-medium text-gray-900 truncate"
+                              title={request.reporterName}>
+                              {request.reporterName}
+                            </div>
+                            <div
+                              className="text-sm text-gray-500 truncate"
+                              title={request.reporterRole}>
+                              {request.reporterRole}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap truncate">
+                        <span
+                          className="text-sm text-gray-900 truncate"
+                          title={request.errorTypeName || "Chưa xác định"}>
+                          {request.errorTypeName || "Chưa xác định"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center min-w-0">
+                          <div className="flex-shrink-0">
+                            {getStatusIcon(request.status)}
+                          </div>
+                          <span
+                            className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full truncate ${getStatusBadge(
+                              request.status
+                            )}`}
+                            title={getStatusText(request.status)}>
+                            {getStatusText(request.status)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                          <span className="text-sm text-gray-900 truncate">
+                            {new Date(request.createdAt).toLocaleDateString(
+                              "vi-VN"
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setShowModal(true);
+                          }}
+                          className="text-indigo-600 hover:text-indigo-900">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center">
+                      <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                      <h3 className="text-sm font-medium text-gray-900 mb-1">
+                        Không tìm thấy kết quả
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                      </p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
