@@ -40,22 +40,13 @@ export default function TraCuuThietBiPage() {
     const style = document.createElement("style");
     style.textContent = `
       html {
-        scrollbar-gutter: stable;
-        overflow-y: scroll; /* Fallback cho trình duyệt không hỗ trợ scrollbar-gutter */
+        overflow-y: auto;
       }
       
       body {
-        min-height: 100vh; /* Đảm bảo body luôn có chiều cao tối thiểu */
+        min-height: 100vh;
       }
       
-      /* Hỗ trợ cho trình duyệt hiện đại */
-      @supports (scrollbar-gutter: stable) {
-        html {
-          overflow-y: auto; /* Reset overflow khi đã có scrollbar-gutter */
-        }
-      }
-      
-      /* Đảm bảo container luôn có đủ chiều cao */
       .main-content {
         min-height: calc(100vh - 2rem);
       }
@@ -158,12 +149,7 @@ export default function TraCuuThietBiPage() {
   const categories = Array.from(new Set(assets.map((asset) => asset.category)));
 
   return (
-    <div
-      className="space-y-6 main-content"
-      style={{
-        scrollbarGutter: "stable",
-        minHeight: "calc(100vh - 4rem)",
-      }}>
+    <div className="space-y-6 main-content">
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between">

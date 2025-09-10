@@ -36,22 +36,13 @@ export default function LapToTrinhPage() {
     const style = document.createElement("style");
     style.textContent = `
       html {
-        scrollbar-gutter: stable;
-        overflow-y: scroll; /* Fallback cho trình duyệt không hỗ trợ scrollbar-gutter */
+        overflow-y: auto;
       }
       
       body {
-        min-height: 100vh; /* Đảm bảo body luôn có chiều cao tối thiểu */
+        min-height: 100vh;
       }
       
-      /* Hỗ trợ cho trình duyệt hiện đại */
-      @supports (scrollbar-gutter: stable) {
-        html {
-          overflow-y: auto; /* Reset overflow khi đã có scrollbar-gutter */
-        }
-      }
-      
-      /* Đảm bảo container luôn có đủ chiều cao */
       .main-content {
         min-height: calc(100vh - 2rem);
       }
@@ -200,11 +191,7 @@ export default function LapToTrinhPage() {
   };
 
   return (
-    <div
-      className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content"
-      style={{
-        scrollbarGutter: "stable",
-      }}>
+    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -269,102 +256,104 @@ export default function LapToTrinhPage() {
       </div>
 
       {/* Lists Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white shadow rounded-lg">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
             Danh sách đề xuất đã được duyệt ({sortedLists.length})
           </h2>
         </div>
 
-        <div className="overflow-hidden" style={{ minHeight: "600px" }}>
-          {/* Mobile Card View */}
-          <div className="block sm:hidden">
-            <div className="p-3 space-y-3">
-              {sortedLists.length > 0 ? (
-                sortedLists.map((list) => (
-                  <div
-                    key={list.id}
-                    className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center">
-                        <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {list.title}
+        <div className="flex flex-col h-[400px] sm:h-[500px] lg:h-[600px]">
+          <div className="flex-1 overflow-auto">
+            {/* Mobile Card View */}
+            <div className="block sm:hidden">
+              <div className="p-3 space-y-3">
+                {sortedLists.length > 0 ? (
+                  sortedLists.map((list) => (
+                    <div
+                      key={list.id}
+                      className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center">
+                          <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {list.title}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              Mã: {list.id}
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            Mã: {list.id}
+                        </div>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                            list.status
+                          )}`}>
+                          {getStatusText(list.status)}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                        <div>
+                          <div className="text-gray-500">Người tạo</div>
+                          <div className="text-gray-900 font-medium">
+                            {list.createdBy}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Số thiết bị</div>
+                          <div className="text-gray-900 font-medium">
+                            {list.totalItems} thiết bị
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Chi phí ước tính</div>
+                          <div className="text-green-600 font-semibold">
+                            {list.totalCost.toLocaleString("vi-VN")} VNĐ
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Ngày tạo</div>
+                          <div className="text-gray-900">
+                            {new Date(list.createdAt).toLocaleDateString(
+                              "vi-VN"
+                            )}
                           </div>
                         </div>
                       </div>
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                          list.status
-                        )}`}>
-                        {getStatusText(list.status)}
-                      </span>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                      <div>
-                        <div className="text-gray-500">Người tạo</div>
-                        <div className="text-gray-900 font-medium">
-                          {list.createdBy}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Số thiết bị</div>
-                        <div className="text-gray-900 font-medium">
-                          {list.totalItems} thiết bị
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Chi phí ước tính</div>
-                        <div className="text-green-600 font-semibold">
-                          {list.totalCost.toLocaleString("vi-VN")} VNĐ
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Ngày tạo</div>
-                        <div className="text-gray-900">
-                          {new Date(list.createdAt).toLocaleDateString("vi-VN")}
-                        </div>
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => handleViewDetail(list)}
+                          className="text-indigo-600 hover:text-indigo-900 p-1">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleCreateReport(list.id)}
+                          className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
+                          Lập tờ trình
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-end space-x-2">
-                      <button
-                        onClick={() => handleViewDetail(list)}
-                        className="text-indigo-600 hover:text-indigo-900 p-1">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleCreateReport(list.id)}
-                        className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
-                        Lập tờ trình
-                      </button>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <h3 className="text-sm font-medium text-gray-900 mb-1">
+                      Không tìm thấy kết quả
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                    </p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <h3 className="text-sm font-medium text-gray-900 mb-1">
-                    Không tìm thấy kết quả
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Desktop Table View - Optimized for full width display */}
-          <div className="hidden sm:block">
-            <div className="overflow-hidden">
+            {/* Desktop Table View - Optimized for full width display */}
+            <div className="hidden sm:block">
               <table className="w-full divide-y divide-gray-200 table-fixed">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
                     <th className="w-[30%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button

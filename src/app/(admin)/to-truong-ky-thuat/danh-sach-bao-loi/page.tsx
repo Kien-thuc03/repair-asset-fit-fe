@@ -43,22 +43,13 @@ export default function DanhSachBaoLoiPage() {
     const style = document.createElement("style");
     style.textContent = `
       html {
-        scrollbar-gutter: stable;
-        overflow-y: scroll; /* Fallback cho trình duyệt không hỗ trợ scrollbar-gutter */
+        overflow-y: auto;
       }
       
       body {
-        min-height: 100vh; /* Đảm bảo body luôn có chiều cao tối thiểu */
+        min-height: 100vh;
       }
       
-      /* Hỗ trợ cho trình duyệt hiện đại */
-      @supports (scrollbar-gutter: stable) {
-        html {
-          overflow-y: auto; /* Reset overflow khi đã có scrollbar-gutter */
-        }
-      }
-      
-      /* Đảm bảo container luôn có đủ chiều cao */
       .main-content {
         min-height: calc(100vh - 2rem);
       }
@@ -212,11 +203,7 @@ export default function DanhSachBaoLoiPage() {
   };
 
   return (
-    <div
-      className="container mx-auto px-4 py-2 main-content"
-      style={{
-        scrollbarGutter: "stable",
-      }}>
+    <div className="container mx-auto px-4 py-2 main-content">
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-center">
@@ -390,15 +377,15 @@ export default function DanhSachBaoLoiPage() {
       </div>
 
       {/* Requests Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white shadow rounded-lg">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-900">
             Danh sách báo lỗi ({sortedRequests.length})
           </h2>
         </div>
 
-        <div className="overflow-hidden" style={{ minHeight: "600px" }}>
-          <div className="overflow-hidden">
+        <div className="flex flex-col h-[400px] sm:h-[500px] lg:h-[600px]">
+          <div className="flex-1 overflow-auto">
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
