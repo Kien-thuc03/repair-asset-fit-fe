@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -29,6 +29,39 @@ export default function PhanCongPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Inject CSS vào head để xử lý scrollbar cho toàn trang
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      html {
+        scrollbar-gutter: stable;
+        overflow-y: scroll; /* Fallback cho trình duyệt không hỗ trợ scrollbar-gutter */
+      }
+      
+      body {
+        min-height: 100vh; /* Đảm bảo body luôn có chiều cao tối thiểu */
+      }
+      
+      /* Hỗ trợ cho trình duyệt hiện đại */
+      @supports (scrollbar-gutter: stable) {
+        html {
+          overflow-y: auto; /* Reset overflow khi đã có scrollbar-gutter */
+        }
+      }
+      
+      /* Đảm bảo container luôn có đủ chiều cao */
+      .main-content {
+        min-height: calc(100vh - 2rem);
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Cleanup khi component unmount
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: string) => {
@@ -168,7 +201,11 @@ export default function PhanCongPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-2">
+    <div
+      className="container mx-auto px-4 py-2 main-content"
+      style={{
+        scrollbarGutter: "stable",
+      }}>
       {/* Header */}
       <div className="mb-8">
         <Link
@@ -243,135 +280,143 @@ export default function PhanCongPage() {
             </h2>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full table-fixed divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr>
-                  <th
-                    className="w-64 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("name")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Phòng</span>
-                      {getSortIcon("name")}
-                    </div>
-                  </th>
-                  <th
-                    className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("building")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Tòa nhà</span>
-                      {getSortIcon("building")}
-                    </div>
-                  </th>
-                  <th
-                    className="w-48 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("floors")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Tầng</span>
-                      {getSortIcon("floors")}
-                    </div>
-                  </th>
-                  <th
-                    className="w-56 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("technician")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Kỹ thuật viên phụ trách</span>
-                      {getSortIcon("technician")}
-                    </div>
-                  </th>
-                  <th className="w-24 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Thao tác
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sortedRooms.map((room) => (
-                  <tr key={room.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap truncate">
-                      <div className="flex items-center">
-                        <MapPin className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                        <span className="text-sm font-medium text-gray-900 truncate">
-                          {room.roomNumber}
-                        </span>
+          <div className="overflow-hidden" style={{ minHeight: "600px" }}>
+            <div className="overflow-hidden">
+              <table className="w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50 sticky top-0 z-10">
+                  <tr>
+                    <th
+                      className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[25%]"
+                      onClick={() => handleSort("name")}>
+                      <div className="flex items-center space-x-1">
+                        <span>Phòng</span>
+                        {getSortIcon("name")}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap truncate">
-                      <div className="flex items-center">
-                        <Building2 className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                        <span className="text-sm text-gray-900 truncate">
-                          {room.building || "N/A"}
-                        </span>
+                    </th>
+                    <th
+                      className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
+                      onClick={() => handleSort("building")}>
+                      <div className="flex items-center space-x-1">
+                        <span>Tòa nhà</span>
+                        {getSortIcon("building")}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap truncate">
-                      <span
-                        className="text-sm text-gray-500 truncate"
-                        title={room.floor || ""}>
-                        {room.floor || "N/A"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingRoom === room.id ? (
-                        <div className="flex items-center space-x-2">
-                          <select
-                            value={selectedTechnician}
-                            onChange={(e) =>
-                              setSelectedTechnician(e.target.value)
-                            }
-                            className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-1 min-w-0">
-                            <option value="">Chưa phân công</option>
-                            {technicians.map((tech) => (
-                              <option key={tech.id} value={tech.id}>
-                                {tech.name}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            onClick={() =>
-                              handleAssignTechnician(
-                                room.id,
-                                selectedTechnician
-                              )
-                            }
-                            className="text-green-600 hover:text-green-800 flex-shrink-0">
-                            <Save className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setEditingRoom(null);
-                              setSelectedTechnician("");
-                            }}
-                            className="text-gray-400 hover:text-gray-600 flex-shrink-0">
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center min-w-0">
-                          <User className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                    </th>
+                    <th
+                      className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
+                      onClick={() => handleSort("floors")}>
+                      <div className="flex items-center space-x-1">
+                        <span>Tầng</span>
+                        {getSortIcon("floors")}
+                      </div>
+                    </th>
+                    <th
+                      className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[35%]"
+                      onClick={() => handleSort("technician")}>
+                      <div className="flex items-center space-x-1">
+                        <span>Kỹ thuật viên phụ trách</span>
+                        {getSortIcon("technician")}
+                      </div>
+                    </th>
+                    <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
+                      Thao tác
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedRooms.map((room) => (
+                    <tr key={room.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-4 whitespace-nowrap w-[25%]">
+                        <div className="flex items-center">
+                          <MapPin className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                           <span
-                            className="text-sm text-gray-900 truncate"
-                            title={getTechnicianName(
-                              room.assignedTechnician || ""
-                            )}>
-                            {getTechnicianName(room.assignedTechnician || "")}
+                            className="text-sm font-medium text-gray-900 truncate"
+                            title={room.roomNumber}>
+                            {room.roomNumber}
                           </span>
                         </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => {
-                          setEditingRoom(room.id);
-                          setSelectedTechnician(room.assignedTechnician || "");
-                        }}
-                        className="text-indigo-600 hover:text-indigo-900">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap w-[15%]">
+                        <div className="flex items-center">
+                          <Building2 className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
+                          <span
+                            className="text-sm text-gray-900 truncate"
+                            title={room.building || "N/A"}>
+                            {room.building || "N/A"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap w-[15%]">
+                        <span
+                          className="text-sm text-gray-500 truncate block"
+                          title={room.floor || "N/A"}>
+                          {room.floor || "N/A"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap w-[35%]">
+                        {editingRoom === room.id ? (
+                          <div className="flex items-center space-x-2">
+                            <select
+                              value={selectedTechnician}
+                              onChange={(e) =>
+                                setSelectedTechnician(e.target.value)
+                              }
+                              className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-1 min-w-0 truncate">
+                              <option value="">Chưa phân công</option>
+                              {technicians.map((tech) => (
+                                <option key={tech.id} value={tech.id}>
+                                  {tech.name}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              onClick={() =>
+                                handleAssignTechnician(
+                                  room.id,
+                                  selectedTechnician
+                                )
+                              }
+                              className="text-green-600 hover:text-green-800 flex-shrink-0">
+                              <Save className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingRoom(null);
+                                setSelectedTechnician("");
+                              }}
+                              className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center min-w-0">
+                            <User className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                            <span
+                              className="text-sm text-gray-900 truncate"
+                              title={getTechnicianName(
+                                room.assignedTechnician || ""
+                              )}>
+                              {getTechnicianName(room.assignedTechnician || "")}
+                            </span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium w-[10%]">
+                        <button
+                          onClick={() => {
+                            setEditingRoom(room.id);
+                            setSelectedTechnician(
+                              room.assignedTechnician || ""
+                            );
+                          }}
+                          className="text-indigo-600 hover:text-indigo-900">
+                          <Edit className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       ) : (
