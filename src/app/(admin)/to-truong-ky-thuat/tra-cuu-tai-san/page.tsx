@@ -166,10 +166,10 @@ export default function TraCuuThietBiPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Hoạt động
+                    Đang sử dụng
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {assets.filter((e) => e.status === "HOẠT_ĐỘNG").length}
+                    {assets.filter((e) => e.status === "đang_sử_dụng").length}
                   </dd>
                 </dl>
               </div>
@@ -186,10 +186,10 @@ export default function TraCuuThietBiPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Bảo trì
+                    Chờ xử lý
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {assets.filter((e) => e.status === "BẢO_TRÌ").length}
+                    {assets.filter((e) => e.status === "chờ_bàn_giao" || e.status === "chờ_tiếp_nhận").length}
                   </dd>
                 </dl>
               </div>
@@ -206,10 +206,10 @@ export default function TraCuuThietBiPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Hỏng hóc
+                    Hư hỏng
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {assets.filter((e) => e.status === "HỎNG_HÓC").length}
+                    {assets.filter((e) => e.status === "hư_hỏng").length}
                   </dd>
                 </dl>
               </div>
@@ -277,10 +277,13 @@ export default function TraCuuThietBiPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
               <option value="all">Tất cả trạng thái</option>
-              <option value="HOẠT_ĐỘNG">Hoạt động</option>
-              <option value="BẢO_TRÌ">Bảo trì</option>
-              <option value="HỎNG_HÓC">Hỏng hóc</option>
-              <option value="NGỪNG_SỬ_DỤNG">Ngừng sử dụng</option>
+              <option value="đang_sử_dụng">Hoạt động</option>
+              <option value="chờ_bàn_giao">Chờ bàn giao</option>
+              <option value="chờ_tiếp_nhận">Chờ tiếp nhận</option>
+              <option value="hư_hỏng">Hư hỏng</option>
+              <option value="mất_tích">Mất tích</option>
+              <option value="đề_xuất_thanh_lý">Đề xuất thanh lý</option>
+              <option value="đã_thanh_lý">Đã thanh lý</option>
             </select>
           </div>
         </div>
@@ -584,11 +587,11 @@ export default function TraCuuThietBiPage() {
                                 </span>
                                 <span
                                   className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    repair.status === "HOÀN_THÀNH"
+                                    repair.status === "ĐÃ_HOÀN_THÀNH"
                                       ? "bg-green-100 text-green-800"
                                       : "bg-blue-100 text-blue-800"
                                   }`}>
-                                  {repair.status === "HOÀN_THÀNH"
+                                  {repair.status === "ĐÃ_HOÀN_THÀNH"
                                     ? "Hoàn thành"
                                     : "Đang xử lý"}
                                 </span>

@@ -17,18 +17,21 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-import { RepairRequestForList } from "@/types";
-import { mockRepairRequestsForList } from "@/lib/mockData";
+import { RepairRequest, RepairStatus } from "@/types";
+import {
+  mockRepairRequests,
+  repairRequestStatusConfig,
+  errorTypes,
+} from "@/lib/mockData";
 
 export default function DanhSachBaoLoiPage() {
-  const [requests, setRequests] = useState<RepairRequestForList[]>(
-    mockRepairRequestsForList
-  );
+  const [requests, setRequests] = useState<RepairRequest[]>(mockRepairRequests);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedErrorType, setSelectedErrorType] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRequest, setSelectedRequest] =
-    useState<RepairRequestForList | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<RepairRequest | null>(
+    null
+  );
   const [showModal, setShowModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
@@ -137,55 +140,23 @@ export default function DanhSachBaoLoiPage() {
     return 0;
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "CHỜ_TIẾP_NHẬN":
-        return "bg-yellow-100 text-yellow-800";
-      case "ĐANG_XỬ_LÝ":
-        return "bg-blue-100 text-blue-800";
-      case "HOÀN_THÀNH":
-        return "bg-green-100 text-green-800";
-      case "HỦY_BỎ":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getStatusBadge = (status: RepairStatus) => {
+    const config = repairRequestStatusConfig[status];
+    return config ? config.color : "bg-gray-100 text-gray-800";
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "CHỜ_TIẾP_NHẬN":
-        return "Chờ tiếp nhận";
-      case "ĐANG_XỬ_LÝ":
-        return "Đang xử lý";
-      case "HOÀN_THÀNH":
-        return "Hoàn thành";
-      case "HỦY_BỎ":
-        return "Đã hủy";
-      default:
-        return status;
-    }
+  const getStatusText = (status: RepairStatus) => {
+    const config = repairRequestStatusConfig[status];
+    return config ? config.label : status;
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "CHỜ_TIẾP_NHẬN":
-        return <Clock className="h-4 w-4" />;
-      case "ĐANG_XỬ_LÝ":
-        return <AlertCircle className="h-4 w-4" />;
-      case "HOÀN_THÀNH":
-        return <CheckCircle className="h-4 w-4" />;
-      case "HỦY_BỎ":
-        return <XCircle className="h-4 w-4" />;
-      default:
-        return <Clock className="h-4 w-4" />;
-    }
+  const getStatusIcon = (status: RepairStatus) => {
+    const config = repairRequestStatusConfig[status];
+    const IconComponent = config ? config.icon : Clock;
+    return <IconComponent className="h-4 w-4" />;
   };
 
-  const updateRequestStatus = (
-    requestId: string,
-    newStatus: "CHỜ_TIẾP_NHẬN" | "ĐANG_XỬ_LÝ" | "HOÀN_THÀNH" | "HỦY_BỎ"
-  ) => {
+  const updateRequestStatus = (requestId: string, newStatus: RepairStatus) => {
     setRequests((prev) =>
       prev.map((req) =>
         req.id === requestId
@@ -193,11 +164,11 @@ export default function DanhSachBaoLoiPage() {
               ...req,
               status: newStatus,
               acceptedAt:
-                newStatus === "ĐANG_XỬ_LÝ" && !req.acceptedAt
+                newStatus === RepairStatus.ĐANG_XỬ_LÝ && !req.acceptedAt
                   ? new Date().toISOString()
                   : req.acceptedAt,
               completedAt:
-                newStatus === "HOÀN_THÀNH"
+                newStatus === RepairStatus.ĐÃ_HOÀN_THÀNH
                   ? new Date().toISOString()
                   : req.completedAt,
             }
@@ -258,10 +229,12 @@ export default function DanhSachBaoLoiPage() {
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}>
               <option value="all">Tất cả</option>
-              <option value="CHỜ_TIẾP_NHẬN">Chờ tiếp nhận</option>
-              <option value="ĐANG_XỬ_LÝ">Đang xử lý</option>
-              <option value="HOÀN_THÀNH">Hoàn thành</option>
-              <option value="HỦY_BỎ">Đã hủy</option>
+              <option value={RepairStatus.CHỜ_TIẾP_NHẬN}>Chờ tiếp nhận</option>
+              <option value={RepairStatus.ĐÃ_TIẾP_NHẬN}>Đã tiếp nhận</option>
+              <option value={RepairStatus.ĐANG_XỬ_LÝ}>Đang xử lý</option>
+              <option value={RepairStatus.CHỜ_THAY_THẾ}>Chờ thay thế</option>
+              <option value={RepairStatus.ĐÃ_HOÀN_THÀNH}>Hoàn thành</option>
+              <option value={RepairStatus.ĐÃ_HỦY}>Đã hủy</option>
             </select>
           </div>
 
@@ -274,11 +247,11 @@ export default function DanhSachBaoLoiPage() {
               value={selectedErrorType}
               onChange={(e) => setSelectedErrorType(e.target.value)}>
               <option value="all">Tất cả</option>
-              <option value="Hỏng nguồn điện">Hỏng nguồn điện</option>
-              <option value="Lỗi RAM">Lỗi RAM</option>
-              <option value="Lỗi ổ cứng">Lỗi ổ cứng</option>
-              <option value="Lỗi card đồ họa">Lỗi card đồ họa</option>
-              <option value="Lỗi CPU">Lỗi CPU</option>
+              {errorTypes.map((errorType) => (
+                <option key={errorType.id} value={errorType.name}>
+                  {errorType.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -306,8 +279,9 @@ export default function DanhSachBaoLoiPage() {
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
                     {
-                      requests.filter((r) => r.status === "CHỜ_TIẾP_NHẬN")
-                        .length
+                      requests.filter(
+                        (r) => r.status === RepairStatus.CHỜ_TIẾP_NHẬN
+                      ).length
                     }
                   </dd>
                 </dl>
@@ -328,7 +302,11 @@ export default function DanhSachBaoLoiPage() {
                     Đang xử lý
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {requests.filter((r) => r.status === "ĐANG_XỬ_LÝ").length}
+                    {
+                      requests.filter(
+                        (r) => r.status === RepairStatus.ĐANG_XỬ_LÝ
+                      ).length
+                    }
                   </dd>
                 </dl>
               </div>
@@ -348,7 +326,11 @@ export default function DanhSachBaoLoiPage() {
                     Hoàn thành
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {requests.filter((r) => r.status === "HOÀN_THÀNH").length}
+                    {
+                      requests.filter(
+                        (r) => r.status === RepairStatus.ĐÃ_HOÀN_THÀNH
+                      ).length
+                    }
                   </dd>
                 </dl>
               </div>
@@ -685,27 +667,36 @@ export default function DanhSachBaoLoiPage() {
               </div>
 
               <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-                {selectedRequest.status === "CHỜ_TIẾP_NHẬN" && (
+                {selectedRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN && (
                   <button
                     onClick={() =>
-                      updateRequestStatus(selectedRequest.id, "ĐANG_XỬ_LÝ")
+                      updateRequestStatus(
+                        selectedRequest.id,
+                        RepairStatus.ĐANG_XỬ_LÝ
+                      )
                     }
                     className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     Bắt đầu xử lý
                   </button>
                 )}
-                {selectedRequest.status === "ĐANG_XỬ_LÝ" && (
+                {selectedRequest.status === RepairStatus.ĐANG_XỬ_LÝ && (
                   <>
                     <button
                       onClick={() =>
-                        updateRequestStatus(selectedRequest.id, "HOÀN_THÀNH")
+                        updateRequestStatus(
+                          selectedRequest.id,
+                          RepairStatus.ĐÃ_HOÀN_THÀNH
+                        )
                       }
                       className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
                       Hoàn thành
                     </button>
                     <button
                       onClick={() =>
-                        updateRequestStatus(selectedRequest.id, "HỦY_BỎ")
+                        updateRequestStatus(
+                          selectedRequest.id,
+                          RepairStatus.ĐÃ_HỦY
+                        )
                       }
                       className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500">
                       Hủy bỏ

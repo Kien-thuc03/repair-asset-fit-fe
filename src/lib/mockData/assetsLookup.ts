@@ -328,25 +328,40 @@ export const mockRepairHistoryLookup: RepairHistory[] = [
 ];
 
 export const assetStatusConfig = {
-  DANG_SU_DUNG: {
-    label: "Hoạt động",
+  đang_sử_dụng: {
+    label: "Đang sử dụng",
     color: "bg-green-100 text-green-800 border-green-200",
     icon: CheckCircle,
   },
-  BAO_TRI: {
-    label: "Bảo trì",
+  chờ_bàn_giao: {
+    label: "Chờ bàn giao",
     color: "bg-yellow-100 text-yellow-800 border-yellow-200",
     icon: Clock,
   },
-  HONG_HOC: {
-    label: "Hỏng hóc",
+  chờ_tiếp_nhận: {
+    label: "Chờ tiếp nhận",
+    color: "bg-blue-100 text-blue-800 border-blue-200",
+    icon: Clock,
+  },
+  hư_hỏng: {
+    label: "Hư hỏng",
     color: "bg-red-100 text-red-800 border-red-200",
     icon: AlertTriangle,
   },
-  NGUNG_SU_DUNG: {
-    label: "Ngừng sử dụng",
+  mất_tích: {
+    label: "Mất tích",
+    color: "bg-purple-100 text-purple-800 border-purple-200",
+    icon: AlertTriangle,
+  },
+  đề_xuất_thanh_lý: {
+    label: "Đề xuất thanh lý",
+    color: "bg-orange-100 text-orange-800 border-orange-200",
+    icon: AlertTriangle,
+  },
+  đã_thanh_lý: {
+    label: "Đã thanh lý",
     color: "bg-gray-100 text-gray-800 border-gray-200",
-    icon: Clock,
+    icon: CheckCircle,
   },
 };
 

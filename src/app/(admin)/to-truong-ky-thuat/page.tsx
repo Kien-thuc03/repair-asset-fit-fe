@@ -160,7 +160,7 @@ export default function ToTruongKyThuatDashboard() {
             </Link>
 
             <Link
-              href="/to-truong-ky-thuat/quan-ly-nhom"
+              href="/to-truong-ky-thuat/bien-ban"
               className="relative group bg-yellow-50 p-4 focus-within:ring-2 focus-within:ring-inset focus-within:ring-yellow-500 rounded-lg hover:bg-yellow-100 transition-colors block">
               <div className="flex items-center">
                 <span className="rounded-lg inline-flex p-2 bg-yellow-600 text-white mr-3">
