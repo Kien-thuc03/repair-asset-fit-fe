@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -30,6 +30,39 @@ export default function LapToTrinhPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Inject CSS vào head để xử lý scrollbar cho toàn trang
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      html {
+        scrollbar-gutter: stable;
+        overflow-y: scroll; /* Fallback cho trình duyệt không hỗ trợ scrollbar-gutter */
+      }
+      
+      body {
+        min-height: 100vh; /* Đảm bảo body luôn có chiều cao tối thiểu */
+      }
+      
+      /* Hỗ trợ cho trình duyệt hiện đại */
+      @supports (scrollbar-gutter: stable) {
+        html {
+          overflow-y: auto; /* Reset overflow khi đã có scrollbar-gutter */
+        }
+      }
+      
+      /* Đảm bảo container luôn có đủ chiều cao */
+      .main-content {
+        min-height: calc(100vh - 2rem);
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Cleanup khi component unmount
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const filteredLists = replacementLists.filter((list) => {
     const matchesStatus =
@@ -167,7 +200,11 @@ export default function LapToTrinhPage() {
   };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4">
+    <div
+      className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content"
+      style={{
+        scrollbarGutter: "stable",
+      }}>
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <Link
@@ -246,7 +283,7 @@ export default function LapToTrinhPage() {
           </h2>
         </div>
 
-        <div className="overflow-hidden">
+        <div className="overflow-hidden" style={{ minHeight: "600px" }}>
           {/* Mobile Card View */}
           <div className="block sm:hidden">
             <div className="p-3 space-y-3">
@@ -336,33 +373,33 @@ export default function LapToTrinhPage() {
               <table className="w-full divide-y divide-gray-200 table-fixed">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="w-[35%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[30%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center space-x-1 hover:text-gray-700 uppercase"
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
                         onClick={() => handleSort("title")}>
                         <span>Danh sách</span>
                         {getSortIcon("title")}
                       </button>
                     </th>
-                    <th className="w-[12%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[14%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center space-x-1 hover:text-gray-700 uppercase"
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
                         onClick={() => handleSort("createdBy")}>
                         <span>Người tạo</span>
                         {getSortIcon("createdBy")}
                       </button>
                     </th>
-                    <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("totalItems")}>
                         <span>Thiết bị</span>
                         {getSortIcon("totalItems")}
                       </button>
                     </th>
-                    <th className="w-[15%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[12%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center justify-end space-x-1 hover:text-gray-700 ml-auto uppercase"
+                        className="flex items-center justify-end space-x-1 hover:text-gray-700 ml-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("totalCost")}>
                         <span>Chi phí</span>
                         {getSortIcon("totalCost")}
@@ -370,7 +407,7 @@ export default function LapToTrinhPage() {
                     </th>
                     <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("status")}>
                         <span>Trạng thái</span>
                         {getSortIcon("status")}
@@ -378,13 +415,13 @@ export default function LapToTrinhPage() {
                     </th>
                     <th className="w-[10%] hidden lg:table-cell px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("createdAt")}>
                         <span>Ngày tạo</span>
                         {getSortIcon("createdAt")}
                       </button>
                     </th>
-                    <th className="w-[8%] lg:w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[16%] lg:w-[16%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       Thao tác
                     </th>
                   </tr>
@@ -393,59 +430,64 @@ export default function LapToTrinhPage() {
                   {sortedLists.length > 0 ? (
                     sortedLists.map((list) => (
                       <tr key={list.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-3">
-                          <div className="flex items-start">
-                            <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0 mt-0.5" />
+                        <td className="px-3 py-4 whitespace-nowrap w-[30%]">
+                          <div className="flex items-center min-w-0">
+                            <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium text-gray-900 truncate">
-                                {list.title.length > 45
-                                  ? `${list.title.substring(0, 45)}...`
-                                  : list.title}
+                              <div
+                                className="text-sm font-medium text-gray-900 truncate"
+                                title={list.title}>
+                                {list.title}
                               </div>
-                              <div className="text-xs text-gray-500 truncate">
+                              <div
+                                className="text-xs text-gray-500 truncate"
+                                title={list.id}>
                                 #{list.id}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="text-sm text-gray-900 truncate">
-                            {list.createdBy.length > 12
-                              ? `${list.createdBy.substring(0, 12)}...`
-                              : list.createdBy}
+                        <td className="px-2 py-4 whitespace-nowrap w-[14%]">
+                          <div
+                            className="text-sm text-gray-900 truncate"
+                            title={list.createdBy}>
+                            {list.createdBy}
                           </div>
                         </td>
-                        <td className="px-2 py-3 text-center">
-                          <div className="flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-900">
-                              {list.totalItems}
-                            </span>
-                          </div>
+                        <td className="px-2 py-4 whitespace-nowrap text-center w-[8%]">
+                          <span className="text-sm font-medium text-gray-900">
+                            {list.totalItems}
+                          </span>
                         </td>
-                        <td className="px-2 py-3 text-right">
+                        <td className="px-2 py-4 whitespace-nowrap text-right w-[12%]">
                           <div className="text-sm font-semibold text-green-600">
                             {(list.totalCost / 1000000).toFixed(1)}M
                           </div>
                           <div className="text-xs text-gray-500">VNĐ</div>
                         </td>
-                        <td className="px-2 py-3 text-center">
+                        <td className="px-2 py-4 whitespace-nowrap text-center w-[10%]">
                           <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusBadge(
                               list.status
-                            )}`}>
+                            )}`}
+                            title={getStatusText(list.status)}>
                             {getStatusText(list.status)}
                           </span>
                         </td>
-                        <td className="hidden lg:table-cell px-2 py-3 text-center">
-                          <div className="text-sm text-gray-900">
+                        <td className="hidden lg:table-cell px-2 py-4 whitespace-nowrap text-center w-[10%]">
+                          <div className="text-xs text-gray-900">
                             {new Date(list.createdAt).toLocaleDateString(
                               "vi-VN",
-                              { day: "2-digit", month: "2-digit" }
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "2-digit",
+                              }
                             )}
                           </div>
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="flex items-center justify-center space-x-1">
+                        <td className="px-3 py-4 whitespace-nowrap w-[16%]">
+                          <div className="flex items-center justify-center space-x-2">
                             <button
                               onClick={() => handleViewDetail(list)}
                               className="text-indigo-600 hover:text-indigo-900 p-1"
@@ -454,12 +496,10 @@ export default function LapToTrinhPage() {
                             </button>
                             <button
                               onClick={() => handleCreateReport(list.id)}
-                              className="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
+                              className="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap"
                               title="Lập tờ trình">
-                              <FileText className="h-3 w-3" />
-                              <span className="ml-1 hidden xl:inline">
-                                Trình
-                              </span>
+                              <FileText className="h-3 w-3 mr-1" />
+                              <span>Lập trình</span>
                             </button>
                           </div>
                         </td>
