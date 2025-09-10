@@ -173,7 +173,7 @@ export default function RequestsTable({ data }: Props) {
 								<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
 									<div className="flex flex-col">
 										<span className="font-medium">{r.assetName}</span>
-										{r.componentName ? <span className="text-xs text-gray-500">{r.componentName}</span> : null}
+										{r.componentName ? <span className="text-xs text-gray-500">{r.componentName}</span> : <span className="text-xs text-gray-500">Linh kiện chưa xác định</span>}
 									</div>
 								</td>
 								<td className="flex flex-col px-4 py-3 whitespace-nowrap text-sm text-gray-700">

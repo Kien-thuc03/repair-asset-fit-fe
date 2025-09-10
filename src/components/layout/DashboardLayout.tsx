@@ -392,7 +392,7 @@ function Topbar({
                   {user?.fullName || "Nguyễn Kiến Thức"}
                 </p>
                 <p className="text-xs text-green-600 truncate">
-                  {user && user.roles.length > 1
+                  {user && user.roles.length >= 1
                     ? `${RoleInfo[user.activeRole]?.name || user.activeRole}`
                     : "Sinh viên"}
                 </p>
