@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -37,6 +37,39 @@ export default function BienBanPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Inject CSS vào head để xử lý scrollbar cho toàn trang
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      html {
+        scrollbar-gutter: stable;
+        overflow-y: scroll; /* Fallback cho trình duyệt không hỗ trợ scrollbar-gutter */
+      }
+      
+      body {
+        min-height: 100vh; /* Đảm bảo body luôn có chiều cao tối thiểu */
+      }
+      
+      /* Hỗ trợ cho trình duyệt hiện đại */
+      @supports (scrollbar-gutter: stable) {
+        html {
+          overflow-y: auto; /* Reset overflow khi đã có scrollbar-gutter */
+        }
+      }
+      
+      /* Đảm bảo container luôn có đủ chiều cao */
+      .main-content {
+        min-height: calc(100vh - 2rem);
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Cleanup khi component unmount
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const filteredReports = inspectionReports.filter((report) => {
     const matchesStatus =
@@ -207,16 +240,14 @@ export default function BienBanPage() {
   };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4">
+    <div
+      className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content"
+      style={{
+        scrollbarGutter: "stable",
+        minHeight: "calc(100vh - 4rem)",
+      }}>
       {/* Header */}
       <div className="mb-4 sm:mb-6">
-        <Link
-          href="/to-truong-ky-thuat"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Về trang chủ
-        </Link>
-
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -284,7 +315,7 @@ export default function BienBanPage() {
           </h2>
         </div>
 
-        <div className="overflow-hidden">
+        <div className="overflow-hidden" style={{ minHeight: "500px" }}>
           {/* Mobile Card View */}
           <div className="block sm:hidden">
             <div className="p-3 space-y-3">

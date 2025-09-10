@@ -13,6 +13,8 @@ import {
   Calendar,
   User,
   Wrench,
+  Link,
+  ArrowLeft,
 } from "lucide-react";
 import { Asset } from "@/types";
 import {

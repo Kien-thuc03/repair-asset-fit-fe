@@ -253,13 +253,6 @@ export default function DuyetDeXuatPage() {
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 ">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
-        <Link
-          href="/to-truong-ky-thuat"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Về trang chủ
-        </Link>
-
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
