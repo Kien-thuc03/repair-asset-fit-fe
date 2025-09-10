@@ -50,14 +50,24 @@ import {
   weeklyTrendData,
   detailedTableData,
   activityTimelineData,
-  technicianPerformanceData,
-  equipmentStatsData,
   detailedErrorStats,
+  mockTechnicians,
 } from "@/lib/mockData";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { Title, Text } = Typography;
+
+// Interface cho dữ liệu lỗi chi tiết
+interface DetailedErrorStat {
+  key: string;
+  errorType: string;
+  count: number;
+  percentage: number;
+  avgRepairTime: string;
+  difficulty: string;
+  commonCauses: string[];
+}
 
 // Helper function để tạo icon
 const getIcon = (iconType: string) => {
@@ -82,7 +92,13 @@ const StatsReportsPage = () => {
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
 
-  // Hàm xử lý sắp xếp
+  // State cho bảng thống kê lỗi riêng biệt
+  const [errorSortField, setErrorSortField] = useState<string | null>(null);
+  const [errorSortOrder, setErrorSortOrder] = useState<"asc" | "desc" | null>(
+    null
+  );
+
+  // Hàm xử lý sắp xếp cho bảng chính
   const handleSort = (field: string) => {
     if (sortField === field) {
       // Nếu đang sắp xếp cột này, chuyển đổi thứ tự: asc -> desc -> null -> asc
@@ -101,7 +117,26 @@ const StatsReportsPage = () => {
     }
   };
 
-  // Hàm render title với icon sắp xếp
+  // Hàm xử lý sắp xếp cho bảng thống kê lỗi
+  const handleErrorSort = (field: string) => {
+    if (errorSortField === field) {
+      // Nếu đang sắp xếp cột này, chuyển đổi thứ tự: asc -> desc -> null -> asc
+      if (errorSortOrder === "asc") {
+        setErrorSortOrder("desc");
+      } else if (errorSortOrder === "desc") {
+        setErrorSortOrder(null);
+        setErrorSortField(null);
+      } else {
+        setErrorSortOrder("asc");
+      }
+    } else {
+      // Nếu sắp xếp cột khác, bắt đầu với asc
+      setErrorSortField(field);
+      setErrorSortOrder("asc");
+    }
+  };
+
+  // Hàm render title với icon sắp xếp cho bảng chính
   const renderSortTitle = (title: string, field: string) => (
     <div
       className="flex items-center justify-center cursor-pointer hover:text-blue-600 select-none"
@@ -118,6 +153,31 @@ const StatsReportsPage = () => {
         <ChevronDown
           className={`w-3 h-3 -mt-1 ${
             sortField === field && sortOrder === "desc"
+              ? "text-blue-600"
+              : "text-gray-400"
+          }`}
+        />
+      </div>
+    </div>
+  );
+
+  // Hàm render title với icon sắp xếp cho bảng thống kê lỗi
+  const renderErrorSortTitle = (title: string, field: string) => (
+    <div
+      className="flex items-center justify-center cursor-pointer hover:text-blue-600 select-none"
+      onClick={() => handleErrorSort(field)}>
+      <span>{title}</span>
+      <div className="flex flex-col ml-1">
+        <ChevronUp
+          className={`w-3 h-3 ${
+            errorSortField === field && errorSortOrder === "asc"
+              ? "text-blue-600"
+              : "text-gray-400"
+          }`}
+        />
+        <ChevronDown
+          className={`w-3 h-3 -mt-1 ${
+            errorSortField === field && errorSortOrder === "desc"
               ? "text-blue-600"
               : "text-gray-400"
           }`}
@@ -225,7 +285,7 @@ const StatsReportsPage = () => {
     },
   ];
 
-  // Hàm sắp xếp dữ liệu
+  // Hàm sắp xếp dữ liệu cho bảng chính
   const getSortedData = (data: DepartmentStats[]) => {
     if (!sortField || !sortOrder) return data;
 
@@ -247,6 +307,70 @@ const StatsReportsPage = () => {
 
       return 0;
     });
+  };
+
+  // Hàm sắp xếp dữ liệu cho bảng thống kê lỗi
+  const getSortedErrorData = (data: DetailedErrorStat[]) => {
+    if (!errorSortField || !errorSortOrder) return data;
+
+    return [...data].sort((a, b) => {
+      const aVal = a[errorSortField as keyof DetailedErrorStat];
+      const bVal = b[errorSortField as keyof DetailedErrorStat];
+
+      // Xử lý trường hợp số
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return errorSortOrder === "asc" ? aVal - bVal : bVal - aVal;
+      }
+
+      // Xử lý trường hợp chuỗi
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return errorSortOrder === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+
+      return 0;
+    });
+  };
+
+  // Tính toán thống kê kỹ thuật viên từ dữ liệu thực
+  const getTechnicianStats = () => {
+    return mockTechnicians.map((tech) => {
+      // Tính toán số liệu giả lập từ thông tin kỹ thuật viên
+      const completed = Math.floor(Math.random() * 50) + 10;
+      const pending = Math.floor(Math.random() * 10) + 1;
+      const avgTime = Math.floor(Math.random() * 5) + 2;
+      const efficiency = Math.floor(Math.random() * 20) + 80;
+
+      return {
+        id: tech.id,
+        name: tech.name,
+        completed,
+        pending,
+        avgTime,
+        efficiency,
+        status: tech.status,
+        currentTask: tech.currentTask,
+        assignedAreas: tech.assignedAreas.length,
+      };
+    });
+  };
+
+  // Tính toán thống kê linh kiện máy tính
+  const getComputerComponentStats = () => {
+    const components = [
+      { category: "CPU", total: 120, faulty: 5, percentage: 4.2 },
+      { category: "RAM", total: 240, faulty: 12, percentage: 5.0 },
+      { category: "Ổ cứng", total: 180, faulty: 18, percentage: 10.0 },
+      { category: "Mainboard", total: 120, faulty: 8, percentage: 6.7 },
+      { category: "Nguồn", total: 130, faulty: 15, percentage: 11.5 },
+      { category: "VGA", total: 80, faulty: 3, percentage: 3.8 },
+      { category: "Màn hình", total: 150, faulty: 9, percentage: 6.0 },
+      { category: "Bàn phím", total: 200, faulty: 25, percentage: 12.5 },
+      { category: "Chuột", total: 220, faulty: 30, percentage: 13.6 },
+    ];
+
+    return components;
   };
 
   const handleExport = (type: string) => {
@@ -424,32 +548,62 @@ const StatsReportsPage = () => {
             <Col xs={24} lg={12}>
               <Card title="Thống kê kỹ thuật viên">
                 <div className="space-y-4">
-                  {technicianPerformanceData.map((tech, index) => (
-                    <div key={index} className="border-b pb-4 last:border-b-0">
-                      <div className="flex justify-between items-center mb-2">
-                        <Text strong>{tech.name}</Text>
-                        <Tag color="blue">{tech.efficiency.toFixed(1)}%</Tag>
+                  {getTechnicianStats().map((tech, index) => {
+                    const statusColor =
+                      tech.status === "active"
+                        ? "green"
+                        : tech.status === "busy"
+                        ? "orange"
+                        : tech.status === "offline"
+                        ? "red"
+                        : "default";
+
+                    return (
+                      <div
+                        key={index}
+                        className="border-b pb-4 last:border-b-0">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-2">
+                            <Text strong>{tech.name}</Text>
+                            <Tag color={statusColor}>
+                              {tech.status === "active"
+                                ? "Hoạt động"
+                                : tech.status === "busy"
+                                ? "Bận"
+                                : tech.status === "offline"
+                                ? "Nghỉ"
+                                : tech.status}
+                            </Tag>
+                          </div>
+                          <Tag color="blue">{tech.efficiency.toFixed(1)}%</Tag>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-sm text-gray-600 mb-2">
+                          <div>Hoàn thành: {tech.completed}</div>
+                          <div>Đang xử lý: {tech.pending}</div>
+                          <div>TB: {tech.avgTime} ngày</div>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          <div>Phụ trách: {tech.assignedAreas} khu vực</div>
+                          {tech.currentTask && (
+                            <div>Nhiệm vụ hiện tại: {tech.currentTask}</div>
+                          )}
+                        </div>
+                        <Progress
+                          percent={tech.efficiency}
+                          size="small"
+                          status={
+                            tech.efficiency >= 95
+                              ? "success"
+                              : tech.efficiency >= 90
+                              ? "normal"
+                              : "exception"
+                          }
+                          showInfo={false}
+                          className="mt-2"
+                        />
                       </div>
-                      <div className="grid grid-cols-3 gap-2 text-sm text-gray-600">
-                        <div>Hoàn thành: {tech.completed}</div>
-                        <div>Đang xử lý: {tech.pending}</div>
-                        <div>TB: {tech.avgTime} ngày</div>
-                      </div>
-                      <Progress
-                        percent={tech.efficiency}
-                        size="small"
-                        status={
-                          tech.efficiency >= 95
-                            ? "success"
-                            : tech.efficiency >= 90
-                            ? "normal"
-                            : "exception"
-                        }
-                        showInfo={false}
-                        className="mt-2"
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             </Col>
@@ -457,34 +611,51 @@ const StatsReportsPage = () => {
 
           <Row gutter={[16, 16]} className="mt-4">
             <Col xs={24}>
-              <Card title="Thống kê thiết bị - Khoa CNTT">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {equipmentStatsData.map((equipment, index) => (
+              <Card title="Thống kê linh kiện máy tính - Khoa CNTT">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {getComputerComponentStats().map((component, index) => (
                     <div
                       key={index}
-                      className="text-center p-4 border rounded-lg">
-                      <div className="text-lg font-semibold text-gray-800">
-                        {equipment.category}
+                      className="text-center p-4 border rounded-lg hover:shadow-md transition-shadow">
+                      <div className="text-lg font-semibold text-gray-800 mb-2">
+                        {component.category}
                       </div>
                       <div className="text-2xl font-bold text-blue-600 my-2">
-                        {equipment.total}
+                        {component.total}
                       </div>
-                      <div className="text-sm text-gray-600">
-                        Lỗi: {equipment.faulty} ({equipment.percentage}%)
+                      <div className="text-sm text-gray-600 mb-2">
+                        Lỗi:{" "}
+                        <span className="font-semibold text-red-600">
+                          {component.faulty}
+                        </span>{" "}
+                        ({component.percentage}%)
+                      </div>
+                      <div className="text-sm text-green-600 mb-3">
+                        Hoạt động tốt: {component.total - component.faulty}
                       </div>
                       <Progress
-                        percent={100 - equipment.percentage}
+                        percent={100 - component.percentage}
                         size="small"
                         status={
-                          equipment.percentage <= 5
+                          component.percentage <= 5
                             ? "success"
-                            : equipment.percentage <= 10
+                            : component.percentage <= 10
                             ? "normal"
                             : "exception"
                         }
                         showInfo={false}
-                        className="mt-2"
+                        strokeColor={
+                          component.percentage <= 5
+                            ? "#52c41a"
+                            : component.percentage <= 10
+                            ? "#faad14"
+                            : "#ff4d4f"
+                        }
                       />
+                      <div className="text-xs text-gray-500 mt-1">
+                        Tỷ lệ hoạt động tốt:{" "}
+                        {(100 - component.percentage).toFixed(1)}%
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -552,7 +723,7 @@ const StatsReportsPage = () => {
                 <Table
                   columns={[
                     {
-                      title: "Mã lỗi",
+                      title: renderErrorSortTitle("Mã lỗi", "key"),
                       dataIndex: "key",
                       key: "key",
                       render: (text: string) => (
@@ -560,21 +731,19 @@ const StatsReportsPage = () => {
                       ),
                     },
                     {
-                      title: "Loại lỗi",
+                      title: renderErrorSortTitle("Loại lỗi", "errorType"),
                       dataIndex: "errorType",
                       key: "errorType",
                       width: 200,
                     },
                     {
-                      title: "Số lượng",
+                      title: renderErrorSortTitle("Số lượng", "count"),
                       dataIndex: "count",
                       key: "count",
-                      sorter: (a: { count: number }, b: { count: number }) =>
-                        a.count - b.count,
                       render: (count: number) => <Text strong>{count}</Text>,
                     },
                     {
-                      title: "Tỷ lệ",
+                      title: renderErrorSortTitle("Tỷ lệ", "percentage"),
                       dataIndex: "percentage",
                       key: "percentage",
                       render: (percentage: number) => (
@@ -585,12 +754,15 @@ const StatsReportsPage = () => {
                       ),
                     },
                     {
-                      title: "Thời gian sửa TB",
+                      title: renderErrorSortTitle(
+                        "Thời gian sửa TB",
+                        "avgRepairTime"
+                      ),
                       dataIndex: "avgRepairTime",
                       key: "avgRepairTime",
                     },
                     {
-                      title: "Độ khó",
+                      title: renderErrorSortTitle("Độ khó", "difficulty"),
                       dataIndex: "difficulty",
                       key: "difficulty",
                       render: (difficulty: string) => {
@@ -628,14 +800,13 @@ const StatsReportsPage = () => {
                       ),
                     },
                   ]}
-                  dataSource={detailedErrorStats}
+                  dataSource={getSortedErrorData(detailedErrorStats)}
                   pagination={{
                     pageSize: 10,
                     showSizeChanger: true,
                     showTotal: (total, range) =>
                       `${range[0]}-${range[1]} của ${total} loại lỗi`,
                   }}
-                  scroll={{ x: 1000 }}
                 />
               </Card>
             </Col>
