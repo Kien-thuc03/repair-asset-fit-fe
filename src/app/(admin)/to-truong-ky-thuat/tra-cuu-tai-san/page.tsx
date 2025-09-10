@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import {
   Search,
@@ -13,8 +12,6 @@ import {
   Calendar,
   User,
   Wrench,
-  Link,
-  ArrowLeft,
 } from "lucide-react";
 import { Asset } from "@/types";
 import {
