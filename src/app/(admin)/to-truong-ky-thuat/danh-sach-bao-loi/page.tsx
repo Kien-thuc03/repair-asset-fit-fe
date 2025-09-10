@@ -368,12 +368,12 @@ export default function DanhSachBaoLoiPage() {
         </div>
 
         <div className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full table-fixed divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="overflow-hidden">
+            <table className="w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
                   <th
-                    className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
                     onClick={() => handleSort("requestCode")}>
                     <div className="flex items-center space-x-1">
                       <span>Mã báo lỗi</span>
@@ -381,7 +381,7 @@ export default function DanhSachBaoLoiPage() {
                     </div>
                   </th>
                   <th
-                    className="w-56 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[25%]"
                     onClick={() => handleSort("assetCode")}>
                     <div className="flex items-center space-x-1">
                       <span>Tài sản</span>
@@ -389,7 +389,7 @@ export default function DanhSachBaoLoiPage() {
                     </div>
                   </th>
                   <th
-                    className="w-40 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
                     onClick={() => handleSort("reporterName")}>
                     <div className="flex items-center space-x-1">
                       <span>Người báo</span>
@@ -397,7 +397,7 @@ export default function DanhSachBaoLoiPage() {
                     </div>
                   </th>
                   <th
-                    className="w-32 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[12%]"
                     onClick={() => handleSort("errorTypeName")}>
                     <div className="flex items-center space-x-1">
                       <span>Loại lỗi</span>
@@ -405,7 +405,7 @@ export default function DanhSachBaoLoiPage() {
                     </div>
                   </th>
                   <th
-                    className="w-36 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[13%]"
                     onClick={() => handleSort("status")}>
                     <div className="flex items-center space-x-1">
                       <span>Trạng thái</span>
@@ -413,14 +413,14 @@ export default function DanhSachBaoLoiPage() {
                     </div>
                   </th>
                   <th
-                    className="w-28 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[12%]"
                     onClick={() => handleSort("createdAt")}>
                     <div className="flex items-center space-x-1">
                       <span>Ngày báo</span>
                       {getSortIcon("createdAt")}
                     </div>
                   </th>
-                  <th className="w-20 px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
                     Thao tác
                   </th>
                 </tr>
@@ -429,15 +429,15 @@ export default function DanhSachBaoLoiPage() {
                 {sortedRequests.length > 0 ? (
                   sortedRequests.map((request) => (
                     <tr key={request.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap truncate">
+                      <td className="px-3 py-4 whitespace-nowrap w-[15%]">
                         <div
                           className="text-sm font-medium text-gray-900 truncate"
                           title={request.requestCode}>
                           {request.requestCode}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="min-w-0">
+                      <td className="px-3 py-4 whitespace-nowrap w-[25%]">
+                        <div>
                           <div
                             className="text-sm font-medium text-gray-900 truncate"
                             title={request.assetCode}>
@@ -448,7 +448,7 @@ export default function DanhSachBaoLoiPage() {
                             title={request.assetName}>
                             {request.assetName}
                           </div>
-                          <div className="flex items-center text-xs text-gray-400 mt-1 min-w-0">
+                          <div className="flex items-center text-xs text-gray-400 mt-1">
                             <Building2 className="h-3 w-3 mr-1 flex-shrink-0" />
                             <span
                               className="truncate"
@@ -458,8 +458,8 @@ export default function DanhSachBaoLoiPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center min-w-0">
+                      <td className="px-3 py-4 whitespace-nowrap w-[15%]">
+                        <div className="flex items-center">
                           <User className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                           <div className="min-w-0">
                             <div
@@ -475,15 +475,15 @@ export default function DanhSachBaoLoiPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap truncate">
+                      <td className="px-3 py-4 whitespace-nowrap w-[12%]">
                         <span
-                          className="text-sm text-gray-900 truncate"
+                          className="text-sm text-gray-900 truncate block"
                           title={request.errorTypeName || "Chưa xác định"}>
                           {request.errorTypeName || "Chưa xác định"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center min-w-0">
+                      <td className="px-3 py-4 whitespace-nowrap w-[13%]">
+                        <div className="flex items-center">
                           <div className="flex-shrink-0">
                             {getStatusIcon(request.status)}
                           </div>
@@ -496,17 +496,27 @@ export default function DanhSachBaoLoiPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-4 whitespace-nowrap w-[12%]">
                         <div className="flex items-center">
-                          <Calendar className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                          <span className="text-sm text-gray-900 truncate">
+                          <Calendar className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
+                          <span
+                            className="text-xs text-gray-900 truncate"
+                            title={new Date(
+                              request.createdAt
+                            ).toLocaleDateString("vi-VN", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}>
                             {new Date(request.createdAt).toLocaleDateString(
                               "vi-VN"
                             )}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium w-[8%]">
                         <button
                           onClick={() => {
                             setSelectedRequest(request);
