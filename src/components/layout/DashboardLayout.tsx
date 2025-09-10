@@ -125,7 +125,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       {
         name: "Thống kê báo cáo",
         href: "/to-truong-ky-thuat/thong-ke-bao-cao",
-        icon: Calendar,
+        icon: BarChart3,
       },
     ],
     [UserRole.PHONG_QUAN_TRI]: [

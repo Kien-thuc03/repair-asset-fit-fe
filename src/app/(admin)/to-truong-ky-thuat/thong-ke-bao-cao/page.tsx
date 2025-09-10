@@ -39,6 +39,8 @@ import {
   FileText,
   CheckCircle,
   Clock,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import type { DepartmentStats } from "@/types/stats";
 import {
@@ -50,12 +52,12 @@ import {
   activityTimelineData,
   technicianPerformanceData,
   equipmentStatsData,
+  detailedErrorStats,
 } from "@/lib/mockData";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 
 // Helper function để tạo icon
 const getIcon = (iconType: string) => {
@@ -74,89 +76,178 @@ const getIcon = (iconType: string) => {
   }
 };
 
-const columns = [
-  {
-    title: "Tầng/Khu vực",
-    dataIndex: "department",
-    key: "department",
-    width: 150,
-  },
-  {
-    title: "Tổng báo cáo",
-    dataIndex: "totalReports",
-    key: "totalReports",
-    sorter: (a: DepartmentStats, b: DepartmentStats) =>
-      a.totalReports - b.totalReports,
-    align: "center" as const,
-    width: 120,
-  },
-  {
-    title: "Hoàn thành",
-    dataIndex: "completed",
-    key: "completed",
-    sorter: (a: DepartmentStats, b: DepartmentStats) =>
-      a.completed - b.completed,
-    align: "center" as const,
-    width: 100,
-  },
-  {
-    title: "Đang xử lý",
-    dataIndex: "pending",
-    key: "pending",
-    sorter: (a: DepartmentStats, b: DepartmentStats) => a.pending - b.pending,
-    align: "center" as const,
-    width: 100,
-  },
-  {
-    title: "Thời gian TB",
-    dataIndex: "avgTime",
-    key: "avgTime",
-    align: "center" as const,
-    width: 120,
-  },
-  {
-    title: "Hiệu suất (%)",
-    dataIndex: "efficiency",
-    key: "efficiency",
-    sorter: (a: DepartmentStats, b: DepartmentStats) =>
-      a.efficiency - b.efficiency,
-    align: "center" as const,
-    width: 150,
-    render: (value: number) => (
-      <div>
-        <Progress
-          percent={value}
-          size="small"
-          status={
-            value >= 95 ? "success" : value >= 90 ? "normal" : "exception"
-          }
-          showInfo={false}
-        />
-        <span className="text-xs text-gray-600 mt-1">{value.toFixed(1)}%</span>
-      </div>
-    ),
-  },
-  {
-    title: "Đánh giá",
-    dataIndex: "status",
-    key: "status",
-    align: "center" as const,
-    width: 100,
-    render: (status: string) => {
-      let color = "default";
-      if (status === "Xuất sắc") color = "purple";
-      else if (status === "Tốt") color = "green";
-      else if (status === "Khá") color = "orange";
-      else if (status === "Trung bình") color = "red";
-
-      return <Tag color={color}>{status}</Tag>;
-    },
-  },
-];
-
 const StatsReportsPage = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [activeTab, setActiveTab] = useState("overview");
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+
+  // Hàm xử lý sắp xếp
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      // Nếu đang sắp xếp cột này, chuyển đổi thứ tự: asc -> desc -> null -> asc
+      if (sortOrder === "asc") {
+        setSortOrder("desc");
+      } else if (sortOrder === "desc") {
+        setSortOrder(null);
+        setSortField(null);
+      } else {
+        setSortOrder("asc");
+      }
+    } else {
+      // Nếu sắp xếp cột khác, bắt đầu với asc
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  // Hàm render title với icon sắp xếp
+  const renderSortTitle = (title: string, field: string) => (
+    <div
+      className="flex items-center justify-center cursor-pointer hover:text-blue-600 select-none"
+      onClick={() => handleSort(field)}>
+      <span>{title}</span>
+      <div className="flex flex-col ml-1">
+        <ChevronUp
+          className={`w-3 h-3 ${
+            sortField === field && sortOrder === "asc"
+              ? "text-blue-600"
+              : "text-gray-400"
+          }`}
+        />
+        <ChevronDown
+          className={`w-3 h-3 -mt-1 ${
+            sortField === field && sortOrder === "desc"
+              ? "text-blue-600"
+              : "text-gray-400"
+          }`}
+        />
+      </div>
+    </div>
+  );
+
+  // Định nghĩa columns với custom sorting
+  const columns = [
+    {
+      title: renderSortTitle("Tầng", "department"),
+      dataIndex: "department",
+      key: "department",
+      width: 80,
+    },
+    {
+      title: renderSortTitle("Báo cáo", "totalReports"),
+      dataIndex: "totalReports",
+      key: "totalReports",
+      align: "center" as const,
+      width: 70,
+    },
+    {
+      title: renderSortTitle("Hoàn thành", "completed"),
+      dataIndex: "completed",
+      key: "completed",
+      align: "center" as const,
+      width: 80,
+    },
+    {
+      title: renderSortTitle("Đang xử lý", "pending"),
+      dataIndex: "pending",
+      key: "pending",
+      align: "center" as const,
+      width: 80,
+    },
+    {
+      title: renderSortTitle("TB (ngày)", "avgTime"),
+      dataIndex: "avgTime",
+      key: "avgTime",
+      align: "center" as const,
+      width: 80,
+    },
+    {
+      title: renderSortTitle("Hiệu suất", "efficiency"),
+      dataIndex: "efficiency",
+      key: "efficiency",
+      align: "center" as const,
+      width: 90,
+      render: (value: number) => {
+        // Xác định màu dựa trên hiệu suất
+        let progressColor = "#1890ff";
+        let textColor = "text-blue-600";
+
+        if (value >= 97) {
+          progressColor = "#722ed1"; // Tím - Xuất sắc
+          textColor = "text-purple-600";
+        } else if (value >= 95) {
+          progressColor = "#52c41a"; // Xanh lá - Tốt
+          textColor = "text-green-600";
+        } else if (value >= 90) {
+          progressColor = "#fa8c16"; // Cam - Khá
+          textColor = "text-orange-600";
+        } else {
+          progressColor = "#ff4d4f"; // Đỏ - Trung bình
+          textColor = "text-red-600";
+        }
+
+        return (
+          <div>
+            <Progress
+              percent={value}
+              size="small"
+              strokeColor={progressColor}
+              showInfo={false}
+            />
+            <span className={`text-xs ${textColor}`}>{value.toFixed(1)}%</span>
+          </div>
+        );
+      },
+    },
+    {
+      title: renderSortTitle("Đánh giá", "status"),
+      dataIndex: "status",
+      key: "status",
+      align: "center" as const,
+      width: 80,
+      render: (status: string, record: DepartmentStats) => {
+        // Sử dụng cùng logic màu với cột hiệu suất
+        let color = "default";
+
+        if (record.efficiency >= 97) {
+          color = "purple"; // Tím - Xuất sắc
+        } else if (record.efficiency >= 95) {
+          color = "green"; // Xanh lá - Tốt
+        } else if (record.efficiency >= 90) {
+          color = "orange"; // Cam - Khá
+        } else {
+          color = "red"; // Đỏ - Trung bình
+        }
+
+        return <Tag color={color}>{status}</Tag>;
+      },
+    },
+  ];
+
+  // Hàm sắp xếp dữ liệu
+  const getSortedData = (data: DepartmentStats[]) => {
+    if (!sortField || !sortOrder) return data;
+
+    return [...data].sort((a, b) => {
+      const aVal = a[sortField as keyof DepartmentStats];
+      const bVal = b[sortField as keyof DepartmentStats];
+
+      // Xử lý trường hợp số
+      if (typeof aVal === "number" && typeof bVal === "number") {
+        return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
+      }
+
+      // Xử lý trường hợp chuỗi
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return sortOrder === "asc"
+          ? aVal.localeCompare(bVal)
+          : bVal.localeCompare(aVal);
+      }
+
+      return 0;
+    });
+  };
 
   const handleExport = (type: string) => {
     console.log(`Xuất báo cáo ${type}`);
@@ -181,73 +272,13 @@ const StatsReportsPage = () => {
     },
   ];
 
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
-        <Title level={2} className="mb-2">
-          Thống kê báo cáo - Khoa CNTT
-        </Title>
-        <Text type="secondary">
-          Thống kê các báo lỗi thiết bị trong các tầng tòa H - Khoa Công nghệ
-          Thông tin
-        </Text>
-      </div>
-
-      {/* Bộ lọc và điều khiển */}
-      <Card className="mb-6">
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} sm={12} md={8}>
-            <Space>
-              <Text>Thời gian:</Text>
-              <RangePicker placeholder={["Từ ngày", "Đến ngày"]} />
-            </Space>
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Space>
-              <Text>Chu kỳ:</Text>
-              <Select
-                value={selectedPeriod}
-                onChange={setSelectedPeriod}
-                style={{ width: 120 }}>
-                <Option value="week">Tuần</Option>
-                <Option value="month">Tháng</Option>
-                <Option value="quarter">Quý</Option>
-                <Option value="year">Năm</Option>
-              </Select>
-            </Space>
-          </Col>
-          <Col xs={24} sm={24} md={8} className="text-right">
-            <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
-              <Button type="primary" icon={<Download className="w-4 h-4" />}>
-                Xuất báo cáo
-              </Button>
-            </Dropdown>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* Thống kê tổng quan */}
-      <Row gutter={[16, 16]} className="mb-6">
-        {statsData.map((stat, index) => (
-          <Col xs={24} sm={12} lg={6} key={index}>
-            <Card>
-              <Statistic
-                title={stat.title}
-                value={stat.value}
-                prefix={getIcon(stat.iconType)}
-                suffix={stat.suffix}
-                valueStyle={stat.valueStyle}
-                precision={stat.precision}
-              />
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
-      {/* Tabs với các loại thống kê khác nhau */}
-      <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        {/* Tab tổng quan */}
-        <TabPane tab="Tổng quan" key="overview">
+  // Định nghĩa tabs items theo cú pháp mới của Ant Design
+  const tabItems = [
+    {
+      key: "overview",
+      label: "Tổng quan",
+      children: (
+        <div>
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={16}>
               <Card title="Thống kê theo tháng" className="mb-4">
@@ -295,68 +326,77 @@ const StatsReportsPage = () => {
               <Card title="Chi tiết theo tầng - Tòa H">
                 <Table
                   columns={columns}
-                  dataSource={detailedTableData}
+                  dataSource={getSortedData(detailedTableData)}
                   pagination={false}
-                  size="middle"
-                  scroll={{ x: 800 }}
+                  size="small"
                 />
               </Card>
             </Col>
             <Col xs={24} lg={8}>
               <Card title="Hoạt động gần đây - Khoa CNTT">
-                <Timeline>
-                  {activityTimelineData.map((activity, index) => (
-                    <Timeline.Item key={index} color={activity.color}>
-                      <p>
-                        {activity.time} - {activity.description}
-                      </p>
-                      <p className="text-gray-500 text-sm">
-                        {activity.timeAgo}
-                      </p>
-                    </Timeline.Item>
-                  ))}
-                </Timeline>
+                <Timeline
+                  items={activityTimelineData.map((activity, index) => ({
+                    key: index,
+                    color: activity.color,
+                    children: (
+                      <div>
+                        <p className="text-sm">
+                          {activity.time} - {activity.description}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          {activity.timeAgo}
+                        </p>
+                      </div>
+                    ),
+                  }))}
+                />
               </Card>
             </Col>
           </Row>
-        </TabPane>
-
-        {/* Tab xu hướng */}
-        <TabPane tab="Xu hướng" key="trends">
-          <Row gutter={[16, 16]}>
-            <Col xs={24}>
-              <Card title="Xu hướng báo cáo và thời gian xử lý">
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={weeklyTrendData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="week" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Legend />
-                    <Bar
-                      yAxisId="left"
-                      dataKey="reports"
-                      fill="#1890ff"
-                      name="Số báo cáo"
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="avgTime"
-                      stroke="#ff7300"
-                      strokeWidth={3}
-                      name="Thời gian TB (ngày)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-          </Row>
-        </TabPane>
-
-        {/* Tab hiệu suất */}
-        <TabPane tab="Hiệu suất" key="performance">
+        </div>
+      ),
+    },
+    {
+      key: "trends",
+      label: "Xu hướng",
+      children: (
+        <Row gutter={[16, 16]}>
+          <Col xs={24}>
+            <Card title="Xu hướng báo cáo và thời gian xử lý">
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={weeklyTrendData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="week" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar
+                    yAxisId="left"
+                    dataKey="reports"
+                    fill="#1890ff"
+                    name="Số báo cáo"
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="avgTime"
+                    stroke="#ff7300"
+                    strokeWidth={3}
+                    name="Thời gian TB (ngày)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </Card>
+          </Col>
+        </Row>
+      ),
+    },
+    {
+      key: "performance",
+      label: "Hiệu suất",
+      children: (
+        <div>
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={12}>
               <Card title="Hiệu suất theo tầng - Tòa H">
@@ -451,26 +491,245 @@ const StatsReportsPage = () => {
               </Card>
             </Col>
           </Row>
-        </TabPane>
+        </div>
+      ),
+    },
+    {
+      key: "error-types",
+      label: "Thống kê loại lỗi",
+      children: (
+        <div>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} lg={12}>
+              <Card title="Phân bố loại lỗi - Khoa CNTT">
+                <ResponsiveContainer width="100%" height={400}>
+                  <PieChart>
+                    <Pie
+                      data={errorTypeStatsData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) =>
+                        `${name} ${((percent || 0) * 100).toFixed(1)}%`
+                      }
+                      outerRadius={120}
+                      fill="#8884d8"
+                      dataKey="value">
+                      {errorTypeStatsData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) => [`${value} trường hợp`, "Số lượng"]}
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Card>
+            </Col>
+            <Col xs={24} lg={12}>
+              <Card title="Top 5 loại lỗi thường gặp">
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart
+                    data={errorTypeStatsData.slice(0, 5)}
+                    layout="horizontal">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" width={120} />
+                    <Tooltip
+                      formatter={(value) => [`${value} trường hợp`, "Số lượng"]}
+                    />
+                    <Bar dataKey="value" fill="#1890ff" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            </Col>
+          </Row>
 
-        {/* Tab báo cáo chi tiết */}
-        <TabPane tab="Báo cáo chi tiết" key="detailed">
-          <Card>
-            <Table
-              columns={columns}
-              dataSource={detailedTableData}
-              pagination={{
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} của ${total} mục`,
-              }}
-              scroll={{ x: 800 }}
-            />
-          </Card>
-        </TabPane>
-      </Tabs>
+          <Row gutter={[16, 16]} className="mt-4">
+            <Col xs={24}>
+              <Card title="Chi tiết thống kê theo loại lỗi">
+                <Table
+                  columns={[
+                    {
+                      title: "Mã lỗi",
+                      dataIndex: "key",
+                      key: "key",
+                      render: (text: string) => (
+                        <Tag color="purple">{text}</Tag>
+                      ),
+                    },
+                    {
+                      title: "Loại lỗi",
+                      dataIndex: "errorType",
+                      key: "errorType",
+                      width: 200,
+                    },
+                    {
+                      title: "Số lượng",
+                      dataIndex: "count",
+                      key: "count",
+                      sorter: (a: { count: number }, b: { count: number }) =>
+                        a.count - b.count,
+                      render: (count: number) => <Text strong>{count}</Text>,
+                    },
+                    {
+                      title: "Tỷ lệ",
+                      dataIndex: "percentage",
+                      key: "percentage",
+                      render: (percentage: number) => (
+                        <div>
+                          <Progress percent={percentage} size="small" />
+                          <span style={{ marginLeft: 8 }}>{percentage}%</span>
+                        </div>
+                      ),
+                    },
+                    {
+                      title: "Thời gian sửa TB",
+                      dataIndex: "avgRepairTime",
+                      key: "avgRepairTime",
+                    },
+                    {
+                      title: "Độ khó",
+                      dataIndex: "difficulty",
+                      key: "difficulty",
+                      render: (difficulty: string) => {
+                        const difficultyColors = {
+                          "Rất dễ": "green",
+                          Dễ: "lime",
+                          "Trung bình": "orange",
+                          Khó: "red",
+                          "Rất khó": "magenta",
+                          Khác: "default",
+                        };
+                        return (
+                          <Tag
+                            color={
+                              difficultyColors[
+                                difficulty as keyof typeof difficultyColors
+                              ]
+                            }>
+                            {difficulty}
+                          </Tag>
+                        );
+                      },
+                    },
+                    {
+                      title: "Nguyên nhân chính",
+                      dataIndex: "commonCauses",
+                      key: "commonCauses",
+                      render: (causes: string[]) => (
+                        <div>
+                          {causes.slice(0, 2).map((cause, index) => (
+                            <Tag key={index}>{cause}</Tag>
+                          ))}
+                          {causes.length > 2 && <span>...</span>}
+                        </div>
+                      ),
+                    },
+                  ]}
+                  dataSource={detailedErrorStats}
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total, range) =>
+                      `${range[0]}-${range[1]} của ${total} loại lỗi`,
+                  }}
+                  scroll={{ x: 1000 }}
+                />
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      ),
+    },
+    {
+      key: "detailed",
+      label: "Báo cáo chi tiết",
+      children: (
+        <Card>
+          <Table
+            columns={columns}
+            dataSource={getSortedData(detailedTableData)}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} của ${total} mục`,
+            }}
+            size="small"
+          />
+        </Card>
+      ),
+    },
+  ];
+
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="mb-6">
+        <Title level={2} className="mb-2">
+          Thống kê báo cáo - Khoa CNTT
+        </Title>
+        <Text type="secondary">
+          Thống kê các báo lỗi thiết bị trong các tầng tòa H - Khoa Công nghệ
+          Thông tin
+        </Text>
+      </div>
+
+      {/* Bộ lọc và điều khiển */}
+      <Card className="mb-6">
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} sm={12} md={8}>
+            <Space>
+              <Text>Thời gian:</Text>
+              <RangePicker placeholder={["Từ ngày", "Đến ngày"]} />
+            </Space>
+          </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Space>
+              <Text>Chu kỳ:</Text>
+              <Select
+                value={selectedPeriod}
+                onChange={setSelectedPeriod}
+                style={{ width: 120 }}>
+                <Option value="week">Tuần</Option>
+                <Option value="month">Tháng</Option>
+                <Option value="quarter">Quý</Option>
+                <Option value="year">Năm</Option>
+              </Select>
+            </Space>
+          </Col>
+          <Col xs={24} sm={24} md={8} className="text-right">
+            <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
+              <Button type="primary" icon={<Download className="w-4 h-4" />}>
+                Xuất báo cáo
+              </Button>
+            </Dropdown>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Thống kê tổng quan */}
+      <Row gutter={[16, 16]} className="mb-6">
+        {statsData.map((stat, index) => (
+          <Col xs={24} sm={12} lg={6} key={index}>
+            <Card>
+              <Statistic
+                title={stat.title}
+                value={stat.value}
+                prefix={getIcon(stat.iconType)}
+                suffix={stat.suffix}
+                valueStyle={stat.valueStyle}
+                precision={stat.precision}
+              />
+            </Card>
+          </Col>
+        ))}
+      </Row>
+
+      {/* Tabs với các loại thống kê khác nhau */}
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
     </div>
   );
 };

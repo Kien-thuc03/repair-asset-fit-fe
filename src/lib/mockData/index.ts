@@ -33,6 +33,7 @@ export {
   activityTimelineData,
   technicianPerformanceData,
   equipmentStatsData,
+  detailedErrorStats,
 } from "./statisticsData";
 
 // Export component types from the main types file for convenience

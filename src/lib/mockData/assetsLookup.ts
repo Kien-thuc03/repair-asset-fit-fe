@@ -371,7 +371,4 @@ export const categoryIcons: Record<
 > = {
   "Máy tính để bàn": Monitor,
   "Máy tính": Monitor,
-  "Thiết bị trình chiếu": Monitor,
-  "Thiết bị điện": AlertTriangle,
-  "Thiết bị mạng": Wifi,
 };
