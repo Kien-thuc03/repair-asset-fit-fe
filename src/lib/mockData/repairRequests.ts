@@ -1,6 +1,5 @@
 import { RepairRequest, RepairStatus } from "@/types";
 import { Clock, CheckCircle, AlertTriangle, X, FileCheck } from "lucide-react";
-import { mockComputers } from "./computers";
 
 
 export const repairRequestStatusConfig = {
@@ -46,7 +45,6 @@ export const mockRepairRequests: RepairRequest[] = [
     assetName: "Máy tính Dell OptiPlex 3070",
     machineLabel: "01",
     componentId: "comp-001",
-    componentName: "Nguồn điện 500W",
     reporterId: "user-001",
     reporterName: "Nguyễn Văn A",
     reporterRole: "Giảng viên",

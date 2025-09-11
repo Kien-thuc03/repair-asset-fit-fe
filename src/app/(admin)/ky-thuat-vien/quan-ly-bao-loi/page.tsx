@@ -57,9 +57,6 @@ export default function DanhSachBaoLoiPage() {
 				<h1 className="text-2xl font-bold text-gray-900">Danh sách báo lỗi</h1>
 				<p className="mt-2 text-gray-600">
 					Theo dõi, tìm kiếm và lọc các báo lỗi. 
-					<span className="font-medium text-gray-900 ml-1">
-						Hiển thị {data.length} / {mockRepairRequests.length} yêu cầu
-					</span>
 				</p>
 			</div>
 
