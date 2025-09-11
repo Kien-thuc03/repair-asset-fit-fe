@@ -123,11 +123,11 @@ export const RoleInfo = {
 // Định nghĩa trạng thái báo cáo lỗi
 export enum RepairStatus {
   CHỜ_TIẾP_NHẬN = "CHỜ_TIẾP_NHẬN",     // Giảng viên vừa tạo, chờ KTV tiếp nhận
-  ĐÃ_TIẾP_NHẬN = "ĐÃ_TIẾP_NHẬN",      // KTV đã xác nhận sẽ xử lý
+  ĐÃ_TIẾP_NHẬN = "ĐÃ_TIẾP_NHẬN",      // KTV xem yêu cầu sẽ tự dộng chuyển sang trạng thái này
   ĐANG_XỬ_LÝ = "ĐANG_XỬ_LÝ",        // KTV đang trong quá trình kiểm tra, sửa chữa
   CHỜ_THAY_THẾ = "CHỜ_THAY_THẾ",      // Lỗi phần cứng, đã tạo đề xuất thay thế và đang chờ duyệt/mua sắm
   ĐÃ_HOÀN_THÀNH = "ĐÃ_HOÀN_THÀNH",     // Đã sửa chữa hoặc thay thế xong
-  ĐÃ_HỦY = "ĐÃ_HỦY",            // Yêu cầu bị hủy
+  ĐÃ_HỦY = "ĐÃ_HỦY",            // Yêu cầu bị hủy bởi giảng viên với yêu cầu là báo lỗi chưa được tiếp nhận
 }
 
 // Type cho user
