@@ -23,6 +23,19 @@ export {
   categoryIcons,
 } from "./assetsLookup";
 
+// Export statistics data
+export {
+  statsData,
+  monthlyData,
+  errorTypeStatsData,
+  weeklyTrendData,
+  detailedTableData,
+  activityTimelineData,
+  technicianPerformanceData,
+  equipmentStatsData,
+  detailedErrorStats,
+} from "./statisticsData";
+
 // Export component types from the main types file for convenience
 export { ComponentType, ComponentStatus } from "@/types";
 export type { Component } from "@/types";

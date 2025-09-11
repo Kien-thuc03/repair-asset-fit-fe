@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import {
   Search,
@@ -32,6 +31,30 @@ export default function TraCuuThietBiPage() {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [showRepairHistory, setShowRepairHistory] = useState(false);
+
+  // Inject CSS vào head để xử lý scrollbar cho toàn trang
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      html {
+        overflow-y: auto;
+      }
+      
+      body {
+        min-height: 100vh;
+      }
+      
+      .main-content {
+        min-height: calc(100vh - 2rem);
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Cleanup khi component unmount
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // Detect if user is on mobile device
   useEffect(() => {
@@ -123,7 +146,7 @@ export default function TraCuuThietBiPage() {
   const categories = Array.from(new Set(assets.map((asset) => asset.category)));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 main-content">
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between">
@@ -135,10 +158,10 @@ export default function TraCuuThietBiPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Tra cứu tài sản
+                Tra cứu thiết bị
               </h1>
               <p className="text-gray-600">
-                Tìm kiếm và xem thông tin chi tiết tài sản thiết bị
+                Tìm kiếm và xem thông tin chi tiết thiết bị
               </p>
             </div>
           </div>
@@ -166,10 +189,10 @@ export default function TraCuuThietBiPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Hoạt động
+                    Đang sử dụng
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {assets.filter((e) => e.status === "HOẠT_ĐỘNG").length}
+                    {assets.filter((e) => e.status === "đang_sử_dụng").length}
                   </dd>
                 </dl>
               </div>
@@ -186,10 +209,16 @@ export default function TraCuuThietBiPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Bảo trì
+                    Chờ xử lý
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {assets.filter((e) => e.status === "BẢO_TRÌ").length}
+                    {
+                      assets.filter(
+                        (e) =>
+                          e.status === "chờ_bàn_giao" ||
+                          e.status === "chờ_tiếp_nhận"
+                      ).length
+                    }
                   </dd>
                 </dl>
               </div>
@@ -206,10 +235,10 @@ export default function TraCuuThietBiPage() {
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Hỏng hóc
+                    Hư hỏng
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {assets.filter((e) => e.status === "HỎNG_HÓC").length}
+                    {assets.filter((e) => e.status === "hư_hỏng").length}
                   </dd>
                 </dl>
               </div>
@@ -277,95 +306,102 @@ export default function TraCuuThietBiPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
               <option value="all">Tất cả trạng thái</option>
-              <option value="HOẠT_ĐỘNG">Hoạt động</option>
-              <option value="BẢO_TRÌ">Bảo trì</option>
-              <option value="HỎNG_HÓC">Hỏng hóc</option>
-              <option value="NGỪNG_SỬ_DỤNG">Ngừng sử dụng</option>
+              <option value="đang_sử_dụng">Đang sử dụng</option>
+              <option value="chờ_bàn_giao">Chờ bàn giao</option>
+              <option value="chờ_tiếp_nhận">Chờ tiếp nhận</option>
+              <option value="hư_hỏng">Hư hỏng</option>
+              <option value="mất_tích">Mất tích</option>
+              <option value="đề_xuất_thanh_lý">Đề xuất thanh lý</option>
+              <option value="đã_thanh_lý">Đã thanh lý</option>
             </select>
           </div>
         </div>
       </div>
 
       {/* Asset Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredAssets.map((asset) => {
-          const StatusIcon = assetStatusConfig[asset.status].icon;
-          const CategoryIcon = categoryIcons[asset.category] || Monitor;
-          const warrantyStatus = getWarrantyStatus(asset.warrantyExpiry);
+      <div style={{ minHeight: "400px" }}>
+        {filteredAssets.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg shadow">
+            <Search className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              Không tìm thấy tài sản
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Không có tài sản nào phù hợp với bộ lọc.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredAssets.map((asset) => {
+              const StatusIcon = assetStatusConfig[asset.status].icon;
+              const CategoryIcon = categoryIcons[asset.category] || Monitor;
+              const warrantyStatus = getWarrantyStatus(asset.warrantyExpiry);
 
-          return (
-            <div
-              key={asset.id}
-              className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <CategoryIcon className="h-8 w-8 text-blue-600" />
+              return (
+                <div
+                  key={asset.id}
+                  className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
+                  <div className="p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0">
+                          <CategoryIcon className="h-8 w-8 text-blue-600" />
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium text-gray-900">
+                            {asset.name}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {asset.assetCode}
+                          </p>
+                        </div>
+                      </div>
+                      <div
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${
+                          assetStatusConfig[asset.status].color
+                        }`}>
+                        <StatusIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">
+                          {assetStatusConfig[asset.status].label}
+                        </span>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">
-                        {asset.name}
-                      </p>
-                      <p className="text-sm text-gray-500">{asset.assetCode}</p>
+
+                    <div className="mt-4 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Model:</span>
+                        <span className="text-gray-900">{asset.model}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Phòng:</span>
+                        <span className="text-gray-900">{asset.roomName}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Bảo hành:</span>
+                        <span className={`font-medium ${warrantyStatus.color}`}>
+                          {warrantyStatus.label}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex justify-between items-center">
+                      <button
+                        onClick={() => {
+                          setSelectedAsset(asset);
+                          setShowRepairHistory(false);
+                        }}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <Eye className="w-3 h-3 mr-1" />
+                        Chi tiết
+                      </button>
                     </div>
                   </div>
-                  <div
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${
-                      assetStatusConfig[asset.status].color
-                    }`}>
-                    <StatusIcon className="w-3 h-3 mr-1 flex-shrink-0" />
-                    <span className="truncate">
-                      {assetStatusConfig[asset.status].label}
-                    </span>
-                  </div>
                 </div>
-
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Model:</span>
-                    <span className="text-gray-900">{asset.model}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Phòng:</span>
-                    <span className="text-gray-900">{asset.roomName}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Bảo hành:</span>
-                    <span className={`font-medium ${warrantyStatus.color}`}>
-                      {warrantyStatus.label}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex justify-between items-center">
-                  <button
-                    onClick={() => {
-                      setSelectedAsset(asset);
-                      setShowRepairHistory(false);
-                    }}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <Eye className="w-3 h-3 mr-1" />
-                    Chi tiết
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        )}
       </div>
-
-      {filteredAssets.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
-          <Search className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
-            Không tìm thấy tài sản
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Không có tài sản nào phù hợp với bộ lọc.
-          </p>
-        </div>
-      )}
 
       {/* Asset Detail Modal */}
       {selectedAsset && (
@@ -584,11 +620,11 @@ export default function TraCuuThietBiPage() {
                                 </span>
                                 <span
                                   className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    repair.status === "HOÀN_THÀNH"
+                                    repair.status === "ĐÃ_HOÀN_THÀNH"
                                       ? "bg-green-100 text-green-800"
                                       : "bg-blue-100 text-blue-800"
                                   }`}>
-                                  {repair.status === "HOÀN_THÀNH"
+                                  {repair.status === "ĐÃ_HOÀN_THÀNH"
                                     ? "Hoàn thành"
                                     : "Đang xử lý"}
                                 </span>

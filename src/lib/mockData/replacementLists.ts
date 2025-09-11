@@ -33,7 +33,7 @@ export const mockReplacementLists: ReplacementList[] = [
         location: "Tòa H - Phòng H704",
         reason: "Ổ cứng SSD 256GB hỏng, mất dữ liệu",
         status: "approved",
-        priority: "high",
+        
         requestDate: "2024-01-12",
         estimatedCost: 2800000,
         description:
@@ -48,7 +48,7 @@ export const mockReplacementLists: ReplacementList[] = [
         location: "Tòa H - Phòng H301",
         reason: "Mainboard Intel B460 hỏng, không khởi động được",
         status: "approved",
-        priority: "high",
+        
         requestDate: "2024-01-18",
         estimatedCost: 4200000,
         description:
@@ -63,7 +63,7 @@ export const mockReplacementLists: ReplacementList[] = [
         location: "Tòa H - Phòng H205",
         reason: "Card đồ họa GTX 1660 hỏng, không hiển thị hình ảnh",
         status: "approved",
-        priority: "medium",
+        
         requestDate: "2024-01-20",
         estimatedCost: 5500000,
         description:
@@ -91,7 +91,7 @@ export const mockReplacementLists: ReplacementList[] = [
         location: "Tòa H - Phòng H901",
         reason: "RAM DDR3 4GB hỏng, máy chạy chậm",
         status: "approved",
-        priority: "medium",
+        
         requestDate: "2024-01-22",
         estimatedCost: 1200000,
         description:
@@ -106,7 +106,7 @@ export const mockReplacementLists: ReplacementList[] = [
         location: "Tòa H - Phòng H901",
         reason: "Nguồn điện 450W không ổn định",
         status: "approved",
-        priority: "high",
+        
         requestDate: "2024-01-25",
         estimatedCost: 7500000,
         description:

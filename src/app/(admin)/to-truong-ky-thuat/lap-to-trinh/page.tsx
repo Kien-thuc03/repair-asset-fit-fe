@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -30,6 +30,30 @@ export default function LapToTrinhPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Inject CSS vào head để xử lý scrollbar cho toàn trang
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      html {
+        overflow-y: auto;
+      }
+      
+      body {
+        min-height: 100vh;
+      }
+      
+      .main-content {
+        min-height: calc(100vh - 2rem);
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Cleanup khi component unmount
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const filteredLists = replacementLists.filter((list) => {
     const matchesStatus =
@@ -167,16 +191,9 @@ export default function LapToTrinhPage() {
   };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4">
+    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
-        <Link
-          href="/to-truong-ky-thuat"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Về trang chủ
-        </Link>
-
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -239,130 +256,132 @@ export default function LapToTrinhPage() {
       </div>
 
       {/* Lists Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white shadow rounded-lg">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
             Danh sách đề xuất đã được duyệt ({sortedLists.length})
           </h2>
         </div>
 
-        <div className="overflow-hidden">
-          {/* Mobile Card View */}
-          <div className="block sm:hidden">
-            <div className="p-3 space-y-3">
-              {sortedLists.length > 0 ? (
-                sortedLists.map((list) => (
-                  <div
-                    key={list.id}
-                    className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center">
-                        <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {list.title}
+        <div className="flex flex-col h-[400px] sm:h-[500px] lg:h-[600px]">
+          <div className="flex-1 overflow-auto">
+            {/* Mobile Card View */}
+            <div className="block sm:hidden">
+              <div className="p-3 space-y-3">
+                {sortedLists.length > 0 ? (
+                  sortedLists.map((list) => (
+                    <div
+                      key={list.id}
+                      className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center">
+                          <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {list.title}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              Mã: {list.id}
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            Mã: {list.id}
+                        </div>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                            list.status
+                          )}`}>
+                          {getStatusText(list.status)}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                        <div>
+                          <div className="text-gray-500">Người tạo</div>
+                          <div className="text-gray-900 font-medium">
+                            {list.createdBy}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Số thiết bị</div>
+                          <div className="text-gray-900 font-medium">
+                            {list.totalItems} thiết bị
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Chi phí ước tính</div>
+                          <div className="text-green-600 font-semibold">
+                            {list.totalCost.toLocaleString("vi-VN")} VNĐ
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Ngày tạo</div>
+                          <div className="text-gray-900">
+                            {new Date(list.createdAt).toLocaleDateString(
+                              "vi-VN"
+                            )}
                           </div>
                         </div>
                       </div>
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                          list.status
-                        )}`}>
-                        {getStatusText(list.status)}
-                      </span>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                      <div>
-                        <div className="text-gray-500">Người tạo</div>
-                        <div className="text-gray-900 font-medium">
-                          {list.createdBy}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Số thiết bị</div>
-                        <div className="text-gray-900 font-medium">
-                          {list.totalItems} thiết bị
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Chi phí ước tính</div>
-                        <div className="text-green-600 font-semibold">
-                          {list.totalCost.toLocaleString("vi-VN")} VNĐ
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Ngày tạo</div>
-                        <div className="text-gray-900">
-                          {new Date(list.createdAt).toLocaleDateString("vi-VN")}
-                        </div>
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => handleViewDetail(list)}
+                          className="text-indigo-600 hover:text-indigo-900 p-1">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleCreateReport(list.id)}
+                          className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
+                          Lập tờ trình
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-end space-x-2">
-                      <button
-                        onClick={() => handleViewDetail(list)}
-                        className="text-indigo-600 hover:text-indigo-900 p-1">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleCreateReport(list.id)}
-                        className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
-                        Lập tờ trình
-                      </button>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <h3 className="text-sm font-medium text-gray-900 mb-1">
+                      Không tìm thấy kết quả
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                    </p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <h3 className="text-sm font-medium text-gray-900 mb-1">
-                    Không tìm thấy kết quả
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Desktop Table View - Optimized for full width display */}
-          <div className="hidden sm:block">
-            <div className="overflow-hidden">
+            {/* Desktop Table View - Optimized for full width display */}
+            <div className="hidden sm:block">
               <table className="w-full divide-y divide-gray-200 table-fixed">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="w-[35%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[30%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center space-x-1 hover:text-gray-700 uppercase"
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
                         onClick={() => handleSort("title")}>
                         <span>Danh sách</span>
                         {getSortIcon("title")}
                       </button>
                     </th>
-                    <th className="w-[12%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[14%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center space-x-1 hover:text-gray-700 uppercase"
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
                         onClick={() => handleSort("createdBy")}>
                         <span>Người tạo</span>
                         {getSortIcon("createdBy")}
                       </button>
                     </th>
-                    <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("totalItems")}>
                         <span>Thiết bị</span>
                         {getSortIcon("totalItems")}
                       </button>
                     </th>
-                    <th className="w-[15%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[12%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center justify-end space-x-1 hover:text-gray-700 ml-auto uppercase"
+                        className="flex items-center justify-end space-x-1 hover:text-gray-700 ml-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("totalCost")}>
                         <span>Chi phí</span>
                         {getSortIcon("totalCost")}
@@ -370,7 +389,7 @@ export default function LapToTrinhPage() {
                     </th>
                     <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("status")}>
                         <span>Trạng thái</span>
                         {getSortIcon("status")}
@@ -378,13 +397,13 @@ export default function LapToTrinhPage() {
                     </th>
                     <th className="w-[10%] hidden lg:table-cell px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
-                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("createdAt")}>
                         <span>Ngày tạo</span>
                         {getSortIcon("createdAt")}
                       </button>
                     </th>
-                    <th className="w-[8%] lg:w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[16%] lg:w-[16%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       Thao tác
                     </th>
                   </tr>
@@ -393,59 +412,64 @@ export default function LapToTrinhPage() {
                   {sortedLists.length > 0 ? (
                     sortedLists.map((list) => (
                       <tr key={list.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-3">
-                          <div className="flex items-start">
-                            <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0 mt-0.5" />
+                        <td className="px-3 py-4 whitespace-nowrap w-[30%]">
+                          <div className="flex items-center min-w-0">
+                            <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium text-gray-900 truncate">
-                                {list.title.length > 45
-                                  ? `${list.title.substring(0, 45)}...`
-                                  : list.title}
+                              <div
+                                className="text-sm font-medium text-gray-900 truncate"
+                                title={list.title}>
+                                {list.title}
                               </div>
-                              <div className="text-xs text-gray-500 truncate">
+                              <div
+                                className="text-xs text-gray-500 truncate"
+                                title={list.id}>
                                 #{list.id}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="text-sm text-gray-900 truncate">
-                            {list.createdBy.length > 12
-                              ? `${list.createdBy.substring(0, 12)}...`
-                              : list.createdBy}
+                        <td className="px-2 py-4 whitespace-nowrap w-[14%]">
+                          <div
+                            className="text-sm text-gray-900 truncate"
+                            title={list.createdBy}>
+                            {list.createdBy}
                           </div>
                         </td>
-                        <td className="px-2 py-3 text-center">
-                          <div className="flex items-center justify-center">
-                            <span className="text-sm font-medium text-gray-900">
-                              {list.totalItems}
-                            </span>
-                          </div>
+                        <td className="px-2 py-4 whitespace-nowrap text-center w-[8%]">
+                          <span className="text-sm font-medium text-gray-900">
+                            {list.totalItems}
+                          </span>
                         </td>
-                        <td className="px-2 py-3 text-right">
+                        <td className="px-2 py-4 whitespace-nowrap text-right w-[12%]">
                           <div className="text-sm font-semibold text-green-600">
                             {(list.totalCost / 1000000).toFixed(1)}M
                           </div>
                           <div className="text-xs text-gray-500">VNĐ</div>
                         </td>
-                        <td className="px-2 py-3 text-center">
+                        <td className="px-2 py-4 whitespace-nowrap text-center w-[10%]">
                           <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusBadge(
                               list.status
-                            )}`}>
+                            )}`}
+                            title={getStatusText(list.status)}>
                             {getStatusText(list.status)}
                           </span>
                         </td>
-                        <td className="hidden lg:table-cell px-2 py-3 text-center">
-                          <div className="text-sm text-gray-900">
+                        <td className="hidden lg:table-cell px-2 py-4 whitespace-nowrap text-center w-[10%]">
+                          <div className="text-xs text-gray-900">
                             {new Date(list.createdAt).toLocaleDateString(
                               "vi-VN",
-                              { day: "2-digit", month: "2-digit" }
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "2-digit",
+                              }
                             )}
                           </div>
                         </td>
-                        <td className="px-2 py-3">
-                          <div className="flex items-center justify-center space-x-1">
+                        <td className="px-3 py-4 whitespace-nowrap w-[16%]">
+                          <div className="flex items-center justify-center space-x-2">
                             <button
                               onClick={() => handleViewDetail(list)}
                               className="text-indigo-600 hover:text-indigo-900 p-1"
@@ -454,12 +478,10 @@ export default function LapToTrinhPage() {
                             </button>
                             <button
                               onClick={() => handleCreateReport(list.id)}
-                              className="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
+                              className="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap"
                               title="Lập tờ trình">
-                              <FileText className="h-3 w-3" />
-                              <span className="ml-1 hidden xl:inline">
-                                Trình
-                              </span>
+                              <FileText className="h-3 w-3 mr-1" />
+                              <span>Lập trình</span>
                             </button>
                           </div>
                         </td>

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -37,6 +37,30 @@ export default function BienBanPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Inject CSS vào head để xử lý scrollbar cho toàn trang
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      html {
+        overflow-y: auto;
+      }
+      
+      body {
+        min-height: 100vh;
+      }
+      
+      .main-content {
+        min-height: calc(100vh - 2rem);
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Cleanup khi component unmount
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const filteredReports = inspectionReports.filter((report) => {
     const matchesStatus =
@@ -207,16 +231,9 @@ export default function BienBanPage() {
   };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4">
+    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
-        <Link
-          href="/to-truong-ky-thuat"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Về trang chủ
-        </Link>
-
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -277,105 +294,105 @@ export default function BienBanPage() {
       </div>
 
       {/* Reports Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white shadow rounded-lg">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
             Danh sách biên bản ({sortedReports.length})
           </h2>
         </div>
 
-        <div className="overflow-hidden">
-          {/* Mobile Card View */}
-          <div className="block sm:hidden">
-            <div className="p-3 space-y-3">
-              {sortedReports.length > 0 ? (
-                sortedReports.map((report) => (
-                  <div
-                    key={report.id}
-                    className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center">
-                        <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {report.reportNumber}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            Tờ trình: {report.relatedReportTitle}
+        <div className="flex flex-col h-[400px] sm:h-[500px] lg:h-[600px]">
+          <div className="flex-1 overflow-auto">
+            {/* Mobile Card View */}
+            <div className="block sm:hidden">
+              <div className="p-3 space-y-3">
+                {sortedReports.length > 0 ? (
+                  sortedReports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center">
+                          <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">
+                              {report.reportNumber}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              Tờ trình: {report.relatedReportTitle}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <span
-                        className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                          report.status
-                        )}`}>
-                        {getStatusIcon(report.status)}
-                        <span className="ml-1">
-                          {getStatusText(report.status)}
+                        <span
+                          className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                            report.status
+                          )}`}>
+                          {getStatusIcon(report.status)}
+                          <span className="ml-1">
+                            {getStatusText(report.status)}
+                          </span>
                         </span>
-                      </span>
-                    </div>
+                      </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                      <div>
-                        <div className="text-gray-500">Người lập</div>
-                        <div className="text-gray-900 font-medium">
-                          {report.createdBy}
+                      <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                        <div>
+                          <div className="text-gray-500">Người lập</div>
+                          <div className="text-gray-900 font-medium">
+                            {report.createdBy}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Ngày kiểm tra</div>
+                          <div className="text-gray-900">
+                            {new Date(report.inspectionDate).toLocaleDateString(
+                              "vi-VN"
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div>
-                        <div className="text-gray-500">Ngày kiểm tra</div>
-                        <div className="text-gray-900">
-                          {new Date(report.inspectionDate).toLocaleDateString(
-                            "vi-VN"
-                          )}
-                        </div>
+
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => handleViewDetail(report)}
+                          className="text-indigo-600 hover:text-indigo-900 p-1"
+                          title="Xem chi tiết">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        {report.status === "pending" && (
+                          <button
+                            onClick={() => handleSignReport(report)}
+                            className="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 border border-green-300 rounded-md hover:bg-green-200">
+                            Ký xác nhận
+                          </button>
+                        )}
+                        {report.status === "signed" && (
+                          <button
+                            onClick={() => handleSendBack(report.id)}
+                            className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
+                            Gửi lại
+                          </button>
+                        )}
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-end space-x-2">
-                      <button
-                        onClick={() => handleViewDetail(report)}
-                        className="text-indigo-600 hover:text-indigo-900 p-1"
-                        title="Xem chi tiết">
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      {report.status === "pending" && (
-                        <button
-                          onClick={() => handleSignReport(report)}
-                          className="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 border border-green-300 rounded-md hover:bg-green-200">
-                          Ký xác nhận
-                        </button>
-                      )}
-                      {report.status === "signed" && (
-                        <button
-                          onClick={() => handleSendBack(report.id)}
-                          className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
-                          Gửi lại
-                        </button>
-                      )}
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <h3 className="text-sm font-medium text-gray-900 mb-1">
+                      Không tìm thấy kết quả
+                    </h3>
+                    <p className="text-xs text-gray-500">
+                      Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                    </p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <h3 className="text-sm font-medium text-gray-900 mb-1">
-                    Không tìm thấy kết quả
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
-                  </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Desktop Table View */}
-          <div className="hidden sm:block">
-            <div className="overflow-hidden">
+            {/* Desktop Table View */}
+            <div className="hidden sm:block">
               <table className="w-full divide-y divide-gray-200 table-fixed">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
                     <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button

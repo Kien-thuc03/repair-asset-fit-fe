@@ -1,8 +1,6 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
 import {
-  ArrowLeft,
   Search,
   Eye,
   CheckCircle,
@@ -18,7 +16,7 @@ import {
   ListPlus,
 } from "lucide-react";
 import { ReplacementRequestForList } from "@/types";
-import { mockReplacementRequests } from "@/lib/mockData";
+import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
 import CreateReplacementListModal from "./modal/CreateReplacementListModal";
 import RequestDetailModal from "./modal/RequestDetailModal";
 import CreateListSuccessModal from "./modal/CreateListSuccessModal";
@@ -29,7 +27,6 @@ export default function DuyetDeXuatPage() {
     mockReplacementRequests
   );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRequest, setSelectedRequest] =
     useState<ReplacementRequestForList | null>(null);
@@ -48,15 +45,13 @@ export default function DuyetDeXuatPage() {
     .filter((request) => {
       const matchesStatus =
         selectedStatus === "all" || request.status === selectedStatus;
-      const matchesPriority =
-        selectedPriority === "all" || request.priority === selectedPriority;
       const matchesSearch =
         searchTerm === "" ||
         request.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase());
 
-      return matchesStatus && matchesPriority && matchesSearch;
+      return matchesStatus && matchesSearch;
     })
     .sort((a, b) => {
       // Chỉ sắp xếp khi có sortField được chọn
@@ -172,29 +167,28 @@ export default function DuyetDeXuatPage() {
     }
   };
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-800";
-      case "medium":
-        return "bg-orange-100 text-orange-800";
-      case "low":
-        return "bg-blue-100 text-blue-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  // Empty priority functions for modal compatibility
+  const getPriorityBadge = () => "bg-gray-100 text-gray-800";
+  const getPriorityText = () => "N/A";
 
-  const getPriorityText = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "Cao";
-      case "medium":
-        return "Trung bình";
-      case "low":
-        return "Thấp";
+  // Hàm xác định vai trò dựa trên tên người yêu cầu
+  const getUserRole = (requestedBy: string) => {
+    // Mapping cụ thể theo dữ liệu mock để đồng bộ với trang danh sách báo lỗi
+    switch (requestedBy) {
+      case "Võ Thị F":
+        return "KTV";
+      case "Phạm Thị D":
+        return "Giảng viên";
+      case "Hoàng Văn E":
+        return "Giảng viên";
+      case "Nguyễn Văn A":
+        return "Giảng viên";
+      case "Trần Thị B":
+        return "Giảng viên";
+      case "Lê Văn C":
+        return "Giảng viên";
       default:
-        return priority;
+        return "Giảng viên";
     }
   };
 
@@ -253,13 +247,6 @@ export default function DuyetDeXuatPage() {
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 ">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
-        <Link
-          href="/to-truong-ky-thuat"
-          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4">
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Về trang chủ
-        </Link>
-
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -301,7 +288,7 @@ export default function DuyetDeXuatPage() {
 
       {/* Filters */}
       <div className="bg-white p-3 sm:p-6 rounded-lg shadow mb-4 sm:mb-6">
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4 items-end">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 items-end">
           <div className="flex flex-col h-full">
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
               Tìm kiếm
@@ -333,23 +320,6 @@ export default function DuyetDeXuatPage() {
                 <option value="pending">Chờ duyệt</option>
                 <option value="approved">Đã duyệt</option>
                 <option value="rejected">Từ chối</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-col h-full">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
-              Độ ưu tiên
-            </label>
-            <div className="flex-1 h-9 sm:h-10">
-              <select
-                className="w-full h-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                value={selectedPriority}
-                onChange={(e) => setSelectedPriority(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value="high">Cao</option>
-                <option value="medium">Trung bình</option>
-                <option value="low">Thấp</option>
               </select>
             </div>
           </div>
@@ -439,6 +409,9 @@ export default function DuyetDeXuatPage() {
                         <div className="text-gray-900 font-medium">
                           {request.requestedBy}
                         </div>
+                        <div className="text-gray-500 text-xs">
+                          {getUserRole(request.requestedBy)}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-500">Vị trí</div>
@@ -456,13 +429,10 @@ export default function DuyetDeXuatPage() {
                         </span>
                       </div>
                       <div>
-                        <div className="text-gray-500">Độ ưu tiên</div>
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
-                            request.priority
-                          )}`}>
-                          {getPriorityText(request.priority)}
-                        </span>
+                        <div className="text-gray-500">Chi phí ước tính</div>
+                        <div className="text-gray-900 font-medium">
+                          {request.estimatedCost.toLocaleString("vi-VN")} VND
+                        </div>
                       </div>
                     </div>
 
@@ -529,14 +499,6 @@ export default function DuyetDeXuatPage() {
                   </th>
                   <th
                     className="w-20 sm:w-24 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("priority")}>
-                    <div className="flex items-center">
-                      <span className="truncate">Ưu tiên</span>
-                      {getSortIcon("priority")}
-                    </div>
-                  </th>
-                  <th
-                    className="w-20 sm:w-24 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("status")}>
                     <div className="flex items-center">
                       <span className="truncate">Trạng thái</span>
@@ -594,7 +556,7 @@ export default function DuyetDeXuatPage() {
                               {request.requestedBy}
                             </div>
                             <div className="text-xs text-gray-500 truncate">
-                              {request.unit.split(" ").slice(-2).join(" ")}
+                              {getUserRole(request.requestedBy)}
                             </div>
                           </div>
                         </div>
@@ -606,18 +568,6 @@ export default function DuyetDeXuatPage() {
                             {request.location}
                           </span>
                         </div>
-                      </td>
-                      <td className="w-20 sm:w-24 px-2 py-2 sm:py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-1 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
-                            request.priority
-                          )}`}>
-                          {request.priority === "high"
-                            ? "Cao"
-                            : request.priority === "medium"
-                            ? "TB"
-                            : "Thấp"}
-                        </span>
                       </td>
                       <td className="w-20 sm:w-24 px-2 py-2 sm:py-4 whitespace-nowrap">
                         <span
