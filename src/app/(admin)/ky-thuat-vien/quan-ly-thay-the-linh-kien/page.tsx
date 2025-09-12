@@ -4,8 +4,8 @@ import { useState, useMemo } from 'react'
 import { Breadcrumb, Input, Select, DatePicker, Table, Tag, Button, Space } from 'antd'
 import { Search, Filter, Eye, Package } from 'lucide-react'
 import Link from 'next/link'
-import { mockReplacementRequestsForTechnician, ReplacementRequestItem } from '@/lib/mockData/replacementRequests'
-import { ReplacementStatus } from '@/types'
+import { mockReplacementRequestsForTechnician } from '@/lib/mockData/replacementRequests'
+import { ReplacementStatus, ReplacementRequestItem } from '@/types'
 
 const { RangePicker } = DatePicker
 const { Option } = Select
@@ -44,10 +44,6 @@ export default function QuanLyThayTheLinhKienPage() {
 		[ReplacementStatus.CHỜ_XÁC_MINH]: { 
 			color: 'blue', 
 			text: 'Chờ xác minh' 
-		},
-		[ReplacementStatus.CHỜ_QTV_KHOA_DUYỆT]: { 
-			color: 'purple', 
-			text: 'Chờ QTV Khoa duyệt' 
 		},
 		[ReplacementStatus.ĐÃ_DUYỆT]: { 
 			color: 'green', 
@@ -107,12 +103,6 @@ export default function QuanLyThayTheLinhKienPage() {
 			),
 		},
 		{
-			title: 'Đề xuất bởi',
-			dataIndex: 'technicianName',
-			key: 'technicianName',
-			width: 120,
-		},
-		{
 			title: 'Trạng thái',
 			dataIndex: 'status',
 			key: 'status',
@@ -121,17 +111,6 @@ export default function QuanLyThayTheLinhKienPage() {
 				const config = statusConfig[status]
 				return <Tag color={config.color}>{config.text}</Tag>
 			},
-		},
-		{
-			title: 'Chi phí ước tính',
-			dataIndex: 'estimatedCost',
-			key: 'estimatedCost',
-			width: 120,
-			render: (cost: number) => (
-				<span className="font-medium text-green-600">
-					{cost.toLocaleString('vi-VN')} VNĐ
-				</span>
-			),
 		},
 		{
 			title: 'Ngày tạo',
@@ -215,9 +194,6 @@ export default function QuanLyThayTheLinhKienPage() {
 						</Option>
 						<Option value={ReplacementStatus.CHỜ_XÁC_MINH}>
 							Chờ xác minh
-						</Option>
-						<Option value={ReplacementStatus.CHỜ_QTV_KHOA_DUYỆT}>
-							Chờ QTV Khoa duyệt
 						</Option>
 						<Option value={ReplacementStatus.ĐÃ_DUYỆT}>
 							Đã duyệt
