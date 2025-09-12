@@ -4,7 +4,7 @@ import { useState } from "react"
 import { RepairRequest } from "@/types"
 import { repairRequestStatusConfig } from "@/lib/mockData/repairRequests"
 import Link from "next/link"
-import { ChevronUp, ChevronDown } from "lucide-react"
+import { ChevronUp, ChevronDown, Eye } from "lucide-react"
 
 interface Props {
 	data: RepairRequest[]
@@ -108,7 +108,7 @@ export default function RequestsTable({ data }: Props) {
 				<thead className="bg-gray-50">
 					<tr>
 						<th 
-							className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+							className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 							onClick={() => handleSort("requestCode")}
 						>
 							<div className="flex items-center space-x-1">
@@ -117,7 +117,7 @@ export default function RequestsTable({ data }: Props) {
 							</div>
 						</th>
 						<th 
-							className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+							className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 							onClick={() => handleSort("assetName")}
 						>
 							<div className="flex items-center space-x-1">
@@ -126,7 +126,7 @@ export default function RequestsTable({ data }: Props) {
 							</div>
 						</th>
 						<th 
-							className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+							className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 							onClick={() => handleSort("location")}
 						>
 							<div className="flex items-center space-x-1">
@@ -135,7 +135,7 @@ export default function RequestsTable({ data }: Props) {
 							</div>
 						</th>
 						<th 
-							className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+							className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 							onClick={() => handleSort("reporterName")}
 						>
 							<div className="flex items-center space-x-1">
@@ -144,7 +144,7 @@ export default function RequestsTable({ data }: Props) {
 							</div>
 						</th>
 						<th 
-							className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+							className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 							onClick={() => handleSort("status")}
 						>
 							<div className="flex items-center space-x-1">
@@ -153,7 +153,7 @@ export default function RequestsTable({ data }: Props) {
 							</div>
 						</th>
 						<th 
-							className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+							className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 							onClick={() => handleSort("createdAt")}
 						>
 							<div className="flex items-center space-x-1">
@@ -161,7 +161,9 @@ export default function RequestsTable({ data }: Props) {
 								{getSortIcon("createdAt")}
 							</div>
 						</th>
-						<th className="px-4 py-3" />
+						<th className="px-4 py-3">
+							<span className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group">Thao tác</span>
+						</th>
 					</tr>
 				</thead>
 				<tbody className="bg-white divide-y divide-gray-200">
@@ -186,7 +188,9 @@ export default function RequestsTable({ data }: Props) {
 								</td>
 								<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">{new Date(r.createdAt).toLocaleString()}</td>
 								<td className="px-4 py-3 whitespace-nowrap text-right text-sm">
-									<Link href={`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${r.id}`} className="text-blue-600 hover:underline">Chi tiết</Link>
+									<Link href={`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${r.id}`} className="text-blue-600 hover:text-blue-900 inline-flex items-center">
+                        				<Eye className="w-4 h-4" />
+                    				</Link>
 								</td>
 							</tr>
 						)

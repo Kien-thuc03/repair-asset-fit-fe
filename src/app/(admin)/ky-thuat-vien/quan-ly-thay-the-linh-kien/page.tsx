@@ -125,9 +125,11 @@ export default function QuanLyThayTheLinhKienPage() {
 			width: 80,
 			render: (_: any, record: ReplacementRequestItem) => (
 				<Link href={`/ky-thuat-vien/quan-ly-thay-the-linh-kien/chi-tiet/${record.id}`}>
-					<Button size="small" icon={<Eye className="w-4 h-4" />}>
-						Chi tiết
-					</Button>
+					<button 
+					title='Xem chi tiết' 
+					className="text-blue-600 hover:text-blue-900 inline-flex items-center">
+                        <Eye className="w-4 h-4" />
+					</button>
 				</Link>
 			),
 		},
@@ -149,7 +151,6 @@ export default function QuanLyThayTheLinhKienPage() {
 					{
 						title: (
 							<div className="flex items-center">
-								<Package className="w-4 h-4 mr-1" />
 								<span>Quản lý thay thế linh kiện</span>
 							</div>
 						),
@@ -160,7 +161,6 @@ export default function QuanLyThayTheLinhKienPage() {
 			{/* Header */}
 			<div>
 				<h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-					<Package className="w-6 h-6" />
 					Quản lý thay thế linh kiện
 				</h1>
 				<p className="mt-2 text-gray-600">
@@ -189,6 +189,7 @@ export default function QuanLyThayTheLinhKienPage() {
 						onChange={setStatusFilter}
 						allowClear
 					>
+						<Option value="">Tất cả trạng thái</Option>
 						<Option value={ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT}>
 							Chờ Tổ trưởng duyệt
 						</Option>

@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   title: "Repair Asset Management - FIT IUH",
   description: "Hệ thống quản lý sửa chữa tài sản - Khoa CNTT Đại học Công nghiệp TP.HCM",
   icons: {
-    icon: "/logo_iuh.png",
-    shortcut: "/logo_iuh.png",
-    apple: "/logo_iuh.png",
+    icon: "images/Logo_IUH.webp",
+    shortcut: "images/Logo_IUH.webp",
+    apple: "images/Logo_IUH.webp",
   },
 };
 
