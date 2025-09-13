@@ -312,9 +312,6 @@ export default function ChiTietBienBanPage() {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Giải pháp đề xuất
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Chi phí ước tính
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -336,9 +333,6 @@ export default function ChiTietBienBanPage() {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900">
                           {item.proposedSolution}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          {item.estimatedCost.toLocaleString("vi-VN")} VNĐ
                         </td>
                       </tr>
                     ))}

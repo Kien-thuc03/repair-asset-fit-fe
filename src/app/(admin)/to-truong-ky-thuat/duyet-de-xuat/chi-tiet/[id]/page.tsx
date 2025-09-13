@@ -246,17 +246,7 @@ export default function ChiTietDuyetDeXuatPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start space-x-3">
-                    <DollarSign className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Chi phí ước tính
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {request.estimatedCost.toLocaleString("vi-VN")} VND
-                      </p>
-                    </div>
-                  </div>
+
                 </div>
               </div>
             </div>

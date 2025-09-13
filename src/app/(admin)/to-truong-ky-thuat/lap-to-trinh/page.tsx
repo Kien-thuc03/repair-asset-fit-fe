@@ -119,10 +119,6 @@ export default function LapToTrinhPage() {
         aValue = a.unit;
         bValue = b.unit;
         break;
-      case "estimatedCost":
-        aValue = a.estimatedCost;
-        bValue = b.estimatedCost;
-        break;
       case "status":
         aValue = a.status;
         bValue = b.status;
@@ -410,12 +406,6 @@ export default function LapToTrinhPage() {
                           </div>
                         </div>
                         <div>
-                          <div className="text-gray-500">Chi phí ước tính</div>
-                          <div className="text-green-600 font-semibold">
-                            {request.estimatedCost.toLocaleString("vi-VN")} VNĐ
-                          </div>
-                        </div>
-                        <div>
                           <div className="text-gray-500">Ngày đề xuất</div>
                           <div className="text-gray-900">
                             {new Date(request.requestDate).toLocaleDateString(
@@ -502,15 +492,7 @@ export default function LapToTrinhPage() {
                         {getSortIcon("unit")}
                       </button>
                     </th>
-                    <th className="w-[11%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        className="flex items-center justify-end space-x-1 hover:text-gray-700 ml-auto uppercase whitespace-nowrap"
-                        onClick={() => handleSort("estimatedCost")}>
-                        <span>Chi phí</span>
-                        {getSortIcon("estimatedCost")}
-                      </button>
-                    </th>
-                    <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[15%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("status")}>
@@ -582,13 +564,7 @@ export default function LapToTrinhPage() {
                             {request.unit}
                           </div>
                         </td>
-                        <td className="px-2 py-4 whitespace-nowrap text-right w-[11%]">
-                          <div className="text-sm font-semibold text-green-600">
-                            {(request.estimatedCost / 1000000).toFixed(1)}M
-                          </div>
-                          <div className="text-xs text-gray-500">VNĐ</div>
-                        </td>
-                        <td className="px-2 py-4 whitespace-nowrap text-center w-[10%]">
+                        <td className="px-2 py-4 whitespace-nowrap text-center w-[15%]">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusBadge(
                               request.status
@@ -638,7 +614,7 @@ export default function LapToTrinhPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center">
+                      <td colSpan={7} className="px-6 py-12 text-center">
                         <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                         <h3 className="text-sm font-medium text-gray-900 mb-1">
                           Không tìm thấy kết quả

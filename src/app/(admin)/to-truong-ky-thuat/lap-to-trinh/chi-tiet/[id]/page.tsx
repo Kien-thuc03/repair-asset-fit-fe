@@ -11,7 +11,6 @@ import {
   Package,
   FileText,
   Hash,
-  DollarSign,
   Clock,
   Info,
 } from "lucide-react";
@@ -212,18 +211,6 @@ export default function ChiTietLapToTrinhPage() {
                     Đơn vị
                   </div>
                   <div className="text-sm text-gray-900">{request.unit}</div>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <DollarSign className="h-5 w-5 text-gray-400 mt-0.5" />
-                <div>
-                  <div className="text-sm font-medium text-gray-500">
-                    Chi phí ước tính
-                  </div>
-                  <div className="text-sm font-semibold text-green-600">
-                    {request.estimatedCost.toLocaleString("vi-VN")} VNĐ
-                  </div>
                 </div>
               </div>
 

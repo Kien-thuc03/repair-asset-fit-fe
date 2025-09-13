@@ -47,8 +47,6 @@ export default function LapToTrinhPage() {
   const generateContent = () => {
     if (!selectedRequest) return "";
 
-    const totalCost = selectedRequest.estimatedCost.toLocaleString("vi-VN");
-
     return `Phòng Lab H8.1, H8.2, H8.3 của Khoa CNTT đang cần thay thế thiết bị. Hệ điều hành Windows 10 và một số phần mềm chuyên ngành Khoa học máy tính đã lỗi thời. Máy tính hiện tại không đáp ứng được yêu cầu sử dụng phần mềm chuyên ngành phù hợp với giáo trình và học liệu mới. Hệ điều hành cũ, CPU đã quá lạc hậu so với phiên bản mới nhất. Cần nâng cấp phần mềm mới Intel H310, không thể sử dụng được nâng cấp để tối ưu hiệu suất. Ổ đĩa cứng SSD và RAM máy tính vẫn sử dụng hệ thống cũ. Ổ cứng SSD cũ 256GB, và thông số Ram: DDR4 8GB cần được nâng cấp.
 
 Khoa CNTT kính trình Ban Giám hiệu phê duyệt chi ngân sách cho Phòng Quản trị tiến hành nâng cấp thiết bị để phục vụ công tác giảng dạy cho sinh viên được tốt hơn.
@@ -59,7 +57,6 @@ Thông tin thiết bị cần thay thế:
 - Vị trí: ${selectedRequest.location}
 - Người đề xuất: ${selectedRequest.requestedBy}
 - Lý do: ${selectedRequest.reason}
-- Chi phí ước tính: ${totalCost} VNĐ
 
 Khoa rất mong Ban Giám hiệu xem xét và đồng ý cho thực hiện.
 
@@ -379,9 +376,6 @@ Trân trọng kính trình.`;
                   <strong>Mã:</strong> {selectedRequest.assetCode}
                   <br />
                   <strong>Tên:</strong> {selectedRequest.assetName}
-                  <br />
-                  <strong>Chi phí:</strong>{" "}
-                  {selectedRequest.estimatedCost.toLocaleString("vi-VN")} VNĐ
                 </div>
               </div>
 
