@@ -13,6 +13,11 @@ export {
 export { mockReplacementRequests } from "./replacementRequests";
 export { mockReplacementLists, type ReplacementList } from "./replacementLists";
 export {
+  mockComponentsFromReports,
+  mockComponentsFromReportsWithStatus,
+  type ComponentFromReport,
+} from "./componentsFromReports";
+export {
   mockInspectionReports,
   type InspectionReport,
 } from "./inspectionReports";
