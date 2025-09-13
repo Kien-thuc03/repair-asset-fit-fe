@@ -54,7 +54,7 @@ export default function BaoCaoLoiPage() {
             editData.timestamp && Date.now() - editData.timestamp < 3600000;
 
           if (isDataFresh) {
-            // First, set room and filter assets
+            // Now we can use direct IDs since mockRepairRequests uses correct IDs
             if (editData.roomId) {
               handleRoomChange(editData.roomId);
 

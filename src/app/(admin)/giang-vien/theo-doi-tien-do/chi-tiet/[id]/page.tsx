@@ -40,10 +40,13 @@ export default function ChiTietTheoDaoTienDoPage() {
     const editData = {
       requestId: request.id,
       assetId: request.assetId,
+      assetName: request.assetName,
       roomId: request.roomId,
+      roomName: request.roomName,
       componentId: request.componentId,
       componentName: request.componentName,
       errorTypeId: request.errorTypeId || "",
+      errorTypeName: request.errorTypeName || "",
       description: request.description,
       // Add timestamp to ensure data freshness
       timestamp: Date.now(),
