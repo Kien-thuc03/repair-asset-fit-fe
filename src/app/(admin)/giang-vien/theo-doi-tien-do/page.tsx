@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Clock,
   Eye,
   Search,
-  X,
   ChevronUp,
   ChevronDown,
   Download,
@@ -15,14 +15,12 @@ import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
 import { Breadcrumb } from "antd";
 
 export default function TheoDaoTienDoPage() {
+  const router = useRouter();
   const [requests] = useState<RepairRequest[]>(mockRepairRequests);
   const [filteredRequests, setFilteredRequests] =
     useState<RepairRequest[]>(mockRepairRequests);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedRequest, setSelectedRequest] = useState<RepairRequest | null>(
-    null
-  );
 
   // Selection state for export
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -414,7 +412,11 @@ export default function TheoDaoTienDoPage() {
                     </td>
                     <td className="px-4 py-4 text-center text-sm font-medium">
                       <button
-                        onClick={() => setSelectedRequest(request)}
+                        onClick={() =>
+                          router.push(
+                            `/giang-vien/theo-doi-tien-do/chi-tiet/${request.id}`
+                          )
+                        }
                         className="text-blue-600 hover:text-blue-900 inline-flex items-center">
                         <Eye className="w-4 h-4" />
                       </button>
@@ -518,7 +520,11 @@ export default function TheoDaoTienDoPage() {
 
                   <div className="flex justify-end">
                     <button
-                      onClick={() => setSelectedRequest(request)}
+                      onClick={() =>
+                        router.push(
+                          `/giang-vien/theo-doi-tien-do/chi-tiet/${request.id}`
+                        )
+                      }
                       className="text-blue-600 hover:text-blue-900 inline-flex items-center text-sm">
                       <Eye className="w-4 h-4 mr-1" />
                       Chi tiết
@@ -545,149 +551,6 @@ export default function TheoDaoTienDoPage() {
 
       {/* Spacer to ensure minimum height and consistent scrollbar */}
       <div className="min-h-[200px]"></div>
-
-      {/* Request Detail Modal */}
-      {selectedRequest && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Chi tiết yêu cầu {selectedRequest.requestCode}
-                </h3>
-                <button
-                  onClick={() => setSelectedRequest(null)}
-                  className="text-gray-400 hover:text-gray-600">
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Tài sản
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedRequest.assetName}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {selectedRequest.assetCode}
-                    </p>
-                    {selectedRequest.componentName && (
-                      <p className="text-xs text-gray-400">
-                        Linh kiện: {selectedRequest.componentName}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Phòng
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedRequest.roomName}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Loại lỗi
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedRequest.errorTypeName || "Chưa phân loại"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Trạng thái
-                    </label>
-                    <div
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border mt-1 ${
-                        repairRequestStatusConfig[selectedRequest.status].color
-                      }`}>
-                      {repairRequestStatusConfig[selectedRequest.status].label}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Mô tả
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {selectedRequest.description}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Ngày tạo
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {formatDate(selectedRequest.createdAt)}
-                    </p>
-                  </div>
-                  {selectedRequest.acceptedAt &&
-                    selectedRequest.acceptedAt.trim() !== "" && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Ngày tiếp nhận
-                        </label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {formatDate(selectedRequest.acceptedAt)}
-                        </p>
-                      </div>
-                    )}
-                  {selectedRequest.completedAt &&
-                    selectedRequest.completedAt.trim() !== "" && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Ngày hoàn thành
-                        </label>
-                        <p className="mt-1 text-sm text-gray-900">
-                          {formatDate(selectedRequest.completedAt)}
-                        </p>
-                      </div>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Người báo cáo
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedRequest.reporterName}
-                    </p>
-                  </div>
-                  {selectedRequest.assignedTechnicianName && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Người xử lý
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedRequest.assignedTechnicianName}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {selectedRequest.resolutionNotes &&
-                  selectedRequest.resolutionNotes.trim() !== "" && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Ghi chú xử lý
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {selectedRequest.resolutionNotes}
-                      </p>
-                    </div>
-                  )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Export Success Modal */}
       {showExportSuccessModal && (
