@@ -268,15 +268,11 @@ export default function QuanLyThayTheLinhKienPage() {
 				</p>
 			</div>
 
-			{/* Filters */}
+			{/* Filters & Search */}
 			<div className="bg-white p-4 rounded-lg shadow space-y-4">
-				<div className="flex items-center gap-2 mb-3">
-					<Filter className="w-4 h-4" />
-					<span className="font-medium">Bộ lọc</span>
-				</div>
-				
 				<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 					<Input
+					className='col-span-1 md:col-span-2'
 						placeholder="Tìm kiếm theo mã, tên tài sản, linh kiện..."
 						prefix={<Search className="w-4 h-4" />}
 						value={searchText}
@@ -313,19 +309,6 @@ export default function QuanLyThayTheLinhKienPage() {
 						value={dateRange}
 						onChange={setDateRange}
 					/>
-
-					<Button 
-						onClick={() => {
-							setSearchText('')
-							setStatusFilter('')
-							setDateRange(null)
-							setSortField('')
-							setSortDirection('none')
-							setCurrentPage(1)
-						}}
-					>
-						Xóa bộ lọc
-					</Button>
 				</div>
 			</div>
 

@@ -136,11 +136,11 @@ export default function RepairDetailPage() {
 							}
 							setCurrentRequest(updatedReq)
 							
-							notification.success({
-								message: 'Cập nhật thành công',
-								description: 'Trạng thái và ghi chú xử lý đã được cập nhật',
-								placement: 'topRight'
-							})
+							// notification.success({
+							// 	message: 'Cập nhật thành công',
+							// 	description: 'Trạng thái và ghi chú xử lý đã được cập nhật',
+							// 	placement: 'topRight'
+							// })
 						}}
 					/>
 				</div>
