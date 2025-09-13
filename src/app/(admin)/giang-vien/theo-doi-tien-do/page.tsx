@@ -13,6 +13,7 @@ import {
 import { RepairRequest } from "@/types";
 import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
 import { Breadcrumb } from "antd";
+import Pagination from "@/components/common/Pagination";
 
 export default function TheoDaoTienDoPage() {
   const router = useRouter();
@@ -35,6 +36,13 @@ export default function TheoDaoTienDoPage() {
   const [sortField, setSortField] = useState<keyof RepairRequest | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
     "asc"
+  );
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [paginatedRequests, setPaginatedRequests] = useState<RepairRequest[]>(
+    []
   );
 
   // Handle sorting
@@ -114,7 +122,32 @@ export default function TheoDaoTienDoPage() {
     // Reset selection when filter changes
     setSelectedItems([]);
     setSelectAll(false);
+
+    // Reset to first page when filter changes
+    setCurrentPage(1);
   }, [requests, searchTerm, statusFilter, sortField, sortDirection]);
+
+  // Handle pagination
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginated = filteredRequests.slice(startIndex, endIndex);
+    setPaginatedRequests(paginated);
+  }, [filteredRequests, currentPage, pageSize]);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedItems([]); // Reset selection when changing page
+    setSelectAll(false);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page
+    setSelectedItems([]); // Reset selection
+    setSelectAll(false);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("vi-VN");
@@ -126,7 +159,7 @@ export default function TheoDaoTienDoPage() {
       setSelectedItems([]);
       setSelectAll(false);
     } else {
-      setSelectedItems(filteredRequests.map((req) => req.id));
+      setSelectedItems(paginatedRequests.map((req) => req.id));
       setSelectAll(true);
     }
   };
@@ -139,7 +172,7 @@ export default function TheoDaoTienDoPage() {
     } else {
       const newSelected = [...selectedItems, id];
       setSelectedItems(newSelected);
-      setSelectAll(newSelected.length === filteredRequests.length);
+      setSelectAll(newSelected.length === paginatedRequests.length);
     }
   };
 
@@ -161,12 +194,17 @@ export default function TheoDaoTienDoPage() {
     setShowExportSuccessModal(true);
   };
 
-  // Update selectAll when filteredRequests changes
+  // Update selectAll when paginatedRequests changes
   useEffect(() => {
-    if (selectedItems.length > 0 && filteredRequests.length > 0) {
-      setSelectAll(selectedItems.length === filteredRequests.length);
+    if (selectedItems.length > 0 && paginatedRequests.length > 0) {
+      setSelectAll(
+        selectedItems.length === paginatedRequests.length &&
+          paginatedRequests.every((req) => selectedItems.includes(req.id))
+      );
+    } else {
+      setSelectAll(false);
     }
-  }, [filteredRequests, selectedItems]);
+  }, [paginatedRequests, selectedItems]);
 
   // Sortable header component
   const SortableHeader = ({
@@ -282,7 +320,7 @@ export default function TheoDaoTienDoPage() {
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-medium text-gray-900">
-            Danh sách yêu cầu ({filteredRequests.length})
+            Danh sách yêu cầu ({filteredRequests.length} tổng)
           </h3>
 
           {/* Export Excel Button */}
@@ -326,7 +364,7 @@ export default function TheoDaoTienDoPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredRequests.map((request) => {
+              {paginatedRequests.map((request) => {
                 const StatusIcon =
                   repairRequestStatusConfig[request.status].icon;
                 return (
@@ -442,13 +480,13 @@ export default function TheoDaoTienDoPage() {
               <span className="ml-2 text-sm text-gray-700">
                 {selectAll
                   ? `Bỏ chọn tất cả`
-                  : `Chọn tất cả (${filteredRequests.length} mục)`}
+                  : `Chọn tất cả (${paginatedRequests.length} mục trang này)`}
               </span>
             </label>
           </div>
 
           <div className="space-y-4 p-4">
-            {filteredRequests.map((request) => {
+            {paginatedRequests.map((request) => {
               const StatusIcon = repairRequestStatusConfig[request.status].icon;
               return (
                 <div
@@ -546,6 +584,20 @@ export default function TheoDaoTienDoPage() {
               Không tìm thấy yêu cầu nào phù hợp với bộ lọc.
             </p>
           </div>
+        )}
+
+        {/* Pagination */}
+        {filteredRequests.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={filteredRequests.length}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showSizeChanger={true}
+            showQuickJumper={true}
+            showTotal={true}
+          />
         )}
       </div>
 
