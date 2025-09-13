@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { AlertTriangle, Camera, Send, QrCode } from "lucide-react";
 import { ReportForm, SimpleAsset as Asset, Component } from "@/types";
 import {
@@ -11,8 +12,13 @@ import {
   mockComputers,
 } from "@/lib/mockData";
 import SuccessModal from "./modal/SuccessModal";
+import { Breadcrumb } from "antd";
 
 export default function BaoCaoLoiPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const isEditMode = searchParams.get("edit") === "true";
+
   const [formData, setFormData] = useState<ReportForm>({
     assetId: "",
     componentId: "",
@@ -30,11 +36,69 @@ export default function BaoCaoLoiPage() {
   );
   const [isMobile, setIsMobile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [editRequestId, setEditRequestId] = useState<string>("");
 
   // Debug filteredComponents changes
   useEffect(() => {
     console.log("filteredComponents updated:", filteredComponents);
   }, [filteredComponents]);
+
+  // Load edit data from localStorage
+  useEffect(() => {
+    if (isEditMode) {
+      const editDataStr = localStorage.getItem("editRequestData");
+      if (editDataStr) {
+        try {
+          const editData = JSON.parse(editDataStr);
+
+          // Check if data is fresh (within last hour)
+          const isDataFresh =
+            editData.timestamp && Date.now() - editData.timestamp < 3600000;
+
+          if (isDataFresh) {
+            // Save the request ID for navigation after submit/cancel
+            setEditRequestId(editData.requestId || "");
+
+            // Now we can use direct IDs since mockRepairRequests uses correct IDs
+            if (editData.roomId) {
+              handleRoomChange(editData.roomId);
+
+              // Set asset after room is set (with small delay to ensure assets are filtered)
+              setTimeout(() => {
+                if (editData.assetId) {
+                  handleAssetChange(editData.assetId);
+
+                  // Set components after asset is set
+                  setTimeout(() => {
+                    if (editData.componentId && editData.componentName) {
+                      setSelectedComponentIds([editData.componentId]);
+                    }
+
+                    // Set other form data including componentId
+                    setFormData((prev) => ({
+                      ...prev,
+                      componentId: editData.componentId || "",
+                      errorTypeId: editData.errorTypeId || "",
+                      description: editData.description || "",
+                    }));
+                  }, 100);
+                }
+              }, 100);
+            }
+
+            // Clear edit data after loading
+            localStorage.removeItem("editRequestData");
+          } else {
+            // Data is stale, remove it
+            localStorage.removeItem("editRequestData");
+          }
+        } catch (error) {
+          console.error("Error loading edit data:", error);
+          localStorage.removeItem("editRequestData");
+        }
+      }
+    }
+  }, [isEditMode]);
 
   // Detect if user is on mobile device
   useEffect(() => {
@@ -68,6 +132,25 @@ export default function BaoCaoLoiPage() {
     setSelectedComponentIds([]);
     setFilteredAssets([]);
     setFilteredComponents([]);
+  };
+
+  // Handle success modal close - navigate back to detail page
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    if (isEditMode && editRequestId) {
+      router.push(`/giang-vien/theo-doi-tien-do/chi-tiet/${editRequestId}`);
+    } else {
+      router.push("/giang-vien/theo-doi-tien-do");
+    }
+  };
+
+  // Handle cancel button
+  const handleCancel = () => {
+    if (isEditMode && editRequestId) {
+      router.push(`/giang-vien/theo-doi-tien-do/chi-tiet/${editRequestId}`);
+    } else {
+      router.push("/giang-vien");
+    }
   };
 
   const handleRoomChange = (roomId: string) => {
@@ -109,7 +192,9 @@ export default function BaoCaoLoiPage() {
           const components = mockComponents.filter(
             (comp) => comp.computerAssetId === asset.id
           );
-          const computer = mockComputers.find((comp) => comp.assetId === asset.id);
+          const computer = mockComputers.find(
+            (comp) => comp.assetId === asset.id
+          );
           const machineLabel = computer?.machineLabel || "N/A";
           console.log("Filtered components after QR scan:", components);
 
@@ -140,6 +225,49 @@ export default function BaoCaoLoiPage() {
 
   return (
     <div className="space-y-6">
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/giang-vien",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            ...(isEditMode && editRequestId
+              ? [
+                  {
+                    href: "/giang-vien/theo-doi-tien-do",
+                    title: (
+                      <div className="flex items-center">
+                        <span>Theo dõi tiến độ</span>
+                      </div>
+                    ),
+                  },
+                  {
+                    href: `/giang-vien/theo-doi-tien-do/chi-tiet/${editRequestId}`,
+                    title: (
+                      <div className="flex items-center">
+                        <span>Chi tiết yêu cầu</span>
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>
+                    {isEditMode ? "Chỉnh sửa báo cáo lỗi" : "Báo cáo lỗi"}
+                  </span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center space-x-3">
@@ -150,14 +278,38 @@ export default function BaoCaoLoiPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Báo cáo lỗi thiết bị
+              {isEditMode ? "Chỉnh sửa báo cáo lỗi" : "Báo cáo lỗi thiết bị"}
             </h1>
             <p className="text-gray-600">
-              Tạo báo cáo lỗi cho thiết bị gặp sự cố
+              {isEditMode
+                ? "Cập nhật thông tin báo cáo lỗi thiết bị"
+                : "Tạo báo cáo lỗi cho thiết bị gặp sự cố"}
             </p>
           </div>
         </div>
       </div>
+
+      {/* Edit Mode Notice */}
+      {isEditMode && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 text-blue-600" />
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-blue-900">
+                Đang chỉnh sửa yêu cầu
+              </h4>
+              <p className="text-sm text-blue-700 mt-1">
+                Thông tin từ yêu cầu trước đó đã được tự động điền vào form. Bạn
+                có thể thay đổi các thông tin cần thiết và gửi lại.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* QR Scanner Button for Mobile */}
       {isMobile && (
@@ -227,7 +379,9 @@ export default function BaoCaoLoiPage() {
                     : "Chọn thiết bị"}
                 </option>
                 {filteredAssets.map((asset) => {
-                  const computer = mockComputers.find((comp) => comp.assetId === asset.id);
+                  const computer = mockComputers.find(
+                    (comp) => comp.assetId === asset.id
+                  );
                   const machineLabel = computer?.machineLabel || "N/A";
                   return (
                     <option key={asset.id} value={asset.id}>
@@ -542,6 +696,7 @@ export default function BaoCaoLoiPage() {
           <div className="flex justify-end space-x-3">
             <button
               type="button"
+              onClick={handleCancel}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
               Hủy
             </button>
@@ -552,12 +707,12 @@ export default function BaoCaoLoiPage() {
               {isSubmitting ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Đang gửi...
+                  {isEditMode ? "Đang cập nhật..." : "Đang gửi..."}
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Gửi báo cáo
+                  {isEditMode ? "Cập nhật báo cáo" : "Gửi báo cáo"}
                 </>
               )}
             </button>
@@ -568,9 +723,17 @@ export default function BaoCaoLoiPage() {
       {/* Success Modal */}
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        title="Báo cáo lỗi đã được gửi thành công!"
-        message="Cảm ơn bạn đã báo cáo lỗi. Chúng tôi sẽ xem xét và xử lý trong thời gian sớm nhất. Bạn có thể theo dõi tiến độ xử lý trong phần 'Theo dõi tiến độ'."
+        onClose={handleSuccessModalClose}
+        title={
+          isEditMode
+            ? "Báo cáo lỗi đã được cập nhật thành công!"
+            : "Báo cáo lỗi đã được gửi thành công!"
+        }
+        message={
+          isEditMode
+            ? "Thông tin báo cáo lỗi đã được cập nhật. Chúng tôi sẽ xem xét lại và xử lý theo thông tin mới. Bạn có thể theo dõi tiến độ xử lý trong phần 'Theo dõi tiến độ'."
+            : "Cảm ơn bạn đã báo cáo lỗi. Chúng tôi sẽ xem xét và xử lý trong thời gian sớm nhất. Bạn có thể theo dõi tiến độ xử lý trong phần 'Theo dõi tiến độ'."
+        }
       />
     </div>
   );

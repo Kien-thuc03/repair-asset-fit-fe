@@ -25,6 +25,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Calendar,
+  Clock,
+  Search,
 } from "lucide-react";
 
 // Navigation items
@@ -51,12 +53,12 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       {
         name: "Theo dõi tiến độ",
         href: "/giang-vien/theo-doi-tien-do",
-        icon: ClipboardList,
+        icon: Clock,
       },
       {
         name: "Tra cứu thiết bị",
         href: "/giang-vien/tra-cuu-thiet-bi",
-        icon: Settings,
+        icon: Search,
       },
     ],
     [UserRole.KY_THUAT_VIEN]: [
@@ -115,7 +117,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       {
         name: "Tra cứu tài sản",
         href: "/to-truong-ky-thuat/tra-cuu-tai-san",
-        icon: Settings,
+        icon: Search,
       },
       {
         name: "Biên bản",
