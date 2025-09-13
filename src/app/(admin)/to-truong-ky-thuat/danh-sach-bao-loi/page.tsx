@@ -448,7 +448,7 @@ export default function DanhSachBaoLoiPage() {
                       {getSortIcon("createdAt")}
                     </div>
                   </th>
-                  <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%] whitespace-nowrap">
                     Thao tác
                   </th>
                 </tr>
@@ -544,7 +544,7 @@ export default function DanhSachBaoLoiPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium w-[8%]">
+                      <td className="px-3 py-4 whitespace-nowrap text-center text-sm font-medium w-[8%]">
                         <button
                           onClick={() => {
                             setSelectedRequest(request);
