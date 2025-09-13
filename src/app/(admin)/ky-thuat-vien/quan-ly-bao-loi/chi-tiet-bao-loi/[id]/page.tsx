@@ -7,9 +7,9 @@ import { Clock, User, MapPin, Wrench, Calendar, FileText, AlertCircle, CheckCirc
 import { mockRepairRequests, repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
 import { mockAssetsLookup } from '@/lib/mockData/assetsLookup'
 import { RepairStatus } from '@/types'
-import InfoCard from '@/components/technician/RequestDetail/InfoCard'
 import ActionPanel from '@/components/technician/RequestDetail/ActionPanel'
 import HistoryCard from '@/components/technician/RequestDetail/HistoryCard'
+import ImageViewer from '@/components/ui/ImageViewer'
 
 
 export default function RepairDetailPage() {
@@ -303,18 +303,12 @@ export default function RepairDetailPage() {
 									<p className="text-sm font-medium text-gray-500 mb-3">
 										Hình ảnh minh họa ({currentRequest.mediaUrls.length} ảnh)
 									</p>
-									<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-										{currentRequest.mediaUrls.map((url: string, index: number) => (
-											<div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-200">
-												<img 
-													src={url} 
-													alt={`Ảnh minh họa ${index + 1}`}
-													className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-													onClick={() => window.open(url, '_blank')}
-												/>
-											</div>
-										))}
-									</div>
+									<ImageViewer 
+										images={currentRequest.mediaUrls}
+										showDownload={true}
+										title="Hình ảnh minh họa lỗi"
+										className="w-full"
+									/>
 								</div>
 							</>
 						)}
