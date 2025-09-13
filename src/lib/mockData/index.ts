@@ -26,6 +26,13 @@ export {
   assetStatusConfig,
   categoryIcons,
 } from "./assetsLookup";
+export {
+  mockReportLists,
+  getReportListsByStatus,
+  getReportListById,
+  getReportListsStats,
+  type ReportList,
+} from "./reportLists";
 
 // Export statistics data
 export {

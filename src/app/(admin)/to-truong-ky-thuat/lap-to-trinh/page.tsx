@@ -5,13 +5,19 @@ import { Search, Eye, FileText, ChevronUp, ChevronDown } from "lucide-react";
 
 import { Breadcrumb } from "antd";
 import { ReplacementRequestForList, ReplacementStatus } from "@/types";
-import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
+import {
+  mockReportLists,
+  getReportListsByStatus,
+} from "@/lib/mockData/reportLists";
 
 export default function LapToTrinhPage() {
   const router = useRouter();
-  const [replacementRequests] = useState<ReplacementRequestForList[]>(
-    mockReplacementRequests
-  );
+
+  // Lấy tất cả các items từ các danh sách đã tạo có trạng thái "CHỜ_LẬP_TỜ_TRÌNH"
+  const [replacementRequests] = useState<ReplacementRequestForList[]>(() => {
+    const reportLists = getReportListsByStatus("CHỜ_LẬP_TỜ_TRÌNH");
+    return reportLists.flatMap((list) => list.items);
+  });
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<string>("");
@@ -200,8 +206,8 @@ export default function LapToTrinhPage() {
               Lập tờ trình
             </h1>
             <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Quản lý và lập tờ trình cho các danh sách đề xuất thay thế thiết
-              bị
+              Lập tờ trình cho các danh sách đề xuất thay thế linh kiện đã được
+              tạo
             </p>
           </div>
         </div>
@@ -219,7 +225,7 @@ export default function LapToTrinhPage() {
               <input
                 type="text"
                 className="absolute inset-0 w-full h-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                placeholder="Tên tài sản, mã đề xuất..."
+                placeholder="Tên linh kiện, mã đề xuất..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -257,7 +263,7 @@ export default function LapToTrinhPage() {
       <div className="bg-white shadow rounded-lg">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách đề xuất đã được duyệt ({sortedRequests.length})
+            Danh sách linh kiện chờ lập tờ trình ({sortedRequests.length})
           </h2>
         </div>
 
@@ -332,11 +338,20 @@ export default function LapToTrinhPage() {
                         </button>
                         <button
                           onClick={() => {
-                            router.push(
-                              `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
-                            );
+                            if (request.status === ReplacementStatus.ĐÃ_DUYỆT) {
+                              router.push(
+                                `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
+                              );
+                            }
                           }}
-                          className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
+                          disabled={
+                            request.status !== ReplacementStatus.ĐÃ_DUYỆT
+                          }
+                          className={`px-3 py-1 text-xs font-medium border rounded-md transition-colors ${
+                            request.status === ReplacementStatus.ĐÃ_DUYỆT
+                              ? "text-blue-700 bg-blue-100 border-blue-300 hover:bg-blue-200 cursor-pointer"
+                              : "text-gray-400 bg-gray-100 border-gray-300 cursor-not-allowed"
+                          }`}>
                           Lập tờ trình
                         </button>
                       </div>
@@ -365,7 +380,7 @@ export default function LapToTrinhPage() {
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
                         onClick={() => handleSort("assetName")}>
-                        <span>Tài sản</span>
+                        <span>Linh kiện</span>
                         {getSortIcon("assetName")}
                       </button>
                     </th>
@@ -490,12 +505,27 @@ export default function LapToTrinhPage() {
                             </button>
                             <button
                               onClick={() => {
-                                router.push(
-                                  `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
-                                );
+                                if (
+                                  request.status === ReplacementStatus.ĐÃ_DUYỆT
+                                ) {
+                                  router.push(
+                                    `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
+                                  );
+                                }
                               }}
-                              className="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap"
-                              title="Lập tờ trình">
+                              disabled={
+                                request.status !== ReplacementStatus.ĐÃ_DUYỆT
+                              }
+                              className={`inline-flex items-center px-3 py-1.5 border rounded text-xs font-medium whitespace-nowrap transition-colors ${
+                                request.status === ReplacementStatus.ĐÃ_DUYỆT
+                                  ? "text-blue-700 bg-blue-50 border-blue-300 hover:bg-blue-100 cursor-pointer"
+                                  : "text-gray-400 bg-gray-100 border-gray-300 cursor-not-allowed"
+                              }`}
+                              title={
+                                request.status === ReplacementStatus.ĐÃ_DUYỆT
+                                  ? "Lập tờ trình"
+                                  : "Chỉ được lập tờ trình khi đã duyệt"
+                              }>
                               <FileText className="h-3 w-3 mr-1" />
                               <span>Lập tờ trình</span>
                             </button>
