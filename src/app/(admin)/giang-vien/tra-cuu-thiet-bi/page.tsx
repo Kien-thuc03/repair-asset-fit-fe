@@ -17,6 +17,7 @@ import {
   categoryIcons,
 } from "@/lib/mockData";
 import { Breadcrumb } from "antd";
+import Pagination from "@/components/common/Pagination";
 
 export default function TraCuuThietBiPage() {
   const router = useRouter();
@@ -27,6 +28,11 @@ export default function TraCuuThietBiPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isMobile, setIsMobile] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12); // 12 items per page for grid layout
+  const [paginatedAssets, setPaginatedAssets] = useState<Asset[]>([]);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -91,7 +97,28 @@ export default function TraCuuThietBiPage() {
     }
 
     setFilteredAssets(filtered);
+    
+    // Reset to first page when filter changes
+    setCurrentPage(1);
   }, [assets, searchTerm, categoryFilter, statusFilter]);
+
+  // Handle pagination
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginated = filteredAssets.slice(startIndex, endIndex);
+    setPaginatedAssets(paginated);
+  }, [filteredAssets, currentPage, pageSize]);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page
+  };
 
   const getWarrantyStatus = (warrantyExpiry: string) => {
     const today = new Date();
@@ -313,6 +340,15 @@ export default function TraCuuThietBiPage() {
         </div>
       </div>
 
+      {/* Asset Grid Header */}
+      <div className="bg-white shadow rounded-lg p-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-medium text-gray-900">
+            Danh sách thiết bị ({filteredAssets.length} tổng)
+          </h3>
+        </div>
+      </div>
+
       {/* Asset Grid */}
       <div style={{ minHeight: "400px" }}>
         {filteredAssets.length === 0 ? (
@@ -327,7 +363,7 @@ export default function TraCuuThietBiPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredAssets.map((asset) => {
+            {paginatedAssets.map((asset) => {
               const StatusIcon = assetStatusConfig[asset.status].icon;
               const CategoryIcon = categoryIcons[asset.category] || Monitor;
               const warrantyStatus = getWarrantyStatus(asset.warrantyExpiry);
@@ -398,6 +434,23 @@ export default function TraCuuThietBiPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredAssets.length > 0 && (
+        <div className="bg-white shadow rounded-lg">
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={filteredAssets.length}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showSizeChanger={true}
+            showQuickJumper={true}
+            showTotal={true}
+            pageSizeOptions={[6, 12, 24, 48]}
+          />
+        </div>
+      )}
     </div>
   );
 }
