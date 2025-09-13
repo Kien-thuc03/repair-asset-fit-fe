@@ -478,7 +478,7 @@ export default function DuyetDeXuatPage() {
                     <div className="mt-2 text-xs text-gray-500">
                       {new Date(request.requestDate).toLocaleDateString(
                         "vi-VN",
-                        { day: "2-digit", month: "2-digit" }
+                        { day: "2-digit", month: "2-digit", year: "numeric" }
                       )}
                     </div>
                   </div>
@@ -626,7 +626,11 @@ export default function DuyetDeXuatPage() {
                           <span className="text-xs text-gray-900">
                             {new Date(request.requestDate).toLocaleDateString(
                               "vi-VN",
-                              { day: "2-digit", month: "2-digit" }
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              }
                             )}
                           </span>
                         </div>
