@@ -462,16 +462,6 @@ export default function ChiTietTheoDaoTienDoPage() {
                   </div>
                 </div>
               )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Mức độ ưu tiên
-                </label>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 mt-1">
-                  Trung bình
-                </span>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700">
                   Ngày dự kiến hoàn thành

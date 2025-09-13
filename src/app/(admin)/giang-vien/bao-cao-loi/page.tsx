@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { AlertTriangle, Camera, Send, QrCode } from "lucide-react";
 import { ReportForm, SimpleAsset as Asset, Component } from "@/types";
 import {
@@ -16,6 +16,7 @@ import { Breadcrumb } from "antd";
 
 export default function BaoCaoLoiPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const isEditMode = searchParams.get("edit") === "true";
 
   const [formData, setFormData] = useState<ReportForm>({
@@ -35,6 +36,7 @@ export default function BaoCaoLoiPage() {
   );
   const [isMobile, setIsMobile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [editRequestId, setEditRequestId] = useState<string>("");
 
   // Debug filteredComponents changes
   useEffect(() => {
@@ -54,6 +56,9 @@ export default function BaoCaoLoiPage() {
             editData.timestamp && Date.now() - editData.timestamp < 3600000;
 
           if (isDataFresh) {
+            // Save the request ID for navigation after submit/cancel
+            setEditRequestId(editData.requestId || "");
+
             // Now we can use direct IDs since mockRepairRequests uses correct IDs
             if (editData.roomId) {
               handleRoomChange(editData.roomId);
@@ -127,6 +132,25 @@ export default function BaoCaoLoiPage() {
     setSelectedComponentIds([]);
     setFilteredAssets([]);
     setFilteredComponents([]);
+  };
+
+  // Handle success modal close - navigate back to detail page
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    if (isEditMode && editRequestId) {
+      router.push(`/giang-vien/theo-doi-tien-do/chi-tiet/${editRequestId}`);
+    } else {
+      router.push("/giang-vien/theo-doi-tien-do");
+    }
+  };
+
+  // Handle cancel button
+  const handleCancel = () => {
+    if (isEditMode && editRequestId) {
+      router.push(`/giang-vien/theo-doi-tien-do/chi-tiet/${editRequestId}`);
+    } else {
+      router.push("/giang-vien");
+    }
   };
 
   const handleRoomChange = (roomId: string) => {
@@ -212,10 +236,32 @@ export default function BaoCaoLoiPage() {
                 </div>
               ),
             },
+            ...(isEditMode && editRequestId
+              ? [
+                  {
+                    href: "/giang-vien/theo-doi-tien-do",
+                    title: (
+                      <div className="flex items-center">
+                        <span>Theo dõi tiến độ</span>
+                      </div>
+                    ),
+                  },
+                  {
+                    href: `/giang-vien/theo-doi-tien-do/chi-tiet/${editRequestId}`,
+                    title: (
+                      <div className="flex items-center">
+                        <span>Chi tiết yêu cầu</span>
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
             {
               title: (
                 <div className="flex items-center">
-                  <span>Báo cáo lỗi</span>
+                  <span>
+                    {isEditMode ? "Chỉnh sửa báo cáo lỗi" : "Báo cáo lỗi"}
+                  </span>
                 </div>
               ),
             },
@@ -650,6 +696,7 @@ export default function BaoCaoLoiPage() {
           <div className="flex justify-end space-x-3">
             <button
               type="button"
+              onClick={handleCancel}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
               Hủy
             </button>
@@ -676,7 +723,7 @@ export default function BaoCaoLoiPage() {
       {/* Success Modal */}
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={handleSuccessModalClose}
         title={
           isEditMode
             ? "Báo cáo lỗi đã được cập nhật thành công!"
