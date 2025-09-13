@@ -21,6 +21,7 @@ import {
 } from "@/lib/mockData/inspectionReports";
 import InspectionReportDetailModal from "./modal/InspectionReportDetailModal";
 import SignConfirmationModal from "./modal/SignConfirmationModal";
+import { Breadcrumb } from "antd";
 
 export default function BienBanPage() {
   const [inspectionReports, setInspectionReports] = useState<
@@ -232,6 +233,27 @@ export default function BienBanPage() {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content">
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/to-truong-ky-thuat",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Xác nhận biên bản</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">

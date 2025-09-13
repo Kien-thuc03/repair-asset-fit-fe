@@ -20,6 +20,7 @@ import {
   repairRequestStatusConfig,
   errorTypes,
 } from "@/lib/mockData";
+import { Breadcrumb } from "antd";
 
 export default function DanhSachBaoLoiPage() {
   const [requests, setRequests] = useState<RepairRequest[]>(mockRepairRequests);
@@ -201,6 +202,27 @@ export default function DanhSachBaoLoiPage() {
 
   return (
     <div className="container mx-auto px-4 py-2 main-content">
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/to-truong-ky-thuat",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Danh sách báo lỗi</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-center">

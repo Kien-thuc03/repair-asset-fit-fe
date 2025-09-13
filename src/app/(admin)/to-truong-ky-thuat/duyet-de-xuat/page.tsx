@@ -19,10 +19,9 @@ import {
 import { ReplacementRequestForList, ReplacementStatus } from "@/types";
 import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
 import { mockComponentsFromReports } from "@/lib/mockData/componentsFromReports";
-import CreateReplacementListModal from "./modal/CreateReplacementListModal";
-import CreateListSuccessModal from "./modal/CreateListSuccessModal";
 import ExportExcelSuccessModal from "./modal/ExportExcelSuccessModal";
 import ExportExcelErrorModal from "./modal/ExportExcelErrorModal";
+import { Breadcrumb } from "antd";
 
 // Helper functions
 const getStatusBadge = (status: ReplacementStatus) => {
@@ -86,9 +85,6 @@ export default function DuyetDeXuatPage() {
   );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [showCreateListModal, setShowCreateListModal] = useState(false);
-  const [showCreateListSuccessModal, setShowCreateListSuccessModal] =
-    useState(false);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [exportCount, setExportCount] = useState(0);
@@ -280,6 +276,27 @@ export default function DuyetDeXuatPage() {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 ">
+            <div className="mb-2">
+              <Breadcrumb
+                items={[
+                  {
+                    href: "/to-truong-ky-thuat",
+                    title: (
+                      <div className="flex items-center">
+                        <span>Trang chủ</span>
+                      </div>
+                    ),
+                  },
+                  {
+                    title: (
+                      <div className="flex items-center">
+                        <span>Duyệt đề xuất</span>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            </div>
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -296,7 +313,9 @@ export default function DuyetDeXuatPage() {
           <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
             {/* Create List Button */}
             <button
-              onClick={() => setShowCreateListModal(true)}
+              onClick={() =>
+                router.push("/to-truong-ky-thuat/duyet-de-xuat/tao-danh-sach")
+              }
               disabled={approvedRequests.length === 0}
               className="inline-flex items-center px-4 py-2 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 disabled:cursor-not-allowed">
               <ListPlus className="h-4 w-4 mr-2" />
@@ -691,24 +710,7 @@ export default function DuyetDeXuatPage() {
         </div>
       </div>
 
-      {/* Create Replacement List Modal */}
-      <CreateReplacementListModal
-        show={showCreateListModal}
-        onClose={() => setShowCreateListModal(false)}
-        approvedRequests={approvedRequests}
-        onSuccess={(count) => {
-          setExportCount(count);
-          setShowCreateListSuccessModal(true);
-        }}
-      />
-
       {/* Success Modals */}
-      <CreateListSuccessModal
-        isOpen={showCreateListSuccessModal}
-        onClose={() => setShowCreateListSuccessModal(false)}
-        listCount={exportCount}
-      />
-
       <ExportExcelSuccessModal
         isOpen={showExportSuccessModal}
         onClose={() => setShowExportSuccessModal(false)}

@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { FileText, Calendar, User, Building2, Computer, X } from "lucide-react";
-import { ReplacementList } from "@/lib/mockData/replacementLists";
 import CreateReportSuccessModal from "./CreateReportSuccessModal";
 
 interface ListDetailModalProps {

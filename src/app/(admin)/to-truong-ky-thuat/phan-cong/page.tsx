@@ -14,6 +14,7 @@ import {
 import { Technician } from "@/types";
 import { Room } from "@/types/unit";
 import { mockTechnicians, mockRooms } from "@/lib/mockData";
+import { Breadcrumb } from "antd";
 
 export default function PhanCongPage() {
   const [technicians] = useState<Technician[]>(mockTechnicians);
@@ -184,6 +185,27 @@ export default function PhanCongPage() {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4">
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/to-truong-ky-thuat",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Phân công khu vực</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-center">
