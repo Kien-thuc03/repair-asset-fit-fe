@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Clock, Eye, Search, X, ChevronUp, ChevronDown } from "lucide-react";
 import { EnhancedRepairRequest as RepairRequest } from "@/types";
 import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
+import { Breadcrumb } from "antd";
 
 export default function TheoDaoTienDoPage() {
   const [requests] = useState<RepairRequest[]>(mockRepairRequests);
@@ -135,6 +136,27 @@ export default function TheoDaoTienDoPage() {
 
   return (
     <div className="space-y-6 min-h-screen">
+      <div className="mb-2">
+              <Breadcrumb
+                items={[
+                  {
+                    href: "/giang-vien",
+                    title: (
+                      <div className="flex items-center">
+                        <span>Trang chủ</span>
+                      </div>
+                    ),
+                  },
+                  {
+                    title: (
+                      <div className="flex items-center">
+                        <span>Theo dõi tiến độ</span>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            </div>
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center space-x-3">

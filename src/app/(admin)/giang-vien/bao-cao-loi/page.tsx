@@ -11,6 +11,7 @@ import {
   mockComputers,
 } from "@/lib/mockData";
 import SuccessModal from "./modal/SuccessModal";
+import { Breadcrumb } from "antd";
 
 export default function BaoCaoLoiPage() {
   const [formData, setFormData] = useState<ReportForm>({
@@ -109,7 +110,9 @@ export default function BaoCaoLoiPage() {
           const components = mockComponents.filter(
             (comp) => comp.computerAssetId === asset.id
           );
-          const computer = mockComputers.find((comp) => comp.assetId === asset.id);
+          const computer = mockComputers.find(
+            (comp) => comp.assetId === asset.id
+          );
           const machineLabel = computer?.machineLabel || "N/A";
           console.log("Filtered components after QR scan:", components);
 
@@ -140,6 +143,27 @@ export default function BaoCaoLoiPage() {
 
   return (
     <div className="space-y-6">
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/giang-vien",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Báo cáo lỗi</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center space-x-3">
@@ -227,7 +251,9 @@ export default function BaoCaoLoiPage() {
                     : "Chọn thiết bị"}
                 </option>
                 {filteredAssets.map((asset) => {
-                  const computer = mockComputers.find((comp) => comp.assetId === asset.id);
+                  const computer = mockComputers.find(
+                    (comp) => comp.assetId === asset.id
+                  );
                   const machineLabel = computer?.machineLabel || "N/A";
                   return (
                     <option key={asset.id} value={asset.id}>

@@ -20,6 +20,7 @@ import {
   assetStatusConfig,
   categoryIcons,
 } from "@/lib/mockData";
+import { Breadcrumb } from "antd";
 
 export default function TraCuuThietBiPage() {
   const [assets] = useState<Asset[]>(mockAssetsLookup);
@@ -147,6 +148,27 @@ export default function TraCuuThietBiPage() {
 
   return (
     <div className="space-y-6 main-content">
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/giang-vien",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Tra cứu thiết bị</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between">
