@@ -129,7 +129,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     isLocked: true,
     categoryId: "4",
     shape: AssetShape.COMPUTER,
-    status: AssetStatus.HU_HONG,
+    status: AssetStatus.CHO_TIEP_NHAN,
     createdBy: "USER001",
     createdAt: "2023-01-15T08:00:00Z",
     updatedAt: "2024-09-01T14:20:00Z",

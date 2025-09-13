@@ -1,7 +1,6 @@
 import { RepairRequest, RepairStatus } from "@/types";
 import { Clock, CheckCircle, AlertTriangle, X, FileCheck } from "lucide-react";
 
-
 export const repairRequestStatusConfig = {
   [RepairStatus.CHỜ_TIẾP_NHẬN]: {
     label: "Chờ tiếp nhận",
@@ -44,22 +43,23 @@ export const mockRepairRequests: RepairRequest[] = [
     assetCode: "PC-H101-01",
     assetName: "PC Dell OptiPlex 3080",
     machineLabel: "01",
-    componentId: "comp-001",
+    componentId: "COMP005",
+    componentName: "Dell 200W PSU",
     reporterId: "user-001",
     reporterName: "Nguyễn Văn A",
     reporterRole: "Giảng viên",
     assignedTechnicianId: "tech-001",
     assignedTechnicianName: "Trần Thị B",
-    roomId: "room-001",
-    roomName: "H301",
+    roomId: "ROOM001",
+    roomName: "H101",
     buildingName: "Tòa H",
-    errorTypeId: "error-001",
-    errorTypeName: "Hỏng nguồn điện",
+    errorTypeId: "ET001",
+    errorTypeName: "Máy không khởi động",
     description:
       "Máy tính không khởi động được, có mùi cháy từ nguồn điện 500W, cần thay thay nguồn mới ngay lập tức",
     mediaUrls: [
       "https://vr360.vn/wp-content/uploads/2015/07/nguyen-nhan-khien-may-tinh-khong-the-khoi-dong-vao-windows-300x138.jpg",
-      "https://ictsaigon.com.vn/storage/news/may-tinh-khong-khoi-dong-duoc/may-tinh-khong-khoi-dong-duoc-8.webp"
+      "https://ictsaigon.com.vn/storage/news/may-tinh-khong-khoi-dong-duoc/may-tinh-khong-khoi-dong-duoc-8.webp",
     ],
     status: RepairStatus.CHỜ_TIẾP_NHẬN,
     resolutionNotes: "",
@@ -82,11 +82,11 @@ export const mockRepairRequests: RepairRequest[] = [
     reporterRole: "Giảng viên",
     assignedTechnicianId: "tech-002",
     assignedTechnicianName: "Phạm Văn D",
-    roomId: "room-002",
-    roomName: "H205",
+    roomId: "ROOM001",
+    roomName: "H101",
     buildingName: "Tòa H",
-    errorTypeId: "error-002",
-    errorTypeName: "Lỗi RAM",
+    errorTypeId: "ET002",
+    errorTypeName: "Máy hư phần mềm",
     description: "RAM DDR4 8GB bị lỗi, máy không khởi động được, màn hình đen",
     mediaUrls: ["https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/131734/Originals/loi-man-hinh-xanh.png"],
     status: RepairStatus.ĐANG_XỬ_LÝ,
@@ -110,11 +110,11 @@ export const mockRepairRequests: RepairRequest[] = [
     reporterRole: "Giảng viên",
     assignedTechnicianId: "tech-003",
     assignedTechnicianName: "Nguyễn Văn F",
-    roomId: "room-003",
-    roomName: "H704",
+    roomId: "ROOM001",
+    roomName: "H101",
     buildingName: "Tòa H",
-    errorTypeId: "error-003",
-    errorTypeName: "Lỗi ổ cứng",
+    errorTypeId: "ET005",
+    errorTypeName: "Máy không sử dụng được",
     description:
       "Ổ cứng SSD 256GB bị bad sector nghiêm trọng, mất dữ liệu, không thể truy cập",
     mediaUrls: ["ssd_error.jpg"],
@@ -140,16 +140,16 @@ export const mockRepairRequests: RepairRequest[] = [
     reporterRole: "KTV",
     assignedTechnicianId: "tech-004",
     assignedTechnicianName: "Hoàng Văn E",
-    roomId: "room-004",
-    roomName: "H508",
+    roomId: "ROOM002",
+    roomName: "H102",
     buildingName: "Tòa H",
-    errorTypeId: "error-004",
-    errorTypeName: "Lỗi card đồ họa",
+    errorTypeId: "ET007",
+    errorTypeName: "Máy hư màn hình",
     description:
-      "Card đồ họa NVIDIA GTX 1050 2GB bị lỗi chip, màn hình không hiển thị hình ảnh",
+      "Màn hình Lenovo ThinkVision E24-20 bị lỗi, không hiển thị hình ảnh, có dấu hiệu hỏng backlight",
     mediaUrls: [
       "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=300&fit=crop",
-      "https://images.unsplash.com/photo-1551808525-51a94da548ce?w=400&h=300&fit=crop"
+      "https://images.unsplash.com/photo-1551808525-51a94da548ce?w=400&h=300&fit=crop",
     ],
     status: RepairStatus.CHỜ_TIẾP_NHẬN,
     resolutionNotes: "",
