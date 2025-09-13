@@ -103,7 +103,7 @@ export default function RequestsTable({ data }: Props) {
 	})
 
 	return (
-		<div className="overflow-x-auto bg-white shadow rounded-lg">
+		<div className="overflow-x-auto bg-white shadow rounded-t-lg">
 			<table className="min-w-full divide-y divide-gray-200">
 				<thead className="bg-gray-50">
 					<tr>
@@ -197,6 +197,8 @@ export default function RequestsTable({ data }: Props) {
 					})}
 				</tbody>
 			</table>
+
+
 		</div>
 	)
 }

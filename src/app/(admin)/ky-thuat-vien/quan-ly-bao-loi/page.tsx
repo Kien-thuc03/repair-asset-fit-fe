@@ -5,15 +5,20 @@ import { Breadcrumb } from 'antd'
 import { mockRepairRequests } from '@/lib/mockData/repairRequests'
 import RequestsFilters from '@/components/technician/RequestsList/RequestsFilters'
 import RequestsTable from '@/components/technician/RequestsList/RequestsTable'
+import { Pagination } from '@/components/ui'
 
 export default function DanhSachBaoLoiPage() {
 	const [filters, setFilters] = useState<{ q: string; status: string; dateFrom: string; dateTo: string }>({ q: '', status: '', dateFrom: '', dateTo: '' })
+	const [currentPage, setCurrentPage] = useState(1)
+	const [pageSize, setPageSize] = useState(10)
 
 	const handleFilter = useCallback((newFilters: { q: string; status: string; dateFrom: string; dateTo: string }) => {
 		setFilters(newFilters)
+		setCurrentPage(1) // Reset về trang 1 khi filter thay đổi
 	}, [])
 
-	const data = useMemo(() => {
+	// Dữ liệu đã lọc
+	const filteredData = useMemo(() => {
 		return mockRepairRequests.filter((r) => {
 			const matchesQ = filters.q
 				? [r.requestCode, r.assetName, r.roomName, r.buildingName, r.assetCode]
@@ -29,6 +34,13 @@ export default function DanhSachBaoLoiPage() {
 			return matchesQ && matchesStatus && matchesFrom && matchesTo
 		})
 	}, [filters])
+
+	// Dữ liệu phân trang
+	const paginatedData = useMemo(() => {
+		const startIndex = (currentPage - 1) * pageSize
+		const endIndex = startIndex + pageSize
+		return filteredData.slice(startIndex, endIndex)
+	}, [filteredData, currentPage, pageSize])
 
 	return (
 		<div className="space-y-6">
@@ -61,7 +73,20 @@ export default function DanhSachBaoLoiPage() {
 			</div>
 
 			<RequestsFilters onFilter={handleFilter} />
-			<RequestsTable data={data} />
+			<div className="space-y-0">
+				<RequestsTable data={paginatedData} />
+				<Pagination
+					currentPage={currentPage}
+					pageSize={pageSize}
+					total={filteredData.length}
+					onPageChange={setCurrentPage}
+					onPageSizeChange={setPageSize}
+					showSizeChanger={true}
+					pageSizeOptions={[10, 20, 50, 100]}
+					showQuickJumper={true}
+					showTotal={true}
+				/>
+			</div>
 		</div>
 	)
 }
