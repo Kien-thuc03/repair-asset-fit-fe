@@ -10,18 +10,75 @@ import {
   Calendar,
   User,
   Building2,
-  Computer,
+  Package,
   ChevronUp,
   ChevronDown,
   ListPlus,
 } from "lucide-react";
-import { ReplacementRequestForList } from "@/types";
+import { ReplacementRequestForList, ReplacementStatus } from "@/types";
 import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
+import { mockComponentsFromReports } from "@/lib/mockData/componentsFromReports";
 import CreateReplacementListModal from "./modal/CreateReplacementListModal";
 import RequestDetailModal from "./modal/RequestDetailModal";
 import CreateListSuccessModal from "./modal/CreateListSuccessModal";
 import ExportExcelSuccessModal from "./modal/ExportExcelSuccessModal";
 import ExportExcelErrorModal from "./modal/ExportExcelErrorModal";
+
+// Helper functions
+const getStatusBadge = (status: ReplacementStatus) => {
+  switch (status) {
+    case ReplacementStatus.CHỜ_XÁC_MINH:
+      return "bg-yellow-100 text-yellow-800";
+    case ReplacementStatus.ĐÃ_DUYỆT:
+      return "bg-green-100 text-green-800";
+    case ReplacementStatus.ĐÃ_TỪ_CHỐI:
+      return "bg-red-100 text-red-800";
+    case ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT:
+      return "bg-blue-100 text-blue-800";
+    case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+      return "bg-purple-100 text-purple-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+};
+
+const getStatusText = (status: ReplacementStatus) => {
+  switch (status) {
+    case ReplacementStatus.CHỜ_XÁC_MINH:
+      return "Chờ xác minh";
+    case ReplacementStatus.ĐÃ_DUYỆT:
+      return "Đã duyệt";
+    case ReplacementStatus.ĐÃ_TỪ_CHỐI:
+      return "Từ chối";
+    case ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT:
+      return "Chờ tổ trưởng duyệt";
+    case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+      return "Đã hoàn tất mua sắm";
+    default:
+      return status;
+  }
+};
+
+const getUserRole = () => {
+  return "KTV";
+};
+
+// Helper function để lấy thông tin linh kiện từ componentsFromReports dựa trên assetCode
+const getComponentInfo = (assetCode: string) => {
+  const component = mockComponentsFromReports.find(
+    (comp) => comp.assetCode === assetCode
+  );
+  return component
+    ? {
+        componentName: component.componentName,
+        componentSpecs: component.componentSpecs || "",
+      }
+    : {
+        componentName: "Chưa xác định",
+        componentSpecs: "",
+      };
+};
+
 export default function DuyetDeXuatPage() {
   const [requests, setRequests] = useState<ReplacementRequestForList[]>(
     mockReplacementRequests
@@ -41,15 +98,55 @@ export default function DuyetDeXuatPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+
+  // Handle actions
+  const handleApprove = (requestId: string) => {
+    setRequests((prev) =>
+      prev.map((req) =>
+        req.id === requestId
+          ? {
+              ...req,
+              status: ReplacementStatus.ĐÃ_DUYỆT,
+            }
+          : req
+      )
+    );
+    console.log("Approved request:", requestId);
+  };
+
+  const handleReject = (requestId: string) => {
+    setRequests((prev) =>
+      prev.map((req) =>
+        req.id === requestId
+          ? {
+              ...req,
+              status: ReplacementStatus.ĐÃ_TỪ_CHỐI,
+            }
+          : req
+      )
+    );
+    console.log("Rejected request:", requestId);
+  };
+
   const filteredRequests = requests
     .filter((request) => {
       const matchesStatus =
-        selectedStatus === "all" || request.status === selectedStatus;
+        selectedStatus === "all" ||
+        (selectedStatus === "pending" &&
+          (request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
+            request.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT)) ||
+        (selectedStatus === "approved" &&
+          request.status === ReplacementStatus.ĐÃ_DUYỆT) ||
+        (selectedStatus === "rejected" &&
+          request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI);
       const matchesSearch =
         searchTerm === "" ||
         request.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase());
+        request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        getComponentInfo(request.assetCode)
+          .componentName.toLowerCase()
+          .includes(searchTerm.toLowerCase());
 
       return matchesStatus && matchesSearch;
     })
@@ -57,10 +154,17 @@ export default function DuyetDeXuatPage() {
       // Chỉ sắp xếp khi có sortField được chọn
       if (!sortField) return 0;
 
-      let aValue: string | number | Date =
-        a[sortField as keyof ReplacementRequestForList];
-      let bValue: string | number | Date =
-        b[sortField as keyof ReplacementRequestForList];
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+
+      // Handle component name sorting
+      if (sortField === "componentName") {
+        aValue = getComponentInfo(a.assetCode).componentName.toLowerCase();
+        bValue = getComponentInfo(b.assetCode).componentName.toLowerCase();
+      } else {
+        aValue = a[sortField as keyof ReplacementRequestForList];
+        bValue = b[sortField as keyof ReplacementRequestForList];
+      }
 
       // Handle date sorting
       if (sortField === "requestDate") {
@@ -123,75 +227,6 @@ export default function DuyetDeXuatPage() {
     }
   };
 
-  const handleApprove = (requestId: string) => {
-    setRequests((prev) =>
-      prev.map((req) =>
-        req.id === requestId ? { ...req, status: "approved" as const } : req
-      )
-    );
-    setShowModal(false);
-  };
-
-  const handleReject = (requestId: string) => {
-    setRequests((prev) =>
-      prev.map((req) =>
-        req.id === requestId ? { ...req, status: "rejected" as const } : req
-      )
-    );
-    setShowModal(false);
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "approved":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "Chờ duyệt";
-      case "approved":
-        return "Đã duyệt";
-      case "rejected":
-        return "Từ chối";
-      default:
-        return status;
-    }
-  };
-
-  // Empty priority functions for modal compatibility
-  const getPriorityBadge = () => "bg-gray-100 text-gray-800";
-  const getPriorityText = () => "N/A";
-
-  // Hàm xác định vai trò dựa trên tên người yêu cầu
-  const getUserRole = (requestedBy: string) => {
-    // Mapping cụ thể theo dữ liệu mock để đồng bộ với trang danh sách báo lỗi
-    switch (requestedBy) {
-      case "Võ Thị F":
-        return "KTV";
-      case "Phạm Thị D":
-        return "Giảng viên";
-      case "Hoàng Văn E":
-        return "Giảng viên";
-      case "Nguyễn Văn A":
-        return "Giảng viên";
-      case "Trần Thị B":
-        return "Giảng viên";
-      case "Lê Văn C":
-        return "Giảng viên";
-      default:
-        return "Giảng viên";
-    }
-  };
-
   // Xử lý checkbox
   const handleSelectItem = (itemId: string) => {
     setSelectedItems((prev) => {
@@ -238,7 +273,9 @@ export default function DuyetDeXuatPage() {
 
   // Lấy các đề xuất đã được duyệt
   const getApprovedRequests = () => {
-    return requests.filter((request) => request.status === "approved");
+    return requests.filter(
+      (request) => request.status === ReplacementStatus.ĐÃ_DUYỆT
+    );
   };
 
   const approvedRequests = getApprovedRequests();
@@ -367,13 +404,13 @@ export default function DuyetDeXuatPage() {
                           checked={selectedItems.includes(request.id)}
                           onChange={() => handleSelectItem(request.id)}
                         />
-                        <Computer className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                        <Package className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
                         <div className="min-w-0">
                           <div className="text-sm font-medium text-gray-900 truncate">
-                            {request.assetCode}
+                            {getComponentInfo(request.assetCode).componentName}
                           </div>
                           <div className="text-xs text-gray-500 truncate">
-                            {request.assetName}
+                            {getComponentInfo(request.assetCode).componentSpecs}
                           </div>
                         </div>
                       </div>
@@ -386,7 +423,9 @@ export default function DuyetDeXuatPage() {
                           className="text-indigo-600 hover:text-indigo-900 p-1">
                           <Eye className="h-4 w-4" />
                         </button>
-                        {request.status === "pending" && (
+                        {(request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
+                          request.status ===
+                            ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT) && (
                           <>
                             <button
                               onClick={() => handleApprove(request.id)}
@@ -410,7 +449,7 @@ export default function DuyetDeXuatPage() {
                           {request.requestedBy}
                         </div>
                         <div className="text-gray-500 text-xs">
-                          {getUserRole(request.requestedBy)}
+                          {getUserRole()}
                         </div>
                       </div>
                       <div>
@@ -438,7 +477,8 @@ export default function DuyetDeXuatPage() {
 
                     <div className="mt-2 text-xs text-gray-500">
                       {new Date(request.requestDate).toLocaleDateString(
-                        "vi-VN"
+                        "vi-VN",
+                        { day: "2-digit", month: "2-digit" }
                       )}
                     </div>
                   </div>
@@ -475,10 +515,10 @@ export default function DuyetDeXuatPage() {
                   </th>
                   <th
                     className="w-28 sm:w-32 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("assetCode")}>
+                    onClick={() => handleSort("componentName")}>
                     <div className="flex items-center">
-                      <span className="truncate">Tài sản</span>
-                      {getSortIcon("assetCode")}
+                      <span className="truncate">Linh kiện</span>
+                      {getSortIcon("componentName")}
                     </div>
                   </th>
                   <th
@@ -523,8 +563,8 @@ export default function DuyetDeXuatPage() {
                   filteredRequests.map((request) => (
                     <tr
                       key={request.id}
-                      className="hover:bg-gray-50 h-16 sm:h-20">
-                      <td className="w-12 px-2 py-2 sm:py-4 whitespace-nowrap">
+                      className="hover:bg-gray-50 h-12 sm:h-14">
+                      <td className="w-12 px-2 py-1 sm:py-2 whitespace-nowrap">
                         <input
                           type="checkbox"
                           className="h-4 w-4 text-blue-600 rounded"
@@ -532,23 +572,26 @@ export default function DuyetDeXuatPage() {
                           onChange={() => handleSelectItem(request.id)}
                         />
                       </td>
-                      <td className="w-28 sm:w-32 px-2 py-2 sm:py-4">
+                      <td className="w-28 sm:w-32 px-2 py-1 sm:py-2">
                         <div className="flex items-center">
-                          <Computer className="h-5 w-5 text-gray-400 mr-1 flex-shrink-0" />
+                          <Package className="h-5 w-5 text-gray-400 mr-1 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <div className="text-xs font-medium text-gray-900 truncate">
-                              {request.assetCode}
+                              {
+                                getComponentInfo(request.assetCode)
+                                  .componentName
+                              }
                             </div>
                             <div className="text-xs text-gray-500 truncate">
-                              {request.assetName
-                                .split(" ")
-                                .slice(0, 2)
-                                .join(" ")}
+                              {
+                                getComponentInfo(request.assetCode)
+                                  .componentSpecs
+                              }
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="w-24 sm:w-28 px-2 py-2 sm:py-4">
+                      <td className="w-24 sm:w-28 px-2 py-1 sm:py-2">
                         <div className="flex items-center">
                           <User className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
@@ -556,12 +599,12 @@ export default function DuyetDeXuatPage() {
                               {request.requestedBy}
                             </div>
                             <div className="text-xs text-gray-500 truncate">
-                              {getUserRole(request.requestedBy)}
+                              {getUserRole()}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="w-28 sm:w-32 px-2 py-2 sm:py-4">
+                      <td className="w-28 sm:w-32 px-2 py-1 sm:py-2">
                         <div className="flex items-center">
                           <Building2 className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
                           <span className="text-xs text-gray-900 truncate">
@@ -569,19 +612,15 @@ export default function DuyetDeXuatPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="w-20 sm:w-24 px-2 py-2 sm:py-4 whitespace-nowrap">
+                      <td className="w-20 sm:w-24 px-2 py-1 sm:py-2 whitespace-nowrap">
                         <span
                           className={`inline-flex px-1 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
                             request.status
                           )}`}>
-                          {request.status === "pending"
-                            ? "Chờ"
-                            : request.status === "approved"
-                            ? "Duyệt"
-                            : "Từ chối"}
+                          {getStatusText(request.status)}
                         </span>
                       </td>
-                      <td className="w-24 sm:w-28 px-2 py-2 sm:py-4 whitespace-nowrap">
+                      <td className="w-24 sm:w-28 px-2 py-1 sm:py-2 whitespace-nowrap">
                         <div className="flex items-center">
                           <Calendar className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
                           <span className="text-xs text-gray-900">
@@ -592,7 +631,7 @@ export default function DuyetDeXuatPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="w-20 px-2 py-2 sm:py-4 whitespace-nowrap text-right">
+                      <td className="w-20 px-2 py-1 sm:py-2 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end space-x-1">
                           <button
                             onClick={() => {
@@ -603,7 +642,9 @@ export default function DuyetDeXuatPage() {
                             title="Xem chi tiết">
                             <Eye className="h-3 w-3" />
                           </button>
-                          {request.status === "pending" && (
+                          {(request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
+                            request.status ===
+                              ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT) && (
                             <>
                               <button
                                 onClick={() => handleApprove(request.id)}
@@ -655,8 +696,6 @@ export default function DuyetDeXuatPage() {
         onReject={handleReject}
         getStatusBadge={getStatusBadge}
         getStatusText={getStatusText}
-        getPriorityBadge={getPriorityBadge}
-        getPriorityText={getPriorityText}
       />
 
       {/* Create Replacement List Modal */}

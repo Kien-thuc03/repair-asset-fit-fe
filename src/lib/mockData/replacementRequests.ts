@@ -1,4 +1,9 @@
-import { ReplacementRequestForList, ReplacementStatus, ReplacementRequestItem, ReplacementComponent } from "@/types";
+import {
+  ReplacementRequestForList,
+  ReplacementStatus,
+  ReplacementRequestItem,
+  ReplacementComponent,
+} from "@/types";
 
 // Mock data cho trang quản lý thay thế linh kiện của KTV
 export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
@@ -6,7 +11,8 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
     id: "repl-001",
     requestCode: "DXTL-2025-0001",
     title: "Thay thế linh kiện phòng máy H301",
-    description: "Đề xuất thay thế nguồn điện cho 2 máy tính bị hỏng do cháy nguồn",
+    description:
+      "Đề xuất thay thế nguồn điện cho 2 máy tính bị hỏng do cháy nguồn",
     components: [
       {
         id: "comp-001-1",
@@ -21,7 +27,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         buildingName: "Tòa H",
         machineLabel: "01",
         reason: "Nguồn điện bị cháy, có mùi cháy và không thể khởi động máy",
-        quantity: 1
+        quantity: 1,
       },
       {
         id: "comp-001-2",
@@ -34,9 +40,10 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h301",
         roomName: "H301",
         buildingName: "Tòa H",
-        reason: "Nguồn điện bị cháy cùng lúc với máy 01, nghi ngờ do sự cố điện",
-        quantity: 1
-      }
+        reason:
+          "Nguồn điện bị cháy cùng lúc với máy 01, nghi ngờ do sự cố điện",
+        quantity: 1,
+      },
     ],
     status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     createdAt: "2024-01-15T09:00:00",
@@ -48,7 +55,8 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
     id: "repl-002",
     requestCode: "DXTL-2025-0002",
     title: "Nâng cấp RAM cho phòng thực hành H205",
-    description: "Đề xuất thay thế và nâng cấp RAM cho 3 máy tính bị lỗi memory",
+    description:
+      "Đề xuất thay thế và nâng cấp RAM cho 3 máy tính bị lỗi memory",
     components: [
       {
         id: "comp-002-1",
@@ -62,8 +70,9 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomName: "H205",
         buildingName: "Tòa H",
         machineLabel: "02",
-        reason: "RAM 8GB cũ bị lỗi, nâng cấp lên 16GB để đáp ứng yêu cầu phần mềm mới",
-        quantity: 1
+        reason:
+          "RAM 8GB cũ bị lỗi, nâng cấp lên 16GB để đáp ứng yêu cầu phần mềm mới",
+        quantity: 1,
       },
       {
         id: "comp-002-2",
@@ -78,7 +87,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         buildingName: "Tòa H",
         machineLabel: "08",
         reason: "RAM hiện tại chỉ có 4GB, không đủ cho phần mềm thiết kế",
-        quantity: 1
+        quantity: 1,
       },
       {
         id: "comp-002-3",
@@ -93,8 +102,8 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         buildingName: "Tòa H",
         machineLabel: "12",
         reason: "RAM 8GB cũ bị lỗi ECC, cần thay thế ngay",
-        quantity: 1
-      }
+        quantity: 1,
+      },
     ],
     status: ReplacementStatus.CHỜ_XÁC_MINH,
     createdAt: "2024-01-14T15:30:00",
@@ -122,8 +131,8 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         buildingName: "Tòa H",
         machineLabel: "03",
         reason: "SSD 256GB cũ bị bad sector nghiêm trọng, nâng cấp lên 512GB",
-        quantity: 1
-      }
+        quantity: 1,
+      },
     ],
     status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
     createdAt: "2024-01-12T10:30:00",
@@ -136,7 +145,8 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
     id: "repl-004",
     requestCode: "DXTL-2025-0004",
     title: "Nâng cấp toàn diện phòng thực hành H508",
-    description: "Đề xuất thay thế và nâng cấp nhiều linh kiện cho phòng thực hành đồ họa",
+    description:
+      "Đề xuất thay thế và nâng cấp nhiều linh kiện cho phòng thực hành đồ họa",
     components: [
       {
         id: "comp-004-1",
@@ -151,7 +161,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         buildingName: "Tòa H",
         machineLabel: "01",
         reason: "Card GTX 1050 cũ không đáp ứng yêu cầu phần mềm thiết kế 3D",
-        quantity: 1
+        quantity: 1,
       },
       {
         id: "comp-004-2",
@@ -165,7 +175,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomName: "H508",
         buildingName: "Tòa H",
         reason: "RAM 8GB hiện tại không đủ cho việc render 3D",
-        quantity: 1
+        quantity: 1,
       },
       {
         id: "comp-004-3",
@@ -180,8 +190,8 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         buildingName: "Tòa H",
         machineLabel: "05",
         reason: "Card GTX 1050 bị lỗi chip, không hiển thị hình ảnh",
-        quantity: 1
-      }
+        quantity: 1,
+      },
     ],
     status: ReplacementStatus.ĐÃ_DUYỆT,
     createdAt: "2024-01-13T12:00:00",
@@ -208,17 +218,19 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomName: "H109",
         buildingName: "Tòa H",
         machineLabel: "01",
-        reason: "CPU i5-8400 cũ bị quá nhiệt nghiêm trọng, cần nâng cấp lên Xeon",
-        quantity: 1
-      }
+        reason:
+          "CPU i5-8400 cũ bị quá nhiệt nghiêm trọng, cần nâng cấp lên Xeon",
+        quantity: 1,
+      },
     ],
     status: ReplacementStatus.ĐÃ_TỪ_CHỐI,
     createdAt: "2024-01-16T08:45:00",
     updatedAt: "2024-01-17T09:15:00",
     createdBy: "Hoàng Thị E - KTV",
-    rejectedReason: "Chi phí quá cao so với giá trị máy, đề nghị tìm giải pháp thay thế khác",
+    rejectedReason:
+      "Chi phí quá cao so với giá trị máy, đề nghị tìm giải pháp thay thế khác",
     unit: "Khoa Công nghệ Thông tin",
-  }
+  },
 ];
 
 // Mock data cho trang duyệt đề xuất của Tổ trưởng KT
@@ -239,11 +251,11 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
   },
   {
     id: "REQ-002",
-    assetCode: "PC-H205-15",
+    assetCode: "PC-H102-05",
     assetName: "Máy tính Desktop HP EliteDesk 800",
     requestedBy: "Trần Thị B",
     unit: "Khoa Công nghệ Thông tin",
-    location: "Tòa H - Phòng H205",
+    location: "Tòa H - Phòng H102",
     reason: "RAM DDR4 8GB hỏng, máy không khởi động được",
     status: ReplacementStatus.CHỜ_XÁC_MINH,
     requestDate: "2024-01-14",
@@ -281,17 +293,17 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
   },
   {
     id: "REQ-005",
-    assetCode: "PC-H508-11",
+    assetCode: "PC-H101-01",
     assetName: "Máy tính Desktop MSI Pro",
     requestedBy: "Hoàng Văn E",
     unit: "Khoa Công nghệ Thông tin",
-    location: "Tòa H - Phòng H508",
-    reason: "Card đồ họa GTX 1050 hỏng, không hiển thị hình ảnh",
+    location: "Tòa H - Phòng H101",
+    reason: "Card mạng không hoạt động, mất kết nối mạng",
     status: ReplacementStatus.CHỜ_XÁC_MINH,
     requestDate: "2024-01-13",
-    estimatedCost: 4200000,
+    estimatedCost: 500000,
     description:
-      "Card đồ họa NVIDIA GTX 1050 2GB bị lỗi chip, màn hình không hiển thị gì, cần thay card đồ họa mới tương đương hoặc cao hơn.",
+      "Card mạng Gigabit Ethernet bị lỗi, không thể kết nối mạng, cần thay card mạng mới tương đương hoặc cao hơn.",
   },
   {
     id: "REQ-006",

@@ -1,6 +1,6 @@
 "use client";
 import { XCircle } from "lucide-react";
-import { ReplacementRequestForList } from "@/types";
+import { ReplacementRequestForList, ReplacementStatus } from "@/types";
 
 interface RequestDetailModalProps {
   show: boolean;
@@ -8,10 +8,8 @@ interface RequestDetailModalProps {
   onClose: () => void;
   onApprove: (requestId: string) => void;
   onReject: (requestId: string) => void;
-  getStatusBadge: (status: string) => string;
-  getStatusText: (status: string) => string;
-  getPriorityBadge: (priority: string) => string;
-  getPriorityText: (priority: string) => string;
+  getStatusBadge: (status: ReplacementStatus) => string;
+  getStatusText: (status: ReplacementStatus) => string;
 }
 
 export default function RequestDetailModal({
@@ -22,8 +20,6 @@ export default function RequestDetailModal({
   onReject,
   getStatusBadge,
   getStatusText,
-  getPriorityBadge,
-  getPriorityText,
 }: RequestDetailModalProps) {
   if (!show || !selectedRequest) return null;
 
@@ -119,14 +115,11 @@ export default function RequestDetailModal({
               </div>
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700">
-                  Độ ưu tiên
+                  Chi phí ước tính
                 </label>
-                <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityBadge(
-                    selectedRequest.priority
-                  )} mt-1`}>
-                  {getPriorityText(selectedRequest.priority)}
-                </span>
+                <p className="mt-1 text-xs sm:text-sm text-gray-900 font-medium">
+                  {selectedRequest.estimatedCost.toLocaleString("vi-VN")} VND
+                </p>
               </div>
             </div>
 
@@ -155,7 +148,9 @@ export default function RequestDetailModal({
             </div>
           </div>
 
-          {selectedRequest.status === "pending" && (
+          {(selectedRequest.status === ReplacementStatus.CHỜ_XÁC_MINH ||
+            selectedRequest.status ===
+              ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT) && (
             <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-6 pt-4 border-t">
               <button
                 onClick={() => onReject(selectedRequest.id)}
