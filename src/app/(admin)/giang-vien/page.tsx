@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AlertTriangle, Clock, Search } from "lucide-react";
 import Link from "next/link";
 import { lecturerStats } from "@/lib/mockData/stats";
-import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
+import { mockRepairRequests } from "@/lib/mockData";
 
 export default function GiangVienDashboard() {
   const { user } = useAuth();

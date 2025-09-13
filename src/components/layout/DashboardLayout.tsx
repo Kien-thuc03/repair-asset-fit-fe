@@ -29,7 +29,6 @@ import {
   Search,
   FileCheck,
   MapPin,
-  BarChart,
 } from "lucide-react";
 
 // Navigation items
@@ -134,17 +133,17 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         href: "/to-truong-ky-thuat/tra-cuu-tai-san",
         icon: Search,
       },
+       {
+        name: "Thống kê báo cáo",
+        href: "/to-truong-ky-thuat/thong-ke-bao-cao",
+        icon: BarChart3,
+      },
       {
         name: "Biên bản",
         href: "/to-truong-ky-thuat/bien-ban",
         icon: Calendar,
       },
-      {
-        name: "Thống kê báo cáo",
-        href: "/to-truong-ky-thuat/thong-ke-bao-cao",
-        icon: BarChart,
-      },
-    ],
+         ],
     [UserRole.PHONG_QUAN_TRI]: [
       {
         name: "Dashboard",
