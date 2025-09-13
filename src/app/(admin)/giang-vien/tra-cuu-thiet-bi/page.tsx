@@ -97,7 +97,7 @@ export default function TraCuuThietBiPage() {
     }
 
     setFilteredAssets(filtered);
-    
+
     // Reset to first page when filter changes
     setCurrentPage(1);
   }, [assets, searchTerm, categoryFilter, statusFilter]);

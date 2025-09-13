@@ -10,6 +10,8 @@ import {
   BarChart,
   FileCheck,
   Users,
+  Search,
+  Calendar,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -130,7 +132,7 @@ export default function ToTruongKyThuatDashboard() {
               className="relative group bg-indigo-50 p-4 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500 rounded-lg hover:bg-indigo-100 transition-colors block">
               <div className="flex items-center">
                 <span className="rounded-lg inline-flex p-2 bg-indigo-600 text-white mr-3">
-                  <TrendingUp className="h-5 w-5" />
+                  <Search className="h-5 w-5" />
                 </span>
                 <div>
                   <h4 className="text-sm font-medium text-gray-900">
@@ -164,7 +166,7 @@ export default function ToTruongKyThuatDashboard() {
               className="relative group bg-yellow-50 p-4 focus-within:ring-2 focus-within:ring-inset focus-within:ring-yellow-500 rounded-lg hover:bg-yellow-100 transition-colors block">
               <div className="flex items-center">
                 <span className="rounded-lg inline-flex p-2 bg-yellow-600 text-white mr-3">
-                  <Users className="h-5 w-5" />
+                  <Calendar className="h-5 w-5" />
                 </span>
                 <div>
                   <h4 className="text-sm font-medium text-gray-900">
