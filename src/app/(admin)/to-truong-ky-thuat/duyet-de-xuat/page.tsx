@@ -514,7 +514,7 @@ export default function DuyetDeXuatPage() {
                     />
                   </th>
                   <th
-                    className="w-28 sm:w-32 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="w-64 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("componentName")}>
                     <div className="flex items-center">
                       <span className="truncate">Linh kiện</span>
@@ -522,15 +522,15 @@ export default function DuyetDeXuatPage() {
                     </div>
                   </th>
                   <th
-                    className="w-24 sm:w-28 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="w-40 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("requestedBy")}>
                     <div className="flex items-center">
-                      <span className="truncate">Người YC</span>
+                      <span className="truncate">Người yêu cầu</span>
                       {getSortIcon("requestedBy")}
                     </div>
                   </th>
                   <th
-                    className="w-28 sm:w-32 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="w-48 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("location")}>
                     <div className="flex items-center">
                       <span className="truncate">Vị trí</span>
@@ -538,7 +538,7 @@ export default function DuyetDeXuatPage() {
                     </div>
                   </th>
                   <th
-                    className="w-20 sm:w-24 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="w-36 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("status")}>
                     <div className="flex items-center">
                       <span className="truncate">Trạng thái</span>
@@ -546,14 +546,14 @@ export default function DuyetDeXuatPage() {
                     </div>
                   </th>
                   <th
-                    className="w-24 sm:w-28 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    className="w-32 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("requestDate")}>
                     <div className="flex items-center">
-                      <span className="truncate">Ngày YC</span>
+                      <span className="truncate">Ngày yêu cầu</span>
                       {getSortIcon("requestDate")}
                     </div>
                   </th>
-                  <th className="w-20 px-2 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="w-24 px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Thao tác
                   </th>
                 </tr>
@@ -572,11 +572,11 @@ export default function DuyetDeXuatPage() {
                           onChange={() => handleSelectItem(request.id)}
                         />
                       </td>
-                      <td className="w-28 sm:w-32 px-2 py-1 sm:py-2">
+                      <td className="w-64 px-2 py-1 sm:py-2">
                         <div className="flex items-center">
-                          <Package className="h-5 w-5 text-gray-400 mr-1 flex-shrink-0" />
+                          <Package className="h-4 w-4 text-gray-400 mr-1 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-gray-900 truncate">
+                            <div className="text-sm font-medium text-gray-900 truncate">
                               {
                                 getComponentInfo(request.assetCode)
                                   .componentName
@@ -591,11 +591,11 @@ export default function DuyetDeXuatPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="w-24 sm:w-28 px-2 py-1 sm:py-2">
+                      <td className="w-40 px-2 py-1 sm:py-2">
                         <div className="flex items-center">
                           <User className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-medium text-gray-900 truncate">
+                            <div className="text-sm font-medium text-gray-900 truncate">
                               {request.requestedBy}
                             </div>
                             <div className="text-xs text-gray-500 truncate">
@@ -604,26 +604,26 @@ export default function DuyetDeXuatPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="w-28 sm:w-32 px-2 py-1 sm:py-2">
+                      <td className="w-48 px-2 py-1 sm:py-2">
                         <div className="flex items-center">
                           <Building2 className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
-                          <span className="text-xs text-gray-900 truncate">
+                          <span className="text-sm text-gray-900 truncate">
                             {request.location}
                           </span>
                         </div>
                       </td>
-                      <td className="w-20 sm:w-24 px-2 py-1 sm:py-2 whitespace-nowrap">
+                      <td className="w-36 px-2 py-1 sm:py-2 whitespace-nowrap">
                         <span
-                          className={`inline-flex px-1 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
                             request.status
                           )}`}>
                           {getStatusText(request.status)}
                         </span>
                       </td>
-                      <td className="w-24 sm:w-28 px-2 py-1 sm:py-2 whitespace-nowrap">
+                      <td className="w-32 px-2 py-1 sm:py-2 whitespace-nowrap">
                         <div className="flex items-center">
                           <Calendar className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
-                          <span className="text-xs text-gray-900">
+                          <span className="text-sm text-gray-900">
                             {new Date(request.requestDate).toLocaleDateString(
                               "vi-VN",
                               {
@@ -635,7 +635,7 @@ export default function DuyetDeXuatPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="w-20 px-2 py-1 sm:py-2 whitespace-nowrap text-right">
+                      <td className="w-24 px-2 py-1 sm:py-2 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end space-x-1">
                           <button
                             onClick={() => {
@@ -670,7 +670,7 @@ export default function DuyetDeXuatPage() {
                   ))
                 ) : (
                   <tr className="h-16 sm:h-20">
-                    <td colSpan={8} className="h-16 sm:h-20">
+                    <td colSpan={7} className="h-16 sm:h-20">
                       <div className="h-16 sm:h-20 flex items-center justify-center">
                         <div className="flex flex-col items-center">
                           <Search className="h-6 w-6 text-gray-300 mb-2" />
