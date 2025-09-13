@@ -1,23 +1,19 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Search, Eye, FileText, ChevronUp, ChevronDown } from "lucide-react";
 
-import CreateReportModal from "./modal/CreateReportModal";
-import ListDetailModal from "./modal/ListDetailModal";
 import { Breadcrumb } from "antd";
 import { ReplacementRequestForList, ReplacementStatus } from "@/types";
 import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
 
 export default function LapToTrinhPage() {
+  const router = useRouter();
   const [replacementRequests] = useState<ReplacementRequestForList[]>(
     mockReplacementRequests
   );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRequest, setSelectedRequest] =
-    useState<ReplacementRequestForList | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showCreateReportModal, setShowCreateReportModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
@@ -173,19 +169,6 @@ export default function LapToTrinhPage() {
     }
   };
 
-  const handleCreateReport = (requestId: string) => {
-    const request = replacementRequests.find((r) => r.id === requestId);
-    if (request) {
-      setSelectedRequest(request);
-      setShowCreateReportModal(true);
-    }
-  };
-
-  const handleViewDetail = (request: ReplacementRequestForList) => {
-    setSelectedRequest(request);
-    setShowDetailModal(true);
-  };
-
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content">
       <div className="mb-2">
@@ -339,12 +322,20 @@ export default function LapToTrinhPage() {
 
                       <div className="flex items-center justify-end space-x-2">
                         <button
-                          onClick={() => handleViewDetail(request)}
+                          onClick={() => {
+                            router.push(
+                              `/to-truong-ky-thuat/lap-to-trinh/chi-tiet/${request.id}`
+                            );
+                          }}
                           className="text-indigo-600 hover:text-indigo-900 p-1">
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleCreateReport(request.id)}
+                          onClick={() => {
+                            router.push(
+                              `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
+                            );
+                          }}
                           className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
                           Lập tờ trình
                         </button>
@@ -488,17 +479,25 @@ export default function LapToTrinhPage() {
                         <td className="px-3 py-4 whitespace-nowrap w-[16%]">
                           <div className="flex items-center justify-center space-x-2">
                             <button
-                              onClick={() => handleViewDetail(request)}
+                              onClick={() => {
+                                router.push(
+                                  `/to-truong-ky-thuat/lap-to-trinh/chi-tiet/${request.id}`
+                                );
+                              }}
                               className="text-indigo-600 hover:text-indigo-900 p-1"
                               title="Xem chi tiết">
                               <Eye className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleCreateReport(request.id)}
+                              onClick={() => {
+                                router.push(
+                                  `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
+                                );
+                              }}
                               className="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap"
                               title="Lập tờ trình">
                               <FileText className="h-3 w-3 mr-1" />
-                              <span>Lập trình</span>
+                              <span>Lập tờ trình</span>
                             </button>
                           </div>
                         </td>
@@ -523,21 +522,6 @@ export default function LapToTrinhPage() {
           </div>
         </div>
       </div>
-
-      {/* Detail Modal */}
-      <ListDetailModal
-        show={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        selectedList={selectedRequest}
-        onCreateReport={handleCreateReport}
-      />
-
-      {/* Create Report Modal */}
-      <CreateReportModal
-        show={showCreateReportModal}
-        onClose={() => setShowCreateReportModal(false)}
-        selectedList={selectedRequest}
-      />
     </div>
   );
 }
