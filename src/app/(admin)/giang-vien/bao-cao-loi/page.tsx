@@ -67,15 +67,12 @@ export default function BaoCaoLoiPage() {
                   setTimeout(() => {
                     if (editData.componentId && editData.componentName) {
                       setSelectedComponentIds([editData.componentId]);
-                      setFormData((prev) => ({
-                        ...prev,
-                        componentId: editData.componentId,
-                      }));
                     }
 
-                    // Set other form data
+                    // Set other form data including componentId
                     setFormData((prev) => ({
                       ...prev,
+                      componentId: editData.componentId || "",
                       errorTypeId: editData.errorTypeId || "",
                       description: editData.description || "",
                     }));
