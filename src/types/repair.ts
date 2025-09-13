@@ -73,6 +73,7 @@ export interface ReplacementComponent {
   roomId: string;
   roomName: string;
   buildingName: string;
+  machineLabel?: string; // Số máy
   reason: string; // Lý do thay thế linh kiện này
   quantity: number; // Số lượng cần thay
 }

@@ -19,6 +19,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h301",
         roomName: "H301",
         buildingName: "Tòa H",
+        machineLabel: "01",
         reason: "Nguồn điện bị cháy, có mùi cháy và không thể khởi động máy",
         quantity: 1
       },
@@ -60,6 +61,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h205",
         roomName: "H205",
         buildingName: "Tòa H",
+        machineLabel: "02",
         reason: "RAM 8GB cũ bị lỗi, nâng cấp lên 16GB để đáp ứng yêu cầu phần mềm mới",
         quantity: 1
       },
@@ -74,6 +76,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h205",
         roomName: "H205",
         buildingName: "Tòa H",
+        machineLabel: "08",
         reason: "RAM hiện tại chỉ có 4GB, không đủ cho phần mềm thiết kế",
         quantity: 1
       },
@@ -88,6 +91,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h205",
         roomName: "H205",
         buildingName: "Tòa H",
+        machineLabel: "12",
         reason: "RAM 8GB cũ bị lỗi ECC, cần thay thế ngay",
         quantity: 1
       }
@@ -116,6 +120,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h704",
         roomName: "H704",
         buildingName: "Tòa H",
+        machineLabel: "03",
         reason: "SSD 256GB cũ bị bad sector nghiêm trọng, nâng cấp lên 512GB",
         quantity: 1
       }
@@ -144,6 +149,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h508",
         roomName: "H508",
         buildingName: "Tòa H",
+        machineLabel: "01",
         reason: "Card GTX 1050 cũ không đáp ứng yêu cầu phần mềm thiết kế 3D",
         quantity: 1
       },
@@ -172,6 +178,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h508",
         roomName: "H508",
         buildingName: "Tòa H",
+        machineLabel: "05",
         reason: "Card GTX 1050 bị lỗi chip, không hiển thị hình ảnh",
         quantity: 1
       }
@@ -200,6 +207,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h109",
         roomName: "H109",
         buildingName: "Tòa H",
+        machineLabel: "01",
         reason: "CPU i5-8400 cũ bị quá nhiệt nghiêm trọng, cần nâng cấp lên Xeon",
         quantity: 1
       }

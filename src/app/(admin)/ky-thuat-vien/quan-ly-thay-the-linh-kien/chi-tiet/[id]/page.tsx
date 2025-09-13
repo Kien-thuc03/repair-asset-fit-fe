@@ -100,6 +100,9 @@ export default function ChiTietThayThePage() {
 			render: (record: ReplacementComponent) => (
 				<div>
 					<div className="font-medium">{record.buildingName} - {record.roomName}</div>
+					{record.machineLabel && (
+						<div className="text-xs text-gray-500">Máy {record.machineLabel}</div>
+					)}
 				</div>
 			),
 		},
