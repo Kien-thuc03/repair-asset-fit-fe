@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Eye,
@@ -19,7 +20,6 @@ import { ReplacementRequestForList, ReplacementStatus } from "@/types";
 import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
 import { mockComponentsFromReports } from "@/lib/mockData/componentsFromReports";
 import CreateReplacementListModal from "./modal/CreateReplacementListModal";
-import RequestDetailModal from "./modal/RequestDetailModal";
 import CreateListSuccessModal from "./modal/CreateListSuccessModal";
 import ExportExcelSuccessModal from "./modal/ExportExcelSuccessModal";
 import ExportExcelErrorModal from "./modal/ExportExcelErrorModal";
@@ -80,14 +80,12 @@ const getComponentInfo = (assetCode: string) => {
 };
 
 export default function DuyetDeXuatPage() {
+  const router = useRouter();
   const [requests, setRequests] = useState<ReplacementRequestForList[]>(
     mockReplacementRequests
   );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRequest, setSelectedRequest] =
-    useState<ReplacementRequestForList | null>(null);
-  const [showModal, setShowModal] = useState(false);
   const [showCreateListModal, setShowCreateListModal] = useState(false);
   const [showCreateListSuccessModal, setShowCreateListSuccessModal] =
     useState(false);
@@ -417,8 +415,9 @@ export default function DuyetDeXuatPage() {
                       <div className="flex items-center space-x-1 ml-2">
                         <button
                           onClick={() => {
-                            setSelectedRequest(request);
-                            setShowModal(true);
+                            router.push(
+                              `/to-truong-ky-thuat/duyet-de-xuat/chi-tiet/${request.id}`
+                            );
                           }}
                           className="text-indigo-600 hover:text-indigo-900 p-1">
                           <Eye className="h-4 w-4" />
@@ -639,8 +638,9 @@ export default function DuyetDeXuatPage() {
                         <div className="flex items-center justify-end space-x-1">
                           <button
                             onClick={() => {
-                              setSelectedRequest(request);
-                              setShowModal(true);
+                              router.push(
+                                `/to-truong-ky-thuat/duyet-de-xuat/chi-tiet/${request.id}`
+                              );
                             }}
                             className="text-indigo-600 hover:text-indigo-900 p-1"
                             title="Xem chi tiết">
@@ -690,17 +690,6 @@ export default function DuyetDeXuatPage() {
           </div>
         </div>
       </div>
-
-      {/* Detail Modal */}
-      <RequestDetailModal
-        show={showModal}
-        selectedRequest={selectedRequest}
-        onClose={() => setShowModal(false)}
-        onApprove={handleApprove}
-        onReject={handleReject}
-        getStatusBadge={getStatusBadge}
-        getStatusText={getStatusText}
-      />
 
       {/* Create Replacement List Modal */}
       <CreateReplacementListModal
