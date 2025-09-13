@@ -61,10 +61,9 @@ export interface ReplacementRequestForList {
   description: string;
 }
 
-// Interface cho danh sách đề xuất thay thế linh kiện (từ KTV)
-export interface ReplacementRequestItem {
+// Interface cho 1 linh kiện trong đề xuất thay thế
+export interface ReplacementComponent {
   id: string;
-  requestCode: string; // Mã đề xuất thay thế
   assetId: string;
   assetCode: string;
   assetName: string;
@@ -74,10 +73,22 @@ export interface ReplacementRequestItem {
   roomId: string;
   roomName: string;
   buildingName: string;
-  reason: string; // Lý do thay thế
+  machineLabel?: string; // Số máy
+  reason: string; // Lý do thay thế linh kiện này
+  quantity: number; // Số lượng cần thay
+}
+
+// Interface cho đề xuất thay thế (chứa nhiều linh kiện)
+export interface ReplacementRequestItem {
+  id: string;
+  requestCode: string; // Mã đề xuất thay thế
+  title: string; // Tiêu đề đề xuất
+  description: string; // Mô tả tổng quan
+  components: ReplacementComponent[]; // Danh sách linh kiện cần thay
   status: ReplacementStatus;
   createdAt: string;
   updatedAt: string;
+  createdBy: string; // Kỹ thuật viên tạo đề xuất
   approvedBy?: string;
   rejectedReason?: string;
   unit: string;

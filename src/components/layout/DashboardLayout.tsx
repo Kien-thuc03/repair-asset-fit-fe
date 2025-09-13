@@ -32,8 +32,9 @@ import {
 // Navigation items
 interface NavigationItem {
   name: string;
-  href: string;
+  href?: string;
   icon: React.ComponentType<{ className?: string }>;
+  children?: NavigationItem[];
 }
 
 // Navigation items by role
@@ -73,9 +74,20 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: Wrench,
       },
       {
-        name: "Quản lý thay thế",
-        href: "/ky-thuat-vien/quan-ly-thay-the-linh-kien",
+        name: "Quản lý thay thế linh kiện",
         icon: FileText,
+        children: [
+          {
+            name: "Lập phiếu đề xuất",
+            href: "/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat",
+            icon: ClipboardList,
+          },
+          {
+            name: "Danh sách đề xuất",
+            href: "/ky-thuat-vien/quan-ly-thay-the-linh-kien",
+            icon: FileText,
+          },
+        ],
       },
       {
         name: "Quản lý tài sản",
@@ -234,20 +246,112 @@ function SidebarNavigation({
   setIsMobileSidebarOpen?: (v: boolean) => void;
   isCollapsed?: boolean;
 }) {
+  const [openDropdowns, setOpenDropdowns] = useState<string[]>([]);
+
   const handleNavClick = () => {
     if (isMobile && setIsMobileSidebarOpen) {
       setIsMobileSidebarOpen(false);
     }
   };
 
+  const toggleDropdown = (itemName: string) => {
+    setOpenDropdowns((prev: string[]) => 
+      prev.includes(itemName) 
+        ? prev.filter((name: string) => name !== itemName)
+        : [...prev, itemName]
+    );
+  };
+
+  // Check if any child is active
+  const isChildActive = (children: NavigationItem[]) => {
+    return children.some(child => pathname === child.href);
+  };
+
+  // Auto-open dropdown if child is active
+  useEffect(() => {
+    navigation.forEach(item => {
+      if (item.children && isChildActive(item.children)) {
+        setOpenDropdowns((prev: string[]) => 
+          prev.includes(item.name) ? prev : [...prev, item.name]
+        );
+      }
+    });
+  }, [pathname, navigation]);
+
   return (
     <nav className={`flex-1 py-6 space-y-2 ${isCollapsed ? "px-2" : "px-4"}`}>
       {navigation.map((item: NavigationItem) => {
+        // If item has children (dropdown)
+        if (item.children) {
+          const isDropdownOpen = openDropdowns.includes(item.name);
+          const hasActiveChild = isChildActive(item.children);
+          
+          return (
+            <div key={item.name} className="space-y-1">
+              {/* Parent item */}
+              <button
+                className={`group flex items-center justify-between w-full ${
+                  isCollapsed ? "px-2" : "px-4"
+                } py-3 text-sm font-medium rounded-lg transition-colors ${
+                  hasActiveChild
+                    ? "bg-blue-700 text-white"
+                    : "text-blue-200 hover:text-white hover:bg-blue-700"
+                }`}
+                onClick={() => !isCollapsed && toggleDropdown(item.name)}
+                title={isCollapsed ? item.name : undefined}>
+                <div className="flex items-center">
+                  <item.icon
+                    className={`${isCollapsed ? "" : "mr-3"} h-5 w-5 ${
+                      hasActiveChild ? "text-white" : "text-blue-300 group-hover:text-white"
+                    }`}
+                  />
+                  {!isCollapsed && <span>{item.name}</span>}
+                </div>
+                {!isCollapsed && (
+                  <ChevronRight
+                    className={`h-4 w-4 transform transition-transform ${
+                      isDropdownOpen ? "rotate-90" : ""
+                    } ${hasActiveChild ? "text-white" : "text-blue-300 group-hover:text-white"}`}
+                  />
+                )}
+              </button>
+              
+              {/* Children items */}
+              {!isCollapsed && isDropdownOpen && (
+                <div className="ml-6 space-y-1">
+                  {item.children.map((child) => {
+                    const isChildItemActive = pathname === child.href;
+                    return (
+                      <Link
+                        key={child.name}
+                        href={child.href!}
+                        className={`group flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          isChildItemActive
+                            ? "bg-blue-600 text-white"
+                            : "text-blue-200 hover:text-white hover:bg-blue-600"
+                        }`}
+                        onClick={handleNavClick}>
+                        <child.icon
+                          className={`mr-3 h-4 w-4 ${
+                            isChildItemActive ? "text-white" : "text-blue-300 group-hover:text-white"
+                          }`}
+                        />
+                        <span>{child.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Regular item without children
         const isActive = pathname === item.href;
         return (
           <Link
             key={item.name}
-            href={item.href}
+            href={item.href!}
             className={`group flex items-center ${
               isCollapsed ? "px-2" : "px-4"
             } py-3 text-sm font-medium rounded-lg transition-colors ${
