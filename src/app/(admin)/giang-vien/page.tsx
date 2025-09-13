@@ -4,9 +4,63 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AlertTriangle, Clock, Search } from "lucide-react";
 import Link from "next/link";
 import { lecturerStats } from "@/lib/mockData/stats";
+import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
 
 export default function GiangVienDashboard() {
   const { user } = useAuth();
+
+  // Helper function to get relative time
+  const getRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    );
+
+    if (diffInHours < 1) return "Vừa xong";
+    if (diffInHours < 24) return `${diffInHours} giờ trước`;
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return "1 ngày trước";
+    if (diffInDays < 7) return `${diffInDays} ngày trước`;
+
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    return `${diffInWeeks} tuần trước`;
+  };
+
+  // Get recent activities (last 3 activities)
+  const recentActivities = mockRepairRequests
+    .sort((a, b) => {
+      // Sort by latest activity (createdAt, acceptedAt, or completedAt)
+      const aLatest = a.completedAt || a.acceptedAt || a.createdAt;
+      const bLatest = b.completedAt || b.acceptedAt || b.createdAt;
+      return new Date(bLatest).getTime() - new Date(aLatest).getTime();
+    })
+    .slice(0, 3)
+    .map((request) => {
+      // Determine activity type and time
+      let activityType = "created";
+      let activityTime = request.createdAt;
+      let statusColor = "bg-yellow-400";
+
+      if (request.completedAt) {
+        activityType = "completed";
+        activityTime = request.completedAt;
+        statusColor = "bg-green-400";
+      } else if (request.acceptedAt) {
+        activityType = "processing";
+        activityTime = request.acceptedAt;
+        statusColor = "bg-blue-400";
+      }
+
+      return {
+        ...request,
+        activityType,
+        activityTime,
+        statusColor,
+        relativeTime: getRelativeTime(activityTime),
+      };
+    });
 
   return (
     <div className="space-y-8">
@@ -108,52 +162,32 @@ export default function GiangVienDashboard() {
             Hoạt động gần đây
           </h3>
           <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-green-400 rounded-full mt-2"></div>
+            {recentActivities.map((activity) => (
+              <div key={activity.id} className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div
+                    className={`w-2 h-2 ${activity.statusColor} rounded-full mt-2`}></div>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-gray-900">
+                    <span className="font-medium">
+                      Báo cáo {activity.requestCode}
+                    </span>{" "}
+                    {activity.activityType === "completed" &&
+                      "đã được hoàn thành"}
+                    {activity.activityType === "processing" &&
+                      "đang được xử lý"}
+                    {activity.activityType === "created" && "đã được tạo"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {activity.assetName}, {activity.roomName}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {activity.relativeTime}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-gray-900">
-                  <span className="font-medium">Báo cáo YCSC-2025-0012</span> đã
-                  được hoàn thành
-                </p>
-                <p className="text-xs text-gray-500">
-                  PC Dell OptiPlex - Máy 05, Phòng A102
-                </p>
-                <p className="text-xs text-gray-400">2 giờ trước</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-gray-900">
-                  <span className="font-medium">Báo cáo YCSC-2025-0013</span>{" "}
-                  đang được xử lý
-                </p>
-                <p className="text-xs text-gray-500">
-                  PC HP ProDesk - Máy 01, Phòng A101
-                </p>
-                <p className="text-xs text-gray-400">5 giờ trước</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2"></div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-gray-900">
-                  Bạn đã tạo <span className="font-medium">báo cáo mới</span>
-                </p>
-                <p className="text-xs text-gray-500">
-                  PC Lenovo ThinkCentre - Máy 04, Phòng A101
-                </p>
-                <p className="text-xs text-gray-400">1 ngày trước</p>
-              </div>
-            </div>
+            ))}
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-200">
