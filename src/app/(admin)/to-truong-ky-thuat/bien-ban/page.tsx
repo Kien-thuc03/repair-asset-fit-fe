@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Search,
   Eye,
   FileText,
@@ -10,7 +9,6 @@ import {
   CheckCircle,
   Clock,
   Send,
-  Filter,
   Signature,
   ChevronUp,
   ChevronDown,
@@ -24,10 +22,10 @@ import SignConfirmationModal from "./modal/SignConfirmationModal";
 import { Breadcrumb } from "antd";
 
 export default function BienBanPage() {
+  const router = useRouter();
   const [inspectionReports, setInspectionReports] = useState<
     InspectionReport[]
   >(mockInspectionReports);
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReport, setSelectedReport] = useState<InspectionReport | null>(
     null
@@ -64,8 +62,6 @@ export default function BienBanPage() {
   }, []);
 
   const filteredReports = inspectionReports.filter((report) => {
-    const matchesStatus =
-      selectedStatus === "all" || report.status === selectedStatus;
     const matchesSearch =
       searchTerm === "" ||
       report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -74,7 +70,7 @@ export default function BienBanPage() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
-    return matchesStatus && matchesSearch;
+    return matchesSearch;
   });
 
   // Hàm xử lý sắp xếp 3 trạng thái
@@ -193,8 +189,7 @@ export default function BienBanPage() {
   };
 
   const handleViewDetail = (report: InspectionReport) => {
-    setSelectedReport(report);
-    setShowDetailModal(true);
+    router.push(`/to-truong-ky-thuat/bien-ban/chi-tiet?id=${report.id}`);
   };
 
   const handleSignReport = (report: InspectionReport) => {
@@ -269,48 +264,20 @@ export default function BienBanPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-3 sm:p-6 rounded-lg shadow mb-4 sm:mb-6">
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 items-end">
-          <div className="flex flex-col h-full">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
-              Tìm kiếm
-            </label>
-            <div className="relative flex-1 min-w-0 h-9 sm:h-10">
-              <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400 pointer-events-none flex-shrink-0 z-10" />
-              <input
-                type="text"
-                className="absolute inset-0 w-full h-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                placeholder="Số biên bản, tiêu đề..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col h-full">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
-              Trạng thái
-            </label>
-            <div className="flex-1 h-9 sm:h-10">
-              <select
-                className="w-full h-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value="pending">Chờ ký</option>
-                <option value="signed">Đã ký</option>
-                <option value="sent_back">Đã gửi lại</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-col h-full justify-end">
-            <div className="h-9 sm:h-10">
-              <button className="w-full h-full inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
-                Lọc
-              </button>
-            </div>
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Tìm kiếm
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Số biên bản, tiêu đề..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
       </div>
@@ -416,7 +383,7 @@ export default function BienBanPage() {
               <table className="w-full divide-y divide-gray-200 table-fixed">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[30%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase"
                         onClick={() => handleSort("reportNumber")}>
@@ -424,7 +391,7 @@ export default function BienBanPage() {
                         {getSortIcon("reportNumber")}
                       </button>
                     </th>
-                    <th className="w-[30%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[35%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase"
                         onClick={() => handleSort("relatedReportTitle")}>
@@ -432,7 +399,7 @@ export default function BienBanPage() {
                         {getSortIcon("relatedReportTitle")}
                       </button>
                     </th>
-                    <th className="w-[12%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[15%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase"
                         onClick={() => handleSort("createdBy")}>
@@ -449,14 +416,6 @@ export default function BienBanPage() {
                       </button>
                     </th>
                     <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
-                        onClick={() => handleSort("status")}>
-                        <span>Trạng thái</span>
-                        {getSortIcon("status")}
-                      </button>
-                    </th>
-                    <th className="w-[13%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Thao tác
                     </th>
                   </tr>
@@ -480,10 +439,10 @@ export default function BienBanPage() {
                         </td>
                         <td className="px-2 py-3">
                           <div className="text-sm text-gray-900 truncate">
-                            {report.relatedReportTitle.length > 40
+                            {report.relatedReportTitle.length > 50
                               ? `${report.relatedReportTitle.substring(
                                   0,
-                                  40
+                                  50
                                 )}...`
                               : report.relatedReportTitle}
                           </div>
@@ -492,8 +451,8 @@ export default function BienBanPage() {
                           <div className="flex items-center">
                             <User className="h-3 w-3 text-gray-400 mr-1" />
                             <span className="text-sm text-gray-900 truncate">
-                              {report.createdBy.length > 10
-                                ? `${report.createdBy.substring(0, 10)}...`
+                              {report.createdBy.length > 12
+                                ? `${report.createdBy.substring(0, 12)}...`
                                 : report.createdBy}
                             </span>
                           </div>
@@ -505,17 +464,6 @@ export default function BienBanPage() {
                               { day: "2-digit", month: "2-digit" }
                             )}
                           </div>
-                        </td>
-                        <td className="px-2 py-3 text-center">
-                          <span
-                            className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                              report.status
-                            )}`}>
-                            {getStatusIcon(report.status)}
-                            <span className="ml-1">
-                              {getStatusText(report.status)}
-                            </span>
-                          </span>
                         </td>
                         <td className="px-2 py-3">
                           <div className="flex items-center justify-center space-x-1">
@@ -553,7 +501,7 @@ export default function BienBanPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
+                      <td colSpan={5} className="px-6 py-12 text-center">
                         <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                         <h3 className="text-sm font-medium text-gray-900 mb-1">
                           Không tìm thấy kết quả
