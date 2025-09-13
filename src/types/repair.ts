@@ -55,10 +55,32 @@ export interface ReplacementRequestForList {
   unit: string;
   location: string;
   reason: string;
-  status: "pending" | "approved" | "rejected";
+  status: ReplacementStatus;
   requestDate: string;
   estimatedCost: number;
   description: string;
+}
+
+// Interface cho danh sách đề xuất thay thế linh kiện (từ KTV)
+export interface ReplacementRequestItem {
+  id: string;
+  requestCode: string; // Mã đề xuất thay thế
+  assetId: string;
+  assetCode: string;
+  assetName: string;
+  componentId: string;
+  componentName: string;
+  componentSpecs?: string;
+  roomId: string;
+  roomName: string;
+  buildingName: string;
+  reason: string; // Lý do thay thế
+  status: ReplacementStatus;
+  createdAt: string;
+  updatedAt: string;
+  approvedBy?: string;
+  rejectedReason?: string;
+  unit: string;
 }
 
 // Định nghĩa thông tin chi tiết về vai trò
@@ -161,7 +183,6 @@ export interface ErrorReport {
 export enum ReplacementStatus {
   CHỜ_TỔ_TRƯỞNG_DUYỆT = "CHỜ_TỔ_TRƯỞNG_DUYỆT",
   CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH",          // Chờ Phòng Quản trị cử người xuống xác minh thực tế
-  CHỜ_QTV_KHOA_DUYỆT = "CHỜ_QTV_KHOA_DUYỆT",
   ĐÃ_DUYỆT = "ĐÃ_DUYỆT",              // Đã được duyệt, chờ mua sắm
   ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI",
   ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM",   // Đã có thiết bị mới

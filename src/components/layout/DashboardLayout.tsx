@@ -71,8 +71,8 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: Wrench,
       },
       {
-        name: "Đề xuất thay thế",
-        href: "/ky-thuat-vien/de-xuat-thay-the",
+        name: "Quản lý thay thế",
+        href: "/ky-thuat-vien/quan-ly-thay-the-linh-kien",
         icon: FileText,
       },
       {

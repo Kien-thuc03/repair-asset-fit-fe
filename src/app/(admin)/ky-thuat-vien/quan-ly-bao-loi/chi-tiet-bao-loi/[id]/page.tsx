@@ -29,12 +29,12 @@ export default function RepairDetailPage() {
 			}
 			setCurrentRequest(updatedReq)
 			
-			// Hiển thị thông báo
-			notification.success({
-				message: 'Đã tiếp nhận yêu cầu',
-				description: 'Yêu cầu sửa chữa đã được tự động chuyển sang trạng thái "Đã tiếp nhận"',
-				placement: 'topRight'
-			})
+			// // Hiển thị thông báo
+			// notification.success({
+			// 	message: 'Đã tiếp nhận yêu cầu',
+			// 	description: 'Yêu cầu sửa chữa đã được tự động chuyển sang trạng thái "Đã tiếp nhận"',
+			// 	placement: 'topRight'
+			// })
 			
 			// Trong thực tế, đây sẽ là API call để cập nhật trạng thái
 			// await updateRepairRequestStatus(req.id, RepairStatus.ĐÃ_TIẾP_NHẬN)
@@ -136,11 +136,11 @@ export default function RepairDetailPage() {
 							}
 							setCurrentRequest(updatedReq)
 							
-							notification.success({
-								message: 'Cập nhật thành công',
-								description: 'Trạng thái và ghi chú xử lý đã được cập nhật',
-								placement: 'topRight'
-							})
+							// notification.success({
+							// 	message: 'Cập nhật thành công',
+							// 	description: 'Trạng thái và ghi chú xử lý đã được cập nhật',
+							// 	placement: 'topRight'
+							// })
 						}}
 					/>
 				</div>

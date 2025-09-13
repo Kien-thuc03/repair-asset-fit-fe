@@ -1,29 +1,4 @@
-import { ReplacementRequestForList, ReplacementStatus } from "@/types";
-
-// Interface cho danh sách đề xuất thay thế linh kiện (từ KTV)
-export interface ReplacementRequestItem {
-  id: string;
-  requestCode: string; // Mã đề xuất thay thế
-  assetId: string;
-  assetCode: string;
-  assetName: string;
-  componentId: string;
-  componentName: string;
-  componentSpecs?: string;
-  roomId: string;
-  roomName: string;
-  buildingName: string;
-  technicianId: string;
-  technicianName: string;
-  reason: string; // Lý do thay thế
-  estimatedCost: number;
-  status: ReplacementStatus;
-  createdAt: string;
-  updatedAt: string;
-  approvedBy?: string;
-  rejectedReason?: string;
-  unit: string;
-}
+import { ReplacementRequestForList, ReplacementStatus, ReplacementRequestItem } from "@/types";
 
 // Mock data cho trang quản lý thay thế linh kiện của KTV
 export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
@@ -39,10 +14,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
     roomId: "room-001",
     roomName: "H301",
     buildingName: "Tòa H",
-    technicianId: "tech-001",
-    technicianName: "Trần Thị B",
     reason: "Nguồn điện bị cháy, có mùi cháy và không thể khởi động máy",
-    estimatedCost: 1200000,
     status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     createdAt: "2024-01-15T09:00:00",
     updatedAt: "2024-01-15T09:00:00",
@@ -60,10 +32,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
     roomId: "room-002",
     roomName: "H205",
     buildingName: "Tòa H",
-    technicianId: "tech-002",
-    technicianName: "Phạm Văn D",
     reason: "RAM bị lỗi, máy không khởi động được",
-    estimatedCost: 800000,
     status: ReplacementStatus.CHỜ_XÁC_MINH,
     createdAt: "2024-01-14T15:30:00",
     updatedAt: "2024-01-16T10:00:00",
@@ -82,10 +51,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
     roomId: "room-003",
     roomName: "H704",
     buildingName: "Tòa H",
-    technicianId: "tech-003",
-    technicianName: "Nguyễn Văn F",
     reason: "SSD bị bad sector nghiêm trọng, không thể sửa được",
-    estimatedCost: 1500000,
     status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
     createdAt: "2024-01-12T10:30:00",
     updatedAt: "2024-01-13T16:00:00",
@@ -104,11 +70,8 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
     roomId: "room-004",
     roomName: "H508",
     buildingName: "Tòa H",
-    technicianId: "tech-004",
-    technicianName: "Hoàng Văn E",
     reason: "Card đồ họa bị lỗi chip, không hiển thị hình ảnh",
-    estimatedCost: 3500000,
-    status: ReplacementStatus.CHỜ_QTV_KHOA_DUYỆT,
+    status: ReplacementStatus.ĐÃ_DUYỆT,
     createdAt: "2024-01-13T12:00:00",
     updatedAt: "2024-01-16T14:30:00",
     approvedBy: "Trưởng phòng KT",
@@ -126,10 +89,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
     roomId: "room-005",
     roomName: "H109",
     buildingName: "Tòa H",
-    technicianId: "tech-005",
-    technicianName: "Lê Văn C",
     reason: "CPU bị quá nhiệt và không thể sửa được do hỏng chip",
-    estimatedCost: 4500000,
     status: ReplacementStatus.ĐÃ_TỪ_CHỐI,
     createdAt: "2024-01-16T08:45:00",
     updatedAt: "2024-01-17T09:15:00",
@@ -148,7 +108,7 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     unit: "Khoa Công nghệ Thông tin",
     location: "Tòa H - Phòng H301",
     reason: "Hỏng mainboard Intel H310, không thể sửa chữa",
-    status: "pending",
+    status: ReplacementStatus.CHỜ_XÁC_MINH,
     requestDate: "2024-01-15",
     estimatedCost: 8500000,
     description:
@@ -162,7 +122,7 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     unit: "Khoa Công nghệ Thông tin",
     location: "Tòa H - Phòng H205",
     reason: "RAM DDR4 8GB hỏng, máy không khởi động được",
-    status: "pending",
+    status: ReplacementStatus.CHỜ_XÁC_MINH,
     requestDate: "2024-01-14",
     estimatedCost: 1200000,
     description:
@@ -176,7 +136,7 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     unit: "Khoa Công nghệ Thông tin",
     location: "Tòa H - Phòng H704",
     reason: "Ổ cứng SSD 256GB hỏng, mất dữ liệu",
-    status: "approved",
+    status: ReplacementStatus.ĐÃ_DUYỆT,
     requestDate: "2024-01-12",
     estimatedCost: 2800000,
     description:
@@ -190,7 +150,7 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     unit: "Khoa Công nghệ Thông tin",
     location: "Tòa H - Phòng H109",
     reason: "Nguồn điện 500W bị cháy, có mùi khét",
-    status: "pending",
+    status: ReplacementStatus.CHỜ_XÁC_MINH,
     requestDate: "2024-01-16",
     estimatedCost: 1800000,
     description:
@@ -204,7 +164,7 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     unit: "Khoa Công nghệ Thông tin",
     location: "Tòa H - Phòng H508",
     reason: "Card đồ họa GTX 1050 hỏng, không hiển thị hình ảnh",
-    status: "pending",
+    status: ReplacementStatus.CHỜ_XÁC_MINH,
     requestDate: "2024-01-13",
     estimatedCost: 4200000,
     description:
@@ -218,7 +178,7 @@ export const mockReplacementRequests: ReplacementRequestForList[] = [
     unit: "Khoa Công nghệ Thông tin",
     location: "Tòa H - Phòng H902",
     reason: "CPU Intel i5-8400 quá nóng, máy tự động tắt",
-    status: "rejected",
+    status: ReplacementStatus.ĐÃ_TỪ_CHỐI,
     requestDate: "2024-01-10",
     estimatedCost: 5500000,
     description:

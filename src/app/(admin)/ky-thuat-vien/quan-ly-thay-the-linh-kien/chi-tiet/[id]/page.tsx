@@ -4,8 +4,8 @@ import { useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Breadcrumb, Card, Tag, Descriptions, Button, Space, Timeline, Alert } from 'antd'
 import { Package, ArrowLeft, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
-import { mockReplacementRequestsForTechnician, ReplacementRequestItem } from '@/lib/mockData/replacementRequests'
-import { ReplacementStatus } from '@/types'
+import { mockReplacementRequestsForTechnician } from '@/lib/mockData/replacementRequests'
+import { ReplacementStatus, ReplacementRequestItem } from '@/types'
 
 export default function ChiTietThayThePage() {
 	const params = useParams()
@@ -28,9 +28,6 @@ export default function ChiTietThayThePage() {
 					]}
 				/>
 				<h1 className="text-2xl font-bold text-gray-900">Không tìm thấy đề xuất</h1>
-				<Button icon={<ArrowLeft />} onClick={() => router.back()}>
-					Quay lại
-				</Button>
 			</div>
 		)
 	}
@@ -46,11 +43,6 @@ export default function ChiTietThayThePage() {
 			color: 'blue', 
 			text: 'Chờ xác minh',
 			icon: AlertTriangle
-		},
-		[ReplacementStatus.CHỜ_QTV_KHOA_DUYỆT]: { 
-			color: 'purple', 
-			text: 'Chờ QTV Khoa duyệt',
-			icon: Clock
 		},
 		[ReplacementStatus.ĐÃ_DUYỆT]: { 
 			color: 'green', 
@@ -146,9 +138,6 @@ export default function ChiTietThayThePage() {
 						Thông tin chi tiết về đề xuất thay thế linh kiện
 					</p>
 				</div>
-				<Button icon={<ArrowLeft />} onClick={() => router.back()}>
-					Quay lại
-				</Button>
 			</div>
 
 			{/* Status Alert */}
@@ -208,14 +197,6 @@ export default function ChiTietThayThePage() {
 										<div className="text-sm text-gray-500">{request.componentSpecs}</div>
 									)}
 								</div>
-							</Descriptions.Item>
-							<Descriptions.Item label="Chi phí ước tính" span={1}>
-								<span className="font-medium text-green-600 text-lg">
-									{request.estimatedCost.toLocaleString('vi-VN')} VNĐ
-								</span>
-							</Descriptions.Item>
-							<Descriptions.Item label="Kỹ thuật viên đề xuất">
-								{request.technicianName}
 							</Descriptions.Item>
 						</Descriptions>
 					</Card>
