@@ -1,14 +1,22 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Eye, FileText, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  Search,
+  Eye,
+  FileText,
+  ChevronUp,
+  ChevronDown,
+  Download,
+  CheckSquare,
+  Square,
+  X,
+} from "lucide-react";
 
 import { Breadcrumb } from "antd";
+import Pagination from "@/components/common/Pagination";
 import { ReplacementRequestForList, ReplacementStatus } from "@/types";
-import {
-  mockReportLists,
-  getReportListsByStatus,
-} from "@/lib/mockData/reportLists";
+import { getReportListsByStatus } from "@/lib/mockData/reportLists";
 
 export default function LapToTrinhPage() {
   const router = useRouter();
@@ -24,6 +32,19 @@ export default function LapToTrinhPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Selection states
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  // Export states
+  const [exportCount, setExportCount] = useState(0);
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -175,6 +196,55 @@ export default function LapToTrinhPage() {
     }
   };
 
+  // Pagination logic
+  const getCurrentData = () => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return sortedRequests.slice(startIndex, endIndex);
+  };
+
+  // Selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    setSelectedItems(
+      checked ? sortedRequests.map((request) => request.id) : []
+    );
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems((prev) => [...prev, itemId]);
+    } else {
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+      setSelectAll(false);
+    }
+  };
+
+  // Export handler
+  const handleExportExcel = () => {
+    const itemsToExport =
+      selectedItems.length > 0
+        ? sortedRequests.filter((request) => selectedItems.includes(request.id))
+        : sortedRequests;
+
+    if (itemsToExport.length === 0) {
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    console.log("Xuất Excel:", itemsToExport);
+    // TODO: Implement actual Excel export logic
+    setExportCount(itemsToExport.length);
+    setShowExportSuccessModal(true);
+  };
+
+  // Reset pagination when changing filters or search
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedItems([]);
+    setSelectAll(false);
+  }, [selectedStatus, searchTerm]);
+
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content">
       <div className="mb-2">
@@ -210,6 +280,17 @@ export default function LapToTrinhPage() {
               tạo
             </p>
           </div>
+          {/* Export Excel Button */}
+          <button
+            onClick={handleExportExcel}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <Download className="h-4 w-4 mr-2" />
+            <span>
+              {selectedItems.length > 0
+                ? `Xuất Excel (${selectedItems.length} mục)`
+                : `Xuất Excel (${sortedRequests.length} mục)`}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -272,12 +353,30 @@ export default function LapToTrinhPage() {
             {/* Mobile Card View */}
             <div className="block sm:hidden">
               <div className="p-3 space-y-3">
-                {sortedRequests.length > 0 ? (
-                  sortedRequests.map((request) => (
+                {getCurrentData().length > 0 ? (
+                  getCurrentData().map((request) => (
                     <div
                       key={request.id}
-                      className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <div className="flex items-start justify-between mb-2">
+                      className="bg-gray-50 rounded-lg p-3 border border-gray-200 relative">
+                      {/* Selection checkbox */}
+                      <div className="absolute top-3 right-3">
+                        <button
+                          onClick={() =>
+                            handleSelectItem(
+                              request.id,
+                              !selectedItems.includes(request.id)
+                            )
+                          }
+                          className="text-gray-400 hover:text-gray-600">
+                          {selectedItems.includes(request.id) ? (
+                            <CheckSquare className="h-4 w-4 text-blue-600" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="flex items-start justify-between mb-2 pr-8">
                         <div className="flex items-center">
                           <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
                           <div className="min-w-0">
@@ -368,7 +467,18 @@ export default function LapToTrinhPage() {
               <table className="w-full divide-y divide-gray-200 table-fixed">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="w-[30%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[5%] px-3 py-3 text-left">
+                      <button
+                        onClick={() => handleSelectAll(!selectAll)}
+                        className="text-gray-400 hover:text-gray-600">
+                        {selectAll ? (
+                          <CheckSquare className="h-4 w-4" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
                         onClick={() => handleSort("assetName")}>
@@ -376,7 +486,7 @@ export default function LapToTrinhPage() {
                         {getSortIcon("assetName")}
                       </button>
                     </th>
-                    <th className="w-[14%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[13%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
                         onClick={() => handleSort("requestedBy")}>
@@ -392,7 +502,7 @@ export default function LapToTrinhPage() {
                         {getSortIcon("unit")}
                       </button>
                     </th>
-                    <th className="w-[12%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[11%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center justify-end space-x-1 hover:text-gray-700 ml-auto uppercase whitespace-nowrap"
                         onClick={() => handleSort("estimatedCost")}>
@@ -416,16 +526,32 @@ export default function LapToTrinhPage() {
                         {getSortIcon("requestDate")}
                       </button>
                     </th>
-                    <th className="w-[16%] lg:w-[16%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                    <th className="w-[18%] lg:w-[18%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                       Thao tác
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {sortedRequests.length > 0 ? (
-                    sortedRequests.map((request) => (
+                  {getCurrentData().length > 0 ? (
+                    getCurrentData().map((request) => (
                       <tr key={request.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-4 whitespace-nowrap w-[30%]">
+                        <td className="w-[5%] px-3 py-4">
+                          <button
+                            onClick={() =>
+                              handleSelectItem(
+                                request.id,
+                                !selectedItems.includes(request.id)
+                              )
+                            }
+                            className="text-gray-400 hover:text-gray-600">
+                            {selectedItems.includes(request.id) ? (
+                              <CheckSquare className="h-4 w-4 text-blue-600" />
+                            ) : (
+                              <Square className="h-4 w-4" />
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap w-[25%]">
                           <div className="flex items-center min-w-0">
                             <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                             <div className="min-w-0 flex-1">
@@ -442,7 +568,7 @@ export default function LapToTrinhPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-2 py-4 whitespace-nowrap w-[14%]">
+                        <td className="px-2 py-4 whitespace-nowrap w-[13%]">
                           <div
                             className="text-sm text-gray-900 truncate"
                             title={request.requestedBy}>
@@ -456,7 +582,7 @@ export default function LapToTrinhPage() {
                             {request.unit}
                           </div>
                         </td>
-                        <td className="px-2 py-4 whitespace-nowrap text-right w-[12%]">
+                        <td className="px-2 py-4 whitespace-nowrap text-right w-[11%]">
                           <div className="text-sm font-semibold text-green-600">
                             {(request.estimatedCost / 1000000).toFixed(1)}M
                           </div>
@@ -483,7 +609,7 @@ export default function LapToTrinhPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-3 py-4 whitespace-nowrap w-[16%]">
+                        <td className="px-3 py-4 whitespace-nowrap w-[18%]">
                           <div className="flex items-center justify-center space-x-2">
                             <button
                               onClick={() => {
@@ -512,7 +638,7 @@ export default function LapToTrinhPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center">
+                      <td colSpan={8} className="px-6 py-12 text-center">
                         <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                         <h3 className="text-sm font-medium text-gray-900 mb-1">
                           Không tìm thấy kết quả
@@ -528,7 +654,72 @@ export default function LapToTrinhPage() {
             </div>
           </div>
         </div>
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={sortedRequests.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
+
+      {/* Export Success Modal */}
+      {showExportSuccessModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                <Download className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                Xuất Excel thành công!
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Đã xuất {exportCount} tờ trình thành công.
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
+                <button
+                  onClick={() => setShowExportSuccessModal(false)}
+                  className="px-4 py-2 bg-green-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Error Modal */}
+      {showExportErrorModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <X className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                Không thể xuất Excel
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Không có dữ liệu để xuất. Vui lòng kiểm tra lại.
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
+                <button
+                  onClick={() => setShowExportErrorModal(false)}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

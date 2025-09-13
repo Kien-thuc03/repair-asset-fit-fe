@@ -13,6 +13,10 @@ import {
   ChevronUp,
   ChevronDown,
   Calculator,
+  Download,
+  CheckSquare,
+  Square,
+  X,
 } from "lucide-react";
 import { RepairRequest, RepairStatus } from "@/types";
 import {
@@ -21,6 +25,7 @@ import {
   errorTypes,
 } from "@/lib/mockData";
 import { Breadcrumb } from "antd";
+import Pagination from "@/components/common/Pagination";
 
 export default function DanhSachBaoLoiPage() {
   const router = useRouter();
@@ -32,6 +37,19 @@ export default function DanhSachBaoLoiPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Selection states
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  // Export states
+  const [exportCount, setExportCount] = useState(0);
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -175,6 +193,55 @@ export default function DanhSachBaoLoiPage() {
     return <IconComponent className="h-4 w-4" />;
   };
 
+  // Pagination logic
+  const getCurrentData = () => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return sortedRequests.slice(startIndex, endIndex);
+  };
+
+  // Selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    setSelectedItems(
+      checked ? sortedRequests.map((request) => request.id) : []
+    );
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems((prev) => [...prev, itemId]);
+    } else {
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+      setSelectAll(false);
+    }
+  };
+
+  // Export handler
+  const handleExportExcel = () => {
+    const itemsToExport =
+      selectedItems.length > 0
+        ? sortedRequests.filter((request) => selectedItems.includes(request.id))
+        : sortedRequests;
+
+    if (itemsToExport.length === 0) {
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    console.log("Xuất Excel:", itemsToExport);
+    // TODO: Implement actual Excel export logic
+    setExportCount(itemsToExport.length);
+    setShowExportSuccessModal(true);
+  };
+
+  // Reset pagination when changing filters or search
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedItems([]);
+    setSelectAll(false);
+  }, [selectedStatus, selectedErrorType, searchTerm]);
+
   return (
     <div className="container mx-auto px-4 py-2 main-content">
       <div className="mb-2">
@@ -209,6 +276,17 @@ export default function DanhSachBaoLoiPage() {
               Theo dõi và quản lý các báo cáo lỗi từ giảng viên
             </p>
           </div>
+          {/* Export Excel Button */}
+          <button
+            onClick={handleExportExcel}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <Download className="h-4 w-4 mr-2" />
+            <span>
+              {selectedItems.length > 0
+                ? `Xuất Excel (${selectedItems.length} mục)`
+                : `Xuất Excel (${sortedRequests.length} mục)`}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -376,6 +454,17 @@ export default function DanhSachBaoLoiPage() {
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
+                  <th className="px-3 py-3 text-left w-[5%]">
+                    <button
+                      onClick={() => handleSelectAll(!selectAll)}
+                      className="text-gray-400 hover:text-gray-600">
+                      {selectAll ? (
+                        <CheckSquare className="h-4 w-4" />
+                      ) : (
+                        <Square className="h-4 w-4" />
+                      )}
+                    </button>
+                  </th>
                   <th
                     className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
                     onClick={() => handleSort("requestCode")}>
@@ -430,9 +519,25 @@ export default function DanhSachBaoLoiPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {sortedRequests.length > 0 ? (
-                  sortedRequests.map((request) => (
+                {getCurrentData().length > 0 ? (
+                  getCurrentData().map((request) => (
                     <tr key={request.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-4 w-[5%]">
+                        <button
+                          onClick={() =>
+                            handleSelectItem(
+                              request.id,
+                              !selectedItems.includes(request.id)
+                            )
+                          }
+                          className="text-gray-400 hover:text-gray-600">
+                          {selectedItems.includes(request.id) ? (
+                            <CheckSquare className="h-4 w-4 text-blue-600" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </button>
+                      </td>
                       <td className="px-3 py-4 whitespace-nowrap w-[15%]">
                         <div
                           className="text-sm font-medium text-gray-900 truncate"
@@ -535,7 +640,7 @@ export default function DanhSachBaoLoiPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
+                    <td colSpan={8} className="px-6 py-12 text-center">
                       <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                       <h3 className="text-sm font-medium text-gray-900 mb-1">
                         Không tìm thấy kết quả
@@ -550,7 +655,72 @@ export default function DanhSachBaoLoiPage() {
             </table>
           </div>
         </div>
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={sortedRequests.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
+
+      {/* Export Success Modal */}
+      {showExportSuccessModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                <Download className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                Xuất Excel thành công!
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Đã xuất {exportCount} báo lỗi thành công.
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
+                <button
+                  onClick={() => setShowExportSuccessModal(false)}
+                  className="px-4 py-2 bg-green-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Error Modal */}
+      {showExportErrorModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <X className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                Không thể xuất Excel
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Không có dữ liệu để xuất. Vui lòng kiểm tra lại.
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
+                <button
+                  onClick={() => setShowExportErrorModal(false)}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
