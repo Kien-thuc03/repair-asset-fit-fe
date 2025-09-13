@@ -314,52 +314,9 @@ export default function RepairDetailPage() {
 						)}
 					</Card>
 
-					{/* Asset Information */}
-					{assetInfo && (
-						<Card title={
-							<div className="flex items-center gap-2">
-								<Monitor className="w-5 h-5 text-green-600" />
-								<span>Thông tin tài sản</span>
-							</div>
-						}>
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-								<div className="space-y-3">
-									<div>
-										<p className="text-sm font-medium text-gray-500">Mã tài sản</p>
-										<p className="font-medium">{assetInfo.assetCode}</p>
-									</div>
-									<div>
-										<p className="text-sm font-medium text-gray-500">Model</p>
-										<p className="font-medium">{assetInfo.model}</p>
-									</div>
-									<div>
-										<p className="text-sm font-medium text-gray-500">Serial Number</p>
-										<p className="font-medium">{assetInfo.serialNumber}</p>
-									</div>
-									<div>
-										<p className="text-sm font-medium text-gray-500">Ngày mua</p>
-										<p className="font-medium">{new Date(assetInfo.purchaseDate).toLocaleDateString('vi-VN')}</p>
-									</div>
-								</div>
-								<div className="space-y-3">
-									<div>
-										<p className="text-sm font-medium text-gray-500">Thông số kỹ thuật</p>
-										<div className="bg-gray-50 p-3 rounded-md space-y-1">
-											{assetInfo.specifications && Object.entries(assetInfo.specifications).map(([key, value]) => (
-												<div key={key} className="flex justify-between text-sm">
-													<span className="font-medium">{key}:</span>
-													<span>{value}</span>
-												</div>
-											))}
-										</div>
-									</div>
-								</div>
-							</div>
-						</Card>
-					)}
-
 					<ActionPanel
 						initStatus={currentRequest.status}
+						assetId={currentRequest.assetId} // Truyền assetId
 						onCreateReplacement={(parts) => {
 							// In a real app, you'd likely pass this data to the replacement request page
 							console.log('Creating replacement request with parts:', parts)

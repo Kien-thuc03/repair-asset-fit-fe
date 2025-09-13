@@ -1,7 +1,7 @@
 'use client'
 
 import { RepairStatus } from '@/types'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button, Form, Input, Select, Space, Radio, Card, Alert } from 'antd'
 import { CheckCircle, Settings, Package, FileText } from 'lucide-react'
 import ReplacementPartsInput, { ReplacementPart } from './ReplacementPartsInput'
@@ -12,15 +12,18 @@ const { TextArea } = Input
 interface Props {
 	initStatus: RepairStatus
 	requestId?: string
+	assetId?: string // Thêm prop assetId
 	onCreateReplacement: (parts: ReplacementPart[]) => void
 	onStatusUpdate?: (newStatus: RepairStatus, notes: string) => void
 }
 
-export default function ActionPanel({ initStatus, requestId, onCreateReplacement, onStatusUpdate }: Props) {
+export default function ActionPanel({ initStatus, requestId, assetId, onCreateReplacement, onStatusUpdate }: Props) {
 	const [form] = Form.useForm()
 	const [status, setStatus] = useState<RepairStatus>(initStatus)
 	const [inspectionResult, setInspectionResult] = useState<'software' | 'hardware' | 'replacement' | ''>('')
 	const [showReplacementParts, setShowReplacementParts] = useState(false)
+
+
 
 	const onFinish = (values: any) => {
 		console.log('Form values:', values)
@@ -125,7 +128,7 @@ export default function ActionPanel({ initStatus, requestId, onCreateReplacement
 							name="replacementParts" 
 							label="Linh kiện cần thay thế"
 						>
-							<ReplacementPartsInput />
+							<ReplacementPartsInput assetId={assetId} />
 						</Form.Item>
 					)}
 
