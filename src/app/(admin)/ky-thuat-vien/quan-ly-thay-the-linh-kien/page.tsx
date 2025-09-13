@@ -5,13 +5,13 @@ import { Breadcrumb, Input, Select, DatePicker, Tag, Button } from 'antd'
 import { Search, Filter, Eye, Package, ChevronUp, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { mockReplacementRequestsForTechnician } from '@/lib/mockData/replacementRequests'
-import { ReplacementStatus, ReplacementRequestItem } from '@/types'
+import { ReplacementStatus, ReplacementRequestItem, ReplacementComponent } from '@/types'
 import { Pagination } from '@/components/ui'
 
 const { RangePicker } = DatePicker
 const { Option } = Select
 
-type SortField = "requestCode" | "assetName" | "componentName" | "location" | "status" | "createdAt"
+type SortField = "requestCode" | "title" | "componentsCount" | "totalCost" | "status" | "createdAt"
 type SortDirection = "asc" | "desc" | "none"
 
 export default function QuanLyThayTheLinhKienPage() {
@@ -70,8 +70,12 @@ export default function QuanLyThayTheLinhKienPage() {
 
 		// Lọc dữ liệu
 		const filtered = mockReplacementRequestsForTechnician.filter((item: ReplacementRequestItem) => {
+			const componentNames = item.components.map(c => c.componentName).join(' ')
+			const assetNames = item.components.map(c => c.assetName).join(' ')
+			const assetCodes = item.components.map(c => c.assetCode).join(' ')
+			
 			const matchesSearch = searchText ? 
-				[item.assetCode, item.assetName, item.componentName, item.requestCode]
+				[assetCodes, assetNames, componentNames, item.requestCode, item.title]
 					.filter(Boolean)
 					.join(' ')
 					.toLowerCase()
@@ -98,17 +102,13 @@ export default function QuanLyThayTheLinhKienPage() {
 					aValue = a.requestCode
 					bValue = b.requestCode
 					break
-				case "assetName":
-					aValue = a.assetName
-					bValue = b.assetName
+				case "title":
+					aValue = a.title
+					bValue = b.title
 					break
-				case "componentName":
-					aValue = a.componentName
-					bValue = b.componentName
-					break
-				case "location":
-					aValue = `${a.buildingName} ${a.roomName}`
-					bValue = `${b.buildingName} ${b.roomName}`
+				case "componentsCount":
+					aValue = a.components.length
+					bValue = b.components.length
 					break
 				case "status":
 					aValue = a.status
@@ -170,35 +170,25 @@ export default function QuanLyThayTheLinhKienPage() {
 			),
 		},
 		{
-			title: 'Tài sản',
-			key: 'asset',
-			width: 200,
+			title: 'Tiêu đề đề xuất',
+			key: 'title',
+			width: 250,
 			render: (_: any, record: ReplacementRequestItem) => (
 				<div>
-					<div className="font-medium">{record.assetName}</div>
-					<div className="text-xs text-gray-500">Mã: {record.assetCode}</div>
+					<div className="font-medium">{record.title}</div>
+					<div className="text-xs text-gray-500 line-clamp-2">{record.description}</div>
 				</div>
 			),
 		},
 		{
-			title: 'Linh kiện cần thay',
-			key: 'component',
-			width: 180,
+			title: 'Số linh kiện',
+			key: 'componentsCount',
+			width: 100,
 			render: (_: any, record: ReplacementRequestItem) => (
-				<div>
-					<div className="font-medium">{record.componentName}</div>
-					<div className="text-xs text-gray-500">{record.componentSpecs}</div>
-				</div>
-			),
-		},
-		{
-			title: 'Vị trí',
-			key: 'location',
-			width: 120,
-			render: (_: any, record: ReplacementRequestItem) => (
-				<div>
-					<div className="font-medium">{record.buildingName}</div>
-					<div className="text-xs text-gray-500">{record.roomName}</div>
+				<div className="text-center">
+					<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+						{record.components.length} linh kiện
+					</span>
 				</div>
 			),
 		},
@@ -261,10 +251,10 @@ export default function QuanLyThayTheLinhKienPage() {
 			{/* Header */}
 			<div>
 				<h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-					Quản lý thay thế linh kiện
+					Danh sách đề xuất thay thế
 				</h1>
 				<p className="mt-2 text-gray-600">
-					Theo dõi và quản lý các yêu cầu thay thế linh kiện từ báo cáo lỗi.
+					Quản lý và theo dõi các đề xuất thay thế linh kiện đã được tạo.
 				</p>
 			</div>
 
@@ -273,7 +263,7 @@ export default function QuanLyThayTheLinhKienPage() {
 				<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 					<Input
 					className='col-span-1 md:col-span-2'
-						placeholder="Tìm kiếm theo mã, tên tài sản, linh kiện..."
+						placeholder="Tìm kiếm theo mã đề xuất, tiêu đề, tên tài sản, linh kiện..."
 						prefix={<Search className="w-4 h-4" />}
 						value={searchText}
 						onChange={(e) => setSearchText(e.target.value)}
@@ -328,29 +318,20 @@ export default function QuanLyThayTheLinhKienPage() {
 							</th>
 							<th 
 								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-								onClick={() => handleSort("assetName")}
+								onClick={() => handleSort("title")}
 							>
 								<div className="flex items-center space-x-1">
-									<span>Tài sản</span>
-									{getSortIcon("assetName")}
+									<span>Tiêu đề đề xuất</span>
+									{getSortIcon("title")}
 								</div>
 							</th>
 							<th 
 								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-								onClick={() => handleSort("componentName")}
+								onClick={() => handleSort("componentsCount")}
 							>
 								<div className="flex items-center space-x-1">
-									<span>Linh kiện cần thay</span>
-									{getSortIcon("componentName")}
-								</div>
-							</th>
-							<th 
-								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-								onClick={() => handleSort("location")}
-							>
-								<div className="flex items-center space-x-1">
-									<span>Vị trí</span>
-									{getSortIcon("location")}
+									<span>Số linh kiện</span>
+									{getSortIcon("componentsCount")}
 								</div>
 							</th>
 							<th 
@@ -384,25 +365,16 @@ export default function QuanLyThayTheLinhKienPage() {
 									<td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
 										{record.requestCode}
 									</td>
-									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+									<td className="px-4 py-3 text-sm text-gray-700">
 										<div>
-											<div className="font-medium">{record.assetName}</div>
-											<div className="text-xs text-gray-500">Mã: {record.assetCode}</div>
+											<div className="font-medium">{record.title}</div>
+											<div className="text-xs text-gray-500 line-clamp-2 mt-1">{record.description}</div>
 										</div>
 									</td>
-									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-										<div>
-											<div className="font-medium">{record.componentName}</div>
-											{record.componentSpecs && (
-												<div className="text-xs text-gray-500">{record.componentSpecs}</div>
-											)}
-										</div>
-									</td>
-									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-										<div>
-											<div className="font-medium">{record.buildingName}</div>
-											<div className="text-xs text-gray-500">{record.roomName}</div>
-										</div>
+									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 text-center">
+										<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+											{record.components.length} linh kiện
+										</span>
 									</td>
 									<td className="px-4 py-3 whitespace-nowrap">
 										<Tag color={config.color}>{config.text}</Tag>

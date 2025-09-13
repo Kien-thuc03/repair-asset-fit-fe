@@ -2,10 +2,10 @@
 
 import { useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Breadcrumb, Card, Tag, Descriptions, Button, Space, Timeline, Alert } from 'antd'
+import { Breadcrumb, Card, Tag, Descriptions, Button, Space, Timeline, Alert, Table } from 'antd'
 import { Package, ArrowLeft, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import { mockReplacementRequestsForTechnician } from '@/lib/mockData/replacementRequests'
-import { ReplacementStatus, ReplacementRequestItem } from '@/types'
+import { ReplacementStatus, ReplacementRequestItem, ReplacementComponent } from '@/types'
 
 export default function ChiTietThayThePage() {
 	const params = useParams()
@@ -63,6 +63,70 @@ export default function ChiTietThayThePage() {
 
 	const currentStatus = statusConfig[request.status]
 
+	// Cấu hình cột cho bảng linh kiện
+	const componentColumns = [
+		{
+			title: 'STT',
+			key: 'index',
+			width: 60,
+			render: (_: any, __: any, index: number) => index + 1,
+		},
+		{
+			title: 'Tên linh kiện',
+			dataIndex: 'componentName',
+			key: 'componentName',
+			render: (text: string, record: ReplacementComponent) => (
+				<div>
+					<div className="font-medium">{text}</div>
+					{record.componentSpecs && (
+						<div className="text-sm text-gray-500">{record.componentSpecs}</div>
+					)}
+				</div>
+			),
+		},
+		{
+			title: 'Tài sản',
+			key: 'asset',
+			render: (record: ReplacementComponent) => (
+				<div>
+					<div className="font-medium">{record.assetName}</div>
+					<div className="text-sm text-gray-500">Mã: {record.assetCode}</div>
+				</div>
+			),
+		},
+		{
+			title: 'Vị trí',
+			key: 'location',
+			render: (record: ReplacementComponent) => (
+				<div>
+					<div className="font-medium">{record.buildingName} - {record.roomName}</div>
+				</div>
+			),
+		},
+		{
+			title: 'Số lượng',
+			dataIndex: 'quantity',
+			key: 'quantity',
+			align: 'center' as const,
+			width: 100,
+			render: (quantity: number) => (
+				<span className="font-medium text-blue-600">
+					{quantity}
+				</span>
+			),
+		},
+		{
+			title: 'Lý do thay thế',
+			dataIndex: 'reason',
+			key: 'reason',
+			render: (reason: string) => (
+				<div className="text-sm text-gray-700">
+					{reason}
+				</div>
+			),
+		},
+	]
+
 	// Timeline items
 	const timelineItems = [
 		{
@@ -116,7 +180,6 @@ export default function ChiTietThayThePage() {
 						href: '/ky-thuat-vien/quan-ly-thay-the-linh-kien',
 						title: (
 							<div className="flex items-center gap-1">
-								<Package className="w-4 h-4" />
 								<span>Quản lý thay thế linh kiện</span>
 							</div>
 						),
@@ -131,7 +194,6 @@ export default function ChiTietThayThePage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-						<Package className="w-6 h-6" />
 						Chi tiết đề xuất • {request.requestCode}
 					</h1>
 					<p className="mt-2 text-gray-600">
@@ -178,32 +240,37 @@ export default function ChiTietThayThePage() {
 									{currentStatus.text}
 								</Tag>
 							</Descriptions.Item>
-							<Descriptions.Item label="Tài sản" span={2}>
-								<div>
-									<div className="font-medium">{request.assetName}</div>
-									<div className="text-sm text-gray-500">Mã: {request.assetCode}</div>
-								</div>
+							<Descriptions.Item label="Tiêu đề đề xuất" span={2}>
+								<div className="font-medium">{request.title}</div>
 							</Descriptions.Item>
-							<Descriptions.Item label="Vị trí" span={2}>
-								<div>
-									<div className="font-medium">{request.buildingName} - {request.roomName}</div>
-									<div className="text-sm text-gray-500">{request.unit}</div>
-								</div>
+							<Descriptions.Item label="Đơn vị quản lý" span={2}>
+								<div className="font-medium">{request.unit}</div>
 							</Descriptions.Item>
-							<Descriptions.Item label="Linh kiện cần thay" span={2}>
-								<div>
-									<div className="font-medium">{request.componentName}</div>
-									{request.componentSpecs && (
-										<div className="text-sm text-gray-500">{request.componentSpecs}</div>
-									)}
-								</div>
+							<Descriptions.Item label="Số lượng linh kiện" span={2}>
+								<span className="font-medium text-blue-600">
+									{request.components.length} linh kiện
+								</span>
 							</Descriptions.Item>
 						</Descriptions>
 					</Card>
 
-					{/* Reason */}
-					<Card title="Lý do thay thế" className="shadow">
-						<p className="text-gray-700 leading-relaxed">{request.reason}</p>
+					{/* Components List */}
+					<Card 
+						title={`Danh sách linh kiện cần thay thế (${request.components.length})`} 
+						className="shadow"
+					>
+						<Table
+							dataSource={request.components}
+							columns={componentColumns}
+							rowKey="id"
+							pagination={false}
+							size="middle"
+						/>
+					</Card>
+
+					{/* Description */}
+					<Card title="Mô tả chi tiết" className="shadow">
+						<p className="text-gray-700 leading-relaxed">{request.description}</p>
 					</Card>
 				</div>
 
