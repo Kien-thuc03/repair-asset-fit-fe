@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Eye,
@@ -9,10 +10,8 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  XCircle,
   ChevronUp,
   ChevronDown,
-  CalculatorIcon,
   Calculator,
 } from "lucide-react";
 import { RepairRequest, RepairStatus } from "@/types";
@@ -24,14 +23,11 @@ import {
 import { Breadcrumb } from "antd";
 
 export default function DanhSachBaoLoiPage() {
-  const [requests, setRequests] = useState<RepairRequest[]>(mockRepairRequests);
+  const router = useRouter();
+  const [requests] = useState<RepairRequest[]>(mockRepairRequests);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedErrorType, setSelectedErrorType] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState<RepairRequest | null>(
-    null
-  );
-  const [showModal, setShowModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
@@ -177,28 +173,6 @@ export default function DanhSachBaoLoiPage() {
     const config = repairRequestStatusConfig[status];
     const IconComponent = config ? config.icon : Clock;
     return <IconComponent className="h-4 w-4" />;
-  };
-
-  const updateRequestStatus = (requestId: string, newStatus: RepairStatus) => {
-    setRequests((prev) =>
-      prev.map((req) =>
-        req.id === requestId
-          ? {
-              ...req,
-              status: newStatus,
-              acceptedAt:
-                newStatus === RepairStatus.ĐANG_XỬ_LÝ && !req.acceptedAt
-                  ? new Date().toISOString()
-                  : req.acceptedAt,
-              completedAt:
-                newStatus === RepairStatus.ĐÃ_HOÀN_THÀNH
-                  ? new Date().toISOString()
-                  : req.completedAt,
-            }
-          : req
-      )
-    );
-    setShowModal(false);
   };
 
   return (
@@ -372,7 +346,7 @@ export default function DanhSachBaoLoiPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Calculator  className="h-8 w-8 text-purple-400" />
+                <Calculator className="h-8 w-8 text-purple-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
@@ -549,8 +523,9 @@ export default function DanhSachBaoLoiPage() {
                       <td className="px-3 py-4 whitespace-nowrap text-center text-sm font-medium w-[8%]">
                         <button
                           onClick={() => {
-                            setSelectedRequest(request);
-                            setShowModal(true);
+                            router.push(
+                              `/to-truong-ky-thuat/danh-sach-bao-loi/chi-tiet?id=${request.id}`
+                            );
                           }}
                           className="text-indigo-600 hover:text-indigo-900">
                           <Eye className="h-4 w-4" />
@@ -576,199 +551,6 @@ export default function DanhSachBaoLoiPage() {
           </div>
         </div>
       </div>
-
-      {/* Detail Modal */}
-      {showModal && selectedRequest && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-3xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Chi tiết báo lỗi {selectedRequest.requestCode}
-                </h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600">
-                  <XCircle className="h-6 w-6" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Mã tài sản
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.assetCode}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Tên thiết bị
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.assetName}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Vị trí
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.roomName} -{" "}
-                      {selectedRequest.buildingName}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Linh kiện
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.componentName || "Tổng thể"}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Mô tả lỗi
-                  </label>
-                  <p className="text-sm text-gray-900 mt-1 p-3 bg-gray-50 rounded">
-                    {selectedRequest.description}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Loại lỗi
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.errorTypeName || "Chưa xác định"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Trạng thái
-                    </label>
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                        selectedRequest.status
-                      )} mt-1`}>
-                      {getStatusText(selectedRequest.status)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Người báo cáo
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.reporterName} (
-                      {selectedRequest.reporterRole})
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Ngày báo cáo
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {new Date(selectedRequest.createdAt).toLocaleString(
-                        "vi-VN"
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedRequest.assignedTechnicianName && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Kỹ thuật viên phụ trách
-                      </label>
-                      <p className="text-sm text-gray-900 mt-1">
-                        {selectedRequest.assignedTechnicianName}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Thời gian tiếp nhận
-                      </label>
-                      <p className="text-sm text-gray-900 mt-1">
-                        {selectedRequest.acceptedAt &&
-                          new Date(selectedRequest.acceptedAt).toLocaleString(
-                            "vi-VN"
-                          )}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {selectedRequest.resolutionNotes && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Ghi chú kỹ thuật viên
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1 p-3 bg-gray-50 rounded">
-                      {selectedRequest.resolutionNotes}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-                {selectedRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN && (
-                  <button
-                    onClick={() =>
-                      updateRequestStatus(
-                        selectedRequest.id,
-                        RepairStatus.ĐANG_XỬ_LÝ
-                      )
-                    }
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    Bắt đầu xử lý
-                  </button>
-                )}
-                {selectedRequest.status === RepairStatus.ĐANG_XỬ_LÝ && (
-                  <>
-                    <button
-                      onClick={() =>
-                        updateRequestStatus(
-                          selectedRequest.id,
-                          RepairStatus.ĐÃ_HOÀN_THÀNH
-                        )
-                      }
-                      className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                      Hoàn thành
-                    </button>
-                    <button
-                      onClick={() =>
-                        updateRequestStatus(
-                          selectedRequest.id,
-                          RepairStatus.ĐÃ_HỦY
-                        )
-                      }
-                      className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500">
-                      Hủy bỏ
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500">
-                  Đóng
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
