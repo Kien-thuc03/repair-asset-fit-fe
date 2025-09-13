@@ -1,30 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import {
-  ArrowLeft,
-  Search,
-  Eye,
-  FileText,
-  Filter,
-  ChevronUp,
-  ChevronDown,
-} from "lucide-react";
-import {
-  mockReplacementLists,
-  ReplacementList,
-} from "@/lib/mockData/replacementLists";
+import { Search, Eye, FileText, ChevronUp, ChevronDown } from "lucide-react";
+
 import CreateReportModal from "./modal/CreateReportModal";
 import ListDetailModal from "./modal/ListDetailModal";
 import { Breadcrumb } from "antd";
+import { ReplacementRequestForList, ReplacementStatus } from "@/types";
+import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
 
 export default function LapToTrinhPage() {
-  const [replacementLists] = useState<ReplacementList[]>(mockReplacementLists);
+  const [replacementRequests] = useState<ReplacementRequestForList[]>(
+    mockReplacementRequests
+  );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedList, setSelectedList] = useState<ReplacementList | null>(
-    null
-  );
+  const [selectedRequest, setSelectedRequest] =
+    useState<ReplacementRequestForList | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCreateReportModal, setShowCreateReportModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
@@ -56,14 +47,14 @@ export default function LapToTrinhPage() {
     };
   }, []);
 
-  const filteredLists = replacementLists.filter((list) => {
+  const filteredRequests = replacementRequests.filter((request) => {
     const matchesStatus =
-      selectedStatus === "all" || list.status === selectedStatus;
+      selectedStatus === "all" || request.status === selectedStatus;
     const matchesSearch =
       searchTerm === "" ||
-      list.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      list.createdBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      list.id.toLowerCase().includes(searchTerm.toLowerCase());
+      request.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.id.toLowerCase().includes(searchTerm.toLowerCase());
 
     return matchesStatus && matchesSearch;
   });
@@ -86,36 +77,36 @@ export default function LapToTrinhPage() {
   };
 
   // Sắp xếp dữ liệu
-  const sortedLists = [...filteredLists].sort((a, b) => {
+  const sortedRequests = [...filteredRequests].sort((a, b) => {
     if (sortField === "" || sortDirection === "none") return 0;
 
     let aValue: string | number | Date;
     let bValue: string | number | Date;
 
     switch (sortField) {
-      case "title":
-        aValue = a.title;
-        bValue = b.title;
+      case "assetName":
+        aValue = a.assetName;
+        bValue = b.assetName;
         break;
-      case "createdBy":
-        aValue = a.createdBy;
-        bValue = b.createdBy;
+      case "requestedBy":
+        aValue = a.requestedBy;
+        bValue = b.requestedBy;
         break;
-      case "totalItems":
-        aValue = a.totalItems;
-        bValue = b.totalItems;
+      case "unit":
+        aValue = a.unit;
+        bValue = b.unit;
         break;
-      case "totalCost":
-        aValue = a.totalCost;
-        bValue = b.totalCost;
+      case "estimatedCost":
+        aValue = a.estimatedCost;
+        bValue = b.estimatedCost;
         break;
       case "status":
         aValue = a.status;
         bValue = b.status;
         break;
-      case "createdAt":
-        aValue = new Date(a.createdAt);
-        bValue = new Date(b.createdAt);
+      case "requestDate":
+        aValue = new Date(a.requestDate);
+        bValue = new Date(b.requestDate);
         break;
       default:
         return 0;
@@ -150,14 +141,16 @@ export default function LapToTrinhPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "draft":
-        return "bg-gray-100 text-gray-800";
-      case "submitted":
+      case ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT:
+        return "bg-yellow-100 text-yellow-800";
+      case ReplacementStatus.CHỜ_XÁC_MINH:
         return "bg-blue-100 text-blue-800";
-      case "approved":
+      case ReplacementStatus.ĐÃ_DUYỆT:
         return "bg-green-100 text-green-800";
-      case "rejected":
+      case ReplacementStatus.ĐÃ_TỪ_CHỐI:
         return "bg-red-100 text-red-800";
+      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+        return "bg-purple-100 text-purple-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -165,35 +158,37 @@ export default function LapToTrinhPage() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "draft":
-        return "Nháp";
-      case "submitted":
-        return "Đã gửi";
-      case "approved":
+      case ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT:
+        return "Chờ duyệt";
+      case ReplacementStatus.CHỜ_XÁC_MINH:
+        return "Chờ xác minh";
+      case ReplacementStatus.ĐÃ_DUYỆT:
         return "Đã duyệt";
-      case "rejected":
+      case ReplacementStatus.ĐÃ_TỪ_CHỐI:
         return "Từ chối";
+      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+        return "Đã mua sắm";
       default:
         return status;
     }
   };
 
-  const handleCreateReport = (listId: string) => {
-    const list = replacementLists.find((l) => l.id === listId);
-    if (list) {
-      setSelectedList(list);
+  const handleCreateReport = (requestId: string) => {
+    const request = replacementRequests.find((r) => r.id === requestId);
+    if (request) {
+      setSelectedRequest(request);
       setShowCreateReportModal(true);
     }
   };
 
-  const handleViewDetail = (list: ReplacementList) => {
-    setSelectedList(list);
+  const handleViewDetail = (request: ReplacementRequestForList) => {
+    setSelectedRequest(request);
     setShowDetailModal(true);
   };
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content">
-            <div className="mb-2">
+      <div className="mb-2">
         <Breadcrumb
           items={[
             {
@@ -231,7 +226,7 @@ export default function LapToTrinhPage() {
 
       {/* Filters */}
       <div className="bg-white p-3 sm:p-6 rounded-lg shadow mb-4 sm:mb-6">
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 items-end">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 items-end">
           <div className="flex flex-col h-full">
             <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
               Tìm kiếm
@@ -241,7 +236,7 @@ export default function LapToTrinhPage() {
               <input
                 type="text"
                 className="absolute inset-0 w-full h-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                placeholder="Tiêu đề, mã danh sách..."
+                placeholder="Tên tài sản, mã đề xuất..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -258,20 +253,18 @@ export default function LapToTrinhPage() {
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}>
                 <option value="all">Tất cả</option>
-                <option value="draft">Nháp</option>
-                <option value="submitted">Đã gửi</option>
-                <option value="approved">Đã duyệt</option>
-                <option value="rejected">Từ chối</option>
+                <option value={ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT}>
+                  Chờ duyệt
+                </option>
+                <option value={ReplacementStatus.CHỜ_XÁC_MINH}>
+                  Chờ xác minh
+                </option>
+                <option value={ReplacementStatus.ĐÃ_DUYỆT}>Đã duyệt</option>
+                <option value={ReplacementStatus.ĐÃ_TỪ_CHỐI}>Từ chối</option>
+                <option value={ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM}>
+                  Đã mua sắm
+                </option>
               </select>
-            </div>
-          </div>
-
-          <div className="flex flex-col h-full justify-end">
-            <div className="h-9 sm:h-10">
-              <button className="w-full h-full inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
-                Lọc
-              </button>
             </div>
           </div>
         </div>
@@ -281,7 +274,7 @@ export default function LapToTrinhPage() {
       <div className="bg-white shadow rounded-lg">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách đề xuất đã được duyệt ({sortedLists.length})
+            Danh sách đề xuất đã được duyệt ({sortedRequests.length})
           </h2>
         </div>
 
@@ -290,54 +283,54 @@ export default function LapToTrinhPage() {
             {/* Mobile Card View */}
             <div className="block sm:hidden">
               <div className="p-3 space-y-3">
-                {sortedLists.length > 0 ? (
-                  sortedLists.map((list) => (
+                {sortedRequests.length > 0 ? (
+                  sortedRequests.map((request) => (
                     <div
-                      key={list.id}
+                      key={request.id}
                       className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center">
                           <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
                           <div className="min-w-0">
                             <div className="text-sm font-medium text-gray-900 truncate">
-                              {list.title}
+                              {request.assetName}
                             </div>
                             <div className="text-xs text-gray-500 truncate">
-                              Mã: {list.id}
+                              Mã: {request.id}
                             </div>
                           </div>
                         </div>
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                            list.status
+                            request.status
                           )}`}>
-                          {getStatusText(list.status)}
+                          {getStatusText(request.status)}
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 text-xs mb-3">
                         <div>
-                          <div className="text-gray-500">Người tạo</div>
+                          <div className="text-gray-500">Người đề xuất</div>
                           <div className="text-gray-900 font-medium">
-                            {list.createdBy}
+                            {request.requestedBy}
                           </div>
                         </div>
                         <div>
-                          <div className="text-gray-500">Số thiết bị</div>
+                          <div className="text-gray-500">Đơn vị</div>
                           <div className="text-gray-900 font-medium">
-                            {list.totalItems} thiết bị
+                            {request.unit}
                           </div>
                         </div>
                         <div>
                           <div className="text-gray-500">Chi phí ước tính</div>
                           <div className="text-green-600 font-semibold">
-                            {list.totalCost.toLocaleString("vi-VN")} VNĐ
+                            {request.estimatedCost.toLocaleString("vi-VN")} VNĐ
                           </div>
                         </div>
                         <div>
-                          <div className="text-gray-500">Ngày tạo</div>
+                          <div className="text-gray-500">Ngày đề xuất</div>
                           <div className="text-gray-900">
-                            {new Date(list.createdAt).toLocaleDateString(
+                            {new Date(request.requestDate).toLocaleDateString(
                               "vi-VN"
                             )}
                           </div>
@@ -346,12 +339,12 @@ export default function LapToTrinhPage() {
 
                       <div className="flex items-center justify-end space-x-2">
                         <button
-                          onClick={() => handleViewDetail(list)}
+                          onClick={() => handleViewDetail(request)}
                           className="text-indigo-600 hover:text-indigo-900 p-1">
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleCreateReport(list.id)}
+                          onClick={() => handleCreateReport(request.id)}
                           className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
                           Lập tờ trình
                         </button>
@@ -380,33 +373,33 @@ export default function LapToTrinhPage() {
                     <th className="w-[30%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
-                        onClick={() => handleSort("title")}>
-                        <span>Danh sách</span>
-                        {getSortIcon("title")}
+                        onClick={() => handleSort("assetName")}>
+                        <span>Tài sản</span>
+                        {getSortIcon("assetName")}
                       </button>
                     </th>
                     <th className="w-[14%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
-                        onClick={() => handleSort("createdBy")}>
-                        <span>Người tạo</span>
-                        {getSortIcon("createdBy")}
+                        onClick={() => handleSort("requestedBy")}>
+                        <span>Người đề xuất</span>
+                        {getSortIcon("requestedBy")}
                       </button>
                     </th>
                     <th className="w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
-                        onClick={() => handleSort("totalItems")}>
-                        <span>Thiết bị</span>
-                        {getSortIcon("totalItems")}
+                        onClick={() => handleSort("unit")}>
+                        <span>Đơn vị</span>
+                        {getSortIcon("unit")}
                       </button>
                     </th>
                     <th className="w-[12%] px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center justify-end space-x-1 hover:text-gray-700 ml-auto uppercase whitespace-nowrap"
-                        onClick={() => handleSort("totalCost")}>
+                        onClick={() => handleSort("estimatedCost")}>
                         <span>Chi phí</span>
-                        {getSortIcon("totalCost")}
+                        {getSortIcon("estimatedCost")}
                       </button>
                     </th>
                     <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -420,9 +413,9 @@ export default function LapToTrinhPage() {
                     <th className="w-[10%] hidden lg:table-cell px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
-                        onClick={() => handleSort("createdAt")}>
-                        <span>Ngày tạo</span>
-                        {getSortIcon("createdAt")}
+                        onClick={() => handleSort("requestDate")}>
+                        <span>Ngày đề xuất</span>
+                        {getSortIcon("requestDate")}
                       </button>
                     </th>
                     <th className="w-[16%] lg:w-[16%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
@@ -431,22 +424,22 @@ export default function LapToTrinhPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {sortedLists.length > 0 ? (
-                    sortedLists.map((list) => (
-                      <tr key={list.id} className="hover:bg-gray-50">
+                  {sortedRequests.length > 0 ? (
+                    sortedRequests.map((request) => (
+                      <tr key={request.id} className="hover:bg-gray-50">
                         <td className="px-3 py-4 whitespace-nowrap w-[30%]">
                           <div className="flex items-center min-w-0">
                             <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
                             <div className="min-w-0 flex-1">
                               <div
                                 className="text-sm font-medium text-gray-900 truncate"
-                                title={list.title}>
-                                {list.title}
+                                title={request.assetName}>
+                                {request.assetName}
                               </div>
                               <div
                                 className="text-xs text-gray-500 truncate"
-                                title={list.id}>
-                                #{list.id}
+                                title={request.id}>
+                                #{request.id}
                               </div>
                             </div>
                           </div>
@@ -454,33 +447,35 @@ export default function LapToTrinhPage() {
                         <td className="px-2 py-4 whitespace-nowrap w-[14%]">
                           <div
                             className="text-sm text-gray-900 truncate"
-                            title={list.createdBy}>
-                            {list.createdBy}
+                            title={request.requestedBy}>
+                            {request.requestedBy}
                           </div>
                         </td>
                         <td className="px-2 py-4 whitespace-nowrap text-center w-[8%]">
-                          <span className="text-sm font-medium text-gray-900">
-                            {list.totalItems}
-                          </span>
+                          <div
+                            className="text-xs text-gray-900 truncate"
+                            title={request.unit}>
+                            {request.unit}
+                          </div>
                         </td>
                         <td className="px-2 py-4 whitespace-nowrap text-right w-[12%]">
                           <div className="text-sm font-semibold text-green-600">
-                            {(list.totalCost / 1000000).toFixed(1)}M
+                            {(request.estimatedCost / 1000000).toFixed(1)}M
                           </div>
                           <div className="text-xs text-gray-500">VNĐ</div>
                         </td>
                         <td className="px-2 py-4 whitespace-nowrap text-center w-[10%]">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusBadge(
-                              list.status
+                              request.status
                             )}`}
-                            title={getStatusText(list.status)}>
-                            {getStatusText(list.status)}
+                            title={getStatusText(request.status)}>
+                            {getStatusText(request.status)}
                           </span>
                         </td>
                         <td className="hidden lg:table-cell px-2 py-4 whitespace-nowrap text-center w-[10%]">
                           <div className="text-xs text-gray-900">
-                            {new Date(list.createdAt).toLocaleDateString(
+                            {new Date(request.requestDate).toLocaleDateString(
                               "vi-VN",
                               {
                                 day: "2-digit",
@@ -493,13 +488,13 @@ export default function LapToTrinhPage() {
                         <td className="px-3 py-4 whitespace-nowrap w-[16%]">
                           <div className="flex items-center justify-center space-x-2">
                             <button
-                              onClick={() => handleViewDetail(list)}
+                              onClick={() => handleViewDetail(request)}
                               className="text-indigo-600 hover:text-indigo-900 p-1"
                               title="Xem chi tiết">
                               <Eye className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleCreateReport(list.id)}
+                              onClick={() => handleCreateReport(request.id)}
                               className="inline-flex items-center px-3 py-1.5 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 whitespace-nowrap"
                               title="Lập tờ trình">
                               <FileText className="h-3 w-3 mr-1" />
@@ -533,7 +528,7 @@ export default function LapToTrinhPage() {
       <ListDetailModal
         show={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        selectedList={selectedList}
+        selectedList={selectedRequest}
         onCreateReport={handleCreateReport}
       />
 
@@ -541,7 +536,7 @@ export default function LapToTrinhPage() {
       <CreateReportModal
         show={showCreateReportModal}
         onClose={() => setShowCreateReportModal(false)}
-        selectedList={selectedList}
+        selectedList={selectedRequest}
       />
     </div>
   );
