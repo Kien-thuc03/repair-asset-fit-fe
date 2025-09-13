@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import {
   Search,
-  Filter,
   Eye,
   User,
   Building2,
@@ -239,7 +238,7 @@ export default function DanhSachBaoLoiPage() {
 
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Tìm kiếm
@@ -289,13 +288,6 @@ export default function DanhSachBaoLoiPage() {
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="flex items-end">
-            <button className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-              <Filter className="h-4 w-4 mr-2" />
-              Lọc
-            </button>
           </div>
         </div>
       </div>

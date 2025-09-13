@@ -106,8 +106,6 @@ export default function PhanCongPage() {
     switch (status) {
       case "active":
         return "bg-green-100 text-green-800";
-      case "busy":
-        return "bg-orange-100 text-orange-800";
       case "offline":
         return "bg-gray-100 text-gray-800";
       default:
@@ -119,10 +117,8 @@ export default function PhanCongPage() {
     switch (status) {
       case "active":
         return "Sẵn sàng";
-      case "busy":
-        return "Bận";
       case "offline":
-        return "Offline";
+        return "Nghỉ";
       default:
         return status;
     }
@@ -248,45 +244,59 @@ export default function PhanCongPage() {
         </div>
       </div>
 
-      {/* Search */}
+      {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            placeholder={
-              activeTab === "areas" ? "Tìm khu vực..." : "Tìm kỹ thuật viên..."
-            }
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Bộ lọc tìm kiếm</h3>
+          <p className="text-sm text-gray-500">
+            Tìm kiếm và lọc dữ liệu theo các tiêu chí
+          </p>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Tìm kiếm
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              placeholder={
+                activeTab === "areas"
+                  ? "Tìm theo phòng, tòa nhà, tầng..."
+                  : "Tìm theo tên, email kỹ thuật viên..."
+              }
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
       {activeTab === "areas" ? (
         /* Areas Tab */
-        <div className="bg-white shadow rounded-lg">
+        <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900">
               Danh sách khu vực ({sortedRooms.length})
             </h2>
           </div>
 
-          <div className="overflow-hidden">
-            <table className="w-full table-fixed divide-y divide-gray-200">
+          <div className="overflow-auto">
+            <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[25%]"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                     onClick={() => handleSort("name")}>
                     <div className="flex items-center space-x-1">
-                      <span>Phòng</span>
+                      <span>Phòng/Khu vực</span>
                       {getSortIcon("name")}
                     </div>
                   </th>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                     onClick={() => handleSort("building")}>
                     <div className="flex items-center space-x-1">
                       <span>Tòa nhà</span>
@@ -294,7 +304,7 @@ export default function PhanCongPage() {
                     </div>
                   </th>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                     onClick={() => handleSort("floors")}>
                     <div className="flex items-center space-x-1">
                       <span>Tầng</span>
@@ -302,14 +312,14 @@ export default function PhanCongPage() {
                     </div>
                   </th>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[35%]"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
                     onClick={() => handleSort("technician")}>
                     <div className="flex items-center space-x-1">
                       <span>Kỹ thuật viên phụ trách</span>
                       {getSortIcon("technician")}
                     </div>
                   </th>
-                  <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Thao tác
                   </th>
                 </tr>
@@ -318,34 +328,33 @@ export default function PhanCongPage() {
                 {sortedRooms.length > 0 ? (
                   sortedRooms.map((room) => (
                     <tr key={room.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-4 whitespace-nowrap w-[25%]">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <MapPin className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                          <span
-                            className="text-sm font-medium text-gray-900 truncate"
-                            title={room.roomNumber}>
-                            {room.roomNumber}
-                          </span>
+                          <MapPin className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {room.roomNumber}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              Mã: {room.id}
+                            </div>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap w-[15%]">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <Building2 className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
-                          <span
-                            className="text-sm text-gray-900 truncate"
-                            title={room.building || "N/A"}>
+                          <Building2 className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                          <span className="text-sm text-gray-900">
                             {room.building || "N/A"}
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap w-[15%]">
-                        <span
-                          className="text-sm text-gray-500 truncate block"
-                          title={room.floor || "N/A"}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {room.floor || "N/A"}
                         </span>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap w-[35%]">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {editingRoom === room.id ? (
                           <div className="flex items-center space-x-2">
                             <select
@@ -353,7 +362,7 @@ export default function PhanCongPage() {
                               onChange={(e) =>
                                 setSelectedTechnician(e.target.value)
                               }
-                              className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 flex-1 min-w-0 truncate">
+                              className="text-sm border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 min-w-0 flex-1">
                               <option value="">Chưa phân công</option>
                               {technicians.map((tech) => (
                                 <option key={tech.id} value={tech.id}>
@@ -368,7 +377,7 @@ export default function PhanCongPage() {
                                   selectedTechnician
                                 )
                               }
-                              className="text-green-600 hover:text-green-800 flex-shrink-0">
+                              className="text-green-600 hover:text-green-800 p-1 flex-shrink-0">
                               <Save className="h-4 w-4" />
                             </button>
                             <button
@@ -376,24 +385,31 @@ export default function PhanCongPage() {
                                 setEditingRoom(null);
                                 setSelectedTechnician("");
                               }}
-                              className="text-gray-400 hover:text-gray-600 flex-shrink-0">
+                              className="text-gray-400 hover:text-gray-600 p-1 flex-shrink-0">
                               <X className="h-4 w-4" />
                             </button>
                           </div>
                         ) : (
-                          <div className="flex items-center min-w-0">
-                            <User className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                            <span
-                              className="text-sm text-gray-900 truncate"
-                              title={getTechnicianName(
-                                room.assignedTechnician || ""
-                              )}>
-                              {getTechnicianName(room.assignedTechnician || "")}
-                            </span>
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 text-gray-400 mr-3 flex-shrink-0" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {getTechnicianName(
+                                  room.assignedTechnician || ""
+                                )}
+                              </div>
+                              {room.assignedTechnician && (
+                                <div className="text-sm text-gray-500">
+                                  {technicians.find(
+                                    (t) => t.id === room.assignedTechnician
+                                  )?.email || ""}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium w-[10%]">
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
                         <button
                           onClick={() => {
                             setEditingRoom(room.id);
@@ -401,25 +417,24 @@ export default function PhanCongPage() {
                               room.assignedTechnician || ""
                             );
                           }}
-                          className="text-indigo-600 hover:text-indigo-900">
-                          <Edit className="h-4 w-4" />
+                          className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                          <Edit className="h-4 w-4 mr-1" />
+                          Chỉnh sửa
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
-                  <tr className="h-16 sm:h-20">
-                    <td colSpan={5} className="h-16 sm:h-20">
-                      <div className="h-16 sm:h-20 flex items-center justify-center">
-                        <div className="flex flex-col items-center">
-                          <Search className="h-6 w-6 text-gray-300 mb-2" />
-                          <h3 className="text-xs font-medium text-gray-900 mb-1">
-                            Không tìm thấy kết quả
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            Thử thay đổi từ khóa tìm kiếm
-                          </p>
-                        </div>
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center">
+                        <Search className="h-12 w-12 text-gray-300 mb-4" />
+                        <h3 className="text-sm font-medium text-gray-900 mb-2">
+                          Không tìm thấy kết quả
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                        </p>
                       </div>
                     </td>
                   </tr>
