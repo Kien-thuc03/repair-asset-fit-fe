@@ -34,9 +34,26 @@ export default function ChiTietTheoDaoTienDoPage() {
 
   // Handle edit request
   const handleEditRequest = () => {
-    // TODO: Navigate to edit page or open edit modal
-    console.log("Edit request:", request?.id);
-    // router.push(`/giang-vien/bao-cao-loi/chinh-sua/${request?.id}`);
+    if (!request) return;
+    
+    // Prepare data for editing
+    const editData = {
+      requestId: request.id,
+      assetId: request.assetId,
+      roomId: request.roomId,
+      componentId: request.componentId,
+      componentName: request.componentName,
+      errorTypeId: request.errorTypeId || "",
+      description: request.description,
+      // Add timestamp to ensure data freshness
+      timestamp: Date.now()
+    };
+
+    // Save to localStorage
+    localStorage.setItem('editRequestData', JSON.stringify(editData));
+    
+    // Navigate to report page
+    router.push('/giang-vien/bao-cao-loi?edit=true');
   };
 
   // Handle cancel request
