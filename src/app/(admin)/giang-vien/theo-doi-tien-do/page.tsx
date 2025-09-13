@@ -322,7 +322,7 @@ export default function TheoDaoTienDoPage() {
                   Người xử lý
                 </SortableHeader>
                 <SortableHeader field="createdAt">Ngày tạo</SortableHeader>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
@@ -412,7 +412,7 @@ export default function TheoDaoTienDoPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4 text-right text-sm font-medium">
+                    <td className="px-4 py-4 text-center text-sm font-medium">
                       <button
                         onClick={() => setSelectedRequest(request)}
                         className="text-blue-600 hover:text-blue-900 inline-flex items-center">
