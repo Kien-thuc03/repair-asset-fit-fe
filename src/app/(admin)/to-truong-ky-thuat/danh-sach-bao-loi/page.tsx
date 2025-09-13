@@ -12,6 +12,8 @@ import {
   XCircle,
   ChevronUp,
   ChevronDown,
+  CalculatorIcon,
+  Calculator,
 } from "lucide-react";
 import { RepairRequest, RepairStatus } from "@/types";
 import {
@@ -370,7 +372,7 @@ export default function DanhSachBaoLoiPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <AlertCircle className="h-8 w-8 text-purple-400" />
+                <Calculator  className="h-8 w-8 text-purple-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>

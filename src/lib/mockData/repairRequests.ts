@@ -1,5 +1,5 @@
 import { RepairRequest, RepairStatus } from "@/types";
-import { Clock, CheckCircle, AlertTriangle, X, FileCheck } from "lucide-react";
+import { Clock, CheckCircle, AlertTriangle, X, FileCheck, CircleAlert } from "lucide-react";
 
 export const repairRequestStatusConfig = {
   [RepairStatus.CHỜ_TIẾP_NHẬN]: {
@@ -15,7 +15,7 @@ export const repairRequestStatusConfig = {
   [RepairStatus.ĐANG_XỬ_LÝ]: {
     label: "Đang xử lý",
     color: "bg-blue-100 text-blue-800 border-blue-200",
-    icon: AlertTriangle,
+    icon: CircleAlert,
   },
   [RepairStatus.CHỜ_THAY_THẾ]: {
     label: "Chờ thay thế",
