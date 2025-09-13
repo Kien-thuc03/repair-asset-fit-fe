@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Clock, Eye, Search, X, ChevronUp, ChevronDown } from "lucide-react";
-import { EnhancedRepairRequest as RepairRequest } from "@/types";
+import { RepairRequest } from "@/types";
 import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
 import { Breadcrumb } from "antd";
 
@@ -137,26 +137,26 @@ export default function TheoDaoTienDoPage() {
   return (
     <div className="space-y-6 min-h-screen">
       <div className="mb-2">
-              <Breadcrumb
-                items={[
-                  {
-                    href: "/giang-vien",
-                    title: (
-                      <div className="flex items-center">
-                        <span>Trang chủ</span>
-                      </div>
-                    ),
-                  },
-                  {
-                    title: (
-                      <div className="flex items-center">
-                        <span>Theo dõi tiến độ</span>
-                      </div>
-                    ),
-                  },
-                ]}
-              />
-            </div>
+        <Breadcrumb
+          items={[
+            {
+              href: "/giang-vien",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Theo dõi tiến độ</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center space-x-3">
@@ -201,9 +201,11 @@ export default function TheoDaoTienDoPage() {
               className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
               <option value="all">Tất cả trạng thái</option>
               <option value="CHỜ_TIẾP_NHẬN">Chờ tiếp nhận</option>
+              <option value="ĐÃ_TIẾP_NHẬN">Đã tiếp nhận</option>
               <option value="ĐANG_XỬ_LÝ">Đang xử lý</option>
-              <option value="HOÀN_THÀNH">Hoàn thành</option>
-              <option value="HỦY_BỎ">Hủy bỏ</option>
+              <option value="CHỜ_THAY_THẾ">Chờ thay thế</option>
+              <option value="ĐÃ_HOÀN_THÀNH">Đã hoàn thành</option>
+              <option value="ĐÃ_HỦY">Đã hủy</option>
             </select>
           </div>
         </div>
@@ -503,26 +505,28 @@ export default function TheoDaoTienDoPage() {
                       {formatDate(selectedRequest.createdAt)}
                     </p>
                   </div>
-                  {selectedRequest.acceptedAt && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Ngày tiếp nhận
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {formatDate(selectedRequest.acceptedAt)}
-                      </p>
-                    </div>
-                  )}
-                  {selectedRequest.completedAt && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Ngày hoàn thành
-                      </label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {formatDate(selectedRequest.completedAt)}
-                      </p>
-                    </div>
-                  )}
+                  {selectedRequest.acceptedAt &&
+                    selectedRequest.acceptedAt.trim() !== "" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Ngày tiếp nhận
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {formatDate(selectedRequest.acceptedAt)}
+                        </p>
+                      </div>
+                    )}
+                  {selectedRequest.completedAt &&
+                    selectedRequest.completedAt.trim() !== "" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Ngày hoàn thành
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {formatDate(selectedRequest.completedAt)}
+                        </p>
+                      </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -546,16 +550,17 @@ export default function TheoDaoTienDoPage() {
                   )}
                 </div>
 
-                {selectedRequest.resolutionNotes && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Ghi chú xử lý
-                    </label>
-                    <p className="mt-1 text-sm text-gray-900">
-                      {selectedRequest.resolutionNotes}
-                    </p>
-                  </div>
-                )}
+                {selectedRequest.resolutionNotes &&
+                  selectedRequest.resolutionNotes.trim() !== "" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Ghi chú xử lý
+                      </label>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedRequest.resolutionNotes}
+                      </p>
+                    </div>
+                  )}
               </div>
             </div>
           </div>
