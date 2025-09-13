@@ -88,7 +88,7 @@ export const mockRepairRequests: RepairRequest[] = [
     errorTypeId: "error-002",
     errorTypeName: "Lỗi RAM",
     description: "RAM DDR4 8GB bị lỗi, máy không khởi động được, màn hình đen",
-    mediaUrls: ["https://images.unsplash.com/photo-1562747336-ba3daa59b2e2?w=400&h=300&fit=crop"],
+    mediaUrls: ["https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/131734/Originals/loi-man-hinh-xanh.png"],
     status: RepairStatus.ĐANG_XỬ_LÝ,
     resolutionNotes: "Đã kiểm tra RAM, đang chờ linh kiện mới",
     createdAt: "2024-01-14T14:15:00",
