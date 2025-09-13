@@ -16,7 +16,7 @@ import { Breadcrumb } from "antd";
 
 export default function BaoCaoLoiPage() {
   const searchParams = useSearchParams();
-  const isEditMode = searchParams.get('edit') === 'true';
+  const isEditMode = searchParams.get("edit") === "true";
 
   const [formData, setFormData] = useState<ReportForm>({
     assetId: "",
@@ -44,54 +44,55 @@ export default function BaoCaoLoiPage() {
   // Load edit data from localStorage
   useEffect(() => {
     if (isEditMode) {
-      const editDataStr = localStorage.getItem('editRequestData');
+      const editDataStr = localStorage.getItem("editRequestData");
       if (editDataStr) {
         try {
           const editData = JSON.parse(editDataStr);
-          
+
           // Check if data is fresh (within last hour)
-          const isDataFresh = editData.timestamp && (Date.now() - editData.timestamp) < 3600000;
-          
+          const isDataFresh =
+            editData.timestamp && Date.now() - editData.timestamp < 3600000;
+
           if (isDataFresh) {
             // First, set room and filter assets
             if (editData.roomId) {
               handleRoomChange(editData.roomId);
-              
+
               // Set asset after room is set (with small delay to ensure assets are filtered)
               setTimeout(() => {
                 if (editData.assetId) {
                   handleAssetChange(editData.assetId);
-                  
+
                   // Set components after asset is set
                   setTimeout(() => {
                     if (editData.componentId && editData.componentName) {
                       setSelectedComponentIds([editData.componentId]);
-                      setFormData(prev => ({
+                      setFormData((prev) => ({
                         ...prev,
-                        componentId: editData.componentId
+                        componentId: editData.componentId,
                       }));
                     }
-                    
+
                     // Set other form data
-                    setFormData(prev => ({
+                    setFormData((prev) => ({
                       ...prev,
                       errorTypeId: editData.errorTypeId || "",
-                      description: editData.description || ""
+                      description: editData.description || "",
                     }));
                   }, 100);
                 }
               }, 100);
             }
-            
+
             // Clear edit data after loading
-            localStorage.removeItem('editRequestData');
+            localStorage.removeItem("editRequestData");
           } else {
             // Data is stale, remove it
-            localStorage.removeItem('editRequestData');
+            localStorage.removeItem("editRequestData");
           }
         } catch (error) {
-          console.error('Error loading edit data:', error);
-          localStorage.removeItem('editRequestData');
+          console.error("Error loading edit data:", error);
+          localStorage.removeItem("editRequestData");
         }
       }
     }
@@ -237,7 +238,9 @@ export default function BaoCaoLoiPage() {
               {isEditMode ? "Chỉnh sửa báo cáo lỗi" : "Báo cáo lỗi thiết bị"}
             </h1>
             <p className="text-gray-600">
-              {isEditMode ? "Cập nhật thông tin báo cáo lỗi thiết bị" : "Tạo báo cáo lỗi cho thiết bị gặp sự cố"}
+              {isEditMode
+                ? "Cập nhật thông tin báo cáo lỗi thiết bị"
+                : "Tạo báo cáo lỗi cho thiết bị gặp sự cố"}
             </p>
           </div>
         </div>
@@ -257,7 +260,8 @@ export default function BaoCaoLoiPage() {
                 Đang chỉnh sửa yêu cầu
               </h4>
               <p className="text-sm text-blue-700 mt-1">
-                Thông tin từ yêu cầu trước đó đã được tự động điền vào form. Bạn có thể thay đổi các thông tin cần thiết và gửi lại.
+                Thông tin từ yêu cầu trước đó đã được tự động điền vào form. Bạn
+                có thể thay đổi các thông tin cần thiết và gửi lại.
               </p>
             </div>
           </div>
@@ -676,10 +680,15 @@ export default function BaoCaoLoiPage() {
       <SuccessModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
-        title={isEditMode ? "Báo cáo lỗi đã được cập nhật thành công!" : "Báo cáo lỗi đã được gửi thành công!"}
-        message={isEditMode 
-          ? "Thông tin báo cáo lỗi đã được cập nhật. Chúng tôi sẽ xem xét lại và xử lý theo thông tin mới. Bạn có thể theo dõi tiến độ xử lý trong phần 'Theo dõi tiến độ'."
-          : "Cảm ơn bạn đã báo cáo lỗi. Chúng tôi sẽ xem xét và xử lý trong thời gian sớm nhất. Bạn có thể theo dõi tiến độ xử lý trong phần 'Theo dõi tiến độ'."
+        title={
+          isEditMode
+            ? "Báo cáo lỗi đã được cập nhật thành công!"
+            : "Báo cáo lỗi đã được gửi thành công!"
+        }
+        message={
+          isEditMode
+            ? "Thông tin báo cáo lỗi đã được cập nhật. Chúng tôi sẽ xem xét lại và xử lý theo thông tin mới. Bạn có thể theo dõi tiến độ xử lý trong phần 'Theo dõi tiến độ'."
+            : "Cảm ơn bạn đã báo cáo lỗi. Chúng tôi sẽ xem xét và xử lý trong thời gian sớm nhất. Bạn có thể theo dõi tiến độ xử lý trong phần 'Theo dõi tiến độ'."
         }
       />
     </div>

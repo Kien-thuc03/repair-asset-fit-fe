@@ -35,7 +35,7 @@ export default function ChiTietTheoDaoTienDoPage() {
   // Handle edit request
   const handleEditRequest = () => {
     if (!request) return;
-    
+
     // Prepare data for editing
     const editData = {
       requestId: request.id,
@@ -46,14 +46,14 @@ export default function ChiTietTheoDaoTienDoPage() {
       errorTypeId: request.errorTypeId || "",
       description: request.description,
       // Add timestamp to ensure data freshness
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     // Save to localStorage
-    localStorage.setItem('editRequestData', JSON.stringify(editData));
-    
+    localStorage.setItem("editRequestData", JSON.stringify(editData));
+
     // Navigate to report page
-    router.push('/giang-vien/bao-cao-loi?edit=true');
+    router.push("/giang-vien/bao-cao-loi?edit=true");
   };
 
   // Handle cancel request
