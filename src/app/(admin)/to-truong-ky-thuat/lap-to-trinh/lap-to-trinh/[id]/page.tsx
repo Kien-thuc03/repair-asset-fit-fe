@@ -4,7 +4,7 @@ import { useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Breadcrumb } from "antd";
 import { ArrowLeft, FileText, Printer, Save } from "lucide-react";
-import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
+import { getReportListsByStatus } from "@/lib/mockData/reportLists";
 import SaveDraftSuccessModal from "../modal/SaveDraftSuccessModal";
 import SubmitReportSuccessModal from "../modal/SubmitReportSuccessModal";
 
@@ -13,10 +13,12 @@ export default function LapToTrinhPage() {
   const router = useRouter();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
-  const selectedRequest = useMemo(
-    () => mockReplacementRequests.find((r) => r.id === id),
-    [id]
-  );
+  const selectedRequest = useMemo(() => {
+    // Lấy tất cả các items từ các danh sách đã tạo có trạng thái "CHỜ_LẬP_TỜ_TRÌNH"
+    const reportLists = getReportListsByStatus("CHỜ_LẬP_TỜ_TRÌNH");
+    const allItems = reportLists.flatMap((list) => list.items);
+    return allItems.find((r) => r.id === id);
+  }, [id]);
 
   const [reportData, setReportData] = useState({
     submittedBy: "Giảng Thanh Trọn",

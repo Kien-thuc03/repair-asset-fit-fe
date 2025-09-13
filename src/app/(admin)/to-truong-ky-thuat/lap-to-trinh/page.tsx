@@ -338,20 +338,12 @@ export default function LapToTrinhPage() {
                         </button>
                         <button
                           onClick={() => {
-                            if (request.status === ReplacementStatus.ĐÃ_DUYỆT) {
-                              router.push(
-                                `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
-                              );
-                            }
+                            router.push(
+                              `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
+                            );
                           }}
-                          disabled={
-                            request.status !== ReplacementStatus.ĐÃ_DUYỆT
-                          }
-                          className={`px-3 py-1 text-xs font-medium border rounded-md transition-colors ${
-                            request.status === ReplacementStatus.ĐÃ_DUYỆT
-                              ? "text-blue-700 bg-blue-100 border-blue-300 hover:bg-blue-200 cursor-pointer"
-                              : "text-gray-400 bg-gray-100 border-gray-300 cursor-not-allowed"
-                          }`}>
+                          className="px-3 py-1 text-xs font-medium border rounded-md transition-colors text-blue-700 bg-blue-100 border-blue-300 hover:bg-blue-200 cursor-pointer"
+                          title="Lập tờ trình">
                           Lập tờ trình
                         </button>
                       </div>
@@ -505,27 +497,12 @@ export default function LapToTrinhPage() {
                             </button>
                             <button
                               onClick={() => {
-                                if (
-                                  request.status === ReplacementStatus.ĐÃ_DUYỆT
-                                ) {
-                                  router.push(
-                                    `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
-                                  );
-                                }
+                                router.push(
+                                  `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
+                                );
                               }}
-                              disabled={
-                                request.status !== ReplacementStatus.ĐÃ_DUYỆT
-                              }
-                              className={`inline-flex items-center px-3 py-1.5 border rounded text-xs font-medium whitespace-nowrap transition-colors ${
-                                request.status === ReplacementStatus.ĐÃ_DUYỆT
-                                  ? "text-blue-700 bg-blue-50 border-blue-300 hover:bg-blue-100 cursor-pointer"
-                                  : "text-gray-400 bg-gray-100 border-gray-300 cursor-not-allowed"
-                              }`}
-                              title={
-                                request.status === ReplacementStatus.ĐÃ_DUYỆT
-                                  ? "Lập tờ trình"
-                                  : "Chỉ được lập tờ trình khi đã duyệt"
-                              }>
+                              className="inline-flex items-center px-3 py-1.5 border rounded text-xs font-medium whitespace-nowrap transition-colors text-blue-700 bg-blue-50 border-blue-300 hover:bg-blue-100 cursor-pointer"
+                              title="Lập tờ trình">
                               <FileText className="h-3 w-3 mr-1" />
                               <span>Lập tờ trình</span>
                             </button>

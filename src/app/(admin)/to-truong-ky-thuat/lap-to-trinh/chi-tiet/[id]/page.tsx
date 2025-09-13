@@ -15,7 +15,7 @@ import {
   Clock,
   Info,
 } from "lucide-react";
-import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
+import { getReportListsByStatus } from "@/lib/mockData/reportLists";
 import { ReplacementStatus } from "@/types";
 
 export default function ChiTietLapToTrinhPage() {
@@ -23,10 +23,12 @@ export default function ChiTietLapToTrinhPage() {
   const router = useRouter();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
-  const request = useMemo(
-    () => mockReplacementRequests.find((r) => r.id === id),
-    [id]
-  );
+  const request = useMemo(() => {
+    // Lấy tất cả các items từ các danh sách đã tạo có trạng thái "CHỜ_LẬP_TỜ_TRÌNH"
+    const reportLists = getReportListsByStatus("CHỜ_LẬP_TỜ_TRÌNH");
+    const allItems = reportLists.flatMap((list) => list.items);
+    return allItems.find((r) => r.id === id);
+  }, [id]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -304,7 +306,14 @@ export default function ChiTietLapToTrinhPage() {
               </h2>
 
               <div className="space-y-3">
-                <button className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2">
+                <button
+                  onClick={() => {
+                    router.push(
+                      `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
+                    );
+                  }}
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2"
+                  title="Lập tờ trình">
                   <FileText className="h-4 w-4" />
                   <span>Lập tờ trình</span>
                 </button>
