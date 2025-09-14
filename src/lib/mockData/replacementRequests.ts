@@ -40,6 +40,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h301",
         roomName: "H301",
         buildingName: "Tòa H",
+        machineLabel: "05",
         reason:
           "Nguồn điện bị cháy cùng lúc với máy 01, nghi ngờ do sự cố điện",
         quantity: 1,
@@ -174,6 +175,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestItem[] = [
         roomId: "room-h508",
         roomName: "H508",
         buildingName: "Tòa H",
+        machineLabel: "25",
         reason: "RAM 8GB hiện tại không đủ cho việc render 3D",
         quantity: 1,
       },

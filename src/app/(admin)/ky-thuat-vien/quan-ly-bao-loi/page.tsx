@@ -228,7 +228,7 @@ export default function DanhSachBaoLoiPage() {
 								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-24"
 								onClick={() => handleSort("requestCode")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Mã YC</span>
 									{getSortIcon("requestCode")}
 								</div>
@@ -237,7 +237,7 @@ export default function DanhSachBaoLoiPage() {
 								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-40"
 								onClick={() => handleSort("assetName")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Tài sản</span>
 									{getSortIcon("assetName")}
 								</div>
@@ -246,7 +246,7 @@ export default function DanhSachBaoLoiPage() {
 								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-32"
 								onClick={() => handleSort("location")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Vị trí</span>
 									{getSortIcon("location")}
 								</div>
@@ -255,7 +255,7 @@ export default function DanhSachBaoLoiPage() {
 								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-28"
 								onClick={() => handleSort("reporterName")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Người báo</span>
 									{getSortIcon("reporterName")}
 								</div>
@@ -264,7 +264,7 @@ export default function DanhSachBaoLoiPage() {
 								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-32"
 								onClick={() => handleSort("errorTypeName")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Loại lỗi</span>
 									{getSortIcon("errorTypeName")}
 								</div>
@@ -273,7 +273,7 @@ export default function DanhSachBaoLoiPage() {
 								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-28"
 								onClick={() => handleSort("status")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Trạng thái</span>
 									{getSortIcon("status")}
 								</div>
@@ -282,12 +282,12 @@ export default function DanhSachBaoLoiPage() {
 								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-24"
 								onClick={() => handleSort("createdAt")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Ngày báo</span>
 									{getSortIcon("createdAt")}
 								</div>
 							</th>
-							<th className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider w-16">
+							<th className="px-2 py-3 text-left text-xs uppercase font-medium text-gray-500 tracking-wider w-16">
 								Thao tác
 							</th>
 						</tr>

@@ -1,14 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
-import { Card, Table, Button, Tag, Input, Modal, Form, InputNumber, message, Breadcrumb } from "antd";
-import { PlusOutlined, EditOutlined } from "@ant-design/icons";
+import React, { useState, useMemo } from "react";
+import { Card, Table, Button, Input, Modal, Form, message, Breadcrumb } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { Pagination } from "@/components/ui";
 import type { ColumnsType } from "antd/es/table";
-import { 
-  Home as HomeIcon, 
-  Wrench as RepairIcon,
-  FileText as ProposalIcon 
-} from "lucide-react";
 import { mockComponentsFromReportsWithStatus, type ComponentFromReport } from "@/lib/mockData";
 
 interface ProposalFormData {
@@ -20,23 +16,16 @@ interface ProposalFormData {
 export default function CreateProposalPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [form] = Form.useForm();
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Chờ xử lý": return "warning";
-      case "Đang xử lý": return "processing";
-      case "Hoàn thành": return "success";
-      default: return "default";
-    }
-  };
 
   const columns: ColumnsType<ComponentFromReport> = [
     {
       title: 'STT',
       key: 'index',
       width: 60,
-      render: (_: any, __: any, index: number) => index + 1,
+      render: (_: any, __: any, index: number) => (currentPage - 1) * pageSize + index + 1,
     },
     {
       title: 'Tên linh kiện',
@@ -66,9 +55,9 @@ export default function CreateProposalPage() {
       key: 'location',
       render: (record: ComponentFromReport) => (
         <div>
-          <div className="font-medium">{record.buildingName} - {record.roomName}</div>
+          <div className="font-medium">{record.buildingName}</div>
           {record.machineLabel && (
-            <div className="text-xs text-gray-500">Máy {record.machineLabel}</div>
+            <div className="text-xs text-gray-500">{record.roomName} - Máy {record.machineLabel}</div>
           )}
         </div>
       ),
@@ -101,6 +90,22 @@ export default function CreateProposalPage() {
     selectedRowKeys,
     onChange: (newSelectedRowKeys: React.Key[]) => {
       setSelectedRowKeys(newSelectedRowKeys as string[]);
+    },
+    onSelect: (record: ComponentFromReport, selected: boolean) => {
+      if (selected) {
+        setSelectedRowKeys(prev => [...prev, record.id]);
+      } else {
+        setSelectedRowKeys(prev => prev.filter(key => key !== record.id));
+      }
+    },
+    onSelectAll: (selected: boolean, selectedRows: ComponentFromReport[], changeRows: ComponentFromReport[]) => {
+      if (selected) {
+        const newKeys = changeRows.map(row => row.id);
+        setSelectedRowKeys(prev => [...prev, ...newKeys]);
+      } else {
+        const removedKeys = changeRows.map(row => row.id);
+        setSelectedRowKeys(prev => prev.filter(key => !removedKeys.includes(key)));
+      }
     },
     getCheckboxProps: (record: ComponentFromReport) => ({
       disabled: record.status !== "Chờ xử lý",
@@ -148,23 +153,52 @@ export default function CreateProposalPage() {
     (component: ComponentFromReport) => selectedRowKeys.includes(component.id)
   );
 
+  // Tính toán dữ liệu phân trang
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return mockComponentsFromReportsWithStatus.slice(startIndex, endIndex);
+  }, [currentPage, pageSize]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <Breadcrumb className="mb-4">
-        <Breadcrumb.Item>
-          <HomeIcon className="w-4 h-4 mr-1 inline" />
-          <span>Trang chủ</span>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <RepairIcon className="w-4 h-4 mr-1 inline" />
-          <span>Quản lý thay thế linh kiện</span>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <ProposalIcon className="w-4 h-4 mr-1 inline" />
-          <span>Lập phiếu đề xuất</span>
-        </Breadcrumb.Item>
-      </Breadcrumb>
+      <Breadcrumb
+        items={[
+          {
+            href: '/ky-thuat-vien',
+            title: (
+              <div className="flex items-center">
+                <span>Trang chủ</span>
+              </div>
+            ),
+          },
+          {
+            title: (
+              <div className="flex items-center">
+                <span>Quản lý thay thế linh kiện</span>
+              </div>
+            ),
+          },
+          {
+            href: '/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat',
+            title: (
+              <div className="flex items-center">
+                <span>Lập phiếu đề xuất</span>
+              </div>
+            ),
+          },
+        ]}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -212,25 +246,31 @@ export default function CreateProposalPage() {
               Danh sách linh kiện cần thay thế
             </h3>
             <p className="text-gray-600 text-sm">
-              Các linh kiện từ báo cáo lỗi đang chờ xử lý
+              Các linh kiện từ báo cáo lỗi đang chờ xử lý • Tổng cộng {mockComponentsFromReportsWithStatus.length} linh kiện
             </p>
           </div>
         </div>
 
         <Table
           columns={columns}
-          dataSource={mockComponentsFromReportsWithStatus}
+          dataSource={paginatedData}
           rowKey="id"
           rowSelection={rowSelection}
-          pagination={{
-            total: mockComponentsFromReportsWithStatus.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) =>
-              `${range[0]}-${range[1]} của ${total} linh kiện`,
-          }}
+          pagination={false}
           scroll={{ x: 1200 }}
+        />
+        
+        {/* Custom Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={mockComponentsFromReportsWithStatus.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          showSizeChanger={true}
+          showQuickJumper={true}
+          showTotal={true}
+          className="mt-4"
         />
       </Card>
 

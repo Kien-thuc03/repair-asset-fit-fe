@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useMemo } from 'react'
-import { Breadcrumb, Input, Select, DatePicker, Tag, Button } from 'antd'
-import { Search, Filter, Eye, Package, ChevronUp, ChevronDown } from 'lucide-react'
+import { Breadcrumb, Input, Select, DatePicker, Tag } from 'antd'
+import { Search, Eye, ChevronUp, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { mockReplacementRequestsForTechnician } from '@/lib/mockData/replacementRequests'
-import { ReplacementStatus, ReplacementRequestItem, ReplacementComponent } from '@/types'
+import { ReplacementStatus, ReplacementRequestItem } from '@/types'
 import { Pagination } from '@/components/ui'
 
 const { RangePicker } = DatePicker
@@ -245,6 +245,14 @@ export default function QuanLyThayTheLinhKienPage() {
 							</div>
 						),
 					},
+					{ 
+						href: '/ky-thuat-vien/quan-ly-thay-the-linh-kien',
+						title: (
+							<div className="flex items-center">
+								<span>Danh sách đề xuất</span>
+							</div>
+						),
+					}
 				]}
 			/>
 
@@ -311,7 +319,7 @@ export default function QuanLyThayTheLinhKienPage() {
 								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("requestCode")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Mã yêu cầu</span>
 									{getSortIcon("requestCode")}
 								</div>
@@ -320,7 +328,7 @@ export default function QuanLyThayTheLinhKienPage() {
 								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("title")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Tiêu đề đề xuất</span>
 									{getSortIcon("title")}
 								</div>
@@ -329,7 +337,7 @@ export default function QuanLyThayTheLinhKienPage() {
 								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("componentsCount")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Số linh kiện</span>
 									{getSortIcon("componentsCount")}
 								</div>
@@ -338,7 +346,7 @@ export default function QuanLyThayTheLinhKienPage() {
 								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("status")}
 							>
-								<div className="flex items-center space-x-1">
+								<div className="flex items-center uppercase space-x-1">
 									<span>Trạng thái</span>
 									{getSortIcon("status")}
 								</div>
@@ -352,7 +360,7 @@ export default function QuanLyThayTheLinhKienPage() {
 									{getSortIcon("createdAt")}
 								</div>
 							</th>
-							<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+							<th className="px-4 py-3 text-left text-xs uppercase font-medium text-gray-500 tracking-wider">
 								Thao tác
 							</th>
 						</tr>
