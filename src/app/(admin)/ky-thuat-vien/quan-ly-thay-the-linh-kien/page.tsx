@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useMemo } from 'react'
-import { Breadcrumb, Input, Select, DatePicker, Tag } from 'antd'
-import { Search, Eye, ChevronUp, ChevronDown } from 'lucide-react'
+import { Breadcrumb, Input, Select, DatePicker, Tag, Button, message } from 'antd'
+import { Search, Eye, ChevronUp, ChevronDown, Download } from 'lucide-react'
 import Link from 'next/link'
 import { mockReplacementRequestsForTechnician } from '@/lib/mockData/replacementRequests'
 import { ReplacementStatus, ReplacementRequestItem } from '@/types'
@@ -22,6 +22,7 @@ export default function QuanLyThayTheLinhKienPage() {
 	const [sortDirection, setSortDirection] = useState<SortDirection>("none")
 	const [currentPage, setCurrentPage] = useState(1)
 	const [pageSize, setPageSize] = useState(10)
+	const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([])
 
 	// Hàm xử lý sắp xếp 3 trạng thái
 	const handleSort = (field: SortField) => {
@@ -61,6 +62,72 @@ export default function QuanLyThayTheLinhKienPage() {
 				/>
 			</div>
 		)
+	}
+
+	// Hàm xử lý chọn hàng
+	const handleRowSelect = (id: string, selected: boolean) => {
+		if (selected) {
+			setSelectedRowKeys(prev => [...prev, id])
+		} else {
+			setSelectedRowKeys(prev => prev.filter(key => key !== id))
+		}
+	}
+
+	// Hàm xử lý chọn tất cả
+	const handleSelectAll = (selected: boolean) => {
+		if (selected) {
+			const currentPageKeys = paginatedData.map(row => row.id)
+			setSelectedRowKeys(prev => [...prev, ...currentPageKeys])
+		} else {
+			const currentPageKeys = paginatedData.map(row => row.id)
+			setSelectedRowKeys(prev => prev.filter(key => !currentPageKeys.includes(key)))
+		}
+	}
+
+	// Hàm xuất Excel
+	const handleExportExcel = async () => {
+		const selectedData = filteredAndSortedData.filter(item => selectedRowKeys.includes(item.id))
+		
+		if (selectedData.length === 0) {
+			message.warning('Vui lòng chọn ít nhất một đề xuất để xuất Excel')
+			return
+		}
+
+		try {
+			// Dynamic import để tránh lỗi SSR
+			const XLSX = await import('xlsx')
+			
+			// Tạo dữ liệu Excel
+			const excelData = selectedData.map((item, index) => ({
+				'STT': index + 1,
+				'Mã yêu cầu': item.requestCode,
+				'Tiêu đề đề xuất': item.title,
+				'Mô tả': item.description,
+				'Số linh kiện': item.components.length,
+				'Trạng thái': statusConfig[item.status].text,
+				'Ngày tạo': new Date(item.createdAt).toLocaleDateString('vi-VN'),
+				'Người tạo': item.createdBy || 'N/A'
+			}))
+
+			// Tạo workbook và worksheet
+			const wb = XLSX.utils.book_new()
+			const ws = XLSX.utils.json_to_sheet(excelData)
+
+			// Thêm worksheet vào workbook
+			XLSX.utils.book_append_sheet(wb, ws, 'Danh sách đề xuất')
+
+			// Xuất file
+			const fileName = `danh-sach-de-xuat-${new Date().toISOString().split('T')[0]}.xlsx`
+			XLSX.writeFile(wb, fileName)
+
+			message.success(`Đã xuất ${selectedData.length} đề xuất ra file ${fileName}`)
+			
+			// Reset selection sau khi xuất
+			setSelectedRowKeys([])
+		} catch (error) {
+			console.error('Lỗi xuất Excel:', error)
+			message.error('Có lỗi xảy ra khi xuất file Excel')
+		}
 	}
 
 	// Lọc và sắp xếp dữ liệu
@@ -268,9 +335,9 @@ export default function QuanLyThayTheLinhKienPage() {
 
 			{/* Filters & Search */}
 			<div className="bg-white p-4 rounded-lg shadow space-y-4">
-				<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+				<div className="grid grid-cols-1 md:grid-cols-5 gap-4">
 					<Input
-					className='col-span-1 md:col-span-2'
+						className='col-span-1 md:col-span-2'
 						placeholder="Tìm kiếm theo mã đề xuất, tiêu đề, tên tài sản, linh kiện..."
 						prefix={<Search className="w-4 h-4" />}
 						value={searchText}
@@ -307,6 +374,15 @@ export default function QuanLyThayTheLinhKienPage() {
 						value={dateRange}
 						onChange={setDateRange}
 					/>
+
+					<Button
+						type="primary"
+						icon={<Download className="w-4 h-4" />}
+						onClick={handleExportExcel}
+						disabled={selectedRowKeys.length === 0}
+					>
+						Xuất Excel ({selectedRowKeys.length})
+					</Button>
 				</div>
 			</div>
 
@@ -315,6 +391,18 @@ export default function QuanLyThayTheLinhKienPage() {
 				<table className="min-w-full divide-y divide-gray-200">
 					<thead className="bg-gray-50">
 						<tr>
+							<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								<div className="flex items-center space-x-2">
+									<input
+										type="checkbox"
+										className="rounded border-gray-300"
+										checked={paginatedData.length > 0 && paginatedData.every(row => selectedRowKeys.includes(row.id))}
+										onChange={(e) => handleSelectAll(e.target.checked)}
+										aria-label="Chọn tất cả đề xuất"
+									/>
+									<span>STT</span>
+								</div>
+							</th>
 							<th 
 								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("requestCode")}
@@ -366,10 +454,22 @@ export default function QuanLyThayTheLinhKienPage() {
 						</tr>
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
-						{paginatedData.map((record) => {
+						{paginatedData.map((record, index) => {
 							const config = statusConfig[record.status]
 							return (
 								<tr key={record.id} className="hover:bg-gray-50">
+									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+										<div className="flex items-center space-x-2">
+											<input
+												type="checkbox"
+												className="rounded border-gray-300"
+												checked={selectedRowKeys.includes(record.id)}
+												onChange={(e) => handleRowSelect(record.id, e.target.checked)}
+												aria-label={`Chọn đề xuất ${record.requestCode}`}
+											/>
+											<span>{(currentPage - 1) * pageSize + index + 1}</span>
+										</div>
+									</td>
 									<td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
 										{record.requestCode}
 									</td>
