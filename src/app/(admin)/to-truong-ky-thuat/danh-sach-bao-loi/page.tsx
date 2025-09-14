@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
-  Filter,
   Eye,
   User,
   Building2,
@@ -10,9 +10,13 @@ import {
   Clock,
   AlertCircle,
   CheckCircle,
-  XCircle,
   ChevronUp,
   ChevronDown,
+  Calculator,
+  Download,
+  CheckSquare,
+  Square,
+  X,
 } from "lucide-react";
 import { RepairRequest, RepairStatus } from "@/types";
 import {
@@ -20,20 +24,32 @@ import {
   repairRequestStatusConfig,
   errorTypes,
 } from "@/lib/mockData";
+import { Breadcrumb } from "antd";
+import Pagination from "@/components/common/Pagination";
 
 export default function DanhSachBaoLoiPage() {
-  const [requests, setRequests] = useState<RepairRequest[]>(mockRepairRequests);
+  const router = useRouter();
+  const [requests] = useState<RepairRequest[]>(mockRepairRequests);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedErrorType, setSelectedErrorType] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState<RepairRequest | null>(
-    null
-  );
-  const [showModal, setShowModal] = useState(false);
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Selection states
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  // Export states
+  const [exportCount, setExportCount] = useState(0);
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -177,30 +193,78 @@ export default function DanhSachBaoLoiPage() {
     return <IconComponent className="h-4 w-4" />;
   };
 
-  const updateRequestStatus = (requestId: string, newStatus: RepairStatus) => {
-    setRequests((prev) =>
-      prev.map((req) =>
-        req.id === requestId
-          ? {
-              ...req,
-              status: newStatus,
-              acceptedAt:
-                newStatus === RepairStatus.ĐANG_XỬ_LÝ && !req.acceptedAt
-                  ? new Date().toISOString()
-                  : req.acceptedAt,
-              completedAt:
-                newStatus === RepairStatus.ĐÃ_HOÀN_THÀNH
-                  ? new Date().toISOString()
-                  : req.completedAt,
-            }
-          : req
-      )
-    );
-    setShowModal(false);
+  // Pagination logic
+  const getCurrentData = () => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return sortedRequests.slice(startIndex, endIndex);
   };
+
+  // Selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    setSelectedItems(
+      checked ? sortedRequests.map((request) => request.id) : []
+    );
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems((prev) => [...prev, itemId]);
+    } else {
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+      setSelectAll(false);
+    }
+  };
+
+  // Export handler
+  const handleExportExcel = () => {
+    const itemsToExport =
+      selectedItems.length > 0
+        ? sortedRequests.filter((request) => selectedItems.includes(request.id))
+        : sortedRequests;
+
+    if (itemsToExport.length === 0) {
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    console.log("Xuất Excel:", itemsToExport);
+    // TODO: Implement actual Excel export logic
+    setExportCount(itemsToExport.length);
+    setShowExportSuccessModal(true);
+  };
+
+  // Reset pagination when changing filters or search
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedItems([]);
+    setSelectAll(false);
+  }, [selectedStatus, selectedErrorType, searchTerm]);
 
   return (
     <div className="container mx-auto px-4 py-2 main-content">
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/to-truong-ky-thuat",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Danh sách báo lỗi</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* Header */}
       <div className="mb-8">
         <div className="flex justify-between items-center">
@@ -212,12 +276,23 @@ export default function DanhSachBaoLoiPage() {
               Theo dõi và quản lý các báo cáo lỗi từ giảng viên
             </p>
           </div>
+          {/* Export Excel Button */}
+          <button
+            onClick={handleExportExcel}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <Download className="h-4 w-4 mr-2" />
+            <span>
+              {selectedItems.length > 0
+                ? `Xuất Excel (${selectedItems.length} mục)`
+                : `Xuất Excel (${sortedRequests.length} mục)`}
+            </span>
+          </button>
         </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Tìm kiếm
@@ -267,13 +342,6 @@ export default function DanhSachBaoLoiPage() {
                 </option>
               ))}
             </select>
-          </div>
-
-          <div className="flex items-end">
-            <button className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-              <Filter className="h-4 w-4 mr-2" />
-              Lọc
-            </button>
           </div>
         </div>
       </div>
@@ -356,7 +424,7 @@ export default function DanhSachBaoLoiPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <AlertCircle className="h-8 w-8 text-purple-400" />
+                <Calculator className="h-8 w-8 text-purple-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
@@ -386,6 +454,17 @@ export default function DanhSachBaoLoiPage() {
             <table className="w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
+                  <th className="px-3 py-3 text-left w-[5%]">
+                    <button
+                      onClick={() => handleSelectAll(!selectAll)}
+                      className="text-gray-400 hover:text-gray-600">
+                      {selectAll ? (
+                        <CheckSquare className="h-4 w-4" />
+                      ) : (
+                        <Square className="h-4 w-4" />
+                      )}
+                    </button>
+                  </th>
                   <th
                     className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
                     onClick={() => handleSort("requestCode")}>
@@ -434,15 +513,31 @@ export default function DanhSachBaoLoiPage() {
                       {getSortIcon("createdAt")}
                     </div>
                   </th>
-                  <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%] whitespace-nowrap">
                     Thao tác
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {sortedRequests.length > 0 ? (
-                  sortedRequests.map((request) => (
+                {getCurrentData().length > 0 ? (
+                  getCurrentData().map((request) => (
                     <tr key={request.id} className="hover:bg-gray-50">
+                      <td className="px-3 py-4 w-[5%]">
+                        <button
+                          onClick={() =>
+                            handleSelectItem(
+                              request.id,
+                              !selectedItems.includes(request.id)
+                            )
+                          }
+                          className="text-gray-400 hover:text-gray-600">
+                          {selectedItems.includes(request.id) ? (
+                            <CheckSquare className="h-4 w-4 text-blue-600" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </button>
+                      </td>
                       <td className="px-3 py-4 whitespace-nowrap w-[15%]">
                         <div
                           className="text-sm font-medium text-gray-900 truncate"
@@ -530,11 +625,12 @@ export default function DanhSachBaoLoiPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium w-[8%]">
+                      <td className="px-3 py-4 whitespace-nowrap text-center text-sm font-medium w-[8%]">
                         <button
                           onClick={() => {
-                            setSelectedRequest(request);
-                            setShowModal(true);
+                            router.push(
+                              `/to-truong-ky-thuat/danh-sach-bao-loi/chi-tiet?id=${request.id}`
+                            );
                           }}
                           className="text-indigo-600 hover:text-indigo-900">
                           <Eye className="h-4 w-4" />
@@ -544,7 +640,7 @@ export default function DanhSachBaoLoiPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
+                    <td colSpan={8} className="px-6 py-12 text-center">
                       <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
                       <h3 className="text-sm font-medium text-gray-900 mb-1">
                         Không tìm thấy kết quả
@@ -559,193 +655,65 @@ export default function DanhSachBaoLoiPage() {
             </table>
           </div>
         </div>
+
+        {/* Pagination */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={sortedRequests.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
-      {/* Detail Modal */}
-      {showModal && selectedRequest && (
+      {/* Export Success Modal */}
+      {showExportSuccessModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-3xl shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Chi tiết báo lỗi {selectedRequest.requestCode}
-                </h3>
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                <Download className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                Xuất Excel thành công!
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Đã xuất {exportCount} báo lỗi thành công.
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
                 <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-gray-600">
-                  <XCircle className="h-6 w-6" />
+                  onClick={() => setShowExportSuccessModal(false)}
+                  className="px-4 py-2 bg-green-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
+                  Đóng
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Mã tài sản
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.assetCode}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Tên thiết bị
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.assetName}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Vị trí
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.roomName} -{" "}
-                      {selectedRequest.buildingName}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Linh kiện
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.componentName || "Tổng thể"}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Mô tả lỗi
-                  </label>
-                  <p className="text-sm text-gray-900 mt-1 p-3 bg-gray-50 rounded">
-                    {selectedRequest.description}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Loại lỗi
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.errorTypeName || "Chưa xác định"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Trạng thái
-                    </label>
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                        selectedRequest.status
-                      )} mt-1`}>
-                      {getStatusText(selectedRequest.status)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Người báo cáo
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {selectedRequest.reporterName} (
-                      {selectedRequest.reporterRole})
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Ngày báo cáo
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1">
-                      {new Date(selectedRequest.createdAt).toLocaleString(
-                        "vi-VN"
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedRequest.assignedTechnicianName && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Kỹ thuật viên phụ trách
-                      </label>
-                      <p className="text-sm text-gray-900 mt-1">
-                        {selectedRequest.assignedTechnicianName}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Thời gian tiếp nhận
-                      </label>
-                      <p className="text-sm text-gray-900 mt-1">
-                        {selectedRequest.acceptedAt &&
-                          new Date(selectedRequest.acceptedAt).toLocaleString(
-                            "vi-VN"
-                          )}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {selectedRequest.resolutionNotes && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Ghi chú kỹ thuật viên
-                    </label>
-                    <p className="text-sm text-gray-900 mt-1 p-3 bg-gray-50 rounded">
-                      {selectedRequest.resolutionNotes}
-                    </p>
-                  </div>
-                )}
+      {/* Export Error Modal */}
+      {showExportErrorModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <X className="h-6 w-6 text-red-600" />
               </div>
-
-              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
-                {selectedRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN && (
-                  <button
-                    onClick={() =>
-                      updateRequestStatus(
-                        selectedRequest.id,
-                        RepairStatus.ĐANG_XỬ_LÝ
-                      )
-                    }
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    Bắt đầu xử lý
-                  </button>
-                )}
-                {selectedRequest.status === RepairStatus.ĐANG_XỬ_LÝ && (
-                  <>
-                    <button
-                      onClick={() =>
-                        updateRequestStatus(
-                          selectedRequest.id,
-                          RepairStatus.ĐÃ_HOÀN_THÀNH
-                        )
-                      }
-                      className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                      Hoàn thành
-                    </button>
-                    <button
-                      onClick={() =>
-                        updateRequestStatus(
-                          selectedRequest.id,
-                          RepairStatus.ĐÃ_HỦY
-                        )
-                      }
-                      className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500">
-                      Hủy bỏ
-                    </button>
-                  </>
-                )}
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                Không thể xuất Excel
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Không có dữ liệu để xuất. Vui lòng kiểm tra lại.
+                </p>
+              </div>
+              <div className="items-center px-4 py-3">
                 <button
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                  onClick={() => setShowExportErrorModal(false)}
+                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
                   Đóng
                 </button>
               </div>

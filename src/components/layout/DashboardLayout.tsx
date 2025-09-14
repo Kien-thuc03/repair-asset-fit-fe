@@ -27,6 +27,8 @@ import {
   Calendar,
   Clock,
   Search,
+  FileCheck,
+  MapPin,
 } from "lucide-react";
 
 // Navigation items
@@ -109,12 +111,12 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       {
         name: "Duyệt đề xuất",
         href: "/to-truong-ky-thuat/duyet-de-xuat",
-        icon: CheckCircle,
+        icon: FileCheck,
       },
       {
         name: "Phân công khu vực",
         href: "/to-truong-ky-thuat/phan-cong",
-        icon: Users,
+        icon: MapPin,
       },
       {
         name: "Danh sách báo lỗi",
@@ -131,17 +133,17 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         href: "/to-truong-ky-thuat/tra-cuu-tai-san",
         icon: Search,
       },
+       {
+        name: "Thống kê báo cáo",
+        href: "/to-truong-ky-thuat/thong-ke-bao-cao",
+        icon: BarChart3,
+      },
       {
         name: "Biên bản",
         href: "/to-truong-ky-thuat/bien-ban",
         icon: Calendar,
       },
-      {
-        name: "Thống kê báo cáo",
-        href: "/to-truong-ky-thuat/thong-ke-bao-cao",
-        icon: BarChart3,
-      },
-    ],
+         ],
     [UserRole.PHONG_QUAN_TRI]: [
       {
         name: "Dashboard",

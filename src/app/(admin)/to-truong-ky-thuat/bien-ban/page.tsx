@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Search,
   Eye,
   FileText,
@@ -10,10 +9,13 @@ import {
   CheckCircle,
   Clock,
   Send,
-  Filter,
   Signature,
   ChevronUp,
   ChevronDown,
+  Download,
+  CheckSquare,
+  Square,
+  X,
 } from "lucide-react";
 import {
   mockInspectionReports,
@@ -21,12 +23,14 @@ import {
 } from "@/lib/mockData/inspectionReports";
 import InspectionReportDetailModal from "./modal/InspectionReportDetailModal";
 import SignConfirmationModal from "./modal/SignConfirmationModal";
+import { Breadcrumb } from "antd";
+import Pagination from "@/components/common/Pagination";
 
 export default function BienBanPage() {
+  const router = useRouter();
   const [inspectionReports, setInspectionReports] = useState<
     InspectionReport[]
   >(mockInspectionReports);
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReport, setSelectedReport] = useState<InspectionReport | null>(
     null
@@ -37,6 +41,19 @@ export default function BienBanPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
     "none"
   );
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Selection states
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  // Export states
+  const [exportCount, setExportCount] = useState(0);
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -63,8 +80,6 @@ export default function BienBanPage() {
   }, []);
 
   const filteredReports = inspectionReports.filter((report) => {
-    const matchesStatus =
-      selectedStatus === "all" || report.status === selectedStatus;
     const matchesSearch =
       searchTerm === "" ||
       report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -73,7 +88,7 @@ export default function BienBanPage() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
-    return matchesStatus && matchesSearch;
+    return matchesSearch;
   });
 
   // Hàm xử lý sắp xếp 3 trạng thái
@@ -192,8 +207,7 @@ export default function BienBanPage() {
   };
 
   const handleViewDetail = (report: InspectionReport) => {
-    setSelectedReport(report);
-    setShowDetailModal(true);
+    router.push(`/to-truong-ky-thuat/bien-ban/chi-tiet?id=${report.id}`);
   };
 
   const handleSignReport = (report: InspectionReport) => {
@@ -230,8 +244,76 @@ export default function BienBanPage() {
     );
   };
 
+  // Pagination logic
+  const getCurrentData = () => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return sortedReports.slice(startIndex, endIndex);
+  };
+
+  // Selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    setSelectedItems(checked ? sortedReports.map((report) => report.id) : []);
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems((prev) => [...prev, itemId]);
+    } else {
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+      setSelectAll(false);
+    }
+  };
+
+  // Export handler
+  const handleExportExcel = () => {
+    const itemsToExport =
+      selectedItems.length > 0
+        ? sortedReports.filter((report) => selectedItems.includes(report.id))
+        : sortedReports;
+
+    if (itemsToExport.length === 0) {
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    console.log("Xuất Excel:", itemsToExport);
+    // TODO: Implement actual Excel export logic
+    setExportCount(itemsToExport.length);
+    setShowExportSuccessModal(true);
+  };
+
+  // Reset pagination when changing search
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedItems([]);
+    setSelectAll(false);
+  }, [searchTerm]);
+
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content">
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/to-truong-ky-thuat",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Xác nhận biên bản</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       {/* Header */}
       <div className="mb-4 sm:mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
@@ -243,52 +325,32 @@ export default function BienBanPage() {
               Xem và ký xác nhận các biên bản kiểm tra do Phòng Quản trị gửi đến
             </p>
           </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExportExcel}
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+              <Download className="h-4 w-4 mr-2" />
+              Xuất Excel
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-3 sm:p-6 rounded-lg shadow mb-4 sm:mb-6">
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3 items-end">
-          <div className="flex flex-col h-full">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
-              Tìm kiếm
-            </label>
-            <div className="relative flex-1 min-w-0 h-9 sm:h-10">
-              <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400 pointer-events-none flex-shrink-0 z-10" />
-              <input
-                type="text"
-                className="absolute inset-0 w-full h-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                placeholder="Số biên bản, tiêu đề..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col h-full">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
-              Trạng thái
-            </label>
-            <div className="flex-1 h-9 sm:h-10">
-              <select
-                className="w-full h-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value="pending">Chờ ký</option>
-                <option value="signed">Đã ký</option>
-                <option value="sent_back">Đã gửi lại</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="flex flex-col h-full justify-end">
-            <div className="h-9 sm:h-10">
-              <button className="w-full h-full inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                <Filter className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
-                Lọc
-              </button>
-            </div>
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Tìm kiếm
+          </label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Số biên bản, tiêu đề..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
       </div>
@@ -296,9 +358,28 @@ export default function BienBanPage() {
       {/* Reports Table */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-          <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách biên bản ({sortedReports.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-medium text-gray-900">
+              Danh sách biên bản ({sortedReports.length})
+            </h2>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleSelectAll(!selectAll)}
+                className="flex items-center text-sm text-gray-600 hover:text-gray-800">
+                {selectAll ? (
+                  <CheckSquare className="h-4 w-4 mr-1" />
+                ) : (
+                  <Square className="h-4 w-4 mr-1" />
+                )}
+                Chọn tất cả
+              </button>
+              {selectedItems.length > 0 && (
+                <span className="text-sm text-blue-600">
+                  ({selectedItems.length} mục đã chọn)
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col h-[400px] sm:h-[500px] lg:h-[600px]">
@@ -306,13 +387,27 @@ export default function BienBanPage() {
             {/* Mobile Card View */}
             <div className="block sm:hidden">
               <div className="p-3 space-y-3">
-                {sortedReports.length > 0 ? (
-                  sortedReports.map((report) => (
+                {getCurrentData().length > 0 ? (
+                  getCurrentData().map((report) => (
                     <div
                       key={report.id}
                       className="bg-gray-50 rounded-lg p-3 border border-gray-200">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center">
+                          <button
+                            onClick={() =>
+                              handleSelectItem(
+                                report.id,
+                                !selectedItems.includes(report.id)
+                              )
+                            }
+                            className="mr-2 flex-shrink-0">
+                            {selectedItems.includes(report.id) ? (
+                              <CheckSquare className="h-4 w-4 text-blue-600" />
+                            ) : (
+                              <Square className="h-4 w-4 text-gray-400" />
+                            )}
+                          </button>
                           <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
                           <div className="min-w-0">
                             <div className="text-sm font-medium text-gray-900 truncate">
@@ -394,7 +489,18 @@ export default function BienBanPage() {
               <table className="w-full divide-y divide-gray-200 table-fixed">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[5%] px-3 py-3 text-center">
+                      <button
+                        onClick={() => handleSelectAll(!selectAll)}
+                        className="flex items-center justify-center">
+                        {selectAll ? (
+                          <CheckSquare className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <Square className="h-4 w-4 text-gray-400" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="w-[28%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase"
                         onClick={() => handleSort("reportNumber")}>
@@ -402,7 +508,7 @@ export default function BienBanPage() {
                         {getSortIcon("reportNumber")}
                       </button>
                     </th>
-                    <th className="w-[30%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[32%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase"
                         onClick={() => handleSort("relatedReportTitle")}>
@@ -410,7 +516,7 @@ export default function BienBanPage() {
                         {getSortIcon("relatedReportTitle")}
                       </button>
                     </th>
-                    <th className="w-[12%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="w-[15%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase"
                         onClick={() => handleSort("createdBy")}>
@@ -427,22 +533,29 @@ export default function BienBanPage() {
                       </button>
                     </th>
                     <th className="w-[10%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
-                        onClick={() => handleSort("status")}>
-                        <span>Trạng thái</span>
-                        {getSortIcon("status")}
-                      </button>
-                    </th>
-                    <th className="w-[13%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Thao tác
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {sortedReports.length > 0 ? (
-                    sortedReports.map((report) => (
+                  {getCurrentData().length > 0 ? (
+                    getCurrentData().map((report) => (
                       <tr key={report.id} className="hover:bg-gray-50">
+                        <td className="px-3 py-3 text-center">
+                          <button
+                            onClick={() =>
+                              handleSelectItem(
+                                report.id,
+                                !selectedItems.includes(report.id)
+                              )
+                            }>
+                            {selectedItems.includes(report.id) ? (
+                              <CheckSquare className="h-4 w-4 text-blue-600" />
+                            ) : (
+                              <Square className="h-4 w-4 text-gray-400" />
+                            )}
+                          </button>
+                        </td>
                         <td className="px-3 py-3">
                           <div className="flex items-start">
                             <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0 mt-0.5" />
@@ -458,10 +571,10 @@ export default function BienBanPage() {
                         </td>
                         <td className="px-2 py-3">
                           <div className="text-sm text-gray-900 truncate">
-                            {report.relatedReportTitle.length > 40
+                            {report.relatedReportTitle.length > 50
                               ? `${report.relatedReportTitle.substring(
                                   0,
-                                  40
+                                  50
                                 )}...`
                               : report.relatedReportTitle}
                           </div>
@@ -470,8 +583,8 @@ export default function BienBanPage() {
                           <div className="flex items-center">
                             <User className="h-3 w-3 text-gray-400 mr-1" />
                             <span className="text-sm text-gray-900 truncate">
-                              {report.createdBy.length > 10
-                                ? `${report.createdBy.substring(0, 10)}...`
+                              {report.createdBy.length > 12
+                                ? `${report.createdBy.substring(0, 12)}...`
                                 : report.createdBy}
                             </span>
                           </div>
@@ -483,17 +596,6 @@ export default function BienBanPage() {
                               { day: "2-digit", month: "2-digit" }
                             )}
                           </div>
-                        </td>
-                        <td className="px-2 py-3 text-center">
-                          <span
-                            className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                              report.status
-                            )}`}>
-                            {getStatusIcon(report.status)}
-                            <span className="ml-1">
-                              {getStatusText(report.status)}
-                            </span>
-                          </span>
                         </td>
                         <td className="px-2 py-3">
                           <div className="flex items-center justify-center space-x-1">
@@ -549,6 +651,20 @@ export default function BienBanPage() {
         </div>
       </div>
 
+      {/* Pagination */}
+      <div className="mt-6">
+        <Pagination
+          currentPage={currentPage}
+          total={sortedReports.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newPageSize) => {
+            setPageSize(newPageSize);
+            setCurrentPage(1);
+          }}
+        />
+      </div>
+
       {/* Detail Modal */}
       <InspectionReportDetailModal
         show={showDetailModal}
@@ -568,6 +684,62 @@ export default function BienBanPage() {
         selectedReport={selectedReport}
         onConfirmSign={confirmSign}
       />
+
+      {/* Export Success Modal */}
+      {showExportSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                <Download className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Xuất Excel thành công
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Đã xuất {exportCount} biên bản ra file Excel
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowExportSuccessModal(false)}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Error Modal */}
+      {showExportErrorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <X className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Lỗi xuất Excel
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Không có dữ liệu để xuất hoặc đã xảy ra lỗi
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowExportErrorModal(false)}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

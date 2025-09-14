@@ -17,6 +17,7 @@ import {
   Tabs,
   Typography,
   Dropdown,
+  Breadcrumb,
 } from "antd";
 import {
   BarChart,
@@ -838,6 +839,27 @@ const StatsReportsPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/to-truong-ky-thuat",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Thống kê báo cáo</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
       <div className="mb-6">
         <Title level={2} className="mb-2">
           Thống kê báo cáo - Khoa CNTT

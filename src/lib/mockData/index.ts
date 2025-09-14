@@ -11,7 +11,6 @@ export {
   repairRequestStatusConfig,
 } from "./repairRequests";
 export { mockReplacementRequests } from "./replacementRequests";
-export { mockReplacementLists, type ReplacementList } from "./replacementLists";
 export {
   mockComponentsFromReports,
   mockComponentsFromReportsWithStatus,
@@ -27,6 +26,13 @@ export {
   assetStatusConfig,
   categoryIcons,
 } from "./assetsLookup";
+export {
+  mockReportLists,
+  getReportListsByStatus,
+  getReportListById,
+  getReportListsStats,
+  type ReportList,
+} from "./reportLists";
 
 // Export statistics data
 export {
