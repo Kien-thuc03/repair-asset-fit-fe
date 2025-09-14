@@ -699,7 +699,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div className="hidden md:flex md:flex-shrink-0">
         <div
           className={`flex flex-col transition-all duration-300 ${
-            isDesktopSidebarCollapsed ? "w-16" : "w-64"
+            isDesktopSidebarCollapsed ? "w-20" : "w-72"
           }`}>
           <div className="flex flex-col flex-grow bg-blue-900 overflow-y-auto">
             {/* Desktop Header */}
