@@ -1,0 +1,296 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { RepairRequest } from "@/types";
+import { mockRepairRequests } from "@/lib/mockData";
+import { SuccessModal, ErrorModal } from "@/components/modal";
+import Pagination from "@/components/common/Pagination";
+import ProgressHeader from "./ProgressHeader";
+import ProgressFilters from "./ProgressFilters";
+import ExportSection from "./ExportSection";
+import RequestTable from "./RequestTable";
+import RequestCards from "./RequestCards";
+import NoRequestsFound from "./NoRequestsFound";
+
+export default function ProgressTrackingContainer() {
+  const router = useRouter();
+  const [requests] = useState<RepairRequest[]>(mockRepairRequests);
+  const [filteredRequests, setFilteredRequests] =
+    useState<RepairRequest[]>(mockRepairRequests);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  // Selection state for export
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  // Export modals state
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+
+  // Sorting state
+  const [sortField, setSortField] = useState<keyof RepairRequest | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+    null
+  );
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [paginatedRequests, setPaginatedRequests] = useState<RepairRequest[]>(
+    []
+  );
+
+  // Handle sorting
+  const handleSort = (field: keyof RepairRequest) => {
+    if (sortField === field) {
+      // Cycling through: asc -> desc -> null
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortField(null);
+      } else {
+        setSortDirection("asc");
+        setSortField(field);
+      }
+    } else {
+      // New field, start with asc
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  useEffect(() => {
+    let filtered = requests;
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (request) =>
+          request.requestCode
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          request.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          request.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          request.roomName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((request) => request.status === statusFilter);
+    }
+
+    // Apply sorting
+    if (sortField && sortDirection) {
+      filtered.sort((a, b) => {
+        const aValue: string | undefined = a[sortField] as string | undefined;
+        const bValue: string | undefined = b[sortField] as string | undefined;
+
+        // Handle null/undefined values
+        if (!aValue && !bValue) return 0;
+        if (!aValue) return sortDirection === "asc" ? -1 : 1;
+        if (!bValue) return sortDirection === "asc" ? 1 : -1;
+
+        // Handle date comparison
+        if (
+          sortField === "createdAt" ||
+          sortField === "acceptedAt" ||
+          sortField === "completedAt"
+        ) {
+          const aTime = new Date(aValue).getTime();
+          const bTime = new Date(bValue).getTime();
+          return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
+        }
+
+        // Handle string comparison
+        const aLower = aValue.toLowerCase();
+        const bLower = bValue.toLowerCase();
+
+        if (aLower < bLower) {
+          return sortDirection === "asc" ? -1 : 1;
+        }
+        if (aLower > bLower) {
+          return sortDirection === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    setFilteredRequests([...filtered]);
+
+    // Reset selection when filter changes
+    setSelectedItems([]);
+    setSelectAll(false);
+
+    // Reset to first page when filter changes
+    setCurrentPage(1);
+  }, [requests, searchTerm, statusFilter, sortField, sortDirection]);
+
+  // Handle pagination
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginated = filteredRequests.slice(startIndex, endIndex);
+
+    setPaginatedRequests(paginated);
+  }, [filteredRequests, currentPage, pageSize]);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedItems([]); // Reset selection when changing page
+    setSelectAll(false);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page
+    setSelectedItems([]); // Reset selection
+    setSelectAll(false);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("vi-VN");
+  };
+
+  // Handle checkbox selection
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedItems([]);
+      setSelectAll(false);
+    } else {
+      setSelectedItems(paginatedRequests.map((req) => req.id));
+      setSelectAll(true);
+    }
+  };
+
+  const handleSelectItem = (id: string) => {
+    if (selectedItems.includes(id)) {
+      const newSelected = selectedItems.filter((item) => item !== id);
+      setSelectedItems(newSelected);
+      setSelectAll(false);
+    } else {
+      const newSelected = [...selectedItems, id];
+      setSelectedItems(newSelected);
+      setSelectAll(newSelected.length === paginatedRequests.length);
+    }
+  };
+
+  // Handle view details
+  const handleViewDetails = (id: string) => {
+    router.push(`/giang-vien/theo-doi-tien-do/chi-tiet/${id}`);
+  };
+
+  // Xử lý xuất Excel
+  const handleExportExcel = () => {
+    const itemsToExport =
+      selectedItems.length > 0
+        ? filteredRequests.filter((req) => selectedItems.includes(req.id))
+        : filteredRequests;
+
+    if (itemsToExport.length === 0) {
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    console.log("Xuất Excel:", itemsToExport);
+    // TODO: Implement actual Excel export logic
+    setExportCount(itemsToExport.length);
+    setShowExportSuccessModal(true);
+  };
+
+  // Update selectAll when paginatedRequests changes
+  useEffect(() => {
+    if (selectedItems.length > 0 && paginatedRequests.length > 0) {
+      setSelectAll(
+        selectedItems.length === paginatedRequests.length &&
+          paginatedRequests.every((req) => selectedItems.includes(req.id))
+      );
+    } else {
+      setSelectAll(false);
+    }
+  }, [paginatedRequests, selectedItems]);
+
+  return (
+    <div className="space-y-6 min-h-screen">
+      <ProgressHeader />
+
+      <ProgressFilters
+        searchTerm={searchTerm}
+        statusFilter={statusFilter}
+        onSearchChange={setSearchTerm}
+        onStatusFilterChange={setStatusFilter}
+      />
+
+      {/* Requests List */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <ExportSection
+          totalCount={filteredRequests.length}
+          selectedCount={selectedItems.length}
+          onExport={handleExportExcel}
+        />
+
+        <RequestTable
+          requests={paginatedRequests}
+          selectedItems={selectedItems}
+          selectAll={selectAll}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          onViewDetails={handleViewDetails}
+          formatDate={formatDate}
+        />
+
+        <RequestCards
+          requests={paginatedRequests}
+          selectedItems={selectedItems}
+          selectAll={selectAll}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          onViewDetails={handleViewDetails}
+          formatDate={formatDate}
+        />
+
+        {filteredRequests.length === 0 && <NoRequestsFound />}
+
+        {/* Pagination */}
+        {filteredRequests.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={filteredRequests.length}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showSizeChanger={true}
+            showQuickJumper={true}
+            showTotal={true}
+          />
+        )}
+      </div>
+
+      {/* Spacer to ensure minimum height and consistent scrollbar */}
+      <div className="min-h-[200px]"></div>
+
+      {/* Export Success Modal */}
+      <SuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        title="Xuất Excel thành công!"
+        message={`Đã xuất ${exportCount} yêu cầu ra file Excel thành công.`}
+      />
+
+      {/* Export Error Modal */}
+      <ErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
+        title="Không thể xuất Excel"
+        message="Không có dữ liệu để xuất. Vui lòng chọn ít nhất một yêu cầu."
+        showRetry={false}
+      />
+    </div>
+  );
+}
