@@ -10,14 +10,25 @@ import AssetStatsCards from "./AssetStatsCards";
 import AssetFilters from "./AssetFilters";
 import AssetGrid from "./AssetGrid";
 
+// Function to extract floor from room name (e.g., "A1.01" -> "Tầng 1")
+const getFloorFromRoomName = (roomName: string): string => {
+  // Extract floor number from room name pattern (A1.01, B2.05, etc.)
+  const match = roomName.match(/^[A-Z](\d+)\./);
+  if (match) {
+    const floorNumber = match[1];
+    return `Tầng ${floorNumber}`;
+  }
+  return "";
+};
+
 export default function AssetLookupContainer() {
   const router = useRouter();
   const [assets] = useState<Asset[]>(mockAssetsLookup);
   const [filteredAssets, setFilteredAssets] =
     useState<Asset[]>(mockAssetsLookup);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [floorFilter, setFloorFilter] = useState<string>("all");
   const [isMobile, setIsMobile] = useState(false);
 
   // Pagination state
@@ -70,6 +81,18 @@ export default function AssetLookupContainer() {
     router.push(`/giang-vien/tra-cuu-thiet-bi/chi-tiet/${assetId}`);
   };
 
+  // Function to extract floor from room name
+  const getFloorFromRoomName = (roomName: string): string => {
+    // Extract floor information from room name
+    // Examples: "H101" -> "Tầng 1", "H202" -> "Tầng 2", etc.
+    const match = roomName.match(/H(\d)/);
+    if (match) {
+      const floorNumber = match[1];
+      return `Tầng ${floorNumber}`;
+    }
+    return "Không xác định";
+  };
+
   useEffect(() => {
     let filtered = assets;
 
@@ -84,19 +107,22 @@ export default function AssetLookupContainer() {
       );
     }
 
-    if (categoryFilter !== "all") {
-      filtered = filtered.filter((asset) => asset.category === categoryFilter);
-    }
-
     if (statusFilter !== "all") {
       filtered = filtered.filter((asset) => asset.status === statusFilter);
+    }
+
+    if (floorFilter !== "all") {
+      filtered = filtered.filter((asset) => {
+        const assetFloor = getFloorFromRoomName(asset.roomName);
+        return assetFloor === floorFilter;
+      });
     }
 
     setFilteredAssets(filtered);
 
     // Reset to first page when filter changes
     setCurrentPage(1);
-  }, [assets, searchTerm, categoryFilter, statusFilter]);
+  }, [assets, searchTerm, statusFilter, floorFilter]);
 
   // Handle pagination
   useEffect(() => {
@@ -116,7 +142,14 @@ export default function AssetLookupContainer() {
     setCurrentPage(1); // Reset to first page
   };
 
-  const categories = Array.from(new Set(assets.map((asset) => asset.category)));
+  // Generate floors from assets using the getFloorFromRoomName function
+  const floors = Array.from(
+    new Set(
+      assets
+        .map((asset) => getFloorFromRoomName(asset.roomName))
+        .filter((floor) => floor) // Remove empty floors
+    )
+  ).sort();
 
   return (
     <div className="space-y-6 main-content">
@@ -141,31 +174,26 @@ export default function AssetLookupContainer() {
           ]}
         />
       </div>
-
       {/* Header */}
       <AssetLookupHeader isMobile={isMobile} onQRScan={simulateQRScan} />
-
       {/* Quick Stats */}
       <AssetStatsCards assets={assets} />
-
       {/* Filters */}
       <AssetFilters
         searchTerm={searchTerm}
-        categoryFilter={categoryFilter}
         statusFilter={statusFilter}
+        floorFilter={floorFilter}
         onSearchChange={setSearchTerm}
-        onCategoryChange={setCategoryFilter}
         onStatusChange={setStatusFilter}
-        categories={categories}
-      />
-
+        onFloorChange={setFloorFilter}
+        floors={floors}
+      />{" "}
       {/* Asset Grid */}
       <AssetGrid
         assets={paginatedAssets}
         totalAssets={filteredAssets.length}
         onViewDetail={handleViewDetail}
       />
-
       {/* Pagination */}
       {filteredAssets.length > 0 && (
         <div className="bg-white shadow rounded-lg">
