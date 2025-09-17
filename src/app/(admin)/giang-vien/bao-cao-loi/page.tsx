@@ -37,6 +37,7 @@ export default function BaoCaoLoiPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [editRequestId, setEditRequestId] = useState<string>("");
+  const [showComponentSelection, setShowComponentSelection] = useState(false);
 
   // Debug filteredComponents changes
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function BaoCaoLoiPage() {
                   // Set components after asset is set
                   setTimeout(() => {
                     if (editData.componentId && editData.componentName) {
+                      setShowComponentSelection(true);
                       setSelectedComponentIds([editData.componentId]);
                     }
 
@@ -130,6 +132,7 @@ export default function BaoCaoLoiPage() {
       mediaFiles: [],
     });
     setSelectedComponentIds([]);
+    setShowComponentSelection(false);
     setFilteredAssets([]);
     setFilteredComponents([]);
   };
@@ -156,6 +159,7 @@ export default function BaoCaoLoiPage() {
   const handleRoomChange = (roomId: string) => {
     setFormData((prev) => ({ ...prev, roomId, assetId: "", componentId: "" }));
     setSelectedComponentIds([]);
+    setShowComponentSelection(false);
     // Lọc thiết bị theo phòng đã chọn
     const roomAssets = mockAssets.filter((asset) => asset.roomId === roomId);
     setFilteredAssets(roomAssets);
@@ -165,6 +169,7 @@ export default function BaoCaoLoiPage() {
   const handleAssetChange = (assetId: string) => {
     setFormData((prev) => ({ ...prev, assetId, componentId: "" }));
     setSelectedComponentIds([]);
+    setShowComponentSelection(false);
     setFilteredComponents(
       mockComponents.filter((comp) => comp.computerAssetId === assetId)
     );
@@ -199,7 +204,7 @@ export default function BaoCaoLoiPage() {
           console.log("Filtered components after QR scan:", components);
 
           alert(
-            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}`
+            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}\n\nLưu ý: Nếu cần chọn linh kiện cụ thể, hãy tích vào "Chọn linh kiện cụ thể" ở bước 2.`
           );
         }, 100);
       }
@@ -392,7 +397,39 @@ export default function BaoCaoLoiPage() {
               </select>
             </div>
 
-            {/* Component Selection - Click trực tiếp vào linh kiện */}
+            {/* Component Selection Checkbox */}
+            {formData.assetId && (
+              <div className="sm:col-span-2">
+                <div className="flex items-center">
+                  <input
+                    id="showComponents"
+                    type="checkbox"
+                    checked={showComponentSelection}
+                    onChange={(e) => {
+                      setShowComponentSelection(e.target.checked);
+                      if (!e.target.checked) {
+                        setSelectedComponentIds([]);
+                        setFormData((prev) => ({ ...prev, componentId: "" }));
+                      }
+                    }}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="showComponents"
+                    className="ml-3 block text-sm font-medium text-gray-700">
+                    Chọn linh kiện cụ thể (tùy chọn)
+                  </label>
+                </div>
+                <p className="mt-1 text-sm text-gray-500">
+                  Bỏ chọn nếu lỗi ảnh hưởng toàn bộ thiết bị hoặc không xác định
+                  được linh kiện cụ thể
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Component Selection - Only show when checkbox is checked */}
+          {formData.assetId && showComponentSelection && (
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium text-gray-700">
                 Chọn linh kiện gặp lỗi (có thể chọn nhiều)
@@ -581,7 +618,7 @@ export default function BaoCaoLoiPage() {
                 </div>
               )}
             </div>
-          </div>
+          )}
 
           {/* Bước 3: Description - Mô tả lỗi chi tiết */}
           <div>
