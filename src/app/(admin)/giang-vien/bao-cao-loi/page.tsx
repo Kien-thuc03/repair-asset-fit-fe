@@ -204,7 +204,7 @@ export default function BaoCaoLoiPage() {
           console.log("Filtered components after QR scan:", components);
 
           alert(
-            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}\n\nLưu ý: Nếu cần chọn linh kiện cụ thể, hãy tích vào "Chọn linh kiện cụ thể" ở bước 2.`
+            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}\n\nTiếp theo:\n- Bước 3: Chọn loại lỗi\n- Bước 4: Mô tả chi tiết (tùy chọn)\n- Bước 5: Chọn linh kiện cụ thể (nếu cần)\n- Bước 6: Đính kèm hình ảnh (tùy chọn)`
           );
         }, 100);
       }
@@ -397,240 +397,48 @@ export default function BaoCaoLoiPage() {
               </select>
             </div>
 
-            {/* Component Selection Checkbox */}
-            {formData.assetId && (
-              <div className="sm:col-span-2">
-                <div className="flex items-center">
-                  <input
-                    id="showComponents"
-                    type="checkbox"
-                    checked={showComponentSelection}
-                    onChange={(e) => {
-                      setShowComponentSelection(e.target.checked);
-                      if (!e.target.checked) {
-                        setSelectedComponentIds([]);
-                        setFormData((prev) => ({ ...prev, componentId: "" }));
-                      }
-                    }}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor="showComponents"
-                    className="ml-3 block text-sm font-medium text-gray-700">
-                    Chọn linh kiện cụ thể (tùy chọn)
-                  </label>
-                </div>
-                <p className="mt-1 text-sm text-gray-500">
-                  Bỏ chọn nếu lỗi ảnh hưởng toàn bộ thiết bị hoặc không xác định
-                  được linh kiện cụ thể
-                </p>
-              </div>
-            )}
+            {/* Bước 3: Error Type Selection - Chọn loại lỗi */}
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="errorTypeId"
+                className="block text-sm font-medium text-gray-700">
+                Bước 3: Chọn loại lỗi từ danh sách{" "}
+                <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="errorTypeId"
+                required
+                value={formData.errorTypeId}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    errorTypeId: e.target.value,
+                  }))
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <option value="">Chọn loại lỗi phổ biến</option>
+                {errorTypes.map((errorType) => (
+                  <option key={errorType.id} value={errorType.id}>
+                    {errorType.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Chọn loại lỗi phù hợp để hệ thống có thể phân loại và xử lý
+                nhanh chóng
+              </p>
+            </div>
           </div>
 
-          {/* Component Selection - Only show when checkbox is checked */}
-          {formData.assetId && showComponentSelection && (
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Chọn linh kiện gặp lỗi (có thể chọn nhiều)
-              </label>
-              {!formData.assetId ? (
-                <p className="mt-1 text-sm text-gray-500 italic">
-                  Vui lòng chọn thiết bị để xem danh sách linh kiện
-                </p>
-              ) : filteredComponents.length === 0 ? (
-                <p className="mt-1 text-sm text-gray-500 italic">
-                  Không có linh kiện nào được tìm thấy cho thiết bị này
-                </p>
-              ) : (
-                <div className="mt-3 p-3 bg-gray-50 rounded-md">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-medium text-gray-700">
-                      Click vào linh kiện gặp lỗi:
-                    </p>
-                    {selectedComponentIds.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedComponentIds([]);
-                          setFormData((prev) => ({
-                            ...prev,
-                            componentId: "",
-                          }));
-                        }}
-                        className="text-xs text-red-600 hover:text-red-800 underline">
-                        Bỏ chọn tất cả ({selectedComponentIds.length})
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Hiển thị linh kiện đã chọn */}
-                  {selectedComponentIds.length > 0 && (
-                    <div className="mb-3 p-2 bg-blue-100 border border-blue-300 rounded">
-                      <p className="text-sm font-medium text-blue-900 mb-2">
-                        ✓ Đã chọn {selectedComponentIds.length} linh kiện:
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedComponentIds.map((componentId) => {
-                          const component = filteredComponents.find(
-                            (c) => c.id === componentId
-                          );
-                          return (
-                            <span
-                              key={componentId}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-900">
-                              {component?.componentType}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const newSelectedIds =
-                                    selectedComponentIds.filter(
-                                      (id) => id !== componentId
-                                    );
-                                  setSelectedComponentIds(newSelectedIds);
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    componentId:
-                                      newSelectedIds.length > 0
-                                        ? newSelectedIds[0]
-                                        : "",
-                                  }));
-                                }}
-                                className="ml-1 text-blue-700 hover:text-blue-900">
-                                ×
-                              </button>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    {filteredComponents.map((component) => {
-                      const isSelected = selectedComponentIds.includes(
-                        component.id
-                      );
-                      const canSelect = component.status === "INSTALLED";
-                      return (
-                        <div
-                          key={component.id}
-                          onClick={
-                            canSelect
-                              ? () => {
-                                  let newSelectedIds;
-                                  if (isSelected) {
-                                    newSelectedIds =
-                                      selectedComponentIds.filter(
-                                        (id) => id !== component.id
-                                      );
-                                  } else {
-                                    newSelectedIds = [
-                                      ...selectedComponentIds,
-                                      component.id,
-                                    ];
-                                  }
-                                  setSelectedComponentIds(newSelectedIds);
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    componentId:
-                                      newSelectedIds.length > 0
-                                        ? newSelectedIds[0]
-                                        : "",
-                                  }));
-                                }
-                              : undefined
-                          }
-                          className={`p-2 rounded transition-all duration-200 ${
-                            !canSelect
-                              ? "cursor-not-allowed opacity-60"
-                              : "cursor-pointer hover:shadow-md"
-                          } ${
-                            isSelected
-                              ? "bg-blue-200 text-blue-900 border-2 border-blue-400 transform scale-105"
-                              : component.status === "FAULTY"
-                              ? "bg-red-100 text-red-800 border border-red-200"
-                              : component.status === "REMOVED"
-                              ? "bg-gray-100 text-gray-800 border border-gray-200"
-                              : "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
-                          }`}>
-                          <div className="font-medium truncate flex items-center justify-between">
-                            <span>{component.componentType}</span>
-                            <div className="flex items-center space-x-1">
-                              {!canSelect && (
-                                <span className="text-gray-500 text-xs">
-                                  🚫
-                                </span>
-                              )}
-                              {isSelected && (
-                                <span className="text-blue-600 font-bold">
-                                  ✓
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-gray-600 truncate">
-                            {component.name}
-                          </div>
-                          {component.componentSpecs && (
-                            <div className="text-gray-500 truncate text-xs">
-                              {component.componentSpecs}
-                            </div>
-                          )}
-                          <div className="mt-1 flex items-center justify-between">
-                            <span
-                              className={`px-1 py-0.5 rounded text-xs ${
-                                isSelected
-                                  ? "bg-blue-300"
-                                  : component.status === "INSTALLED"
-                                  ? "bg-green-200"
-                                  : component.status === "FAULTY"
-                                  ? "bg-red-200"
-                                  : component.status === "REMOVED"
-                                  ? "bg-gray-200"
-                                  : "bg-gray-200"
-                              }`}>
-                              {component.status === "INSTALLED"
-                                ? "Hoạt động"
-                                : component.status === "FAULTY"
-                                ? "Có lỗi"
-                                : component.status === "REMOVED"
-                                ? "Đã gỡ"
-                                : component.status}
-                            </span>
-                            {!canSelect && (
-                              <span className="text-xs text-gray-500">
-                                Không thể chọn
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <p className="text-xs text-gray-500 mt-2 italic">
-                    💡 Tip: Chỉ có thể chọn các linh kiện đang hoạt động để báo
-                    lỗi. Các linh kiện đã có lỗi hoặc đang bảo trì sẽ không thể
-                    chọn.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Bước 3: Description - Mô tả lỗi chi tiết */}
+          {/* Bước 4: Description - Mô tả lỗi chi tiết (không bắt buộc) */}
           <div>
             <label
               htmlFor="description"
               className="block text-sm font-medium text-gray-700">
-              Bước 3: Mô tả chi tiết tình trạng lỗi{" "}
-              <span className="text-red-500">*</span>
+              Bước 4: Mô tả chi tiết tình trạng lỗi (tùy chọn)
             </label>
             <textarea
               id="description"
-              required
               rows={4}
               value={formData.description}
               onChange={(e) =>
@@ -640,15 +448,251 @@ export default function BaoCaoLoiPage() {
                 }))
               }
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Mô tả chi tiết về tình trạng lỗi, triệu chứng, thời điểm xảy ra, các bước đã thực hiện..."
+              placeholder="Mô tả chi tiết về tình trạng lỗi, triệu chứng, thời điểm xảy ra, các bước đã thực hiện... (không bắt buộc)"
             />
+            <p className="mt-1 text-sm text-gray-500">
+              Thông tin này sẽ giúp kỹ thuật viên hiểu rõ hơn về tình trạng lỗi
+              và xử lý nhanh chóng hơn
+            </p>
+          </div>
+
+          {/* Bước 5: Component Selection - Luôn hiển thị nhưng disabled khi chưa chọn thiết bị */}
+          <div>
+            <div className="flex items-center mb-3">
+              <input
+                id="showComponents"
+                type="checkbox"
+                checked={showComponentSelection}
+                disabled={!formData.assetId}
+                onChange={(e) => {
+                  setShowComponentSelection(e.target.checked);
+                  if (!e.target.checked) {
+                    setSelectedComponentIds([]);
+                    setFormData((prev) => ({ ...prev, componentId: "" }));
+                  }
+                }}
+                className={`h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
+                  !formData.assetId ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              />
+              <label
+                htmlFor="showComponents"
+                className={`ml-3 block text-sm font-medium ${
+                  !formData.assetId ? "text-gray-400" : "text-gray-700"
+                }`}>
+                Bước 5: Chọn linh kiện cụ thể (tùy chọn)
+              </label>
+            </div>
+            <p
+              className={`mb-3 text-sm ${
+                !formData.assetId ? "text-gray-400" : "text-gray-500"
+              }`}>
+              {!formData.assetId
+                ? "Vui lòng chọn thiết bị ở Bước 2 để có thể chọn linh kiện cụ thể"
+                : "Tích vào đây nếu cần chọn linh kiện cụ thể bị lỗi. Bỏ chọn nếu lỗi ảnh hưởng toàn bộ thiết bị."}
+            </p>
+
+            {showComponentSelection && (
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Chọn linh kiện gặp lỗi (có thể chọn nhiều)
+                </label>
+                {!formData.assetId ? (
+                  <p className="mt-1 text-sm text-gray-500 italic">
+                    Vui lòng chọn thiết bị để xem danh sách linh kiện
+                  </p>
+                ) : filteredComponents.length === 0 ? (
+                  <p className="mt-1 text-sm text-gray-500 italic">
+                    Không có linh kiện nào được tìm thấy cho thiết bị này
+                  </p>
+                ) : (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-sm font-medium text-gray-700">
+                        Click vào linh kiện gặp lỗi:
+                      </p>
+                      {selectedComponentIds.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedComponentIds([]);
+                            setFormData((prev) => ({
+                              ...prev,
+                              componentId: "",
+                            }));
+                          }}
+                          className="text-xs text-red-600 hover:text-red-800 underline">
+                          Bỏ chọn tất cả ({selectedComponentIds.length})
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Hiển thị linh kiện đã chọn */}
+                    {selectedComponentIds.length > 0 && (
+                      <div className="mb-3 p-2 bg-blue-100 border border-blue-300 rounded">
+                        <p className="text-sm font-medium text-blue-900 mb-2">
+                          ✓ Đã chọn {selectedComponentIds.length} linh kiện:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedComponentIds.map((componentId) => {
+                            const component = filteredComponents.find(
+                              (c) => c.id === componentId
+                            );
+                            return (
+                              <span
+                                key={componentId}
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-200 text-blue-900">
+                                {component?.componentType}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const newSelectedIds =
+                                      selectedComponentIds.filter(
+                                        (id) => id !== componentId
+                                      );
+                                    setSelectedComponentIds(newSelectedIds);
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      componentId:
+                                        newSelectedIds.length > 0
+                                          ? newSelectedIds[0]
+                                          : "",
+                                    }));
+                                  }}
+                                  className="ml-1 text-blue-700 hover:text-blue-900">
+                                  ×
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      {filteredComponents.map((component) => {
+                        const isSelected = selectedComponentIds.includes(
+                          component.id
+                        );
+                        const canSelect = component.status === "INSTALLED";
+                        return (
+                          <div
+                            key={component.id}
+                            onClick={
+                              canSelect
+                                ? () => {
+                                    let newSelectedIds;
+                                    if (isSelected) {
+                                      newSelectedIds =
+                                        selectedComponentIds.filter(
+                                          (id) => id !== component.id
+                                        );
+                                    } else {
+                                      newSelectedIds = [
+                                        ...selectedComponentIds,
+                                        component.id,
+                                      ];
+                                    }
+                                    setSelectedComponentIds(newSelectedIds);
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      componentId:
+                                        newSelectedIds.length > 0
+                                          ? newSelectedIds[0]
+                                          : "",
+                                    }));
+                                  }
+                                : undefined
+                            }
+                            className={`p-2 rounded transition-all duration-200 ${
+                              !canSelect
+                                ? "cursor-not-allowed opacity-60"
+                                : "cursor-pointer hover:shadow-md"
+                            } ${
+                              isSelected
+                                ? "bg-blue-200 text-blue-900 border-2 border-blue-400 transform scale-105"
+                                : component.status === "FAULTY"
+                                ? "bg-red-100 text-red-800 border border-red-200"
+                                : component.status === "REMOVED"
+                                ? "bg-gray-100 text-gray-800 border border-gray-200"
+                                : "bg-green-100 text-green-800 border border-green-200 hover:bg-green-200"
+                            }`}>
+                            <div className="font-medium truncate flex items-center justify-between">
+                              <span>{component.componentType}</span>
+                              <div className="flex items-center space-x-1">
+                                {!canSelect && (
+                                  <span className="text-gray-500 text-xs">
+                                    🚫
+                                  </span>
+                                )}
+                                {isSelected && (
+                                  <span className="text-blue-600 font-bold">
+                                    ✓
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-gray-600 truncate">
+                              {component.name}
+                            </div>
+                            {component.componentSpecs && (
+                              <div className="text-gray-500 truncate text-xs">
+                                {component.componentSpecs}
+                              </div>
+                            )}
+                            <div className="mt-1 flex items-center justify-between">
+                              <span
+                                className={`px-1 py-0.5 rounded text-xs ${
+                                  isSelected
+                                    ? "bg-blue-300"
+                                    : component.status === "INSTALLED"
+                                    ? "bg-green-200"
+                                    : component.status === "FAULTY"
+                                    ? "bg-red-200"
+                                    : component.status === "REMOVED"
+                                    ? "bg-gray-200"
+                                    : "bg-gray-200"
+                                }`}>
+                                {component.status === "INSTALLED"
+                                  ? "Hoạt động"
+                                  : component.status === "FAULTY"
+                                  ? "Có lỗi"
+                                  : component.status === "REMOVED"
+                                  ? "Đã gỡ"
+                                  : component.status}
+                              </span>
+                              {!canSelect && (
+                                <span className="text-xs text-gray-500">
+                                  Không thể chọn
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <p className="text-xs text-gray-500 mt-2 italic">
+                      💡 Tip: Chỉ có thể chọn các linh kiện đang hoạt động để
+                      báo lỗi. Các linh kiện đã có lỗi hoặc đang bảo trì sẽ
+                      không thể chọn.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Media Files - Đính kèm hình ảnh */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Đính kèm hình ảnh/video minh họa (tùy chọn)
+              Bước 6: Đính kèm hình ảnh/video minh họa (tùy chọn)
             </label>
+            <p className="mb-3 text-sm text-gray-500">
+              Hình ảnh hoặc video sẽ giúp kỹ thuật viên hiểu rõ hơn về tình
+              trạng lỗi và xử lý chính xác hơn
+            </p>
             <div className="flex items-center justify-center w-full">
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -699,34 +743,6 @@ export default function BaoCaoLoiPage() {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Bước 4: Error Type Selection - Chọn loại lỗi */}
-          <div>
-            <label
-              htmlFor="errorTypeId"
-              className="block text-sm font-medium text-gray-700">
-              Bước 4: Chọn loại lỗi từ danh sách{" "}
-              <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="errorTypeId"
-              required
-              value={formData.errorTypeId}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  errorTypeId: e.target.value,
-                }))
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-              <option value="">Chọn loại lỗi phổ biến</option>
-              {errorTypes.map((errorType) => (
-                <option key={errorType.id} value={errorType.id}>
-                  {errorType.name}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Submit Button */}
