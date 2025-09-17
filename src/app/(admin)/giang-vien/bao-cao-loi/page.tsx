@@ -14,7 +14,7 @@ import {
   mockComponents,
   mockComputers,
 } from "@/lib/mockData";
-import SuccessModal from "@/components/modal/SuccessModal";
+import { SuccessModal } from "@/components/modal";
 import {
   QRScannerSection,
   ReportHeader,

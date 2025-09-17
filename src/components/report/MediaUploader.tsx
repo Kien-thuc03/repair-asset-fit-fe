@@ -15,7 +15,7 @@ const MediaUploader: React.FC<MediaUploaderProps> = ({
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        Bước 6: Đính kèm hình ảnh/video minh họa (tùy chọn)
+        Bước 7: Đính kèm hình ảnh/video minh họa (tùy chọn)
       </label>
       <p className="mb-3 text-sm text-gray-500">
         Hình ảnh hoặc video sẽ giúp kỹ thuật viên hiểu rõ hơn về tình trạng lỗi
