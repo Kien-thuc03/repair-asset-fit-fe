@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -29,6 +29,7 @@ import {
   Search,
   FileCheck,
   MapPin,
+  Monitor,
 } from "lucide-react";
 
 // Navigation items
@@ -49,9 +50,20 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: LayoutDashboard,
       },
       {
-        name: "Báo cáo lỗi",
-        href: "/giang-vien/bao-cao-loi",
+        name: "Quản lý báo lỗi",
         icon: AlertTriangle,
+        children: [
+          {
+            name: "Báo lỗi phần cứng",
+            href: "/giang-vien/bao-cao-loi",
+            icon: Monitor,
+          },
+          {
+            name: "Báo lỗi phần mềm",
+            href: "/giang-vien/bao-cao-loi/phan-mem",
+            icon: Monitor,
+          },
+        ],
       },
       {
         name: "Theo dõi tiến độ",
@@ -133,7 +145,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         href: "/to-truong-ky-thuat/tra-cuu-tai-san",
         icon: Search,
       },
-       {
+      {
         name: "Thống kê báo cáo",
         href: "/to-truong-ky-thuat/thong-ke-bao-cao",
         icon: BarChart3,
@@ -143,7 +155,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         href: "/to-truong-ky-thuat/bien-ban",
         icon: Calendar,
       },
-         ],
+    ],
     [UserRole.PHONG_QUAN_TRI]: [
       {
         name: "Dashboard",
@@ -257,28 +269,31 @@ function SidebarNavigation({
   };
 
   const toggleDropdown = (itemName: string) => {
-    setOpenDropdowns((prev: string[]) => 
-      prev.includes(itemName) 
+    setOpenDropdowns((prev: string[]) =>
+      prev.includes(itemName)
         ? prev.filter((name: string) => name !== itemName)
         : [...prev, itemName]
     );
   };
 
   // Check if any child is active
-  const isChildActive = (children: NavigationItem[]) => {
-    return children.some(child => pathname === child.href);
-  };
+  const isChildActive = useCallback(
+    (children: NavigationItem[]) => {
+      return children.some((child) => pathname === child.href);
+    },
+    [pathname]
+  );
 
   // Auto-open dropdown if child is active
   useEffect(() => {
-    navigation.forEach(item => {
+    navigation.forEach((item) => {
       if (item.children && isChildActive(item.children)) {
-        setOpenDropdowns((prev: string[]) => 
+        setOpenDropdowns((prev: string[]) =>
           prev.includes(item.name) ? prev : [...prev, item.name]
         );
       }
     });
-  }, [pathname, navigation]);
+  }, [pathname, navigation, isChildActive]);
 
   return (
     <nav className={`flex-1 py-6 space-y-2 ${isCollapsed ? "px-2" : "px-4"}`}>
@@ -287,7 +302,7 @@ function SidebarNavigation({
         if (item.children) {
           const isDropdownOpen = openDropdowns.includes(item.name);
           const hasActiveChild = isChildActive(item.children);
-          
+
           return (
             <div key={item.name} className="space-y-1">
               {/* Parent item */}
@@ -304,7 +319,9 @@ function SidebarNavigation({
                 <div className="flex items-center">
                   <item.icon
                     className={`${isCollapsed ? "" : "mr-3"} h-5 w-5 ${
-                      hasActiveChild ? "text-white" : "text-blue-300 group-hover:text-white"
+                      hasActiveChild
+                        ? "text-white"
+                        : "text-blue-300 group-hover:text-white"
                     }`}
                   />
                   {!isCollapsed && <span>{item.name}</span>}
@@ -313,11 +330,15 @@ function SidebarNavigation({
                   <ChevronRight
                     className={`h-4 w-4 transform transition-transform ${
                       isDropdownOpen ? "rotate-90" : ""
-                    } ${hasActiveChild ? "text-white" : "text-blue-300 group-hover:text-white"}`}
+                    } ${
+                      hasActiveChild
+                        ? "text-white"
+                        : "text-blue-300 group-hover:text-white"
+                    }`}
                   />
                 )}
               </button>
-              
+
               {/* Children items */}
               {!isCollapsed && isDropdownOpen && (
                 <div className="ml-6 space-y-1">
@@ -335,7 +356,9 @@ function SidebarNavigation({
                         onClick={handleNavClick}>
                         <child.icon
                           className={`mr-3 h-4 w-4 ${
-                            isChildItemActive ? "text-white" : "text-blue-300 group-hover:text-white"
+                            isChildItemActive
+                              ? "text-white"
+                              : "text-blue-300 group-hover:text-white"
                           }`}
                         />
                         <span>{child.name}</span>
