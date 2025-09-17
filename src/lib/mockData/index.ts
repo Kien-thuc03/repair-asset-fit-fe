@@ -27,6 +27,12 @@ export {
   categoryIcons,
 } from "./assetsLookup";
 export {
+  mockSoftware,
+  mockAssetSoftware,
+  softwareCategories,
+  softwareErrorTypes,
+} from "./software";
+export {
   mockReportLists,
   getReportListsByStatus,
   getReportListById,

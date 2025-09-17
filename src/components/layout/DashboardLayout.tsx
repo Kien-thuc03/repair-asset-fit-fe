@@ -18,7 +18,6 @@ import {
   Users,
   BarChart3,
   FileText,
-  CheckCircle,
   AlertTriangle,
   UserCheck,
   Shield,
@@ -30,6 +29,7 @@ import {
   FileCheck,
   MapPin,
   Monitor,
+  FolderCode,
 } from "lucide-react";
 
 // Navigation items
@@ -61,7 +61,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
           {
             name: "Báo lỗi phần mềm",
             href: "/giang-vien/bao-cao-loi/phan-mem",
-            icon: Monitor,
+            icon: FolderCode,
           },
         ],
       },

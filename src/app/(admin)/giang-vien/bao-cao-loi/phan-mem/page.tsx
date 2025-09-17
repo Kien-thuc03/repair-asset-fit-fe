@@ -1,49 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Monitor, Send, Laptop } from "lucide-react";
 import { SimpleAsset as Asset } from "@/types";
-import { mockAssets, mockSimpleRooms, mockComputers } from "@/lib/mockData";
+import {
+  mockAssets,
+  mockSimpleRooms,
+  mockComputers,
+  mockSoftware,
+  mockAssetSoftware,
+  softwareCategories,
+  softwareErrorTypes,
+} from "@/lib/mockData";
 import SuccessModal from "../modal/SuccessModal";
 import { Breadcrumb } from "antd";
-
-// Software error types - specific for software issues
-const softwareErrorTypes = [
-  { id: "sw1", name: "Phần mềm không khởi động được" },
-  { id: "sw2", name: "Phần mềm bị crash/đóng đột ngột" },
-  { id: "sw3", name: "Lỗi bản quyền phần mềm" },
-  { id: "sw4", name: "Phần mềm chạy chậm/lag" },
-  { id: "sw5", name: "Không thể cài đặt phần mềm" },
-  { id: "sw6", name: "Lỗi cập nhật phần mềm" },
-  { id: "sw7", name: "Xung đột giữa các phần mềm" },
-  { id: "sw8", name: "Lỗi driver thiết bị" },
-  { id: "sw9", name: "Lỗi hệ điều hành Windows" },
-  { id: "sw10", name: "Virus/Malware" },
-  { id: "sw11", name: "Lỗi mạng/kết nối internet" },
-  { id: "sw12", name: "Lỗi khác (mô tả chi tiết)" },
-];
-
-// Software categories
-const softwareCategories = [
-  { id: "office", name: "Phần mềm văn phòng (Office, PDF, etc.)" },
-  { id: "programming", name: "Phần mềm lập trình (IDE, Compiler, etc.)" },
-  { id: "design", name: "Phần mềm thiết kế (Photoshop, AutoCAD, etc.)" },
-  { id: "browser", name: "Trình duyệt web (Chrome, Firefox, etc.)" },
-  { id: "security", name: "Phần mềm bảo mật (Antivirus, Firewall, etc.)" },
-  { id: "system", name: "Phần mềm hệ thống (Driver, Utility, etc.)" },
-  { id: "media", name: "Phần mềm đa phương tiện (VLC, Photoshop, etc.)" },
-  { id: "other", name: "Phần mềm khác" },
-];
 
 interface SoftwareReportForm {
   assetId: string;
   roomId: string;
   errorTypeId: string;
   softwareCategory: string;
-  softwareName: string;
+  softwareId: string; // ID of existing software from mockSoftware
+  softwareName: string; // For custom software name if not in list
+  isCustomSoftware: boolean; // Flag to indicate if user is adding new software
+  softwareVersion: string; // Version of the software
   description: string;
   mediaFiles: File[];
+}
+
+interface Software {
+  id: string;
+  name: string;
+  category: string;
+  version?: string;
+  description?: string;
+  license?: string;
 }
 
 export default function BaoCaoLoiPhanMemPage() {
@@ -54,17 +46,62 @@ export default function BaoCaoLoiPhanMemPage() {
     roomId: "",
     errorTypeId: "",
     softwareCategory: "",
+    softwareId: "",
     softwareName: "",
+    isCustomSoftware: false,
+    softwareVersion: "",
     description: "",
     mediaFiles: [],
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+  const [availableSoftware, setAvailableSoftware] = useState<Software[]>([]);
+  const [installedSoftware, setInstalledSoftware] = useState<Software[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Effect to filter software when category or asset changes
+  useEffect(() => {
+    if (formData.softwareCategory) {
+      // Filter software by category
+      const categorySoftware = mockSoftware.filter(
+        (software) => software.category === formData.softwareCategory
+      );
+      setAvailableSoftware(categorySoftware);
+
+      // If asset is selected, also filter by installed software
+      if (formData.assetId) {
+        const assetSoftwareIds = mockAssetSoftware
+          .filter((as) => as.assetId === formData.assetId)
+          .map((as) => as.softwareId);
+
+        const installedItems = categorySoftware.filter((software) =>
+          assetSoftwareIds.includes(software.id)
+        );
+        setInstalledSoftware(installedItems);
+      } else {
+        setInstalledSoftware([]);
+      }
+    } else {
+      setAvailableSoftware([]);
+      setInstalledSoftware([]);
+    }
+  }, [formData.softwareCategory, formData.assetId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate software selection
+    if (formData.isCustomSoftware && !formData.softwareName.trim()) {
+      alert("Vui lòng nhập tên phần mềm.");
+      return;
+    }
+
+    if (!formData.isCustomSoftware && !formData.softwareId) {
+      alert("Vui lòng chọn phần mềm từ danh sách hoặc thêm phần mềm mới.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Simulate API call
@@ -79,7 +116,10 @@ export default function BaoCaoLoiPhanMemPage() {
       roomId: "",
       errorTypeId: "",
       softwareCategory: "",
+      softwareId: "",
       softwareName: "",
+      isCustomSoftware: false,
+      softwareVersion: "",
       description: "",
       mediaFiles: [],
     });
@@ -106,6 +146,35 @@ export default function BaoCaoLoiPhanMemPage() {
 
   const handleAssetChange = (assetId: string) => {
     setFormData((prev) => ({ ...prev, assetId }));
+  };
+
+  const handleSoftwareCategoryChange = (category: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      softwareCategory: category,
+      softwareId: "",
+      softwareName: "",
+      isCustomSoftware: false,
+    }));
+  };
+
+  const handleSoftwareChange = (softwareId: string) => {
+    const selectedSoftware = mockSoftware.find((s) => s.id === softwareId);
+    if (selectedSoftware) {
+      setFormData((prev) => ({
+        ...prev,
+        softwareId,
+        softwareName: selectedSoftware.name,
+        isCustomSoftware: false,
+      }));
+    } else if (softwareId === "custom") {
+      setFormData((prev) => ({
+        ...prev,
+        softwareId: "",
+        softwareName: "",
+        isCustomSoftware: true,
+      }));
+    }
   };
 
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -249,12 +318,7 @@ export default function BaoCaoLoiPhanMemPage() {
                 id="softwareCategory"
                 required
                 value={formData.softwareCategory}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    softwareCategory: e.target.value,
-                  }))
-                }
+                onChange={(e) => handleSoftwareCategoryChange(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 <option value="">Chọn loại phần mềm</option>
                 {softwareCategories.map((category) => (
@@ -270,30 +334,111 @@ export default function BaoCaoLoiPhanMemPage() {
             </div>
           </div>
 
-          {/* Bước 4: Software Name */}
+          {/* Bước 4: Software Selection */}
           <div>
             <label
-              htmlFor="softwareName"
+              htmlFor="softwareSelection"
               className="block text-sm font-medium text-gray-700">
-              Bước 4: Tên phần mềm cụ thể{" "}
-              <span className="text-red-500">*</span>
+              Bước 4: Chọn phần mềm <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              id="softwareName"
-              required
-              value={formData.softwareName}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  softwareName: e.target.value,
-                }))
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Ví dụ: Microsoft Word 2019, Visual Studio Code, Google Chrome..."
-            />
+            {formData.softwareCategory ? (
+              <div className="space-y-3">
+                {/* Software dropdown */}
+                <select
+                  id="softwareSelection"
+                  value={
+                    formData.isCustomSoftware ? "custom" : formData.softwareId
+                  }
+                  onChange={(e) => handleSoftwareChange(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                  <option value="">Chọn phần mềm</option>
+
+                  {/* Show installed software first if asset is selected */}
+                  {formData.assetId && installedSoftware.length > 0 && (
+                    <optgroup label="Phần mềm đã cài đặt trên thiết bị">
+                      {installedSoftware.map((software) => (
+                        <option key={software.id} value={software.id}>
+                          {software.name}{" "}
+                          {software.version && `(${software.version})`}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+
+                  {/* Show all available software in category */}
+                  {availableSoftware.length > 0 && (
+                    <optgroup
+                      label={
+                        formData.assetId
+                          ? "Phần mềm khác trong danh mục"
+                          : "Phần mềm có sẵn"
+                      }>
+                      {availableSoftware
+                        .filter(
+                          (software) =>
+                            !formData.assetId ||
+                            !installedSoftware.some(
+                              (installed) => installed.id === software.id
+                            )
+                        )
+                        .map((software) => (
+                          <option key={software.id} value={software.id}>
+                            {software.name}{" "}
+                            {software.version && `(${software.version})`}
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
+
+                  <option value="custom">+ Thêm phần mềm khác...</option>
+                </select>
+
+                {/* Custom software name input */}
+                {formData.isCustomSoftware && (
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Nhập tên phần mềm..."
+                      value={formData.softwareName}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          softwareName: e.target.value,
+                        }))
+                      }
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                )}
+
+                {/* Software version input */}
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Phiên bản phần mềm (tùy chọn)"
+                    value={formData.softwareVersion}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        softwareVersion: e.target.value,
+                      }))
+                    }
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                <p className="text-sm text-gray-600">
+                  Vui lòng chọn loại phần mềm trước để hiển thị danh sách phần
+                  mềm có sẵn
+                </p>
+              </div>
+            )}
             <p className="mt-1 text-sm text-gray-500">
-              Nhập tên chính xác của phần mềm, bao gồm cả phiên bản nếu biết
+              Chọn phần mềm từ danh sách hoặc thêm phần mềm mới nếu không tìm
+              thấy
             </p>
           </div>
 
