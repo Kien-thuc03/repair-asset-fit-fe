@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Send } from "lucide-react";
-import { ReportForm, SimpleAsset as Asset, Component } from "@/types";
+import {
+  ReportForm as ReportFormType,
+  SimpleAsset as Asset,
+  Component,
+} from "@/types";
 import {
   errorTypes,
   mockAssets,
@@ -12,11 +15,12 @@ import {
   mockComputers,
 } from "@/lib/mockData";
 import SuccessModal from "@/components/modal/SuccessModal";
-import QRScannerSection from "@/components/report/QRScannerSection";
-import ComponentSelector from "@/components/report/ComponentSelector";
-import MediaUploader from "@/components/report/MediaUploader";
-import ReportHeader from "@/components/report/ReportHeader";
-import EditModeNotice from "@/components/report/EditModeNotice";
+import {
+  QRScannerSection,
+  ReportHeader,
+  EditModeNotice,
+  ReportForm,
+} from "@/components/report";
 import { Breadcrumb } from "antd";
 
 export default function BaoCaoLoiPage() {
@@ -24,7 +28,7 @@ export default function BaoCaoLoiPage() {
   const router = useRouter();
   const isEditMode = searchParams.get("edit") === "true";
 
-  const [formData, setFormData] = useState<ReportForm>({
+  const [formData, setFormData] = useState<ReportFormType>({
     assetId: "",
     componentId: "",
     roomId: "",
@@ -288,175 +292,40 @@ export default function BaoCaoLoiPage() {
       <QRScannerSection isMobile={isMobile} onQRScan={simulateQRScan} />
 
       {/* Form */}
-      <div className="bg-white shadow rounded-lg">
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {/* Bước 1: Room Selection - Chọn phòng trước */}
-            <div>
-              <label
-                htmlFor="roomId"
-                className="block text-sm font-medium text-gray-700">
-                Bước 1: Chọn phòng/khoa <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="roomId"
-                required
-                value={formData.roomId}
-                onChange={(e) => handleRoomChange(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                <option value="">Chọn phòng</option>
-                {mockSimpleRooms.map((room) => (
-                  <option key={room.id} value={room.id}>
-                    {room.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Bước 2: Asset Selection - Chọn thiết bị trong phòng */}
-            <div>
-              <label
-                htmlFor="assetId"
-                className="block text-sm font-medium text-gray-700">
-                Bước 2: Chọn thiết bị <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="assetId"
-                required
-                value={formData.assetId}
-                onChange={(e) => handleAssetChange(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                disabled={!formData.roomId}>
-                <option value="">
-                  {!formData.roomId
-                    ? "Vui lòng chọn phòng trước"
-                    : "Chọn thiết bị"}
-                </option>
-                {filteredAssets.map((asset) => {
-                  const computer = mockComputers.find(
-                    (comp) => comp.assetId === asset.id
-                  );
-                  const machineLabel = computer?.machineLabel || "N/A";
-                  return (
-                    <option key={asset.id} value={asset.id}>
-                      Máy {machineLabel} - {asset.name} ({asset.assetCode})
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            {/* Bước 3: Error Type Selection - Chọn loại lỗi */}
-            <div className="sm:col-span-2">
-              <label
-                htmlFor="errorTypeId"
-                className="block text-sm font-medium text-gray-700">
-                Bước 3: Chọn loại lỗi từ danh sách{" "}
-                <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="errorTypeId"
-                required
-                value={formData.errorTypeId}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    errorTypeId: e.target.value,
-                  }))
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                <option value="">Chọn loại lỗi phổ biến</option>
-                {errorTypes.map((errorType) => (
-                  <option key={errorType.id} value={errorType.id}>
-                    {errorType.name}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-sm text-gray-500">
-                Chọn loại lỗi phù hợp để hệ thống có thể phân loại và xử lý
-                nhanh chóng
-              </p>
-            </div>
-          </div>
-
-          {/* Bước 4: Description - Mô tả lỗi chi tiết (không bắt buộc) */}
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700">
-              Bước 4: Mô tả chi tiết tình trạng lỗi (tùy chọn)
-            </label>
-            <textarea
-              id="description"
-              rows={4}
-              value={formData.description}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              placeholder="Mô tả chi tiết về tình trạng lỗi, triệu chứng, thời điểm xảy ra, các bước đã thực hiện... (không bắt buộc)"
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              Thông tin này sẽ giúp kỹ thuật viên hiểu rõ hơn về tình trạng lỗi
-              và xử lý nhanh chóng hơn
-            </p>
-          </div>
-
-          {/* Bước 5: Component Selection - Luôn hiển thị nhưng disabled khi chưa chọn thiết bị */}
-          <ComponentSelector
-            showComponentSelection={showComponentSelection}
-            setShowComponentSelection={setShowComponentSelection}
-            assetId={formData.assetId}
-            filteredComponents={filteredComponents}
-            selectedComponentIds={selectedComponentIds}
-            setSelectedComponentIds={setSelectedComponentIds}
-            onComponentChange={(componentId) =>
-              setFormData((prev) => ({ ...prev, componentId }))
-            }
-          />
-
-          {/* Media Files - Đính kèm hình ảnh */}
-          <MediaUploader
-            mediaFiles={formData.mediaFiles}
-            onMediaChange={handleMediaChange}
-            onRemoveFile={(index) =>
-              setFormData((prev) => ({
-                ...prev,
-                mediaFiles: prev.mediaFiles.filter((_, i) => i !== index),
-              }))
-            }
-          />
-
-          {/* Submit Button */}
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {isEditMode ? "Đang cập nhật..." : "Đang gửi..."}
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 mr-2" />
-                  {isEditMode ? "Cập nhật báo cáo" : "Gửi báo cáo"}
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+      <ReportForm
+        formData={formData}
+        isSubmitting={isSubmitting}
+        isEditMode={isEditMode}
+        filteredAssets={filteredAssets}
+        filteredComponents={filteredComponents}
+        selectedComponentIds={selectedComponentIds}
+        showComponentSelection={showComponentSelection}
+        rooms={mockSimpleRooms}
+        errorTypes={errorTypes}
+        computers={mockComputers}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        onRoomChange={handleRoomChange}
+        onAssetChange={handleAssetChange}
+        onErrorTypeChange={(errorTypeId) =>
+          setFormData((prev) => ({ ...prev, errorTypeId }))
+        }
+        onDescriptionChange={(description) =>
+          setFormData((prev) => ({ ...prev, description }))
+        }
+        onComponentChange={(componentId) =>
+          setFormData((prev) => ({ ...prev, componentId }))
+        }
+        onMediaChange={handleMediaChange}
+        onRemoveFile={(index) =>
+          setFormData((prev) => ({
+            ...prev,
+            mediaFiles: prev.mediaFiles.filter((_, i) => i !== index),
+          }))
+        }
+        setShowComponentSelection={setShowComponentSelection}
+        setSelectedComponentIds={setSelectedComponentIds}
+      />
 
       {/* Success Modal */}
       <SuccessModal
