@@ -1,0 +1,74 @@
+"use client";
+import { Search } from "lucide-react";
+
+interface AssetFiltersProps {
+  searchTerm: string;
+  categoryFilter: string;
+  statusFilter: string;
+  onSearchChange: (value: string) => void;
+  onCategoryChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
+  categories: string[];
+}
+
+export default function AssetFilters({
+  searchTerm,
+  categoryFilter,
+  statusFilter,
+  onSearchChange,
+  onCategoryChange,
+  onStatusChange,
+  categories,
+}: AssetFiltersProps) {
+  return (
+    <div className="bg-white shadow rounded-lg p-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {/* Search */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo mã, tên, model, phòng..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        {/* Category Filter */}
+        <div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => onCategoryChange(e.target.value)}
+            className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <option value="all">Tất cả danh mục</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Status Filter */}
+        <div>
+          <select
+            value={statusFilter}
+            onChange={(e) => onStatusChange(e.target.value)}
+            className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <option value="all">Tất cả trạng thái</option>
+            <option value="đang_sử_dụng">Đang sử dụng</option>
+            <option value="chờ_bàn_giao">Chờ bàn giao</option>
+            <option value="chờ_tiếp_nhận">Chờ tiếp nhận</option>
+            <option value="hư_hỏng">Hư hỏng</option>
+            <option value="mất_tích">Mất tích</option>
+            <option value="đề_xuất_thanh_lý">Đề xuất thanh lý</option>
+            <option value="đã_thanh_lý">Đã thanh lý</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}
