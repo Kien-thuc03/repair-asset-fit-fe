@@ -22,7 +22,7 @@ export default function SortableHeader({
 }: SortableHeaderProps) {
   return (
     <th
-      className={`px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none ${className}`}
+      className={`px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none whitespace-nowrap ${className}`}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -30,7 +30,7 @@ export default function SortableHeader({
         onSort(field);
       }}>
       <div className="flex items-center space-x-1">
-        <span>{children}</span>
+        <span className="whitespace-nowrap">{children}</span>
         <div className="flex flex-col">
           <ChevronUp
             className={`w-3 h-3 ${
