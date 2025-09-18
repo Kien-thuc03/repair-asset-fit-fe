@@ -39,11 +39,8 @@ const RoomAssetSelector: React.FC<RoomAssetSelectorProps> = ({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-900 flex items-center">
-        <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3">
-          1
-        </span>
-        Chọn máy tính cần cài đặt phần mềm
+      <h3 className="block text-sm font-medium text-gray-700 ">
+        Bước 1: Chọn máy tính cần cài đặt phần mềm
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
