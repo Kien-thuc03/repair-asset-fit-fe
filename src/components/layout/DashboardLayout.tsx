@@ -61,9 +61,9 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: Clock,
       },
       {
-        name: "Tra cứu thiết bị",
-        href: "/giang-vien/tra-cuu-thiet-bi",
-        icon: Search,
+        name: "Đề xuất phần mềm",
+        href: "/giang-vien/de-xuat-phan-mem",
+        icon: FolderCode,
       },
     ],
     [UserRole.KY_THUAT_VIEN]: [

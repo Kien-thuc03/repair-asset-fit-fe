@@ -20,6 +20,16 @@ export {
   getAssetSoftwareDetails,
 } from "./software";
 
+// Export software proposals
+export {
+  mockSoftwareProposals,
+  getSoftwareProposalsByStatus,
+  getSoftwareProposalsByProposer,
+  getSoftwareProposalsByTechnician,
+  getSoftwareProposalById,
+  getSoftwareProposalStats,
+} from "./softwareProposals";
+
 // Export component types from the main types file for convenience
 export { ComponentType, ComponentStatus } from "@/types";
 export type { Component } from "@/types";
