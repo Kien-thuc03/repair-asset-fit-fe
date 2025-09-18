@@ -1,17 +1,4 @@
-export interface Software {
-  id: string;
-  name: string;
-  version: string;
-  publisher: string;
-  createdAt: string;
-}
-
-export interface AssetSoftware {
-  assetId: string;
-  softwareId: string;
-  installationDate: string;
-  notes: string;
-}
+import { Software, AssetSoftware } from "@/types";
 
 // Synchronized with database-sync.json software section
 export const mockSoftware: Software[] = [

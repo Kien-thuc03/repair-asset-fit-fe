@@ -1,5 +1,5 @@
 import React from "react";
-import { Software } from "@/lib/mockData";
+import { Software } from "@/types";
 
 interface SoftwareSelectorProps {
   showSoftwareSelection: boolean;

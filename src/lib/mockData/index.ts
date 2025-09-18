@@ -18,8 +18,6 @@ export {
   mockAssetSoftware,
   getSoftwareByAssetId,
   getAssetSoftwareDetails,
-  type Software,
-  type AssetSoftware,
 } from "./software";
 
 // Export component types from the main types file for convenience

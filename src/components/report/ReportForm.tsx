@@ -3,8 +3,8 @@ import {
   ReportForm as ReportFormType,
   SimpleAsset as Asset,
   Component,
+  Software,
 } from "@/types";
-import { Software } from "@/lib/mockData";
 import RoomAssetSelector from "./RoomAssetSelector";
 import ErrorTypeSelector from "./ErrorTypeSelector";
 import DescriptionInput from "./DescriptionInput";

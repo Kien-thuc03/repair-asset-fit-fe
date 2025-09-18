@@ -6,6 +6,7 @@ import {
   ReportForm as ReportFormType,
   SimpleAsset as Asset,
   Component,
+  Software,
 } from "@/types";
 import {
   errorTypes,
@@ -14,7 +15,6 @@ import {
   mockComponents,
   mockComputers,
   getSoftwareByAssetId,
-  type Software,
 } from "@/lib/mockData";
 import { SuccessModal } from "@/components/modal";
 import {
