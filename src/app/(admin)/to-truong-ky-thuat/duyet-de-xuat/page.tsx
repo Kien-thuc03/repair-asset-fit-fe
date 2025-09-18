@@ -42,7 +42,7 @@ const getStatusText = (status: string) => {
 };
 
 const getUserRole = () => {
-  return "KTV";
+  return "Kỹ thuật viên";
 };
 
 // Helper function để lấy thông tin linh kiện dựa trên assetCode
