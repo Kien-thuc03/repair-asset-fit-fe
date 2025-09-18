@@ -10,17 +10,6 @@ import AssetStatsCards from "./AssetStatsCards";
 import AssetFilters from "./AssetFilters";
 import AssetGrid from "./AssetGrid";
 
-// Function to extract floor from room name (e.g., "A1.01" -> "Tầng 1")
-const getFloorFromRoomName = (roomName: string): string => {
-  // Extract floor number from room name pattern (A1.01, B2.05, etc.)
-  const match = roomName.match(/^[A-Z](\d+)\./);
-  if (match) {
-    const floorNumber = match[1];
-    return `Tầng ${floorNumber}`;
-  }
-  return "";
-};
-
 export default function AssetLookupContainer() {
   const router = useRouter();
   const [assets] = useState<Asset[]>(mockAssetsLookup);
@@ -73,12 +62,12 @@ export default function AssetLookupContainer() {
   // Simulate QR scan for demo
   const simulateQRScan = () => {
     const randomAsset = assets[Math.floor(Math.random() * assets.length)];
-    router.push(`/giang-vien/tra-cuu-thiet-bi/chi-tiet/${randomAsset.id}`);
+    router.push(`/to-truong-ky-thuat/tra-cuu-tai-san/chi-tiet/${randomAsset.id}`);
   };
 
   // Handle view detail
   const handleViewDetail = (assetId: string) => {
-    router.push(`/giang-vien/tra-cuu-thiet-bi/chi-tiet/${assetId}`);
+    router.push(`/to-truong-ky-thuat/tra-cuu-tai-san/chi-tiet/${assetId}`);
   };
 
   // Function to extract floor from room name
