@@ -1,6 +1,7 @@
 import { UnitStatus, UnitType } from "@/types/unit";
 
 // Danh sách các đơn vị trong hệ thống
+// Synchronized with database-sync.json
 export const units = [
   {
     id: "unit-1",
@@ -8,7 +9,7 @@ export const units = [
     phone: "028.38940390",
     email: "cntt@iuh.edu.vn",
     type: UnitType.DON_VI_SU_DUNG,
-    representativeId: "user-5", // ID của trưởng khoa
+    representativeId: "user-5", // ID của trưởng khoa (Giảng viên)
     status: UnitStatus.ACTIVE,
     createdBy: "user-2",
     createdAt: new Date("2023-01-01"),

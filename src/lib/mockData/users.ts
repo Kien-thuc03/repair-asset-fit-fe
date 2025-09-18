@@ -1,6 +1,6 @@
 import { UserStatus } from "@/types/user";
 
-// Mock users - data theo cấu trúc bảng users trong database
+// Mock users - Synchronized with database-sync.json
 export const users = [
   {
     id: "user-1",
@@ -10,10 +10,10 @@ export const users = [
     email: "qtv@iuh.edu.vn",
     unitId: "unit-1", // Khoa CNTT
     phoneNumber: "0901234001",
-    birthDate: new Date("1985-01-15"),
+    birthDate: "1985-01-15", // Updated to string format to match sampleData
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
+    createdAt: "2023-01-01T00:00:00Z", // Updated to ISO string format
+    updatedAt: "2023-01-01T00:00:00Z",
     deletedAt: null
   },
   {
@@ -24,10 +24,10 @@ export const users = [
     email: "quantri@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị
     phoneNumber: "0901234002",
-    birthDate: new Date("1987-03-20"),
+    birthDate: "1987-03-20",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
+    createdAt: "2023-01-01T00:00:00Z",
+    updatedAt: "2023-01-01T00:00:00Z",
     deletedAt: null
   },
   {

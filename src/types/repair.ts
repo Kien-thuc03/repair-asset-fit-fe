@@ -324,11 +324,10 @@ export interface SimpleAsset {
   roomId: string;
 }
 
-// Asset Type enum
+// Asset Type enum - Synchronized with database-sync.json
 export enum AssetType {
-  FIXED_ASSET = "FIXED_ASSET", // Tài sản cố định
-  CONSUMABLE = "CONSUMABLE", // Vật tư tiêu hao
-  OFFICE_SUPPLIES = "OFFICE_SUPPLIES", // Đồ dùng văn phòng
+  TSCD = "TSCD", // Tài sản cố định 
+  CCDC = "CCDC", // Công cụ dụng cụ
 }
 
 // Asset Shape enum
@@ -337,13 +336,13 @@ export enum AssetShape {
   COMPUTER = "COMPUTER", // Máy tính
 }
 
-// Asset Status enum
+// Asset Status enum - Synchronized with database-sync.json
 export enum AssetStatus {
   DANG_SU_DUNG = "đang_sử_dụng",
-  CHO_BAN_GIAO = "chờ_bàn_giao",
+  CHO_BAN_GIAO = "chờ_bàn_giao", 
   CHO_TIEP_NHAN = "chờ_tiếp_nhận",
   HU_HONG = "hư_hỏng",
-  MAT_TICH = "mất_tích",
+  DA_MAT = "đã_mất", // Updated from MAT_TICH
   DE_XUAT_THANH_LY = "đề_xuất_thanh_lý",
   DA_THANH_LY = "đã_thanh_lý",
 }
