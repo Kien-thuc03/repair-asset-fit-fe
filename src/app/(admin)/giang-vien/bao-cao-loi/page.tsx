@@ -22,7 +22,7 @@ import {
   ReportHeader,
   EditModeNotice,
   ReportForm,
-} from "@/components/report";
+} from "@/components/lecturer/report";
 import { Breadcrumb } from "antd";
 
 export default function BaoCaoLoiPage() {

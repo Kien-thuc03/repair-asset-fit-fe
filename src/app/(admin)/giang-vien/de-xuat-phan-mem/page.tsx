@@ -12,7 +12,7 @@ import {
   QRScannerSection,
   ProposalHeader,
   ProposalForm,
-} from "@/components/softwareProposal";
+} from "@/components/lecturer/softwareProposal";
 import { Breadcrumb } from "antd";
 
 export default function DeXuatPhanMemPage() {
