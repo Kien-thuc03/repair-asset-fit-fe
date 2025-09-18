@@ -13,6 +13,8 @@ import {
   mockSimpleRooms,
   mockComponents,
   mockComputers,
+  getSoftwareByAssetId,
+  type Software,
 } from "@/lib/mockData";
 import { SuccessModal } from "@/components/modal";
 import {
@@ -40,13 +42,16 @@ export default function BaoCaoLoiPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [filteredComponents, setFilteredComponents] = useState<Component[]>([]);
+  const [filteredSoftware, setFilteredSoftware] = useState<Software[]>([]);
   const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>(
     []
   );
+  const [selectedSoftwareIds, setSelectedSoftwareIds] = useState<string[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [editRequestId, setEditRequestId] = useState<string>("");
   const [showComponentSelection, setShowComponentSelection] = useState(false);
+  const [showSoftwareSelection, setShowSoftwareSelection] = useState(false);
 
   // Debug filteredComponents changes
   useEffect(() => {
@@ -141,9 +146,12 @@ export default function BaoCaoLoiPage() {
       mediaFiles: [],
     });
     setSelectedComponentIds([]);
+    setSelectedSoftwareIds([]);
     setShowComponentSelection(false);
+    setShowSoftwareSelection(false);
     setFilteredAssets([]);
     setFilteredComponents([]);
+    setFilteredSoftware([]);
   };
 
   // Handle success modal close - navigate back to detail page
@@ -168,20 +176,26 @@ export default function BaoCaoLoiPage() {
   const handleRoomChange = (roomId: string) => {
     setFormData((prev) => ({ ...prev, roomId, assetId: "", componentId: "" }));
     setSelectedComponentIds([]);
+    setSelectedSoftwareIds([]);
     setShowComponentSelection(false);
+    setShowSoftwareSelection(false);
     // Lọc thiết bị theo phòng đã chọn
     const roomAssets = mockAssets.filter((asset) => asset.roomId === roomId);
     setFilteredAssets(roomAssets);
     setFilteredComponents([]);
+    setFilteredSoftware([]);
   };
 
   const handleAssetChange = (assetId: string) => {
     setFormData((prev) => ({ ...prev, assetId, componentId: "" }));
     setSelectedComponentIds([]);
+    setSelectedSoftwareIds([]);
     setShowComponentSelection(false);
+    setShowSoftwareSelection(false);
     setFilteredComponents(
       mockComponents.filter((comp) => comp.computerAssetId === assetId)
     );
+    setFilteredSoftware(getSoftwareByAssetId(assetId));
   };
 
   const handleQRScan = (qrCode: string) => {
@@ -298,8 +312,11 @@ export default function BaoCaoLoiPage() {
         isEditMode={isEditMode}
         filteredAssets={filteredAssets}
         filteredComponents={filteredComponents}
+        filteredSoftware={filteredSoftware}
         selectedComponentIds={selectedComponentIds}
+        selectedSoftwareIds={selectedSoftwareIds}
         showComponentSelection={showComponentSelection}
+        showSoftwareSelection={showSoftwareSelection}
         rooms={mockSimpleRooms}
         errorTypes={errorTypes}
         computers={mockComputers}
@@ -316,6 +333,9 @@ export default function BaoCaoLoiPage() {
         onComponentChange={(componentId) =>
           setFormData((prev) => ({ ...prev, componentId }))
         }
+        onSoftwareChange={(softwareId) =>
+          setFormData((prev) => ({ ...prev, componentId: softwareId }))
+        }
         onMediaChange={handleMediaChange}
         onRemoveFile={(index) =>
           setFormData((prev) => ({
@@ -324,7 +344,9 @@ export default function BaoCaoLoiPage() {
           }))
         }
         setShowComponentSelection={setShowComponentSelection}
+        setShowSoftwareSelection={setShowSoftwareSelection}
         setSelectedComponentIds={setSelectedComponentIds}
+        setSelectedSoftwareIds={setSelectedSoftwareIds}
       />
 
       {/* Success Modal */}

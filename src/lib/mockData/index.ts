@@ -11,8 +11,16 @@ export {
 
 // Export new data from database-sync.json
 export { categories, type Category } from "./categories";
-export { software, type Software } from "./software";
-export { assetSoftware, type AssetSoftware } from "./assetSoftware";
+
+// Export software data
+export {
+  mockSoftware,
+  mockAssetSoftware,
+  getSoftwareByAssetId,
+  getAssetSoftwareDetails,
+  type Software,
+  type AssetSoftware,
+} from "./software";
 
 // Export component types from the main types file for convenience
 export { ComponentType, ComponentStatus } from "@/types";
