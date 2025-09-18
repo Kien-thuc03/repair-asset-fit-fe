@@ -15,11 +15,7 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
 }) => {
   return (
     <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-      <Button 
-        size="large" 
-        onClick={onCancel}
-        icon={<X className="w-4 h-4" />}
-      >
+      <Button size="large" onClick={onCancel} icon={<X className="w-4 h-4" />}>
         Hủy
       </Button>
       <Button
@@ -27,12 +23,14 @@ const ProposalFormActions: React.FC<ProposalFormActionsProps> = ({
         size="large"
         htmlType="submit"
         loading={isSubmitting}
-        icon={<Send className="w-4 h-4" />}
-      >
-        {isSubmitting 
-          ? (isEditMode ? "Đang cập nhật..." : "Đang gửi...") 
-          : (isEditMode ? "Cập nhật đề xuất" : "Gửi đề xuất")
-        }
+        icon={<Send className="w-4 h-4" />}>
+        {isSubmitting
+          ? isEditMode
+            ? "Đang cập nhật..."
+            : "Đang gửi..."
+          : isEditMode
+          ? "Cập nhật đề xuất"
+          : "Gửi đề xuất"}
       </Button>
     </div>
   );
