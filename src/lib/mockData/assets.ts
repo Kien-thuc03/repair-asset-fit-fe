@@ -6,7 +6,7 @@ import {
   AssetStatus,
 } from "@/types";
 
-// Simple assets for forms (backward compatibility)
+// Simple assets for forms (backward compatibility) - Synchronized with database-sync.json
 export const mockAssets: Asset[] = [
   // Phòng H101
   {
@@ -87,7 +87,7 @@ export const mockAssets: Asset[] = [
   },
 ];
 
-// Comprehensive assets with all database properties
+// Comprehensive assets with all database properties - Synchronized with database-sync.json
 export const comprehensiveAssets: ComprehensiveAsset[] = [
   // Phòng H101
   {
@@ -102,15 +102,16 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "Dell Technologies Vietnam",
     purchasePackage: 1,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4", // Máy tính
     shape: AssetShape.COMPUTER,
     status: AssetStatus.DANG_SU_DUNG,
-    createdBy: "USER001",
+    createdBy: "user-2",
     createdAt: "2023-01-15T08:00:00Z",
-    updatedAt: "2024-03-15T10:30:00Z",
+    updatedAt: "2023-01-15T08:00:00Z",
+    deletedAt: undefined,
   },
   {
     id: "ASSET002",
@@ -124,7 +125,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "Dell Technologies Vietnam",
     purchasePackage: 1,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -146,7 +147,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "HP Vietnam",
     purchasePackage: 2,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -169,7 +170,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "Lenovo Vietnam",
     purchasePackage: 3,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -191,7 +192,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "Dell Technologies Vietnam",
     purchasePackage: 4,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -213,7 +214,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "HP Vietnam",
     purchasePackage: 5,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -236,7 +237,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "ASUS Vietnam",
     purchasePackage: 6,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -258,7 +259,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "Acer Vietnam",
     purchasePackage: 7,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -281,7 +282,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "Dell Technologies Vietnam",
     purchasePackage: 8,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -303,7 +304,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "HP Vietnam",
     purchasePackage: 9,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -326,7 +327,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "Lenovo Vietnam",
     purchasePackage: 10,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: true,
     isLocked: true,
     categoryId: "4",
@@ -348,7 +349,7 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     quantity: 1,
     origin: "MSI Vietnam",
     purchasePackage: 11,
-    type: AssetType.FIXED_ASSET,
+    type: AssetType.TSCD,
     isHandover: false,
     isLocked: false,
     categoryId: "4",

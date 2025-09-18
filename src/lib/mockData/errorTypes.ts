@@ -5,26 +5,27 @@ export interface ErrorType {
   createdAt: string; // Timestamp (ISO string)
 }
 
+// Synchronized with database-sync.json
 export const errorTypes: ErrorType[] = [
   {
-    id: "ET001",
-    name: "Máy không khởi động",
+    id: "error-001",
+    name: "Lỗi phần cứng - CPU",
     description:
-      "Máy tính không thể bật nguồn hoặc không có phản hồi khi nhấn nút nguồn. Có thể do lỗi nguồn điện, mainboard hoặc các linh kiện phần cứng khác.",
+      "CPU bị quá nhiệt, lỗi xử lý hoặc hỏng hóc. Máy tính có thể tự động tắt hoặc chạy chậm.",
     createdAt: "2024-01-15T08:00:00Z",
   },
   {
-    id: "ET002",
-    name: "Máy hư phần mềm",
+    id: "error-002",
+    name: "Lỗi phần cứng - RAM",
     description:
-      "Các lỗi liên quan đến hệ điều hành, ứng dụng không hoạt động, virus, hoặc file hệ thống bị hỏng. Cần cài đặt lại hoặc sửa chữa phần mềm.",
+      "RAM bị lỗi, không tương thích hoặc hỏng. Máy có thể không khởi động được hoặc bị treo thường xuyên.",
     createdAt: "2024-01-15T08:05:00Z",
   },
   {
-    id: "ET003",
-    name: "Máy hư bàn phím",
+    id: "error-003",
+    name: "Lỗi phần cứng - Ổ cứng",
     description:
-      "Bàn phím không hoạt động, một số phím bị liệt, hoặc gõ phím không có phản hồi. Có thể do lỗi kết nối USB hoặc bàn phím bị hỏng.",
+      "Ổ cứng bị bad sector, hỏng hóc hoặc không nhận dạng được. Dữ liệu có thể bị mất hoặc không truy cập được.",
     createdAt: "2024-01-15T08:10:00Z",
   },
   {

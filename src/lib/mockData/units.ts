@@ -1,13 +1,14 @@
 // Danh sách các đơn vị trong hệ thống
+// Synchronized with database-sync.json
 export const units = [
   {
     id: "unit-1",
     name: "Khoa Công nghệ Thông tin",
     phone: "028.38940390",
     email: "cntt@iuh.edu.vn",
-    type: "đơn_vị_sử_dụng",
-    representativeId: "user-5", // ID của trưởng khoa
-    status: "ACTIVE",
+    type: UnitType.DON_VI_SU_DUNG,
+    representativeId: "user-5", // ID của trưởng khoa (Giảng viên)
+    status: UnitStatus.ACTIVE,
     createdBy: "user-2",
     createdAt: "2023-01-01",
     updatedAt: "2023-01-01",

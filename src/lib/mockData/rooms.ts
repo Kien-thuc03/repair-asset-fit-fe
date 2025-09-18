@@ -1,7 +1,8 @@
 import { Room, RoomStatus } from "@/types/unit";
 
+// Synchronized with database-sync.json
 export const mockRooms: Room[] = [
-  // Tầng 1 - Tòa H
+  // Updated IDs to match sampleData format
   {
     id: "ROOM001",
     building: "Tòa H",
@@ -9,7 +10,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H101",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
-    assignedTechnician: "tech001",
+    assignedTechnician: "user-4", // Kỹ thuật viên
   },
   {
     id: "ROOM002",
@@ -18,7 +19,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H102",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
-    assignedTechnician: "tech001",
+    assignedTechnician: "user-4", // Kỹ thuật viên
   },
   {
     id: "ROOM003",
@@ -27,7 +28,7 @@ export const mockRooms: Room[] = [
     roomNumber: "H103",
     status: RoomStatus.ACTIVE,
     unitId: "unit-1", // Khoa Công nghệ Thông tin
-    assignedTechnician: "tech001",
+    assignedTechnician: "user-4", // Kỹ thuật viên
   },
   // Tầng 2 - Tòa H
   {
