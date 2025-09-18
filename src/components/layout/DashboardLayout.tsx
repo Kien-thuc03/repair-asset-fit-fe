@@ -30,6 +30,7 @@ import {
   MapPin,
   Monitor,
   FolderCode,
+  TriangleAlert,
 } from "lucide-react";
 
 // Navigation items
@@ -51,19 +52,8 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       },
       {
         name: "Quản lý báo lỗi",
-        icon: AlertTriangle,
-        children: [
-          {
-            name: "Báo lỗi phần cứng",
-            href: "/giang-vien/bao-cao-loi",
-            icon: Monitor,
-          },
-          {
-            name: "Báo lỗi phần mềm",
-            href: "/giang-vien/bao-cao-loi/phan-mem",
-            icon: FolderCode,
-          },
-        ],
+        href: "/giang-vien/bao-cao-loi",
+        icon: TriangleAlert,
       },
       {
         name: "Theo dõi tiến độ",
