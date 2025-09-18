@@ -1,5 +1,12 @@
 import { RepairRequest, RepairStatus } from "@/types";
-import { Clock, CheckCircle, AlertTriangle, X, FileCheck, CircleAlert } from "lucide-react";
+import {
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  X,
+  FileCheck,
+  CircleAlert,
+} from "lucide-react";
 
 export const repairRequestStatusConfig = {
   [RepairStatus.CHỜ_TIẾP_NHẬN]: {
@@ -40,13 +47,13 @@ export const mockRepairRequests: RepairRequest[] = [
     id: "req-001",
     requestCode: "YCSC-2025-0001",
     assetId: "ASSET001",
-    assetCode: "PC-H101-01",
+    assetCode: "19-0205/01",
     assetName: "PC Dell OptiPlex 3080",
     machineLabel: "01",
-    componentId: "COMP005",
+    componentId: "CC005",
     componentName: "Dell 200W PSU",
-    reporterId: "user-001",
-    reporterName: "Nguyễn Văn A",
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
     reporterRole: "Giảng viên",
     assignedTechnicianId: "tech-001",
     assignedTechnicianName: "Trần Thị B",

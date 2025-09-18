@@ -1,5 +1,11 @@
+export interface Permission {
+  id: string;
+  name: string;
+  code: string;
+}
+
 // Danh sách các quyền trong hệ thống
-export const permissions = [
+export const permissions: Permission[] = [
   // Quyền của Giảng viên
   {
     id: "perm-1",
@@ -21,7 +27,7 @@ export const permissions = [
     name: "Xem thông tin cá nhân",
     code: "view_personal_info",
   },
-  
+
   // Quyền của Kỹ thuật viên
   {
     id: "perm-5",
@@ -43,7 +49,7 @@ export const permissions = [
     name: "Xem thống kê cá nhân",
     code: "view_personal_stats",
   },
-  
+
   // Quyền của Tổ trưởng Kỹ thuật
   {
     id: "perm-9",
@@ -65,7 +71,7 @@ export const permissions = [
     name: "Xác nhận biên bản",
     code: "confirm_reports",
   },
-  
+
   // Quyền của Phòng Quản trị
   {
     id: "perm-13",
@@ -87,7 +93,7 @@ export const permissions = [
     name: "Gửi đề xuất",
     code: "submit_requests",
   },
-  
+
   // Quyền của QTV Khoa
   {
     id: "perm-17",

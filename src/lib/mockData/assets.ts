@@ -8,42 +8,42 @@ import {
 
 // Simple assets for forms (backward compatibility)
 export const mockAssets: Asset[] = [
-  // Phòng A101
+  // Phòng H101
   {
     id: "ASSET001",
     name: "PC Dell OptiPlex 3080 - Máy 01",
-    assetCode: "PC-A101-01",
+    assetCode: "19-0205/01",
     roomId: "ROOM001",
   },
   {
     id: "ASSET002",
     name: "PC Dell OptiPlex 3080 - Máy 02",
-    assetCode: "PC-A101-02",
+    assetCode: "19-0205/02",
     roomId: "ROOM001",
   },
   {
     id: "ASSET003",
     name: "PC HP ProDesk 400 - Máy 03",
-    assetCode: "PC-A101-03",
+    assetCode: "19-0206/01",
     roomId: "ROOM001",
   },
-  // Phòng A102
+  // Phòng H102
   {
     id: "ASSET004",
     name: "PC Lenovo ThinkCentre - Máy 01",
-    assetCode: "PC-A102-01",
+    assetCode: "19-0207/01",
     roomId: "ROOM002",
   },
   {
     id: "ASSET005",
     name: "PC Dell Inspiron - Máy 02",
-    assetCode: "PC-A102-02",
+    assetCode: "19-0208/01",
     roomId: "ROOM002",
   },
   {
     id: "ASSET006",
     name: "PC HP Pavilion - Máy 03",
-    assetCode: "PC-A102-03",
+    assetCode: "19-0209/01",
     roomId: "ROOM002",
   },
   // Phòng A103
@@ -89,14 +89,14 @@ export const mockAssets: Asset[] = [
 
 // Comprehensive assets with all database properties
 export const comprehensiveAssets: ComprehensiveAsset[] = [
-  // Phòng A101
+  // Phòng H101
   {
     id: "ASSET001",
     ktCode: "19-0205/01",
     fixedCode: "2023.001",
     name: "PC Dell OptiPlex 3080 - Máy 01",
     specs: "Intel Core i5-12400, 16GB RAM, 512GB SSD, Windows 11 Pro",
-    entryDate: "2023-01-15T00:00:00Z",
+    entryDate: "2023-01-15",
     currentRoomId: "ROOM001",
     unit: "chiếc",
     quantity: 1,

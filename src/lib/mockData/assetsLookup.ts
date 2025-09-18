@@ -1,5 +1,5 @@
 import { Asset, RepairHistory, AssetStatus, RepairStatus } from "@/types";
-import { CheckCircle, Clock, AlertTriangle, Monitor, Wifi } from "lucide-react";
+import { CheckCircle, Clock, AlertTriangle, Monitor} from "lucide-react";
 
 export const mockAssetsLookup: Asset[] = [
   {
