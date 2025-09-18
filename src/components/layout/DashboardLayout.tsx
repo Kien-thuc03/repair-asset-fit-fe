@@ -18,7 +18,6 @@ import {
   Users,
   BarChart3,
   FileText,
-  AlertTriangle,
   UserCheck,
   Shield,
   ChevronRight,
@@ -28,7 +27,6 @@ import {
   Search,
   FileCheck,
   MapPin,
-  Monitor,
   FolderCode,
   TriangleAlert,
 } from "lucide-react";
