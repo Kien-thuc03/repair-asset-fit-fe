@@ -1,5 +1,6 @@
 // Danh sách các đơn vị trong hệ thống
 // Synchronized with database-sync.json
+import {UnitType, UnitStatus} from "../../types/unit";
 export const units = [
   {
     id: "unit-1",

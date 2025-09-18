@@ -100,4 +100,32 @@ export const users = [
     updatedAt: "2023-01-01T00:00:00Z",
     deletedAt: null,
   },
+  {
+    id: "user-8",
+    username: "anhtuan",
+    password: "anhtuan123",
+    fullName: "Anh Tuấn",
+    email: "anhtuan@iuh.edu.vn",
+    unitId: "unit-2", // Phòng Quản trị
+    phoneNumber: "0901234008",
+    birthDate: "1992-05-15",
+    status: UserStatus.ACTIVE,
+    createdAt: "2023-01-01T00:00:00Z",
+    updatedAt: "2023-01-01T00:00:00Z",
+    deletedAt: null,
+  },
+  {
+    id: "user-9",
+    username: "vandat",
+    password: "vandat123",
+    fullName: "Văn Đạt",
+    email: "vandat@iuh.edu.vn",
+    unitId: "unit-2", // Phòng Quản trị
+    phoneNumber: "0901234009",
+    birthDate: "1993-08-22",
+    status: UserStatus.ACTIVE,
+    createdAt: "2023-01-01T00:00:00Z",
+    updatedAt: "2023-01-01T00:00:00Z",
+    deletedAt: null,
+  },
 ];
