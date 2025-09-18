@@ -1,5 +1,3 @@
-import { UnitStatus, UnitType } from "@/types/unit";
-
 // Danh sách các đơn vị trong hệ thống
 // Synchronized with database-sync.json
 export const units = [
@@ -12,34 +10,34 @@ export const units = [
     representativeId: "user-5", // ID của trưởng khoa (Giảng viên)
     status: UnitStatus.ACTIVE,
     createdBy: "user-2",
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    deletedAt: null
+    createdAt: "2023-01-01",
+    updatedAt: "2023-01-01",
+    deletedAt: null,
   },
   {
     id: "unit-2",
     name: "Phòng Quản trị",
     phone: "028.38940391",
     email: "quantri@iuh.edu.vn",
-    type: UnitType.PHONG_QUAN_TRI,
+    type: "phòng_quản_trị",
     representativeId: "user-2", // ID của trưởng phòng quản trị
-    status: UnitStatus.ACTIVE,
+    status: "ACTIVE",
     createdBy: "user-2",
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    deletedAt: null
+    createdAt: "2023-01-01",
+    updatedAt: "2023-01-01",
+    deletedAt: null,
   },
   {
     id: "unit-3",
     name: "Phòng Kế hoạch Đầu tư",
     phone: "028.38940392",
     email: "khdautu@iuh.edu.vn",
-    type: UnitType.PHONG_KE_HOACH_DAU_TU,
+    type: "phòng_kế_hoạch_đầu_tư",
     representativeId: "user-7", // ID của trưởng phòng kế hoạch
-    status: UnitStatus.ACTIVE,
+    status: "ACTIVE",
     createdBy: "user-2",
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    deletedAt: null
-  }
+    createdAt: "2023-01-01",
+    updatedAt: "2023-01-01",
+    deletedAt: null,
+  },
 ];

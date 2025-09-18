@@ -12,6 +12,7 @@ export const mockComponents: Component[] = [
     serialNumber: "CPU001",
     status: ComponentStatus.INSTALLED,
     installedAt: "2023-01-15T08:00:00Z",
+    removedAt: undefined,
     notes: "Original CPU, working perfectly",
   },
   {
@@ -23,6 +24,7 @@ export const mockComponents: Component[] = [
     serialNumber: "RAM001",
     status: ComponentStatus.INSTALLED,
     installedAt: "2023-01-15T08:00:00Z",
+    removedAt: undefined,
     notes: "High-performance RAM module",
   },
   {
@@ -34,6 +36,7 @@ export const mockComponents: Component[] = [
     serialNumber: "SSD001",
     status: ComponentStatus.INSTALLED,
     installedAt: "2023-01-15T08:00:00Z",
+    removedAt: undefined,
     notes: "Primary storage drive",
   },
   {
@@ -42,8 +45,10 @@ export const mockComponents: Component[] = [
     componentType: ComponentType.MOTHERBOARD,
     name: "Dell OptiPlex 3080 Motherboard",
     componentSpecs: "Intel B460 chipset, Micro ATX",
+    serialNumber: undefined,
     status: ComponentStatus.INSTALLED,
     installedAt: "2023-01-15T08:00:00Z",
+    removedAt: undefined,
     notes: "OEM motherboard",
   },
   {

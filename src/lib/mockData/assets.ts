@@ -8,7 +8,7 @@ import {
 
 // Simple assets for forms (backward compatibility) - Synchronized with database-sync.json
 export const mockAssets: Asset[] = [
-  // Phòng H101 - Updated to match sampleData
+  // Phòng H101
   {
     id: "ASSET001",
     name: "PC Dell OptiPlex 3080 - Máy 01",
@@ -17,7 +17,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: "ASSET002",
-    name: "PC Dell OptiPlex 3080 - Máy 02", 
+    name: "PC Dell OptiPlex 3080 - Máy 02",
     assetCode: "19-0205/02",
     roomId: "ROOM001",
   },
@@ -27,7 +27,7 @@ export const mockAssets: Asset[] = [
     assetCode: "19-0206/01",
     roomId: "ROOM001",
   },
-  // Phòng H102 - Updated to match sampleData
+  // Phòng H102
   {
     id: "ASSET004",
     name: "PC Lenovo ThinkCentre - Máy 01",
@@ -89,14 +89,14 @@ export const mockAssets: Asset[] = [
 
 // Comprehensive assets with all database properties - Synchronized with database-sync.json
 export const comprehensiveAssets: ComprehensiveAsset[] = [
-  // Phòng H101 - Updated to match sampleData exactly
+  // Phòng H101
   {
     id: "ASSET001",
     ktCode: "19-0205/01",
     fixedCode: "2023.001",
     name: "PC Dell OptiPlex 3080 - Máy 01",
     specs: "Intel Core i5-12400, 16GB RAM, 512GB SSD, Windows 11 Pro",
-    entryDate: "2023-01-15T00:00:00Z",
+    entryDate: "2023-01-15",
     currentRoomId: "ROOM001",
     unit: "chiếc",
     quantity: 1,

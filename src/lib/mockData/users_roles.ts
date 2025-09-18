@@ -1,33 +1,29 @@
-import { UserRole } from "@/types/repair";
-import { roles } from "./roles";
-
-// Tìm roleId dựa trên code
-function getRoleIdByCode(code: UserRole): string {
-  const role = roles.find(r => r.code === code);
-  return role ? role.id : "";
+export interface UserRole {
+  userId: string;
+  roleId: string;
 }
 
 // Quan hệ giữa người dùng và vai trò
-export const userRoles = [
+export const users_roles: UserRole[] = [
   // QTV Khoa
-  { userId: "user-1", roleId: getRoleIdByCode(UserRole.QTV_KHOA) },
-  
+  { userId: "user-1", roleId: "role-5" },
+
   // Nhân viên Phòng Quản trị
-  { userId: "user-2", roleId: getRoleIdByCode(UserRole.PHONG_QUAN_TRI) },
-  
+  { userId: "user-2", roleId: "role-4" },
+
   // Tổ trưởng Kỹ thuật
-  { userId: "user-3", roleId: getRoleIdByCode(UserRole.TO_TRUONG_KY_THUAT) },
-  
+  { userId: "user-3", roleId: "role-3" },
+
   // Kỹ thuật viên
-  { userId: "user-4", roleId: getRoleIdByCode(UserRole.KY_THUAT_VIEN) },
-  
+  { userId: "user-4", roleId: "role-2" },
+
   // Giảng viên
-  { userId: "user-5", roleId: getRoleIdByCode(UserRole.GIANG_VIEN) },
-  
-  // Giảng viên kiêm QTV
-  { userId: "user-6", roleId: getRoleIdByCode(UserRole.GIANG_VIEN) },
-  { userId: "user-6", roleId: getRoleIdByCode(UserRole.QTV_KHOA) },
-  { userId: "user-6", roleId: getRoleIdByCode(UserRole.PHONG_QUAN_TRI) },
-  { userId: "user-6", roleId: getRoleIdByCode(UserRole.TO_TRUONG_KY_THUAT) },
-  { userId: "user-6", roleId: getRoleIdByCode(UserRole.KY_THUAT_VIEN) },
+  { userId: "user-5", roleId: "role-1" },
+
+  // Giảng viên kiêm QTV - nhiều vai trò
+  { userId: "user-6", roleId: "role-1" }, // Giảng viên
+  { userId: "user-6", roleId: "role-5" }, // QTV Khoa
+  { userId: "user-6", roleId: "role-4" }, // Phòng Quản trị
+  { userId: "user-6", roleId: "role-3" }, // Tổ trưởng Kỹ thuật
+  { userId: "user-6", roleId: "role-2" }, // Kỹ thuật viên
 ];

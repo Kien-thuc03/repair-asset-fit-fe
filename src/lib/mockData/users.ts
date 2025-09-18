@@ -28,7 +28,7 @@ export const users = [
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",
-    deletedAt: null
+    deletedAt: null,
   },
   {
     id: "user-3",
@@ -38,11 +38,11 @@ export const users = [
     email: "totruong@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
     phoneNumber: "0901234003",
-    birthDate: new Date("1980-05-10"),
+    birthDate: "1980-05-10",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    deletedAt: null
+    createdAt: "2023-01-01T00:00:00Z",
+    updatedAt: "2023-01-01T00:00:00Z",
+    deletedAt: null,
   },
   {
     id: "user-4",
@@ -52,11 +52,11 @@ export const users = [
     email: "kythuat@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
     phoneNumber: "0901234004",
-    birthDate: new Date("1990-07-25"),
+    birthDate: "1990-07-25",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    deletedAt: null
+    createdAt: "2023-01-01T00:00:00Z",
+    updatedAt: "2023-01-01T00:00:00Z",
+    deletedAt: null,
   },
   {
     id: "user-5",
@@ -66,11 +66,11 @@ export const users = [
     email: "giangvien@iuh.edu.vn",
     unitId: "unit-1", // Khoa CNTT
     phoneNumber: "0901234005",
-    birthDate: new Date("1988-11-30"),
+    birthDate: "1988-11-30",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    deletedAt: null
+    createdAt: "2023-01-01T00:00:00Z",
+    updatedAt: "2023-01-01T00:00:00Z",
+    deletedAt: null,
   },
   {
     id: "user-6",
@@ -80,11 +80,11 @@ export const users = [
     email: "gv_qtv@iuh.edu.vn",
     unitId: "unit-1", // Khoa CNTT
     phoneNumber: "0901234006",
-    birthDate: new Date("1982-09-05"),
+    birthDate: "1982-09-05",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    deletedAt: null
+    createdAt: "2023-01-01T00:00:00Z",
+    updatedAt: "2023-01-01T00:00:00Z",
+    deletedAt: null,
   },
   {
     id: "user-7",
@@ -94,12 +94,10 @@ export const users = [
     email: "kehoach@iuh.edu.vn",
     unitId: "unit-3", // Phòng Kế hoạch Đầu tư
     phoneNumber: "0901234007",
-    birthDate: new Date("1975-04-12"),
+    birthDate: "1975-04-12",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01"),
-    updatedAt: new Date("2023-01-01"),
-    deletedAt: null
-  }
+    createdAt: "2023-01-01T00:00:00Z",
+    updatedAt: "2023-01-01T00:00:00Z",
+    deletedAt: null,
+  },
 ];
-
-// Bỏ legacy code không cần thiết nữa

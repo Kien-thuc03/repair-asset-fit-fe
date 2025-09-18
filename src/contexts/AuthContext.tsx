@@ -1,9 +1,15 @@
 "use client";
 
-import { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from "react";
 import { UserRole } from "@/types/repair";
 import { users } from "@/lib/mockData/users";
-import { userRoles } from "@/lib/mockData/users_roles";
+import { users_roles } from "@/lib/mockData/users_roles";
 import { AuthenticatedUser, UserStatus } from "@/types/user";
 import { roles } from "@/lib/mockData/roles";
 import { units } from "@/lib/mockData/units";
@@ -24,20 +30,20 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // Hàm helper để lấy các vai trò của user
 const getUserRoles = (userId: string): UserRole[] => {
   // Lấy danh sách roleId của user
-  const userRoleIds = userRoles
-    .filter(ur => ur.userId === userId)
-    .map(ur => ur.roleId);
-  
+  const userRoleIds = users_roles
+    .filter((ur) => ur.userId === userId)
+    .map((ur) => ur.roleId);
+
   // Lấy danh sách role code từ roleId
   return roles
-    .filter(role => userRoleIds.includes(role.id))
-    .map(role => role.code as UserRole);
+    .filter((role) => userRoleIds.includes(role.id))
+    .map((role) => role.code as UserRole);
 };
 
 // Hàm helper để lấy đơn vị của user
 const getUserDepartment = (unitId?: string): string => {
   if (!unitId) return "";
-  const unit = units.find(u => u.id === unitId);
+  const unit = units.find((u) => u.id === unitId);
   return unit ? unit.name : "";
 };
 
@@ -56,24 +62,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const parsedUser = JSON.parse(savedUser);
           // Kiểm tra tính hợp lệ của dữ liệu người dùng
-          if (parsedUser && parsedUser.id && parsedUser.roles && parsedUser.activeRole) {
+          if (
+            parsedUser &&
+            parsedUser.id &&
+            parsedUser.roles &&
+            parsedUser.activeRole
+          ) {
             setUser(parsedUser);
             // Set cookie for middleware
-            document.cookie = `repair_user=${savedUser}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
+            document.cookie = `repair_user=${savedUser}; path=/; max-age=${
+              7 * 24 * 60 * 60
+            }`; // 7 days
           } else {
             // Xóa dữ liệu không hợp lệ
             localStorage.removeItem("repair_user");
-            document.cookie = "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            document.cookie =
+              "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
           }
-      } catch {
-        localStorage.removeItem("repair_user");
-        document.cookie = "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      }
+        } catch {
+          localStorage.removeItem("repair_user");
+          document.cookie =
+            "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        }
       }
       // Đánh dấu quá trình khởi tạo đã hoàn tất
       setIsInitializing(false);
     };
-    
+
     checkAuth();
   }, []);
 
@@ -82,22 +97,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+
       // Tìm user từ dữ liệu - có thể đăng nhập bằng username hoặc email
       const foundUser = users.find(
-        u => (u.username === username || 
-             u.email === username) && 
-             u.password === password &&
-             u.status === UserStatus.ACTIVE
+        (u) =>
+          (u.username === username || u.email === username) &&
+          u.password === password &&
+          u.status === UserStatus.ACTIVE
       );
 
       if (foundUser) {
         // Lấy danh sách vai trò của user
         const userRolesList = getUserRoles(foundUser.id);
-        
+
         // Kiểm tra vai trò
         console.log("User roles:", userRolesList);
-        
+
         // Nếu không có vai trò nào, không cho phép đăng nhập
         if (userRolesList.length === 0) {
           throw new Error("Tài khoản không có quyền truy cập");
@@ -114,14 +129,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           activeRole: userRolesList[0], // Vai trò đầu tiên là vai trò mặc định
           department: getUserDepartment(foundUser.unitId),
         };
-        
+
         console.log("Authenticated user:", authenticatedUser);
-        
+
         setUser(authenticatedUser);
         const userJson = JSON.stringify(authenticatedUser);
         localStorage.setItem("repair_user", userJson);
         // Set cookie for middleware
-        document.cookie = `repair_user=${userJson}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
+        document.cookie = `repair_user=${userJson}; path=/; max-age=${
+          7 * 24 * 60 * 60
+        }`; // 7 days
       } else {
         throw new Error("Thông tin đăng nhập không chính xác");
       }
@@ -137,22 +154,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     localStorage.removeItem("repair_user");
     // Remove cookie
-    document.cookie = "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie =
+      "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }
-  
+
   // Function to switch between roles for users with multiple roles
   function switchRole(role: UserRole) {
     if (user && user.roles.includes(role)) {
       const updatedUser = {
         ...user,
-        activeRole: role
+        activeRole: role,
       };
-      
+
       setUser(updatedUser);
       const userJson = JSON.stringify(updatedUser);
       localStorage.setItem("repair_user", userJson);
-      document.cookie = `repair_user=${userJson}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
-      
+      document.cookie = `repair_user=${userJson}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }`; // 7 days
+
       // Chuyển hướng tới URL tương ứng với vai trò được chọn
       // Sử dụng window.location thay vì router để đảm bảo làm mới toàn bộ trang
       import("@/types/repair").then(({ RoleInfo }) => {
@@ -172,8 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         isInitializing,
-      }}
-    >
+      }}>
       {isInitializing ? (
         // Hiển thị một loading indicator trong quá trình khởi tạo để tránh nhấp nháy
         <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-80 z-50">
