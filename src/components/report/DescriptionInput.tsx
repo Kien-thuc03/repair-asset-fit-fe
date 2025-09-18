@@ -14,7 +14,7 @@ const DescriptionInput: React.FC<DescriptionInputProps> = ({
       <label
         htmlFor="description"
         className="block text-sm font-medium text-gray-700">
-        Bước 6: Mô tả chi tiết tình trạng lỗi (tùy chọn)
+        Bước 4: Mô tả chi tiết tình trạng lỗi (tùy chọn)
       </label>
       <textarea
         id="description"
