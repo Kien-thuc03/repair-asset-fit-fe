@@ -10,11 +10,11 @@ export const users = [
     email: "qtv@iuh.edu.vn",
     unitId: "unit-1", // Khoa CNTT
     phoneNumber: "0901234001",
-    birthDate: "1985-01-15", // Updated to string format to match sampleData
+    birthDate: "1985-01-15T00:00:00Z", // Updated to ISO string format to match sampleData
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z", // Updated to ISO string format
     updatedAt: "2023-01-01T00:00:00Z",
-    deletedAt: null
+    deletedAt: null,
   },
   {
     id: "user-2",
@@ -24,7 +24,7 @@ export const users = [
     email: "quantri@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị
     phoneNumber: "0901234002",
-    birthDate: "1987-03-20",
+    birthDate: "1987-03-20T00:00:00Z",
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",
@@ -38,7 +38,7 @@ export const users = [
     email: "totruong@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
     phoneNumber: "0901234003",
-    birthDate: "1980-05-10",
+    birthDate: "1980-05-10T00:00:00Z",
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",
@@ -52,7 +52,7 @@ export const users = [
     email: "kythuat@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
     phoneNumber: "0901234004",
-    birthDate: "1990-07-25",
+    birthDate: "1990-07-25T00:00:00Z",
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",
@@ -66,7 +66,7 @@ export const users = [
     email: "giangvien@iuh.edu.vn",
     unitId: "unit-1", // Khoa CNTT
     phoneNumber: "0901234005",
-    birthDate: "1988-11-30",
+    birthDate: "1988-11-30T00:00:00Z",
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",
@@ -80,7 +80,7 @@ export const users = [
     email: "gv_qtv@iuh.edu.vn",
     unitId: "unit-1", // Khoa CNTT
     phoneNumber: "0901234006",
-    birthDate: "1982-09-05",
+    birthDate: "1982-09-05T00:00:00Z",
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",
@@ -94,7 +94,7 @@ export const users = [
     email: "kehoach@iuh.edu.vn",
     unitId: "unit-3", // Phòng Kế hoạch Đầu tư
     phoneNumber: "0901234007",
-    birthDate: "1975-04-12",
+    birthDate: "1975-04-12T00:00:00Z",
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",
@@ -108,7 +108,7 @@ export const users = [
     email: "anhtuan@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị
     phoneNumber: "0901234008",
-    birthDate: "1992-05-15",
+    birthDate: "1992-05-15T00:00:00Z",
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",
@@ -122,7 +122,7 @@ export const users = [
     email: "vandat@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị
     phoneNumber: "0901234009",
-    birthDate: "1993-08-22",
+    birthDate: "1993-08-22T00:00:00Z",
     status: UserStatus.ACTIVE,
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",

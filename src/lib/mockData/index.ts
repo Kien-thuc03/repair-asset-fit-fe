@@ -12,6 +12,15 @@ export {
 // Export new data from database-sync.json
 export { categories, type Category } from "./categories";
 
+// Export replacement proposals for to-truong-ky-thuat
+export {
+  mockReplacementProposals,
+  mockReplacementItems,
+  replacementProposalStatusConfig,
+  type ReplacementProposal,
+  type ReplacementItem,
+} from "./replacementProposals";
+
 // Export software data
 export {
   mockSoftware,

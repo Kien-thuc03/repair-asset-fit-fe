@@ -44,7 +44,7 @@ export const repairRequestStatusConfig = {
 // Data for repair requests list (for quan-ly-bao-loi page) - Synchronized with database-sync.json
 export const mockRepairRequests: RepairRequest[] = [
   {
-    id: "repair-001",
+    id: "req-001",
     requestCode: "YC-SC-2024-001",
     assetId: "ASSET001",
     assetCode: "19-0205/01",
@@ -76,7 +76,7 @@ export const mockRepairRequests: RepairRequest[] = [
     unit: "Khoa Công nghệ Thông tin",
   },
   {
-    id: "repair-002",
+    id: "req-002",
     requestCode: "YC-SC-2024-002",
     assetId: "ASSET002",
     assetCode: "19-0205/02",
@@ -94,7 +94,8 @@ export const mockRepairRequests: RepairRequest[] = [
     buildingName: "Tòa H",
     errorTypeId: "error-002",
     errorTypeName: "Lỗi phần cứng - RAM",
-    description: "RAM DDR4 16GB bị lỗi, máy không khởi động được, màn hình đen, có tiếng beep liên tục.",
+    description:
+      "RAM DDR4 16GB bị lỗi, máy không khởi động được, màn hình đen, có tiếng beep liên tục.",
     mediaUrls: [
       "https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/131734/Originals/loi-man-hinh-xanh.png",
     ],
