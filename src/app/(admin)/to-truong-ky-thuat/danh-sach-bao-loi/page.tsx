@@ -40,7 +40,7 @@ export default function DanhSachBaoLoiPage() {
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
 
   // Selection states
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -56,15 +56,39 @@ export default function DanhSachBaoLoiPage() {
     const style = document.createElement("style");
     style.textContent = `
       html {
-        overflow-y: auto;
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
       }
       
       body {
         min-height: 100vh;
+        overflow-x: hidden;
       }
       
       .main-content {
         min-height: calc(100vh - 2rem);
+        width: 100vw;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      
+      /* Cố định width để tránh nhảy khi scrollbar xuất hiện/biến mất */
+      .table-container {
+        overflow-y: scroll;
+        scrollbar-gutter: stable;
+      }
+      
+      .container {
+        width: 100% !important;
+        max-width: none !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+      
+      /* Cố định layout cho filter section */
+      .filter-section {
+        position: relative;
+        width: 100%;
       }
     `;
     document.head.appendChild(style);
@@ -290,62 +314,6 @@ export default function DanhSachBaoLoiPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-6 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tìm kiếm
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Mã tài sản, tên thiết bị..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Trạng thái
-            </label>
-            <select
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}>
-              <option value="all">Tất cả</option>
-              <option value={RepairStatus.CHỜ_TIẾP_NHẬN}>Chờ tiếp nhận</option>
-              <option value={RepairStatus.ĐÃ_TIẾP_NHẬN}>Đã tiếp nhận</option>
-              <option value={RepairStatus.ĐANG_XỬ_LÝ}>Đang xử lý</option>
-              <option value={RepairStatus.CHỜ_THAY_THẾ}>Chờ thay thế</option>
-              <option value={RepairStatus.ĐÃ_HOÀN_THÀNH}>Hoàn thành</option>
-              <option value={RepairStatus.ĐÃ_HỦY}>Đã hủy</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Loại lỗi
-            </label>
-            <select
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              value={selectedErrorType}
-              onChange={(e) => setSelectedErrorType(e.target.value)}>
-              <option value="all">Tất cả</option>
-              {errorTypes.map((errorType) => (
-                <option key={errorType.id} value={errorType.name}>
-                  {errorType.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         <div className="bg-white overflow-hidden shadow rounded-lg">
@@ -441,20 +409,84 @@ export default function DanhSachBaoLoiPage() {
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="bg-white p-6 rounded-lg shadow mb-6 filter-section">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tìm kiếm
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Mã tài sản, tên thiết bị..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Trạng thái
+            </label>
+            <select
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}>
+              <option value="all">Tất cả</option>
+              <option value={RepairStatus.CHỜ_TIẾP_NHẬN}>Chờ tiếp nhận</option>
+              <option value={RepairStatus.ĐÃ_TIẾP_NHẬN}>Đã tiếp nhận</option>
+              <option value={RepairStatus.ĐANG_XỬ_LÝ}>Đang xử lý</option>
+              <option value={RepairStatus.CHỜ_THAY_THẾ}>Chờ thay thế</option>
+              <option value={RepairStatus.ĐÃ_HOÀN_THÀNH}>Hoàn thành</option>
+              <option value={RepairStatus.ĐÃ_HỦY}>Đã hủy</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Loại lỗi
+            </label>
+            <select
+              className="block w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              value={selectedErrorType}
+              onChange={(e) => setSelectedErrorType(e.target.value)}>
+              <option value="all">Tất cả</option>
+              {errorTypes.map((errorType) => (
+                <option key={errorType.id} value={errorType.name}>
+                  {errorType.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
       {/* Requests Table */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
-            Danh sách báo lỗi ({sortedRequests.length})
-          </h2>
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-medium text-gray-900">
+              Danh sách báo lỗi ({sortedRequests.length})
+            </h2>
+            {selectedItems.length > 0 && (
+              <div className="text-xs sm:text-sm text-blue-600 font-medium">
+                Đã chọn: {selectedItems.length} mục
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col h-[400px] sm:h-[500px] lg:h-[600px]">
-          <div className="flex-1 overflow-auto">
-            <table className="w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr>
-                  <th className="px-3 py-3 text-left w-[5%]">
+        <div className="overflow-hidden">
+          {/* Desktop Table View */}
+          <div className="overflow-x-auto">
+            <table className="w-full table-fixed divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr className="h-10 sm:h-12">
+                  <th className="w-10 px-1 py-2 sm:py-3 text-left">
                     <button
                       onClick={() => handleSelectAll(!selectAll)}
                       className="text-gray-400 hover:text-gray-600">
@@ -466,54 +498,54 @@ export default function DanhSachBaoLoiPage() {
                     </button>
                   </th>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
+                    className="w-28 px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("requestCode")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Mã báo lỗi</span>
+                    <div className="flex items-center">
+                      <span className="truncate">Mã báo lỗi</span>
                       {getSortIcon("requestCode")}
                     </div>
                   </th>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[25%]"
+                    className="w-48 px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("assetCode")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Tài sản</span>
+                    <div className="flex items-center">
+                      <span className="truncate">Tài sản</span>
                       {getSortIcon("assetCode")}
                     </div>
                   </th>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[15%]"
+                    className="w-32 px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("reporterName")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Người báo</span>
+                    <div className="flex items-center">
+                      <span className="truncate">Người báo</span>
                       {getSortIcon("reporterName")}
                     </div>
                   </th>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[12%]"
+                    className="w-24 px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("errorTypeName")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Loại lỗi</span>
+                    <div className="flex items-center">
+                      <span className="truncate">Loại lỗi</span>
                       {getSortIcon("errorTypeName")}
                     </div>
                   </th>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[13%]"
+                    className="w-28 px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("status")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Trạng thái</span>
+                    <div className="flex items-center">
+                      <span className="truncate">Trạng thái</span>
                       {getSortIcon("status")}
                     </div>
                   </th>
                   <th
-                    className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-[12%]"
+                    className="w-24 px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => handleSort("createdAt")}>
-                    <div className="flex items-center space-x-1">
-                      <span>Ngày báo</span>
+                    <div className="flex items-center">
+                      <span className="truncate">Ngày báo</span>
                       {getSortIcon("createdAt")}
                     </div>
                   </th>
-                  <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%] whitespace-nowrap">
+                  <th className="w-16 px-1 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Thao tác
                   </th>
                 </tr>
@@ -521,8 +553,8 @@ export default function DanhSachBaoLoiPage() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {getCurrentData().length > 0 ? (
                   getCurrentData().map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50">
-                      <td className="px-3 py-4 w-[5%]">
+                    <tr key={request.id} className="hover:bg-gray-50 h-14">
+                      <td className="px-1 py-2">
                         <button
                           onClick={() =>
                             handleSelectItem(
@@ -538,22 +570,22 @@ export default function DanhSachBaoLoiPage() {
                           )}
                         </button>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap w-[15%]">
+                      <td className="px-1 py-2">
                         <div
-                          className="text-sm font-medium text-gray-900 truncate"
+                          className="text-xs font-medium text-gray-900 truncate"
                           title={request.requestCode}>
                           {request.requestCode}
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap w-[25%]">
+                      <td className="px-1 py-2">
                         <div>
                           <div
-                            className="text-sm font-medium text-gray-900 truncate"
+                            className="text-xs font-medium text-gray-900 truncate"
                             title={request.assetCode}>
                             {request.assetCode}
                           </div>
                           <div
-                            className="text-sm text-gray-500 truncate"
+                            className="text-xs text-gray-500 truncate"
                             title={request.assetName}>
                             {request.assetName}
                           </div>
@@ -562,42 +594,42 @@ export default function DanhSachBaoLoiPage() {
                             <span
                               className="truncate"
                               title={`${request.roomName} - ${request.buildingName}`}>
-                              {request.roomName} - {request.buildingName}
+                              {request.roomName}
                             </span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap w-[15%]">
+                      <td className="px-1 py-2">
                         <div className="flex items-center">
-                          <User className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                          <User className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
                           <div className="min-w-0">
                             <div
-                              className="text-sm font-medium text-gray-900 truncate"
+                              className="text-xs font-medium text-gray-900 truncate"
                               title={request.reporterName}>
                               {request.reporterName}
                             </div>
                             <div
-                              className="text-sm text-gray-500 truncate"
+                              className="text-xs text-gray-500 truncate"
                               title={request.reporterRole}>
                               {request.reporterRole}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap w-[12%]">
+                      <td className="px-1 py-2">
                         <span
-                          className="text-sm text-gray-900 truncate block"
+                          className="text-xs text-gray-900 truncate block"
                           title={request.errorTypeName || "Chưa xác định"}>
                           {request.errorTypeName || "Chưa xác định"}
                         </span>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap w-[13%]">
+                      <td className="px-1 py-2">
                         <div className="flex items-center">
                           <div className="flex-shrink-0">
                             {getStatusIcon(request.status)}
                           </div>
                           <span
-                            className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full truncate ${getStatusBadge(
+                            className={`ml-1 inline-flex px-1 py-1 text-xs font-semibold rounded-full truncate ${getStatusBadge(
                               request.status
                             )}`}
                             title={getStatusText(request.status)}>
@@ -605,7 +637,7 @@ export default function DanhSachBaoLoiPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap w-[12%]">
+                      <td className="px-1 py-2">
                         <div className="flex items-center">
                           <Calendar className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
                           <span
@@ -625,7 +657,7 @@ export default function DanhSachBaoLoiPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 py-4 whitespace-nowrap text-center text-sm font-medium w-[8%]">
+                      <td className="px-1 py-2 text-center">
                         <button
                           onClick={() => {
                             router.push(
@@ -657,13 +689,15 @@ export default function DanhSachBaoLoiPage() {
         </div>
 
         {/* Pagination */}
-        <Pagination
-          currentPage={currentPage}
-          pageSize={pageSize}
-          total={sortedRequests.length}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-        />
+        <div className="border-t border-gray-200">
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={sortedRequests.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+          />
+        </div>
       </div>
 
       {/* Export Success Modal */}

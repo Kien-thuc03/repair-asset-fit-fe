@@ -16,11 +16,51 @@ import {
 } from "lucide-react";
 import { Technician } from "@/types";
 import { Room } from "@/types/unit";
-import { mockTechnicians, mockRooms } from "@/lib/mockData";
+import { mockRooms as originalMockRooms } from "@/lib/mockData/rooms";
 import { Breadcrumb } from "antd";
 import Pagination from "@/components/common/Pagination";
 
 export default function PhanCongPage() {
+  // Map users to technicians - chỉ lấy user-8 và user-9
+  const mockTechnicians: Technician[] = [
+    {
+      id: "user-8",
+      name: "Anh Tuấn",
+      email: "anhtuan@iuh.edu.vn",
+      phone: "0901234008",
+      status: "active",
+      assignedAreas: ["Tầng 1-5"],
+      currentTask: "Kiểm tra hệ thống mạng tầng 3",
+    },
+    {
+      id: "user-9",
+      name: "Văn Đạt",
+      email: "vandat@iuh.edu.vn",
+      phone: "0901234009",
+      status: "active",
+      assignedAreas: ["Tầng 6-9"],
+      currentTask: "Bảo trì máy tính phòng H601",
+    },
+  ];
+
+  // Sử dụng rooms từ mockData và mapping lại assignedTechnician
+  const mockRooms: Room[] = originalMockRooms.map((room) => {
+    // Phân chia theo tầng: Tầng 1-5 cho user-8, Tầng 6-9 cho user-9
+    const floorNumber = parseInt(room.floor?.replace("Tầng ", "") || "0");
+
+    let assignedTechnician: string | undefined;
+    if (floorNumber >= 1 && floorNumber <= 5) {
+      assignedTechnician = "user-8"; // Anh Tuấn
+    } else if (floorNumber >= 6 && floorNumber <= 9) {
+      assignedTechnician = "user-9"; // Văn Đạt
+    }
+
+    return {
+      ...room,
+      assignedTechnician,
+    };
+  });
+
   const [technicians] = useState<Technician[]>(mockTechnicians);
   const [rooms, setRooms] = useState<Room[]>(mockRooms);
   const [activeTab, setActiveTab] = useState<"areas" | "technicians">("areas");

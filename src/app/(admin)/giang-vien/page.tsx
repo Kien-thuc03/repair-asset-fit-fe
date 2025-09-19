@@ -8,7 +8,7 @@ import {
   StatsCards,
   QuickActions,
   RecentActivity,
-} from "@/components/dashboard";
+} from "@/components/lecturer/dashboard";
 
 export default function GiangVienDashboard() {
   const { user } = useAuth();

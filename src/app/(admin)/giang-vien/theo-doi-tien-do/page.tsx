@@ -1,7 +1,7 @@
 "use client";
 
 import { Breadcrumb } from "antd";
-import ProgressTrackingContainer from "@/components/progress/ProgressTrackingContainer";
+import ProgressTrackingContainer from "@/components/lecturer/progress/ProgressTrackingContainer";
 
 export default function TheoDaoTienDoPage() {
   return (

@@ -11,12 +11,37 @@ export {
 
 // Export new data from database-sync.json
 export { categories, type Category } from "./categories";
-export { software, type Software } from "./software";
-export { assetSoftware, type AssetSoftware } from "./assetSoftware";
 export { 
   mockReplacementRequestsForTechnician,
   mockComponentsFromReportsWithStatus,
 } from "./replacementRequests";
+
+// Export replacement proposals for to-truong-ky-thuat
+export {
+  mockReplacementProposals,
+  mockReplacementItems,
+  replacementProposalStatusConfig,
+  type ReplacementProposal,
+  type ReplacementItem,
+} from "./replacementProposals";
+
+// Export software data
+export {
+  mockSoftware,
+  mockAssetSoftware,
+  getSoftwareByAssetId,
+  getAssetSoftwareDetails,
+} from "./software";
+
+// Export software proposals
+export {
+  mockSoftwareProposals,
+  getSoftwareProposalsByStatus,
+  getSoftwareProposalsByProposer,
+  getSoftwareProposalsByTechnician,
+  getSoftwareProposalById,
+  getSoftwareProposalStats,
+} from "./softwareProposals";
 
 // Export component types and other enums from the main types file for convenience
 export { ComponentType, ComponentStatus, ReplacementStatus } from "@/types";

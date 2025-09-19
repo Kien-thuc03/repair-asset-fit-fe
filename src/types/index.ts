@@ -1,6 +1,7 @@
 export * from "./repair";
 export * from "./user";
 export * from "./unit";
+export * from "./software";
 
 // Common interfaces
 export interface PaginationParams {
