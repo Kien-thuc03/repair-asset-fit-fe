@@ -2,10 +2,9 @@
 
 import { useMemo, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Breadcrumb, notification, Steps, Tag, Card, Divider, Spin, Alert } from 'antd'
+import { Breadcrumb, Steps, Tag, Card, Divider, Spin, Alert } from 'antd'
 import { Clock, User, MapPin, Wrench, Calendar, FileText, AlertCircle, CheckCircle, Settings, Package, Monitor, Info } from 'lucide-react'
 import { mockRepairRequests, repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
-import { mockAssetsLookup } from '@/lib/mockData/assetsLookup'
 import { RepairStatus } from '@/types'
 import ActionPanel from '@/components/technician/RequestDetail/ActionPanel'
 import HistoryCard from '@/components/technician/RequestDetail/HistoryCard'
@@ -20,10 +19,6 @@ export default function RepairDetailPage() {
 	const [loading, setLoading] = useState(true)
 
 	const req = useMemo(() => mockRepairRequests.find((r) => r.id === id), [id])
-	const assetInfo = useMemo(() => {
-		if (!req) return null
-		return mockAssetsLookup.find(asset => asset.id === req.assetId)
-	}, [req])
 
 	// Tự động cập nhật trạng thái khi xem chi tiết
 	useEffect(() => {
@@ -38,12 +33,6 @@ export default function RepairDetailPage() {
 				}
 				setCurrentRequest(updatedReq)
 				
-				// // Hiển thị thông báo
-				// notification.success({
-				// 	message: 'Đã tiếp nhận yêu cầu',
-				// 	description: 'Yêu cầu sửa chữa đã được tự động chuyển sang trạng thái "Đã tiếp nhận"',
-				// 	placement: 'topRight'
-				// })
 				
 				// Trong thực tế, đây sẽ là API call để cập nhật trạng thái
 				// await updateRepairRequestStatus(req.id, RepairStatus.ĐÃ_TIẾP_NHẬN)
@@ -332,11 +321,6 @@ export default function RepairDetailPage() {
 							}
 							setCurrentRequest(updatedReq)
 							
-							// notification.success({
-							// 	message: 'Cập nhật thành công',
-							// 	description: 'Trạng thái và ghi chú xử lý đã được cập nhật',
-							// 	placement: 'topRight'
-							// })
 						}}
 					/>
 				</div>

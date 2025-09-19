@@ -4,14 +4,14 @@ import { useState, useMemo } from 'react'
 import { Breadcrumb, Input, Select, DatePicker, Tag, Button, message } from 'antd'
 import { Search, Eye, ChevronUp, ChevronDown, Download } from 'lucide-react'
 import Link from 'next/link'
-import { mockReplacementRequestsForTechnician } from '@/lib/mockData/replacementRequests'
-import { ReplacementStatus, ReplacementRequestItem } from '@/types'
+import { mockReplacementRequestsForTechnician } from '@/lib/mockData'
+import { ReplacementStatus, ReplacementRequestForTechnician, ComponentFromRequest } from '@/types'
 import { Pagination } from '@/components/ui'
 
 const { RangePicker } = DatePicker
 const { Option } = Select
 
-type SortField = "requestCode" | "title" | "componentsCount" | "totalCost" | "status" | "createdAt"
+type SortField = "requestCode" | "title" | "componentsCount" | "status" | "createdAt"
 type SortDirection = "asc" | "desc" | "none"
 
 export default function QuanLyThayTheLinhKienPage() {
@@ -86,7 +86,7 @@ export default function QuanLyThayTheLinhKienPage() {
 
 	// Hàm xuất Excel
 	const handleExportExcel = async () => {
-		const selectedData = filteredAndSortedData.filter(item => selectedRowKeys.includes(item.id))
+		const selectedData = filteredAndSortedData.filter((item) => selectedRowKeys.includes(item.id))
 		
 		if (selectedData.length === 0) {
 			message.warning('Vui lòng chọn ít nhất một đề xuất để xuất Excel')
@@ -98,13 +98,13 @@ export default function QuanLyThayTheLinhKienPage() {
 			const XLSX = await import('xlsx')
 			
 			// Tạo dữ liệu Excel
-			const excelData = selectedData.map((item, index) => ({
+			const excelData = selectedData.map((item: ReplacementRequestForTechnician, index: number) => ({
 				'STT': index + 1,
 				'Mã yêu cầu': item.requestCode,
 				'Tiêu đề đề xuất': item.title,
 				'Mô tả': item.description,
 				'Số linh kiện': item.components.length,
-				'Trạng thái': statusConfig[item.status].text,
+				'Trạng thái': statusConfig[item.status as ReplacementStatus].text,
 				'Ngày tạo': new Date(item.createdAt).toLocaleDateString('vi-VN'),
 				'Người tạo': item.createdBy || 'N/A'
 			}))
@@ -136,10 +136,10 @@ export default function QuanLyThayTheLinhKienPage() {
 		setCurrentPage(1)
 
 		// Lọc dữ liệu
-		const filtered = mockReplacementRequestsForTechnician.filter((item: ReplacementRequestItem) => {
-			const componentNames = item.components.map(c => c.componentName).join(' ')
-			const assetNames = item.components.map(c => c.assetName).join(' ')
-			const assetCodes = item.components.map(c => c.assetCode).join(' ')
+		const filtered = mockReplacementRequestsForTechnician.filter((item: ReplacementRequestForTechnician) => {
+			const componentNames = item.components.map((c: ComponentFromRequest) => c.componentName).join(' ')
+			const assetNames = item.components.map((c: ComponentFromRequest) => c.assetName).join(' ')
+			const assetCodes = item.components.map((c: ComponentFromRequest) => c.assetCode).join(' ')
 			
 			const matchesSearch = searchText ? 
 				[assetCodes, assetNames, componentNames, item.requestCode, item.title]
@@ -240,7 +240,7 @@ export default function QuanLyThayTheLinhKienPage() {
 			title: 'Tiêu đề đề xuất',
 			key: 'title',
 			width: 250,
-			render: (_: any, record: ReplacementRequestItem) => (
+			render: (_: any, record: ReplacementRequestForTechnician) => (
 				<div>
 					<div className="font-medium">{record.title}</div>
 					<div className="text-xs text-gray-500 line-clamp-2">{record.description}</div>
@@ -251,7 +251,7 @@ export default function QuanLyThayTheLinhKienPage() {
 			title: 'Số linh kiện',
 			key: 'componentsCount',
 			width: 100,
-			render: (_: any, record: ReplacementRequestItem) => (
+			render: (_: any, record: ReplacementRequestForTechnician) => (
 				<div className="text-center">
 					<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
 						{record.components.length} linh kiện
@@ -280,7 +280,7 @@ export default function QuanLyThayTheLinhKienPage() {
 			title: 'Thao tác',
 			key: 'action',
 			width: 80,
-			render: (_: any, record: ReplacementRequestItem) => (
+			render: (_: any, record: ReplacementRequestForTechnician) => (
 				<Link href={`/ky-thuat-vien/quan-ly-thay-the-linh-kien/chi-tiet/${record.id}`}>
 					<button 
 					title='Xem chi tiết' 
@@ -396,7 +396,7 @@ export default function QuanLyThayTheLinhKienPage() {
 									<input
 										type="checkbox"
 										className="rounded border-gray-300"
-										checked={paginatedData.length > 0 && paginatedData.every(row => selectedRowKeys.includes(row.id))}
+										checked={paginatedData.length > 0 && paginatedData.every((row: ReplacementRequestForTechnician) => selectedRowKeys.includes(row.id))}
 										onChange={(e) => handleSelectAll(e.target.checked)}
 										aria-label="Chọn tất cả đề xuất"
 									/>
@@ -454,8 +454,8 @@ export default function QuanLyThayTheLinhKienPage() {
 						</tr>
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
-						{paginatedData.map((record, index) => {
-							const config = statusConfig[record.status]
+						{paginatedData.map((record: ReplacementRequestForTechnician, index: number) => {
+							const config = statusConfig[record.status as ReplacementStatus]
 							return (
 								<tr key={record.id} className="hover:bg-gray-50">
 									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">

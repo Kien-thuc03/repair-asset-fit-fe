@@ -11,6 +11,10 @@ export {
 
 // Export new data from database-sync.json
 export { categories, type Category } from "./categories";
+export { 
+  mockReplacementRequestsForTechnician,
+  mockComponentsFromReportsWithStatus,
+} from "./replacementRequests";
 
 // Export replacement proposals for to-truong-ky-thuat
 export {
@@ -39,8 +43,8 @@ export {
   getSoftwareProposalStats,
 } from "./softwareProposals";
 
-// Export component types from the main types file for convenience
-export { ComponentType, ComponentStatus } from "@/types";
+// Export component types and other enums from the main types file for convenience
+export { ComponentType, ComponentStatus, ReplacementStatus } from "@/types";
 export type { Component } from "@/types";
 
 // Export room types

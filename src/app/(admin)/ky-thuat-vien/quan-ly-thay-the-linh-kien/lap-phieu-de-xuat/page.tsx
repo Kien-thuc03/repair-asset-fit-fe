@@ -5,7 +5,8 @@ import { Button, Input, Modal, Form, message, Breadcrumb, Select, DatePicker, Ta
 import { PlusOutlined } from "@ant-design/icons";
 import { Search, ChevronUp, ChevronDown } from "lucide-react";
 import { Pagination } from "@/components/ui";
-import { mockComponentsFromReportsWithStatus, type ComponentFromReport } from "@/lib/mockData";
+import { mockComponentsFromReportsWithStatus } from "@/lib/mockData";
+import { ReplacementStatus, ComponentFromReport } from "@/types";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -195,7 +196,7 @@ export default function CreateProposalPage() {
 
   const handleSelectAll = (selected: boolean) => {
     if (selected) {
-      const selectableRows = paginatedData.filter(row => row.status === "Chờ xử lý");
+      const selectableRows = paginatedData.filter(row => row.status === ReplacementStatus.CHỜ_XÁC_MINH);
       const newKeys = selectableRows.map(row => row.id);
       setSelectedRowKeys(prev => [...prev, ...newKeys]);
     } else {
@@ -277,8 +278,8 @@ export default function CreateProposalPage() {
                   <input
                     type="checkbox"
                     className="rounded border-gray-300"
-                    checked={paginatedData.filter(row => row.status === "Chờ xử lý").length > 0 && 
-                             paginatedData.filter(row => row.status === "Chờ xử lý").every(row => selectedRowKeys.includes(row.id))}
+                    checked={paginatedData.filter(row => row.status === ReplacementStatus.CHỜ_XÁC_MINH).length > 0 && 
+                             paginatedData.filter(row => row.status === ReplacementStatus.CHỜ_XÁC_MINH).every(row => selectedRowKeys.includes(row.id))}
                     onChange={(e) => handleSelectAll(e.target.checked)}
                     aria-label="Chọn tất cả linh kiện"
                   />
@@ -342,7 +343,7 @@ export default function CreateProposalPage() {
                       className="rounded border-gray-300"
                       checked={selectedRowKeys.includes(record.id)}
                       onChange={(e) => handleRowSelect(record.id, e.target.checked)}
-                      disabled={record.status !== "Chờ xử lý"}
+                      disabled={record.status !== ReplacementStatus.CHỜ_XÁC_MINH}
                       aria-label={`Chọn linh kiện ${record.componentName}`}
                     />
                     <span>{(currentPage - 1) * pageSize + index + 1}</span>
@@ -351,8 +352,8 @@ export default function CreateProposalPage() {
                 <td className="px-4 py-3 text-sm text-gray-700">
                   <div>
                     <div className="font-medium">{record.componentName}</div>
-                    {record.componentSpecs && (
-                      <div className="text-sm text-gray-500">{record.componentSpecs}</div>
+                    {record.newItemSpecs && (
+                      <div className="text-sm text-gray-500">{record.newItemSpecs}</div>
                     )}
                   </div>
                 </td>
@@ -447,9 +448,9 @@ export default function CreateProposalPage() {
                       <span className="font-medium text-gray-900">
                         {component.componentName}
                       </span>
-                      {component.componentSpecs && (
+                      {component.newItemSpecs && (
                         <div className="text-gray-500 text-xs">
-                          {component.componentSpecs}
+                          {component.newItemSpecs}
                         </div>
                       )}
                       <div className="text-gray-600 text-xs">

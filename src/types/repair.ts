@@ -217,13 +217,6 @@ export interface RepairInput {
   description: string;
 }
 
-export interface RepairFilter {
-  search?: string;
-  status?: RepairStatus;
-  startDate?: string;
-  endDate?: string;
-}
-
 // Asset related interfaces
 export interface Asset {
   id: string;
@@ -305,6 +298,57 @@ export interface RepairHistory {
   status: RepairStatus;
 }
 
+// Interface for replacement requests displayed in technician pages
+export interface ReplacementRequestForTechnician {
+  id: string;
+  requestCode: string;
+  title: string;
+  description: string;
+  status: ReplacementStatus;
+  createdAt: string;
+  createdBy?: string;
+  components: ComponentFromRequest[];
+}
+
+// Interface for individual components in a replacement request
+export interface ComponentFromRequest {
+  id: string;
+  componentName: string;
+  componentType: ComponentType;
+  assetId: string;
+  assetName: string;
+  assetCode: string;
+  buildingName: string;
+  roomName: string;
+  newItemName: string;
+  newItemSpecs: string;
+  quantity: number;
+  reason: string;
+  machineLabel?: string;
+}
+
+// Extended interface for component replacement with additional info (for proposal creation)
+export interface ComponentFromReport {
+  id: string;
+  proposalId: string;
+  oldComponentId: string;
+  newItemName: string;
+  newItemSpecs: string;
+  quantity: number;
+  reason: string;
+  newlyPurchasedAssetId: string | null;
+  componentName: string;
+  componentType: ComponentType;
+  assetId: string;
+  assetName: string;
+  assetCode: string;
+  buildingName: string;
+  roomName: string;
+  status: ReplacementStatus;
+  reportDate: string;
+  machineLabel?: string;
+  location: string;
+}
 
 // Report form interface
 export interface ReportForm {
