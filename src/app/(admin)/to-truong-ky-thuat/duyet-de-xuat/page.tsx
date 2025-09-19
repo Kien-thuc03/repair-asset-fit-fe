@@ -16,71 +16,64 @@ import {
   ListPlus,
 } from "lucide-react";
 import { ReplacementRequestForList, ReplacementStatus } from "@/types";
-import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
-import { mockComponentsFromReports } from "@/lib/mockData/componentsFromReports";
+import {
+  mockReplacementProposals,
+  replacementProposalStatusConfig,
+} from "@/lib/mockData/replacementProposals";
 import ExportExcelSuccessModal from "./modal/ExportExcelSuccessModal";
 import ExportExcelErrorModal from "./modal/ExportExcelErrorModal";
 import { Breadcrumb } from "antd";
 
 // Helper functions
-const getStatusBadge = (status: ReplacementStatus) => {
-  switch (status) {
-    case ReplacementStatus.CHỜ_XÁC_MINH:
-      return "bg-yellow-100 text-yellow-800";
-    case ReplacementStatus.ĐÃ_DUYỆT:
-      return "bg-green-100 text-green-800";
-    case ReplacementStatus.ĐÃ_TỪ_CHỐI:
-      return "bg-red-100 text-red-800";
-    case ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT:
-      return "bg-blue-100 text-blue-800";
-    case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
-      return "bg-purple-100 text-purple-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
+const getStatusBadge = (status: string) => {
+  const config =
+    replacementProposalStatusConfig[
+      status as keyof typeof replacementProposalStatusConfig
+    ];
+  return config ? config.color : "bg-gray-100 text-gray-800";
 };
 
-const getStatusText = (status: ReplacementStatus) => {
-  switch (status) {
-    case ReplacementStatus.CHỜ_XÁC_MINH:
-      return "Chờ xác minh";
-    case ReplacementStatus.ĐÃ_DUYỆT:
-      return "Đã duyệt";
-    case ReplacementStatus.ĐÃ_TỪ_CHỐI:
-      return "Từ chối";
-    case ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT:
-      return "Chờ tổ trưởng duyệt";
-    case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
-      return "Đã hoàn tất mua sắm";
-    default:
-      return status;
-  }
+const getStatusText = (status: string) => {
+  const config =
+    replacementProposalStatusConfig[
+      status as keyof typeof replacementProposalStatusConfig
+    ];
+  return config ? config.label : status;
 };
 
 const getUserRole = () => {
-  return "KTV";
+  return "Kỹ thuật viên";
 };
 
-// Helper function để lấy thông tin linh kiện từ componentsFromReports dựa trên assetCode
+// Helper function để lấy thông tin linh kiện dựa trên assetCode
 const getComponentInfo = (assetCode: string) => {
-  const component = mockComponentsFromReports.find(
-    (comp) => comp.assetCode === assetCode
+  // Fallback data since componentsFromReports doesn't exist
+  // Use the component name from replacement proposals if available
+  const proposal = mockReplacementProposals.find(
+    (p) => p.assetCode === assetCode
   );
-  return component
-    ? {
-        componentName: component.componentName,
-        componentSpecs: component.componentSpecs || "",
-      }
-    : {
-        componentName: "Chưa xác định",
-        componentSpecs: "",
-      };
+  return {
+    componentName: proposal?.componentName || "Linh kiện cần thay thế",
+    componentSpecs: "Thông số kỹ thuật",
+  };
 };
 
 export default function DuyetDeXuatPage() {
   const router = useRouter();
   const [requests, setRequests] = useState<ReplacementRequestForList[]>(
-    mockReplacementRequests
+    mockReplacementProposals.map((proposal) => ({
+      id: proposal.id,
+      assetCode: proposal.assetCode || "",
+      assetName: proposal.assetName || "",
+      requestedBy: proposal.proposerName,
+      unit: "Khoa CNTT", // Default unit from database
+      location: proposal.roomName || "",
+      reason: proposal.reason || "",
+      status: proposal.status as ReplacementStatus,
+      requestDate: proposal.createdAt,
+      estimatedCost: 500000, // Placeholder cost
+      description: `Đề xuất thay thế ${proposal.componentName || "linh kiện"}`,
+    }))
   );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -508,7 +501,7 @@ export default function DuyetDeXuatPage() {
           {/* Desktop Table View */}
           <div className="hidden sm:block flex-1 overflow-y-auto">
             <table className="w-full table-fixed divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10">
+              <thead className="bg-gray-50 sticky top-0 z-5">
                 <tr className="h-10 sm:h-12">
                   <th className="w-12 px-2 py-2 sm:py-3 text-left">
                     <input

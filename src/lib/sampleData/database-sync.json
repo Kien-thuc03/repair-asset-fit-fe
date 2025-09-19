@@ -1223,7 +1223,7 @@
     }
   ],
 
-  "repairLogs": [
+  "Logs": [
     {
       "id": "LOG001",
       "repairRequestId": "req-001",
