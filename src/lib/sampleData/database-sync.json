@@ -18,7 +18,8 @@
       "RepairStatus": ["CHỜ_TIẾP_NHẬN", "ĐÃ_TIẾP_NHẬN", "ĐANG_XỬ_LÝ", "CHỜ_THAY_THẾ", "ĐÃ_HOÀN_THÀNH", "ĐÃ_HỦY"],
       "ReplacementStatus": ["CHỜ_TỔ_TRƯỞNG_DUYỆT", "CHỜ_XÁC_MINH", "ĐÃ_DUYỆT", "ĐÃ_TỪ_CHỐI", "ĐÃ_HOÀN_TẤT_MUA_SẮM"],
       "ComponentType": ["CPU", "RAM", "STORAGE", "MOTHERBOARD", "PSU", "GPU", "MONITOR", "KEYBOARD", "MOUSE", "CASE", "COOLING", "OPTICAL_DRIVE", "NETWORK_CARD", "SOUND_CARD", "SPEAKER", "WEBCAM", "OTHER"],
-      "ComponentStatus": ["INSTALLED", "FAULTY", "REMOVED"]
+      "ComponentStatus": ["INSTALLED", "FAULTY", "REMOVED"],
+      "SoftwareProposalStatus": ["CHỜ_DUYỆT", "ĐÃ_DUYỆT", "ĐÃ_TỪ_CHỐI", "ĐÃ_TRANG_BỊ"]
     }
   },
   
@@ -986,11 +987,9 @@
     {
       "id": "req-001",
       "requestCode": "YCSC-2025-0001",
-      "assetId": "ASSET001",
-      "componentId": "CC005",
+      "computerAssetId": "ASSET001",
       "reporterId": "user-5",
       "assignedTechnicianId": "user-4",
-      "roomId": "ROOM001",
       "errorTypeId": "ET001",
       "description": "Máy tính không khởi động được, có mùi cháy từ nguồn điện 500W, cần thay thay nguồn mới ngay lập tức",
       "mediaUrls": [
@@ -1006,11 +1005,9 @@
     {
       "id": "req-002", 
       "requestCode": "YCSC-2025-0002",
-      "assetId": "ASSET002",
-      "componentId": "CC013",
+      "computerAssetId": "ASSET002",
       "reporterId": "user-5",
       "assignedTechnicianId": "user-4",
-      "roomId": "ROOM001",
       "errorTypeId": "ET002",
       "description": "SSD Samsung 980 bị bad sectors, máy không khởi động được, mất dữ liệu",
       "mediaUrls": [
@@ -1025,11 +1022,9 @@
     {
       "id": "req-003",
       "requestCode": "YCSC-2025-0003",
-      "assetId": "ASSET003",
-      "componentId": "CC024",
+      "computerAssetId": "ASSET003",
       "reporterId": "user-5",
       "assignedTechnicianId": "user-4",
-      "roomId": "ROOM001",
       "errorTypeId": "ET007",
       "description": "Màn hình HP P22v G4 bị nhấp nháy và có đường kẻ, không thể sử dụng được",
       "mediaUrls": [],
@@ -1038,6 +1033,128 @@
       "createdAt": "2024-01-12T09:00:00Z",
       "acceptedAt": "2024-01-12T10:00:00Z",
       "completedAt": "2024-01-13T16:00:00Z"
+    }
+  ],
+
+  "repairRequestComponents": [
+    {
+      "repairRequestId": "req-001",
+      "componentId": "CC005",
+      "note": "Nguồn điện bị cháy, có mùi khét"
+    },
+    {
+      "repairRequestId": "req-002",
+      "componentId": "CC013",
+      "note": "SSD có bad sectors nghiêm trọng"
+    },
+    {
+      "repairRequestId": "req-002",
+      "componentId": "CC012",
+      "note": "RAM gây lỗi màn hình xanh"
+    },
+    {
+      "repairRequestId": "req-003",
+      "componentId": "CC024",
+      "note": "Màn hình nhấp nháy, có đường kẻ"
+    }
+  ],
+
+  "technicianAssignments": [
+    {
+      "technicianId": "user-4",
+      "building": "Tòa H",
+      "floor": "Tầng 1"
+    },
+    {
+      "technicianId": "user-4",
+      "building": "Tòa H",
+      "floor": "Tầng 2"
+    },
+    {
+      "technicianId": "user-8",
+      "building": "Tòa H",
+      "floor": "Tầng 3"
+    },
+    {
+      "technicianId": "user-8",
+      "building": "Tòa H",
+      "floor": "Tầng 4"
+    },
+    {
+      "technicianId": "user-9",
+      "building": "Tòa H",
+      "floor": "Tầng 5"
+    }
+  ],
+
+  "replacementProposals": [
+    {
+      "id": "RP001",
+      "proposalCode": "DXTT-2025-0001",
+      "proposerId": "user-4",
+      "teamLeadApproverId": "user-3",
+      "adminVerifierId": null,
+      "status": "CHỜ_TỔ_TRƯỞNG_DUYỆT",
+      "submissionFormUrl": "/documents/proposals/DXTT-2025-0001-submission.pdf",
+      "verificationReportUrl": null,
+      "createdAt": "2024-01-15T10:00:00Z",
+      "updatedAt": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": "RP002",
+      "proposalCode": "DXTT-2025-0002",
+      "proposerId": "user-4",
+      "teamLeadApproverId": "user-3",
+      "adminVerifierId": "user-2",
+      "status": "ĐÃ_DUYỆT",
+      "submissionFormUrl": "/documents/proposals/DXTT-2025-0002-submission.pdf",
+      "verificationReportUrl": "/documents/reports/DXTT-2025-0002-verification.pdf",
+      "createdAt": "2024-01-16T09:00:00Z",
+      "updatedAt": "2024-01-18T14:30:00Z"
+    }
+  ],
+
+  "proposalRepairRequests": [
+    {
+      "proposalId": "RP001",
+      "repairRequestId": "req-002"
+    },
+    {
+      "proposalId": "RP002",
+      "repairRequestId": "req-001"
+    }
+  ],
+
+  "replacementItems": [
+    {
+      "id": "RI001",
+      "proposalId": "RP001",
+      "oldComponentId": "CC013",
+      "newItemName": "Samsung 980 SSD",
+      "newItemSpecs": "512GB NVMe M.2 PCIe 3.0 - Replacement for faulty drive",
+      "quantity": 1,
+      "reason": "SSD hiện tại có bad sectors nghiêm trọng, không thể sử dụng được",
+      "newlyPurchasedComponentId": null
+    },
+    {
+      "id": "RI002",
+      "proposalId": "RP002",
+      "oldComponentId": "CC005",
+      "newItemName": "Dell 250W PSU",
+      "newItemSpecs": "250W 80+ Bronze certified - Higher wattage replacement",
+      "quantity": 1,
+      "reason": "Nguồn điện hiện tại bị cháy, có mùi khét",
+      "newlyPurchasedComponentId": null
+    },
+    {
+      "id": "RI003",
+      "proposalId": "RP001",
+      "oldComponentId": "CC012",
+      "newItemName": "Kingston Fury Beast DDR4",
+      "newItemSpecs": "16GB 3200MHz DDR4 - Same specification replacement",
+      "quantity": 1,
+      "reason": "RAM hiện tại gây lỗi màn hình xanh thường xuyên",
+      "newlyPurchasedComponentId": null
     }
   ],
 
@@ -1296,65 +1413,61 @@
     }
   ],
 
-  "replacementProposals": [
+  "softwareProposals": [
     {
-      "id": "RP001",
-      "repairRequestId": "req-002",
-      "proposalCode": "DXTT-2025-0001",
-      "proposerId": "user-4",
-      "teamLeadApproverId": "user-3",
-      "adminVerifierId": null,
-      "status": "CHỜ_TỔ_TRƯỞNG_DUYỆT",
-      "submissionFormUrl": "/documents/proposals/DXTT-2025-0001-submission.pdf",
-      "verificationReportUrl": null,
-      "createdAt": "2024-01-15T10:00:00Z",
-      "updatedAt": "2024-01-15T10:00:00Z"
+      "id": "SP001",
+      "proposalCode": "DXPM-2025-0001",
+      "proposerId": "user-5",
+      "approverId": null,
+      "roomId": "ROOM001",
+      "reason": "Cần trang bị phần mềm AutoCAD cho môn Thiết kế kỹ thuật",
+      "status": "CHỜ_DUYỆT",
+      "createdAt": "2024-01-20T09:00:00Z",
+      "updatedAt": "2024-01-20T09:00:00Z"
     },
     {
-      "id": "RP002",
-      "repairRequestId": "req-001",
-      "proposalCode": "DXTT-2025-0002",
-      "proposerId": "user-4",
-      "teamLeadApproverId": "user-3",
-      "adminVerifierId": "user-2",
+      "id": "SP002",
+      "proposalCode": "DXPM-2025-0002",
+      "proposerId": "user-5",
+      "approverId": "user-1",
+      "roomId": "ROOM002",
+      "reason": "Cần Adobe Creative Suite cho môn Đồ họa máy tính",
       "status": "ĐÃ_DUYỆT",
-      "submissionFormUrl": "/documents/proposals/DXTT-2025-0002-submission.pdf",
-      "verificationReportUrl": "/documents/reports/DXTT-2025-0002-verification.pdf",
-      "createdAt": "2024-01-16T09:00:00Z",
-      "updatedAt": "2024-01-18T14:30:00Z"
+      "createdAt": "2024-01-18T14:30:00Z",
+      "updatedAt": "2024-01-19T16:00:00Z"
     }
   ],
 
-  "replacementItems": [
+  "softwareProposalItems": [
     {
-      "id": "RI001",
-      "proposalId": "RP001",
-      "oldComponentId": "CC013",
-      "newItemName": "Samsung 980 SSD",
-      "newItemSpecs": "512GB NVMe M.2 PCIe 3.0 - Replacement for faulty drive",
-      "quantity": 1,
-      "reason": "SSD hiện tại có bad sectors nghiêm trọng, không thể sử dụng được",
-      "newlyPurchasedAssetId": null
+      "id": "SPI001",
+      "proposalId": "SP001",
+      "softwareName": "AutoCAD",
+      "version": "2024",
+      "publisher": "Autodesk Inc.",
+      "quantity": 20,
+      "licenseType": "Giấy phép giáo dục theo năm",
+      "newlyAcquiredSoftwareId": null
     },
     {
-      "id": "RI002",
-      "proposalId": "RP002",
-      "oldComponentId": "CC005",
-      "newItemName": "Dell 250W PSU",
-      "newItemSpecs": "250W 80+ Bronze certified - Higher wattage replacement",
-      "quantity": 1,
-      "reason": "Nguồn điện hiện tại bị cháy, có mùi khét",
-      "newlyPurchasedAssetId": null
+      "id": "SPI002",
+      "proposalId": "SP002",
+      "softwareName": "Adobe Photoshop",
+      "version": "2024",
+      "publisher": "Adobe Inc.",
+      "quantity": 15,
+      "licenseType": "Giấy phép Creative Cloud theo năm",
+      "newlyAcquiredSoftwareId": "SW002"
     },
     {
-      "id": "RI003",
-      "proposalId": "RP001",
-      "oldComponentId": "CC012",
-      "newItemName": "Kingston Fury Beast DDR4",
-      "newItemSpecs": "16GB 3200MHz DDR4 - Same specification replacement",
-      "quantity": 1,
-      "reason": "RAM hiện tại gây lỗi màn hình xanh thường xuyên",
-      "newlyPurchasedAssetId": null
+      "id": "SPI003",
+      "proposalId": "SP002",
+      "softwareName": "Adobe Illustrator",
+      "version": "2024",
+      "publisher": "Adobe Inc.",
+      "quantity": 15,
+      "licenseType": "Giấy phép Creative Cloud theo năm",
+      "newlyAcquiredSoftwareId": null
     }
   ]
 }

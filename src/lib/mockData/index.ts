@@ -13,9 +13,13 @@ export {
 export { categories, type Category } from "./categories";
 export { software, type Software } from "./software";
 export { assetSoftware, type AssetSoftware } from "./assetSoftware";
+export { 
+  mockReplacementRequestsForTechnician,
+  mockComponentsFromReportsWithStatus,
+} from "./replacementRequests";
 
-// Export component types from the main types file for convenience
-export { ComponentType, ComponentStatus } from "@/types";
+// Export component types and other enums from the main types file for convenience
+export { ComponentType, ComponentStatus, ReplacementStatus } from "@/types";
 export type { Component } from "@/types";
 
 // Export room types
