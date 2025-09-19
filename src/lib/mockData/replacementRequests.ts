@@ -76,7 +76,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestForTechnici
     description: "Bàn phím nhiều phím bị liệt, ảnh hưởng đến việc học tập",
     status: ReplacementStatus.CHỜ_XÁC_MINH,
     createdAt: "2024-01-17T14:30:00Z",
-    createdBy: "Kỹ thuật viên",
+    createdBy: "user-4", // Thay đổi từ "Kỹ thuật viên" thành user-4
     components: [
       {
         id: "RC004",
@@ -102,7 +102,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestForTechnici
     description: "Chuột bị lỗi click và di chuyển không chính xác",
     status: ReplacementStatus.ĐÃ_TỪ_CHỐI,
     createdAt: "2024-01-18T09:15:00Z",
-    createdBy: "Kỹ thuật viên",
+    createdBy: "user-4", // Thay đổi từ "Kỹ thuật viên" thành user-4
     components: [
       {
         id: "RC005",
@@ -128,7 +128,7 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestForTechnici
     description: "Đã hoàn tất quá trình mua sắm và lắp đặt linh kiện thay thế CPU",
     status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
     createdAt: "2024-01-19T11:00:00Z",
-    createdBy: "Kỹ thuật viên",
+    createdBy: "user-4", // Thay đổi từ "Kỹ thuật viên" thành user-4
     components: [
       {
         id: "RC006",
