@@ -57,6 +57,7 @@ export const mockComponents: Component[] = [
     componentType: ComponentType.PSU,
     name: "Dell 200W PSU",
     componentSpecs: "200W 80+ Bronze certified",
+    serialNumber: undefined,
     status: ComponentStatus.INSTALLED,
     installedAt: "2023-01-15T08:00:00Z",
     notes: "OEM power supply unit",
