@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { Technician } from "@/types";
 import { Room } from "@/types/unit";
 import { mockRooms as originalMockRooms } from "@/lib/mockData/rooms";
+import { users } from "@/lib/mockData/users";
+import { getTechnicianForArea } from "@/lib/mockData/technicianAssignments";
 import { Breadcrumb } from "antd";
 import Pagination from "@/components/common/Pagination";
 import {
@@ -15,39 +17,33 @@ import {
 } from "@/components/leadTechnician/assignment";
 
 export default function PhanCongPage() {
-  // Map users to technicians - chỉ lấy user-8 và user-9
-  const mockTechnicians: Technician[] = [
-    {
-      id: "user-8",
-      name: "Anh Tuấn",
-      email: "anhtuan@iuh.edu.vn",
-      phone: "0901234008",
-      status: "active",
-      assignedAreas: ["Tầng 1-5"],
-      currentTask: "Kiểm tra hệ thống mạng tầng 3",
-    },
-    {
-      id: "user-9",
-      name: "Văn Đạt",
-      email: "vandat@iuh.edu.vn",
-      phone: "0901234009",
-      status: "active",
-      assignedAreas: ["Tầng 6-9"],
-      currentTask: "Bảo trì máy tính phòng H601",
-    },
-  ];
+  // Create technicians from users data using technician assignments
+  const mockTechnicians: Technician[] = users
+    .filter((user) => user.id === "user-8" || user.id === "user-9")
+    .map((user) => {
+      const areaRanges = user.id === "user-8" ? ["Tầng 1-5"] : ["Tầng 6-9"];
 
-  // Sử dụng rooms từ mockData và mapping lại assignedTechnician
+      return {
+        id: user.id,
+        name: user.fullName,
+        email: user.email,
+        phone: user.phoneNumber,
+        status: "active" as const,
+        assignedAreas: areaRanges,
+        currentTask:
+          user.id === "user-8"
+            ? "Kiểm tra hệ thống mạng tầng 3"
+            : "Bảo trì máy tính phòng H601",
+      };
+    });
+
+  // Sử dụng rooms từ mockData và mapping lại assignedTechnician dựa trên technicianAssignments
   const mockRooms: Room[] = originalMockRooms.map((room) => {
-    // Phân chia theo tầng: Tầng 1-5 cho user-8, Tầng 6-9 cho user-9
-    const floorNumber = parseInt(room.floor?.replace("Tầng ", "") || "0");
-
-    let assignedTechnician: string | undefined;
-    if (floorNumber >= 1 && floorNumber <= 5) {
-      assignedTechnician = "user-8"; // Anh Tuấn
-    } else if (floorNumber >= 6 && floorNumber <= 9) {
-      assignedTechnician = "user-9"; // Văn Đạt
-    }
+    // Tìm kỹ thuật viên được phân công cho khu vực này
+    const assignedTechnician = getTechnicianForArea(
+      room.building || "Tòa H",
+      room.floor || ""
+    );
 
     return {
       ...room,
