@@ -2,14 +2,14 @@
 
 import { Card, Tag, Timeline, Empty } from 'antd'
 import { Clock, User, Wrench, CheckCircle, AlertCircle } from 'lucide-react'
-import { mockRepairHistoryLookup } from '@/lib/mockData/assetsLookup'
+import { mockRepairHistory } from '@/lib/mockData/repairHistory'
 
 interface Props {
 	assetId: string
 }
 
 export default function HistoryCard({ assetId }: Props) {
-	const items = mockRepairHistoryLookup.filter((h) => h.assetId === assetId).slice(0, 8)
+	const items = mockRepairHistory.filter((h) => h.assetId === assetId).slice(0, 8)
 
 	const getStatusColor = (status: string) => {
 		switch (status.toLowerCase()) {

@@ -324,22 +324,53 @@ export interface Component {
 
 // Repair history interface
 export interface RepairHistory {
-  id: string;
-  assetId: string;
-  requestCode: string;
-  reportDate: string;
-  completedDate: string;
-  errorType: string;
-  description: string;
-  technicianName: string;
-  solution: string;
+  id: string; // This would be the repairRequestId 
+  assetId: string; // Computer asset ID
+  requestCode: string; // Request code like YCSC-2025-0001
+  reportDate: string; // Initial creation date
+  completedDate?: string; // Completion date if completed
+  errorType: string; // Type of error reported
+  description: string; // Description of the issue
+  technicianName: string; // Name of assigned technician
+  reporterName: string; // Name of person who reported
+  solution?: string; // Solution applied (from resolutionNotes)
+  status: RepairStatus; // Current status
+  logs: RepairLog[]; // Array of all log entries for this repair request
   componentChanges?: {
     componentType: string;
     oldComponent?: string;
     newComponent: string;
     changeReason: string;
-  }[];
-  status: RepairStatus;
+  }[]; // Optional component changes
+}
+
+// Interface for individual repair log entries (matches RepairLogs table)
+export interface RepairLog {
+  id: string; // UUID
+  repairRequestId: string; // FK to RepairRequests
+  actorId: string; // FK to users - person who performed the action
+  actorName: string; // Name of the person who performed the action
+  action: string; // Action performed, e.g., "Tạo yêu cầu", "Tiếp nhận xử lý", "Hoàn tất"
+  fromStatus: RepairStatus | null; // Status before change
+  toStatus: RepairStatus; // Status after change  
+  comment: string; // Notes for this action
+  createdAt: string; // ISO timestamp when action was performed
+}
+
+// Interface for repair history items used in HistoryCard component
+export interface RepairHistoryItem {
+  id: string;
+  assetId: string;
+  requestCode: string;
+  errorType: string;
+  description: string;
+  solution?: string;
+  status: string;
+  reportDate: string;
+  completedDate?: string;
+  technicianName: string;
+  reporterName: string;
+  logs?: RepairLog[]; // Optional logs for detailed history
 }
 
 // Interface for replacement requests displayed in technician pages

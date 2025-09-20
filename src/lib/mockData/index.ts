@@ -75,3 +75,4 @@ export * from "./roles_permissions";
 export * from "./units";
 export * from "./users";
 export * from "./users_roles";
+export * from './repairHistory'
