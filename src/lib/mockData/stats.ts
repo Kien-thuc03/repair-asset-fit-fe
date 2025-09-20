@@ -1,11 +1,4 @@
-import {
-  AlertTriangle,
-  Clock,
-  CheckCircle,
-  FileText,
-  Users,
-  FileCheck,
-} from "lucide-react";
+import { Clock, CheckCircle, FileText, Users, FileCheck } from "lucide-react";
 
 export interface StatItem {
   name: string;
@@ -25,7 +18,7 @@ export const lecturerStats: StatItem[] = [
   },
   {
     name: "Đang xử lý",
-    value: "3",
+    value: "4",
     changeType: "warning",
     icon: Clock,
     color: "bg-yellow-500",
@@ -37,19 +30,12 @@ export const lecturerStats: StatItem[] = [
     icon: CheckCircle,
     color: "bg-green-500",
   },
-  {
-    name: "Cần theo dõi",
-    value: "1",
-    changeType: "negative",
-    icon: AlertTriangle,
-    color: "bg-red-500",
-  },
 ];
 
 export const teamLeaderStats: StatItem[] = [
   {
     name: "Kỹ thuật viên",
-    value: "5",
+    value: "2",
     changeType: "neutral",
     icon: Users,
     color: "bg-blue-500",

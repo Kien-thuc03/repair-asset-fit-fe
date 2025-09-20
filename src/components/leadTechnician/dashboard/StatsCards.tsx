@@ -3,9 +3,10 @@ import { LucideIcon } from "lucide-react";
 
 interface StatItem {
   name: string;
-  value: string | number;
-  color: string;
+  value: string;
+  changeType: "positive" | "negative" | "warning" | "neutral";
   icon: LucideIcon;
+  color: string;
 }
 
 interface StatsCardsProps {
@@ -14,7 +15,7 @@ interface StatsCardsProps {
 
 const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((item) => (
         <div
           key={item.name}
