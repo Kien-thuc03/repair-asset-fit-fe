@@ -109,9 +109,30 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: LayoutDashboard,
       },
       {
-        name: "Duyệt đề xuất",
-        href: "/to-truong-ky-thuat/duyet-de-xuat",
+        name: "Quản lý đề xuất",
         icon: FileCheck,
+        children: [
+          {
+            name: "Danh sách đề xuất phần cứng",
+            href: "/to-truong-ky-thuat/duyet-de-xuat",
+            icon: FileCheck,
+          },
+          {
+            name: "Danh sách đề xuất phần mềm",
+            href: "/to-truong-ky-thuat/danh-sach-de-xuat-phan-mem",
+            icon: FolderCode,
+          },
+          {
+            name: "Quản lý tờ trình",
+            href: "/to-truong-ky-thuat/lap-to-trinh",
+            icon: FileText,
+          },
+          {
+            name: "Biên bản",
+            href: "/to-truong-ky-thuat/bien-ban",
+            icon: Calendar,
+          },
+        ],
       },
       {
         name: "Phân công khu vực",
@@ -123,13 +144,9 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         href: "/to-truong-ky-thuat/danh-sach-bao-loi",
         icon: ClipboardList,
       },
+
       {
-        name: "Lập tờ trình",
-        href: "/to-truong-ky-thuat/lap-to-trinh",
-        icon: FileText,
-      },
-      {
-        name: "Tra cứu tài sản",
+        name: "Quản lý tài sản",
         href: "/to-truong-ky-thuat/tra-cuu-tai-san",
         icon: Search,
       },
@@ -137,11 +154,6 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         name: "Thống kê báo cáo",
         href: "/to-truong-ky-thuat/thong-ke-bao-cao",
         icon: BarChart3,
-      },
-      {
-        name: "Biên bản",
-        href: "/to-truong-ky-thuat/bien-ban",
-        icon: Calendar,
       },
     ],
     [UserRole.PHONG_QUAN_TRI]: [
