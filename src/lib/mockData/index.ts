@@ -13,7 +13,6 @@ export {
   getTechnicianForArea,
   getAssignedAreas,
   getAssignedFloorsForBuilding,
-  type TechnicianAssignment,
 } from "./technicianAssignments";
 export {
   mockRepairRequests,
