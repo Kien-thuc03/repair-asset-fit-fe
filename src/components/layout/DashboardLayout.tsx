@@ -30,6 +30,7 @@ import {
   FolderCode,
   TriangleAlert,
 } from "lucide-react";
+import { changeConfirmLocale } from "antd/es/modal/locale";
 
 // Navigation items
 interface NavigationItem {
@@ -72,8 +73,19 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       },
       {
         name: "Quản lý báo lỗi",
-        href: "/ky-thuat-vien/quan-ly-bao-loi",
         icon: Wrench,
+        children: [
+          {
+            name: "Ghi nhận & xử lý lỗi",
+            href: "/ky-thuat-vien/quan-ly-bao-loi/ghi-nhan-xu-ly-loi",
+            icon: ClipboardList,
+          },
+          {
+            name: "Danh sách Báo lỗi",
+            href: "/ky-thuat-vien/quan-ly-bao-loi",
+            icon: FileText,
+          },
+        ],
       },
       {
         name: "Quản lý thay thế linh kiện",
