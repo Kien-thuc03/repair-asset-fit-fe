@@ -184,9 +184,8 @@ export default function PhanCongPage() {
       const endIndex = startIndex + pageSize;
       return sortedRooms.slice(startIndex, endIndex);
     } else {
-      const startIndex = (currentPage - 1) * pageSize;
-      const endIndex = startIndex + pageSize;
-      return filteredTechnicians.slice(startIndex, endIndex);
+      // Technicians tab không có pagination, trả về tất cả
+      return filteredTechnicians;
     }
   };
 
@@ -285,6 +284,7 @@ export default function PhanCongPage() {
         selectedItemsCount={selectedItems.length}
         totalItems={getCurrentTotal()}
         onExportExcel={handleExportExcel}
+        activeTab={activeTab}
       />
 
       {/* Tabs */}
@@ -337,15 +337,7 @@ export default function PhanCongPage() {
             onSelectItem={handleSelectItem}
           />
 
-          {/* Pagination for Technicians */}
-          <Pagination
-            currentPage={currentPage}
-            pageSize={pageSize}
-            total={getCurrentTotal()}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-            className="mt-6"
-          />
+          {/* Không hiển thị pagination cho tab technicians */}
         </>
       )}
 

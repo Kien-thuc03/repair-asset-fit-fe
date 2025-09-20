@@ -1,5 +1,5 @@
 import React from "react";
-import { User, CheckSquare, Square } from "lucide-react";
+import { User } from "lucide-react";
 import { Technician } from "@/types";
 import { Room } from "@/types/unit";
 
@@ -49,21 +49,6 @@ const TechniciansGrid: React.FC<TechniciansGridProps> = ({
           <div
             key={tech.id}
             className="bg-white overflow-hidden shadow rounded-lg relative">
-            {/* Selection checkbox */}
-            <div className="absolute top-4 right-4">
-              <button
-                onClick={() =>
-                  onSelectItem(tech.id, !selectedItems.includes(tech.id))
-                }
-                className="text-gray-400 hover:text-gray-600">
-                {selectedItems.includes(tech.id) ? (
-                  <CheckSquare className="h-4 w-4 text-blue-600" />
-                ) : (
-                  <Square className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-
             <div className="p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
