@@ -1266,7 +1266,7 @@
       "computerAssetId": "ASSET004",
       "reporterId": "user-5",
       "assignedTechnicianId": "user-8",
-      "errorTypeId": "ET006",
+      "errorTypeId": "ET002",
       "description": "Máy không kết nối được mạng, không thể truy cập internet",
       "mediaUrls": [],
       "status": "ĐÃ_TIẾP_NHẬN",

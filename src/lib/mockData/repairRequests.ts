@@ -153,8 +153,8 @@ export const mockRepairRequests: RepairRequest[] = [
     roomId: "ROOM002",
     roomName: "H102",
     buildingName: "Tòa H",
-    errorTypeId: "ET007",
-    errorTypeName: "Máy hư màn hình",
+    errorTypeId: "ET002",
+    errorTypeName: "Lỗi phần mềm",
     description:
       "Màn hình Lenovo ThinkVision E24-20 bị lỗi, không hiển thị hình ảnh, có dấu hiệu hỏng backlight",
     mediaUrls: [

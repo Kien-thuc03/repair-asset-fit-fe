@@ -306,6 +306,7 @@ export default function RepairDetailPage() {
 					<ActionPanel
 						initStatus={currentRequest.status}
 						assetId={currentRequest.assetId} // Truyền assetId
+						errorTypeName={currentRequest.errorTypeName} // Truyền errorTypeName để xác định loại lỗi
 						onCreateReplacement={(parts) => {
 							// In a real app, you'd likely pass this data to the replacement request page
 							console.log('Creating replacement request with parts:', parts)

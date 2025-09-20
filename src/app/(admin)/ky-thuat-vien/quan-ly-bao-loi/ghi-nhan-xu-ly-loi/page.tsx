@@ -46,7 +46,7 @@ export default function GhiNhanXuLyLoiPage() {
     componentId: "",
     roomId: "",
     errorTypeId: "",
-    errorCategory: "hardware",
+    errorCategory: "software",
     description: "",
     repairMethod: "",
     repairNotes: "",
@@ -140,7 +140,15 @@ export default function GhiNhanXuLyLoiPage() {
 
   // Handle error category change
   const handleErrorCategoryChange = (category: "hardware" | "software") => {
-    setFormData(prev => ({ ...prev, errorCategory: category, errorTypeId: "", componentId: "" }));
+    setFormData(prev => ({ 
+      ...prev, 
+      errorCategory: category, 
+      errorTypeId: "", 
+      componentId: "",
+      repairMethod: "", // Reset repairMethod khi thay đổi category
+      repairNotes: "",  // Reset repairNotes
+      status: RepairStatus.ĐANG_XỬ_LÝ // Reset status về mặc định
+    }));
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
   };
@@ -218,7 +226,7 @@ export default function GhiNhanXuLyLoiPage() {
       componentId: "",
       roomId: "",
       errorTypeId: "",
-      errorCategory: "hardware",
+      errorCategory: "software",
       description: "",
       repairMethod: "",
       repairNotes: "",
@@ -285,7 +293,6 @@ export default function GhiNhanXuLyLoiPage() {
         !formData.building ? 0 :
         !formData.roomId ? 1 :
         !formData.assetId ? 2 :
-        !formData.errorCategory ? 3 :
         !formData.description ? 4 :
         !formData.repairMethod ? 5 :
         !formData.repairNotes ? 6 : 7
@@ -417,8 +424,8 @@ export default function GhiNhanXuLyLoiPage() {
                 onChange={(e) => handleErrorCategoryChange(e.target.value)}
                 disabled={!formData.assetId}
               >
-                <Radio value="hardware">Lỗi phần cứng</Radio>
                 <Radio value="software">Lỗi phần mềm</Radio>
+                <Radio value="hardware">Lỗi phần cứng</Radio>
               </Radio.Group>
             </Form.Item>
 
@@ -443,18 +450,19 @@ export default function GhiNhanXuLyLoiPage() {
           </div>
 
           {/* Bước 4: Chọn linh kiện/phần mềm cụ thể */}
-          {formData.assetId && formData.errorCategory === "hardware" && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4 text-blue-900">
-                Bước 4: Chọn linh kiện bị lỗi (tùy chọn)
-              </h3>
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+              Bước 4: Chọn {formData.errorCategory === "hardware" ? "linh kiện" : "phần mềm"} bị lỗi (tùy chọn)
+            </h3>
+            
+            {formData.errorCategory === "hardware" && (
               <Form.Item label="Linh kiện cụ thể">
                 <Select
                   mode="multiple"
                   placeholder="Chọn linh kiện bị lỗi"
                   value={selectedComponentIds}
                   onChange={setSelectedComponentIds}
-                  disabled={filteredComponents.length === 0}
+                  disabled={!formData.assetId || filteredComponents.length === 0}
                 >
                   {filteredComponents.map(component => (
                     <Option key={component.id} value={component.id}>
@@ -462,22 +470,22 @@ export default function GhiNhanXuLyLoiPage() {
                     </Option>
                   ))}
                 </Select>
+                {!formData.assetId && (
+                  <div className="text-sm text-gray-500 mt-1">
+                    Vui lòng chọn thiết bị trước để hiển thị danh sách linh kiện
+                  </div>
+                )}
               </Form.Item>
-            </div>
-          )}
+            )}
 
-          {formData.assetId && formData.errorCategory === "software" && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-4 text-blue-900">
-                Bước 4: Chọn phần mềm bị lỗi (tùy chọn)
-              </h3>
+            {formData.errorCategory === "software" && (
               <Form.Item label="Phần mềm cụ thể">
                 <Select
                   mode="multiple"
                   placeholder="Chọn phần mềm bị lỗi"
                   value={selectedSoftwareIds}
                   onChange={setSelectedSoftwareIds}
-                  disabled={filteredSoftware.length === 0}
+                  disabled={!formData.assetId || filteredSoftware.length === 0}
                 >
                   {filteredSoftware.map(software => (
                     <Option key={software.id} value={software.id}>
@@ -485,9 +493,14 @@ export default function GhiNhanXuLyLoiPage() {
                     </Option>
                   ))}
                 </Select>
+                {!formData.assetId && (
+                  <div className="text-sm text-gray-500 mt-1">
+                    Vui lòng chọn thiết bị trước để hiển thị danh sách phần mềm
+                  </div>
+                )}
               </Form.Item>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Bước 5: Mô tả chi tiết */}
           <div className="mb-6">
@@ -511,6 +524,18 @@ export default function GhiNhanXuLyLoiPage() {
             <h3 className="text-lg font-semibold mb-4 text-blue-900">
               Bước 6: Xử lý và kết quả kiểm tra
             </h3>
+
+            <Alert
+              message={`Xử lý lỗi ${formData.errorCategory === 'hardware' ? 'phần cứng' : 'phần mềm'}`}
+              description={
+                formData.errorCategory === 'hardware' 
+                  ? "Đối với lỗi phần cứng, bạn có thể sửa chữa tại chỗ hoặc yêu cầu thay thế linh kiện." 
+                  : "Đối với lỗi phần mềm, thường có thể khắc phục bằng cách cài đặt lại, cập nhật driver hoặc xử lý virus."
+              }
+              type="info"
+              showIcon
+              className="mb-4"
+            />
             
             <Form.Item 
               label="Kết quả kiểm tra thực tế" 
@@ -529,24 +554,36 @@ export default function GhiNhanXuLyLoiPage() {
                     setFormData(prev => ({ ...prev, status: RepairStatus.CHỜ_THAY_THẾ }));
                   }
                 }}
-                disabled={!formData.description}
+                disabled={!formData.errorCategory}
               >
                 <div className="space-y-3">
-                  <Radio value="software_fixed" className="flex items-start">
-                    <div className="ml-2">
-                      <div className="font-medium">Lỗi phần mềm - Đã sửa được</div>
-                    </div>
-                  </Radio>
-                  <Radio value="hardware_fixed" className="flex items-start">
-                    <div className="ml-2">
-                      <div className="font-medium">Lỗi phần cứng - Đã sửa được</div>
-                    </div>
-                  </Radio>
-                  <Radio value="need_replacement" className="flex items-start">
-                    <div className="ml-2">
-                      <div className="font-medium">Cần thay thế linh kiện</div>
-                    </div>
-                  </Radio>
+                  {/* Hiển thị option phần mềm chỉ khi errorCategory là software */}
+                  {formData.errorCategory === "software" && (
+                    <Radio value="software_fixed" className="flex items-start">
+                      <div className="ml-2">
+                        <div className="font-medium">Lỗi phần mềm - Đã sửa được</div>
+                        <div className="text-sm text-gray-500">Cài đặt lại phần mềm, cập nhật driver, khắc phục virus...</div>
+                      </div>
+                    </Radio>
+                  )}
+                  
+                  {/* Hiển thị options phần cứng chỉ khi errorCategory là hardware */}
+                  {formData.errorCategory === "hardware" && (
+                    <>
+                      <Radio value="hardware_fixed" className="flex items-start">
+                        <div className="ml-2">
+                          <div className="font-medium">Lỗi phần cứng - Đã sửa được</div>
+                          <div className="text-sm text-gray-500">Sửa chữa tại chỗ, thay cáp kết nối, làm sạch tiếp xúc...</div>
+                        </div>
+                      </Radio>
+                      <Radio value="need_replacement" className="flex items-start">
+                        <div className="ml-2">
+                          <div className="font-medium">Cần thay thế linh kiện</div>
+                          <div className="text-sm text-gray-500">Linh kiện hỏng không thể sửa chữa, cần thay thế mới</div>
+                        </div>
+                      </Radio>
+                    </>
+                  )}
                 </div>
               </Radio.Group>
             </Form.Item>
@@ -564,15 +601,15 @@ export default function GhiNhanXuLyLoiPage() {
             </Form.Item>
 
             {/* Hiển thị phần chọn linh kiện thay thế nếu cần */}
-            {formData.repairMethod === 'need_replacement' && formData.assetId && (
+            {formData.errorCategory === "hardware" && formData.repairMethod === 'need_replacement' && formData.assetId && (
               <div className="mt-4 p-4 border rounded-lg bg-orange-50 border-orange-200">
                 <h4 className="text-md font-semibold text-orange-800 mb-3">Linh kiện cần thay thế</h4>
                 <div className="space-y-3">
                   {selectedComponentIds.length === 0 ? (
                     <Alert
-                      message="Vui lòng chọn linh kiện cần thay thế"
-                      description="Hãy quay lại bước 4 để chọn các linh kiện cụ thể cần thay thế, hoặc chọn từ danh sách dưới đây."
-                      type="warning"
+                      message="⚠️ Bắt buộc: Chọn linh kiện cần thay thế"
+                      description="Bạn đã chọn 'Cần thay thế linh kiện'. Vui lòng quay lại bước 4 để chọn linh kiện cụ thể, hoặc chọn từ danh sách dưới đây. Không thể hoàn thành yêu cầu nếu chưa chọn linh kiện."
+                      type="error"
                       showIcon
                     />
                   ) : (
@@ -621,10 +658,21 @@ export default function GhiNhanXuLyLoiPage() {
                 <div className="text-sm text-blue-800">
                   <strong>💡 Trạng thái sẽ được cập nhật:</strong>
                   <div className="mt-1">
-                    {formData.repairMethod === 'software_fixed' || formData.repairMethod === 'hardware_fixed' ? (
-                      <span className="text-green-600 font-medium">→ Đã hoàn thành</span>
+                    {formData.repairMethod === 'software_fixed' ? (
+                      <div>
+                        <span className="text-green-600 font-medium">→ Đã hoàn thành</span>
+                        <div className="text-xs text-gray-600 mt-1">Lỗi phần mềm đã được khắc phục hoàn toàn</div>
+                      </div>
+                    ) : formData.repairMethod === 'hardware_fixed' ? (
+                      <div>
+                        <span className="text-green-600 font-medium">→ Đã hoàn thành</span>
+                        <div className="text-xs text-gray-600 mt-1">Lỗi phần cứng đã được sửa chữa thành công</div>
+                      </div>
                     ) : formData.repairMethod === 'need_replacement' ? (
-                      <span className="text-orange-600 font-medium">→ Chờ thay thế linh kiện</span>
+                      <div>
+                        <span className="text-orange-600 font-medium">→ Chờ thay thế linh kiện</span>
+                        <div className="text-xs text-gray-600 mt-1">Yêu cầu sẽ chuyển sang quy trình thay thế linh kiện</div>
+                      </div>
                     ) : (
                       <span className="text-blue-900 font-medium">→ Đang xử lý</span>
                     )}
@@ -754,7 +802,8 @@ export default function GhiNhanXuLyLoiPage() {
                 !formData.description || 
                 !formData.repairMethod ||
                 !formData.repairNotes ||
-                (formData.errorCategory === "hardware" && !formData.errorTypeId)
+                (formData.errorCategory === "hardware" && !formData.errorTypeId) ||
+                (formData.repairMethod === 'need_replacement' && selectedComponentIds.length === 0)
               }
             >
               {isSubmitting ? "Đang ghi nhận..." : "Ghi nhận và xử lý"}

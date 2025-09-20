@@ -2,39 +2,66 @@
 
 import { RepairStatus } from '@/types'
 import { useState, useEffect } from 'react'
-import { Button, Form, Input, Select, Space, Radio, Card, Alert } from 'antd'
+import { Button, Form, Input, Radio, Card, Alert } from 'antd'
 import { CheckCircle, Settings, Package, FileText } from 'lucide-react'
 import ReplacementPartsInput, { ReplacementPart } from './ReplacementPartsInput'
 
-const { Option } = Select
 const { TextArea } = Input
 
 interface Props {
 	initStatus: RepairStatus
 	requestId?: string
 	assetId?: string // Thêm prop assetId
+	errorTypeName?: string // Thêm prop errorTypeName để xác định loại lỗi
 	onCreateReplacement: (parts: ReplacementPart[]) => void
 	onStatusUpdate?: (newStatus: RepairStatus, notes: string) => void
 }
 
-export default function ActionPanel({ initStatus, requestId, assetId, onCreateReplacement, onStatusUpdate }: Props) {
+export default function ActionPanel({ initStatus, requestId, assetId, errorTypeName, onCreateReplacement, onStatusUpdate }: Props) {
 	const [form] = Form.useForm()
 	const [status, setStatus] = useState<RepairStatus>(initStatus)
 	const [inspectionResult, setInspectionResult] = useState<'software' | 'hardware' | 'replacement' | ''>('')
 	const [showReplacementParts, setShowReplacementParts] = useState(false)
 
+	// Xác định loại lỗi dựa trên errorTypeName
+	const getErrorCategory = () => {
+		if (!errorTypeName) return 'unknown'
+		
+		// Kiểm tra nếu là lỗi phần mềm
+		const softwareKeywords = ['phần mềm', 'software', 'ứng dụng', 'hệ điều hành', 'driver', 'virus', 'bảo mật']
+		const hardwareKeywords = ['phần cứng', 'hardware', 'màn hình', 'bàn phím', 'chuột', 'CPU', 'RAM', 'ổ cứng', 'nguồn', 'card']
+		
+		const lowerErrorType = errorTypeName.toLowerCase()
+		
+		if (softwareKeywords.some(keyword => lowerErrorType.includes(keyword))) {
+			return 'software'
+		}
+		if (hardwareKeywords.some(keyword => lowerErrorType.includes(keyword))) {
+			return 'hardware'
+		}
+		
+		// Mặc định là phần mềm nếu không xác định được
+		return 'software'
+	}
+
+	const errorCategory = getErrorCategory()
 
 
-	const onFinish = (values: any) => {
+
+	const onFinish = (values: {
+		inspectionResult: string
+		notes: string
+		replacementParts?: ReplacementPart[]
+	}) => {
 		console.log('Form values:', values)
 		
 		// Xác định trạng thái mới dựa trên kết quả kiểm tra
 		let newStatus = status
-		if (inspectionResult === 'software') {
+		if (values.inspectionResult === 'software') {
 			newStatus = RepairStatus.ĐÃ_HOÀN_THÀNH
-		} else if (inspectionResult === 'hardware') {
+		} else if (values.inspectionResult === 'hardware') {
 			newStatus = RepairStatus.ĐÃ_HOÀN_THÀNH
-		} else if (inspectionResult === 'replacement') {
+		} else if (values.inspectionResult === 'replacement') {
 			newStatus = RepairStatus.CHỜ_THAY_THẾ
 			// Nếu có linh kiện cần thay thế, tạo đề xuất
 			if (values.replacementParts && values.replacementParts.length > 0) {
@@ -95,6 +122,20 @@ export default function ActionPanel({ initStatus, requestId, assetId, onCreateRe
 					onFinish={onFinish}
 					layout="vertical"
 				>
+					<Alert
+						message={`Xử lý lỗi ${errorCategory === 'hardware' ? 'phần cứng' : errorCategory === 'software' ? 'phần mềm' : 'không xác định'}`}
+						description={
+							errorCategory === 'hardware' 
+								? "Đối với lỗi phần cứng, bạn có thể sửa chữa tại chỗ hoặc yêu cầu thay thế linh kiện." 
+								: errorCategory === 'software'
+								? "Đối với lỗi phần mềm, thường có thể khắc phục bằng cách cài đặt lại, cập nhật driver hoặc xử lý virus."
+								: "Vui lòng kiểm tra và xác định loại lỗi để xử lý phù hợp."
+						}
+						type="info"
+						showIcon
+						className="mb-4"
+					/>
+
 					<Form.Item 
 						name="inspectionResult" 
 						label="Kết quả kiểm tra thực tế"
@@ -104,11 +145,59 @@ export default function ActionPanel({ initStatus, requestId, assetId, onCreateRe
 							setInspectionResult(e.target.value)
 							setShowReplacementParts(e.target.value === 'replacement')
 						}}>
-							<Space direction="vertical">
-								<Radio value="software">Lỗi phần mềm - Đã sửa được</Radio>
-								<Radio value="hardware">Lỗi phần cứng - Đã sửa được</Radio>
-								<Radio value="replacement">Cần thay thế linh kiện</Radio>
-							</Space>
+							<div className="space-y-3">
+								{/* Hiển thị option phần mềm chỉ khi errorCategory là software */}
+								{errorCategory === "software" && (
+									<Radio value="software" className="flex items-start">
+										<div className="ml-2">
+											<div className="font-medium">Lỗi phần mềm - Đã sửa được</div>
+											<div className="text-sm text-gray-500">Cài đặt lại phần mềm, cập nhật driver, khắc phục virus...</div>
+										</div>
+									</Radio>
+								)}
+								
+								{/* Hiển thị options phần cứng chỉ khi errorCategory là hardware */}
+								{errorCategory === "hardware" && (
+									<>
+										<Radio value="hardware" className="flex items-start">
+											<div className="ml-2">
+												<div className="font-medium">Lỗi phần cứng - Đã sửa được</div>  
+												<div className="text-sm text-gray-500">Sửa chữa tại chỗ, thay cáp kết nối, làm sạch tiếp xúc...</div>
+											</div>
+										</Radio>
+										<Radio value="replacement" className="flex items-start">
+											<div className="ml-2">
+												<div className="font-medium">Cần thay thế linh kiện</div>
+												<div className="text-sm text-gray-500">Linh kiện hỏng không thể sửa chữa, cần thay thế mới</div>
+											</div>
+										</Radio>
+									</>
+								)}
+								
+								{/* Hiển thị tất cả options nếu không xác định được loại lỗi */}
+								{errorCategory === "unknown" && (
+									<>
+										<Radio value="software" className="flex items-start">
+											<div className="ml-2">
+												<div className="font-medium">Lỗi phần mềm - Đã sửa được</div>
+												<div className="text-sm text-gray-500">Cài đặt lại phần mềm, cập nhật driver, khắc phục virus...</div>
+											</div>
+										</Radio>
+										<Radio value="hardware" className="flex items-start">
+											<div className="ml-2">
+												<div className="font-medium">Lỗi phần cứng - Đã sửa được</div>
+												<div className="text-sm text-gray-500">Sửa chữa tại chỗ, thay cáp kết nối, làm sạch tiếp xúc...</div>
+											</div>
+										</Radio>
+										<Radio value="replacement" className="flex items-start">
+											<div className="ml-2">
+												<div className="font-medium">Cần thay thế linh kiện</div>
+												<div className="text-sm text-gray-500">Linh kiện hỏng không thể sửa chữa, cần thay thế mới</div>
+											</div>
+										</Radio>
+									</>
+								)}
+							</div>
 						</Radio.Group>
 					</Form.Item>
 
@@ -130,6 +219,35 @@ export default function ActionPanel({ initStatus, requestId, assetId, onCreateRe
 						>
 							<ReplacementPartsInput assetId={assetId} />
 						</Form.Item>
+					)}
+
+					{/* Thông báo trạng thái sẽ được cập nhật */}
+					{inspectionResult && (
+						<div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+							<div className="text-sm text-blue-800">
+								<strong>💡 Trạng thái sẽ được cập nhật:</strong>
+								<div className="mt-1">
+									{inspectionResult === 'software' ? (
+										<div>
+											<span className="text-green-600 font-medium">→ Đã hoàn thành</span>
+											<div className="text-xs text-gray-600 mt-1">Lỗi phần mềm đã được khắc phục hoàn toàn</div>
+										</div>
+									) : inspectionResult === 'hardware' ? (
+										<div>
+											<span className="text-green-600 font-medium">→ Đã hoàn thành</span>
+											<div className="text-xs text-gray-600 mt-1">Lỗi phần cứng đã được sửa chữa thành công</div>
+										</div>
+									) : inspectionResult === 'replacement' ? (
+										<div>
+											<span className="text-orange-600 font-medium">→ Chờ thay thế linh kiện</span>
+											<div className="text-xs text-gray-600 mt-1">Yêu cầu sẽ chuyển sang quy trình thay thế linh kiện</div>
+										</div>
+									) : (
+										<span className="text-blue-900 font-medium">→ Đang xử lý</span>
+									)}
+								</div>
+							</div>
+						</div>
 					)}
 
 					<Form.Item>
