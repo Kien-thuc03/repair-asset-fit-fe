@@ -1,65 +1,19 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Search,
-  Eye,
-  CheckCircle,
-  XCircle,
-  Download,
-  Calendar,
-  User,
-  Building2,
-  Package,
-  ChevronUp,
-  ChevronDown,
-  ListPlus,
-} from "lucide-react";
 import { ReplacementRequestForList, ReplacementStatus } from "@/types";
-import {
-  mockReplacementProposals,
-  replacementProposalStatusConfig,
-} from "@/lib/mockData/replacementProposals";
+import { mockReplacementProposals } from "@/lib/mockData/replacementProposals";
 import ExportExcelSuccessModal from "./modal/ExportExcelSuccessModal";
 import ExportExcelErrorModal from "./modal/ExportExcelErrorModal";
 import { Breadcrumb } from "antd";
-
-// Helper functions
-const getStatusBadge = (status: string) => {
-  const config =
-    replacementProposalStatusConfig[
-      status as keyof typeof replacementProposalStatusConfig
-    ];
-  return config ? config.color : "bg-gray-100 text-gray-800";
-};
-
-const getStatusText = (status: string) => {
-  const config =
-    replacementProposalStatusConfig[
-      status as keyof typeof replacementProposalStatusConfig
-    ];
-  return config ? config.label : status;
-};
-
-const getUserRole = () => {
-  return "Kỹ thuật viên";
-};
-
-// Helper function để lấy thông tin linh kiện dựa trên assetCode
-const getComponentInfo = (assetCode: string) => {
-  // Fallback data since componentsFromReports doesn't exist
-  // Use the component name from replacement proposals if available
-  const proposal = mockReplacementProposals.find(
-    (p) => p.assetCode === assetCode
-  );
-  return {
-    componentName: proposal?.componentName || "Linh kiện cần thay thế",
-    componentSpecs: "Thông số kỹ thuật",
-  };
-};
+import {
+  ApprovalHeader,
+  ApprovalFilters,
+  ApprovalTable,
+  ApprovalMobileCards,
+  getComponentInfo,
+} from "@/components/leadTechnician/approval";
 
 export default function DuyetDeXuatPage() {
-  const router = useRouter();
   const [requests, setRequests] = useState<ReplacementRequestForList[]>(
     mockReplacementProposals.map((proposal) => ({
       id: proposal.id,
@@ -83,7 +37,6 @@ export default function DuyetDeXuatPage() {
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
 
   // Handle actions
   const handleApprove = (requestId: string) => {
@@ -130,7 +83,7 @@ export default function DuyetDeXuatPage() {
         request.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        getComponentInfo(request.assetCode)
+        getComponentInfo()
           .componentName.toLowerCase()
           .includes(searchTerm.toLowerCase());
 
@@ -145,8 +98,8 @@ export default function DuyetDeXuatPage() {
 
       // Handle component name sorting
       if (sortField === "componentName") {
-        aValue = getComponentInfo(a.assetCode).componentName.toLowerCase();
-        bValue = getComponentInfo(b.assetCode).componentName.toLowerCase();
+        aValue = getComponentInfo().componentName.toLowerCase();
+        bValue = getComponentInfo().componentName.toLowerCase();
       } else {
         aValue = a[sortField as keyof ReplacementRequestForList];
         bValue = b[sortField as keyof ReplacementRequestForList];
@@ -184,35 +137,6 @@ export default function DuyetDeXuatPage() {
     }
   };
 
-  const getSortIcon = (field: string) => {
-    if (sortField === field) {
-      // Hiển thị icon active cho cột đang được sắp xếp
-      if (sortDirection === "asc") {
-        return (
-          <div className="flex flex-col ml-1">
-            <ChevronUp className="h-3 w-3 text-blue-600" />
-            <ChevronDown className="h-3 w-3 text-gray-300 -mt-1" />
-          </div>
-        );
-      } else {
-        return (
-          <div className="flex flex-col ml-1">
-            <ChevronUp className="h-3 w-3 text-gray-300" />
-            <ChevronDown className="h-3 w-3 text-blue-600 -mt-1" />
-          </div>
-        );
-      }
-    } else {
-      // Hiển thị icon mặc định cho các cột khác
-      return (
-        <div className="flex flex-col ml-1 opacity-50 hover:opacity-100 transition-opacity">
-          <ChevronUp className="h-3 w-3 text-gray-400" />
-          <ChevronDown className="h-3 w-3 text-gray-400 -mt-1" />
-        </div>
-      );
-    }
-  };
-
   // Xử lý checkbox
   const handleSelectItem = (itemId: string) => {
     setSelectedItems((prev) => {
@@ -220,22 +144,15 @@ export default function DuyetDeXuatPage() {
         ? prev.filter((id) => id !== itemId)
         : [...prev, itemId];
 
-      // Update selectAll state based on new selection
-      setSelectAll(
-        newSelected.length === filteredRequests.length &&
-          filteredRequests.length > 0
-      );
       return newSelected;
     });
   };
 
   const handleSelectAll = () => {
-    if (selectAll || selectedItems.length === filteredRequests.length) {
+    if (selectedItems.length === filteredRequests.length) {
       setSelectedItems([]);
-      setSelectAll(false);
     } else {
       setSelectedItems(filteredRequests.map((req) => req.id));
-      setSelectAll(true);
     }
   };
 
@@ -289,90 +206,24 @@ export default function DuyetDeXuatPage() {
           ]}
         />
       </div>
+
       {/* Header */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Duyệt đề xuất thay thế
-            </h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Xem xét và phê duyệt các đề xuất thay thế thiết bị
-            </p>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
-            {/* Create List Button */}
-            <button
-              onClick={() =>
-                router.push("/to-truong-ky-thuat/duyet-de-xuat/tao-danh-sach")
-              }
-              disabled={approvedRequests.length === 0}
-              className="inline-flex items-center px-4 py-2 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-300 disabled:cursor-not-allowed">
-              <ListPlus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">
-                Tạo danh sách đề xuất ({approvedRequests.length})
-              </span>
-              <span className="sm:hidden">Tạo danh sách</span>
-            </button>
-
-            {/* Export Excel Button */}
-            <button
-              onClick={handleExportExcel}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              <Download className="h-4 w-4 mr-2" />
-              <span>
-                {selectedItems.length > 0
-                  ? `Xuất Excel (${selectedItems.length} mục)`
-                  : `Xuất Excel (${filteredRequests.length} mục)`}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
+      <ApprovalHeader
+        approvedRequestsCount={approvedRequests.length}
+        selectedItemsCount={selectedItems.length}
+        filteredRequestsCount={filteredRequests.length}
+        onExportExcel={handleExportExcel}
+      />
 
       {/* Filters */}
-      <div className="bg-white p-3 sm:p-6 rounded-lg shadow mb-4 sm:mb-6">
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 items-end">
-          <div className="flex flex-col h-full">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
-              Tìm kiếm
-            </label>
-            <div className="relative flex-1 min-w-0 h-9 sm:h-10">
-              <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400 pointer-events-none flex-shrink-0 z-10" />
-              <input
-                type="text"
-                className="absolute inset-0 w-full h-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                placeholder="Mã tài sản, tên thiết bị..."
-                value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setSearchTerm(e.target.value)
-                }
-              />
-            </div>
-          </div>
+      <ApprovalFilters
+        searchTerm={searchTerm}
+        selectedStatus={selectedStatus}
+        onSearchChange={setSearchTerm}
+        onStatusChange={setSelectedStatus}
+      />
 
-          <div className="flex flex-col h-full">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
-              Trạng thái
-            </label>
-            <div className="flex-1 h-9 sm:h-10">
-              <select
-                className="w-full h-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value="pending">Chờ duyệt</option>
-                <option value="approved">Đã duyệt</option>
-                <option value="rejected">Từ chối</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Requests Table */}
+      {/* Table and Mobile View Container */}
       <div className="bg-white shadow rounded-lg overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] flex flex-col">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -389,307 +240,26 @@ export default function DuyetDeXuatPage() {
 
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           {/* Mobile Card View */}
-          <div className="block sm:hidden flex-1 overflow-y-auto">
-            <div className="p-3 space-y-3">
-              {filteredRequests.length > 0 ? (
-                filteredRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 text-blue-600 rounded mr-2 mt-1 flex-shrink-0"
-                          checked={selectedItems.includes(request.id)}
-                          onChange={() => handleSelectItem(request.id)}
-                        />
-                        <Package className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {getComponentInfo(request.assetCode).componentName}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {getComponentInfo(request.assetCode).componentSpecs}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-1 ml-2">
-                        <button
-                          onClick={() => {
-                            router.push(
-                              `/to-truong-ky-thuat/duyet-de-xuat/chi-tiet/${request.id}`
-                            );
-                          }}
-                          className="text-indigo-600 hover:text-indigo-900 p-1">
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        {(request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
-                          request.status ===
-                            ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT) && (
-                          <>
-                            <button
-                              onClick={() => handleApprove(request.id)}
-                              className="text-green-600 hover:text-green-900 p-1">
-                              <CheckCircle className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleReject(request.id)}
-                              className="text-red-600 hover:text-red-900 p-1">
-                              <XCircle className="h-4 w-4" />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <div className="text-gray-500">Người yêu cầu</div>
-                        <div className="text-gray-900 font-medium">
-                          {request.requestedBy}
-                        </div>
-                        <div className="text-gray-500 text-xs">
-                          {getUserRole()}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Vị trí</div>
-                        <div className="text-gray-900 font-medium truncate">
-                          {request.location}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Trạng thái</div>
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                            request.status
-                          )}`}>
-                          {getStatusText(request.status)}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Chi phí ước tính</div>
-                        <div className="text-gray-900 font-medium">
-                          {request.estimatedCost.toLocaleString("vi-VN")} VND
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-2 text-xs text-gray-500">
-                      {new Date(request.requestDate).toLocaleDateString(
-                        "vi-VN",
-                        { day: "2-digit", month: "2-digit", year: "numeric" }
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                  <h3 className="text-sm font-medium text-gray-900 mb-1">
-                    Không tìm thấy kết quả
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+          <ApprovalMobileCards
+            filteredRequests={filteredRequests}
+            selectedItems={selectedItems}
+            onSelectItem={handleSelectItem}
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
 
           {/* Desktop Table View */}
-          <div className="hidden sm:block flex-1 overflow-y-auto">
-            <table className="w-full table-fixed divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-5">
-                <tr className="h-10 sm:h-12">
-                  <th className="w-12 px-2 py-2 sm:py-3 text-left">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 text-blue-600 rounded"
-                      checked={
-                        filteredRequests.length > 0 &&
-                        selectedItems.length === filteredRequests.length
-                      }
-                      onChange={handleSelectAll}
-                    />
-                  </th>
-                  <th
-                    className="w-64 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("componentName")}>
-                    <div className="flex items-center">
-                      <span className="truncate">Linh kiện</span>
-                      {getSortIcon("componentName")}
-                    </div>
-                  </th>
-                  <th
-                    className="w-40 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("requestedBy")}>
-                    <div className="flex items-center">
-                      <span className="truncate">Người yêu cầu</span>
-                      {getSortIcon("requestedBy")}
-                    </div>
-                  </th>
-                  <th
-                    className="w-48 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("location")}>
-                    <div className="flex items-center">
-                      <span className="truncate">Vị trí</span>
-                      {getSortIcon("location")}
-                    </div>
-                  </th>
-                  <th
-                    className="w-36 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("status")}>
-                    <div className="flex items-center">
-                      <span className="truncate">Trạng thái</span>
-                      {getSortIcon("status")}
-                    </div>
-                  </th>
-                  <th
-                    className="w-32 px-2 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("requestDate")}>
-                    <div className="flex items-center">
-                      <span className="truncate">Ngày yêu cầu</span>
-                      {getSortIcon("requestDate")}
-                    </div>
-                  </th>
-                  <th className="w-24 px-2 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Thao tác
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredRequests.length > 0 ? (
-                  filteredRequests.map((request) => (
-                    <tr
-                      key={request.id}
-                      className="hover:bg-gray-50 h-12 sm:h-14">
-                      <td className="w-12 px-2 py-1 sm:py-2 whitespace-nowrap">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 text-blue-600 rounded"
-                          checked={selectedItems.includes(request.id)}
-                          onChange={() => handleSelectItem(request.id)}
-                        />
-                      </td>
-                      <td className="w-64 px-2 py-1 sm:py-2">
-                        <div className="flex items-center">
-                          <Package className="h-4 w-4 text-gray-400 mr-1 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium text-gray-900 truncate">
-                              {
-                                getComponentInfo(request.assetCode)
-                                  .componentName
-                              }
-                            </div>
-                            <div className="text-xs text-gray-500 truncate">
-                              {
-                                getComponentInfo(request.assetCode)
-                                  .componentSpecs
-                              }
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="w-40 px-2 py-1 sm:py-2">
-                        <div className="flex items-center">
-                          <User className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <div className="text-sm font-medium text-gray-900 truncate">
-                              {request.requestedBy}
-                            </div>
-                            <div className="text-xs text-gray-500 truncate">
-                              {getUserRole()}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="w-48 px-2 py-1 sm:py-2">
-                        <div className="flex items-center">
-                          <Building2 className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
-                          <span className="text-sm text-gray-900 truncate">
-                            {request.location}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="w-36 px-2 py-1 sm:py-2 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
-                            request.status
-                          )}`}>
-                          {getStatusText(request.status)}
-                        </span>
-                      </td>
-                      <td className="w-32 px-2 py-1 sm:py-2 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Calendar className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
-                          <span className="text-sm text-gray-900">
-                            {new Date(request.requestDate).toLocaleDateString(
-                              "vi-VN",
-                              {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              }
-                            )}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="w-24 px-2 py-1 sm:py-2 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end space-x-1">
-                          <button
-                            onClick={() => {
-                              router.push(
-                                `/to-truong-ky-thuat/duyet-de-xuat/chi-tiet/${request.id}`
-                              );
-                            }}
-                            className="text-indigo-600 hover:text-indigo-900 p-1"
-                            title="Xem chi tiết">
-                            <Eye className="h-3 w-3" />
-                          </button>
-                          {(request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
-                            request.status ===
-                              ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT) && (
-                            <>
-                              <button
-                                onClick={() => handleApprove(request.id)}
-                                className="text-green-600 hover:text-green-900 p-1"
-                                title="Phê duyệt">
-                                <CheckCircle className="h-3 w-3" />
-                              </button>
-                              <button
-                                onClick={() => handleReject(request.id)}
-                                className="text-red-600 hover:text-red-900 p-1"
-                                title="Từ chối">
-                                <XCircle className="h-3 w-3" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr className="h-16 sm:h-20">
-                    <td colSpan={7} className="h-16 sm:h-20">
-                      <div className="h-16 sm:h-20 flex items-center justify-center">
-                        <div className="flex flex-col items-center">
-                          <Search className="h-6 w-6 text-gray-300 mb-2" />
-                          <h3 className="text-xs font-medium text-gray-900 mb-1">
-                            Không tìm thấy kết quả
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ApprovalTable
+            filteredRequests={filteredRequests}
+            selectedItems={selectedItems}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSelectItem={handleSelectItem}
+            onSelectAll={handleSelectAll}
+            onSort={handleSort}
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
         </div>
       </div>
 

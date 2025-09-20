@@ -1,6 +1,18 @@
 "use client";
 import { Signature } from "lucide-react";
-import { InspectionReport } from "@/lib/mockData/inspectionReports";
+
+interface InspectionReport {
+  id: string;
+  reportNumber: string;
+  title: string;
+  relatedReportTitle: string;
+  inspectionDate: string;
+  department: string;
+  createdBy: string;
+  status: "pending" | "signed" | "sent_back";
+  leaderSignature?: string;
+  leaderSignedAt?: string;
+}
 
 interface SignConfirmationModalProps {
   show: boolean;
