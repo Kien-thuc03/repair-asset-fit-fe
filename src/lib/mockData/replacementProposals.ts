@@ -59,7 +59,7 @@ export const mockReplacementProposals: ReplacementProposal[] = [
     updatedAt: "2024-01-15T10:00:00Z",
     // Related display data
     assetCode: "19-0205/02",
-    assetName: "PC Dell OptiPlex 3080 - Máy 02",
+    assetName: "PC Dell OptiPlex 3080",
     roomName: "H101",
     componentName: "Kingston Fury Beast DDR4 16GB",
     reason: "RAM hiện tại gây lỗi màn hình xanh thường xuyên",
@@ -103,7 +103,7 @@ export const mockReplacementProposals: ReplacementProposal[] = [
     updatedAt: "2024-01-21T09:15:00Z",
     // Related display data
     assetCode: "19-0207/03",
-    assetName: "PC HP ProDesk 400 - Máy 05",
+    assetName: "PC HP ProDesk 400",
     roomName: "H102",
     componentName: "WD Blue SSD 512GB",
     reason: "SSD hiện tại có bad sectors nghiêm trọng, không thể sử dụng được",
