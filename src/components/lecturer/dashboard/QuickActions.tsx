@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { AlertTriangle, Clock, Search } from "lucide-react";
+import { AlertTriangle, Clock, FolderCode } from "lucide-react";
 
 const QuickActions: React.FC = () => {
   const quickActions = [
@@ -25,14 +25,14 @@ const QuickActions: React.FC = () => {
       description: "Xem tiến độ xử lý các báo cáo đã gửi",
     },
     {
-      href: "/giang-vien/tra-cuu-thiet-bi",
+      href: "/giang-vien/de-xuat-phan-mem",
       bgColor: "bg-green-50",
       hoverColor: "hover:bg-green-100",
       focusColor: "focus-within:ring-green-500",
       iconBg: "bg-green-600",
-      icon: Search,
-      title: "Tra cứu thiết bị",
-      description: "Tìm kiếm và xem thông tin chi tiết tài sản thiết bị",
+      icon: FolderCode,
+      title: "Đề xuất phần mềm",
+      description: "Đề xuất phần mềm mới cho phòng máy",
     },
   ];
 
