@@ -2,16 +2,22 @@
 export { errorTypes, type ErrorType } from "./errorTypes";
 export { mockAssets, comprehensiveAssets } from "./assets";
 export { mockComputers, type Computer } from "./computers";
+export { mockComputerComponents, type ComputerComponent } from "./computerComponents";
 export { mockRooms, mockSimpleRooms, type SimpleRoom } from "./rooms";
 export { mockComponents } from "./components";
 export {
   mockRepairRequests,
+  mockRepairRequestComponents,
   repairRequestStatusConfig,
+  getRepairRequestWithDetails,
+  getAllRepairRequestsWithDetails,
+  getRepairRequestsWithDetailsByStatus,
+  getRepairRequestsWithDetailsByReporter,
 } from "./repairRequests";
 
 // Export new data from database-sync.json
 export { categories, type Category } from "./categories";
-export { 
+export {
   mockReplacementRequestsForTechnician,
   mockComponentsFromReportsWithStatus,
 } from "./replacementRequests";

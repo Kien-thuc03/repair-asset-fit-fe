@@ -1,4 +1,4 @@
-import { RepairRequest, RepairStatus } from "@/types";
+import { RepairRequest, RepairStatus, RepairRequestComponent, RepairRequestWithDetails } from "@/types";
 import {
   Clock,
   CheckCircle,
@@ -45,25 +45,22 @@ export const repairRequestStatusConfig = {
 export const mockRepairRequests: RepairRequest[] = [
   {
     id: "req-001",
-    requestCode: "YC-SC-2024-001",
-    assetId: "ASSET001",
+    requestCode: "YCSC-2025-0001",
+    computerAssetId: "ASSET001",
     assetCode: "19-0205/01",
     assetName: "PC Dell OptiPlex 3080",
-    machineLabel: "01",
-    componentId: "CC005",
-    componentName: "Dell 200W PSU",
     reporterId: "user-5",
     reporterName: "Giảng viên",
     reporterRole: "Giảng viên",
     assignedTechnicianId: "user-4",
     assignedTechnicianName: "Kỹ thuật viên",
-    roomId: "ROOM001",
     roomName: "H101",
+    machineLabel: "01",
     buildingName: "Tòa H",
-    errorTypeId: "error-001",
-    errorTypeName: "Lỗi phần cứng - CPU",
+    errorTypeId: "ET001",
+    errorTypeName: "Máy không khởi động",
     description:
-      "CPU bị quá nhiệt, máy tự động tắt sau khi hoạt động 10-15 phút. Cần kiểm tra tản nhiệt và có thể cần thay thế CPU.",
+      "Máy tính không khởi động được, có mùi cháy từ nguồn điện 500W, cần thay thay nguồn mới ngay lập tức",
     mediaUrls: [
       "https://vr360.vn/wp-content/uploads/2015/07/nguyen-nhan-khien-may-tinh-khong-the-khoi-dong-vao-windows-300x138.jpg",
       "https://ictsaigon.com.vn/storage/news/may-tinh-khong-khoi-dong-duoc/may-tinh-khong-khoi-dong-duoc-8.webp",
@@ -77,81 +74,71 @@ export const mockRepairRequests: RepairRequest[] = [
   },
   {
     id: "req-002",
-    requestCode: "YC-SC-2024-002",
-    assetId: "ASSET002",
+    requestCode: "YCSC-2025-0002",
+    computerAssetId: "ASSET002",
     assetCode: "19-0205/02",
     assetName: "PC Dell OptiPlex 3080 - Máy 02",
-    machineLabel: "02",
-    componentId: "CC013",
-    componentName: "Kingston Fury Beast DDR4 16GB",
-    reporterId: "user-8",
-    reporterName: "Anh Tuấn",
-    reporterRole: "Kỹ thuật viên",
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
+    reporterRole: "Giảng viên",
     assignedTechnicianId: "user-4",
     assignedTechnicianName: "Kỹ thuật viên",
-    roomId: "ROOM001",
     roomName: "H101",
+    machineLabel: "02",
     buildingName: "Tòa H",
-    errorTypeId: "error-002",
-    errorTypeName: "Lỗi phần cứng - RAM",
+    errorTypeId: "ET002",
+    errorTypeName: "Lỗi phần cứng - SSD",
     description:
-      "RAM DDR4 16GB bị lỗi, máy không khởi động được, màn hình đen, có tiếng beep liên tục.",
+      "SSD Samsung 980 bị bad sectors, máy không khởi động được, mất dữ liệu",
     mediaUrls: [
       "https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/131734/Originals/loi-man-hinh-xanh.png",
     ],
     status: RepairStatus.ĐANG_XỬ_LÝ,
-    resolutionNotes: "Đã kiểm tra RAM, đang chờ linh kiện mới từ nhà cung cấp",
+    resolutionNotes: "Đã kiểm tra SSD, đang chờ linh kiện mới",
     createdAt: "2024-01-14T14:15:00Z",
     acceptedAt: "2024-01-14T15:00:00Z",
     completedAt: "",
-    unit: "Phòng Quản trị",
+    unit: "Khoa Công nghệ Thông tin",
   },
   {
-    id: "repair-003",
-    requestCode: "YC-SC-2024-003",
-    assetId: "ASSET003",
+    id: "req-003",
+    requestCode: "YCSC-2025-0003",
+    computerAssetId: "ASSET003",
     assetCode: "19-0206/01",
     assetName: "PC HP ProDesk 400 - Máy 03",
-    machineLabel: "03",
-    componentId: "CC024",
-    componentName: "WD Blue SSD 512GB",
-    reporterId: "user-9",
-    reporterName: "Văn Đạt",
-    reporterRole: "Kỹ thuật viên",
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
+    reporterRole: "Giảng viên",
     assignedTechnicianId: "user-4",
     assignedTechnicianName: "Kỹ thuật viên",
-    roomId: "ROOM001",
-    roomName: "H101",
+    roomName: "H102",
+    machineLabel: "03",
     buildingName: "Tòa H",
-    errorTypeId: "error-003",
-    errorTypeName: "Lỗi phần cứng - Ổ cứng",
+    errorTypeId: "ET007",
+    errorTypeName: "Máy hư màn hình",
     description:
-      "Ổ cứng WD Blue SSD 512GB bị bad sector nghiêm trọng, mất dữ liệu, không thể truy cập được hệ điều hành",
-    mediaUrls: ["ssd_error.jpg"],
+      "Màn hình HP P22v G4 bị nhấp nháy và có đường kẻ, không thể sử dụng được",
+    mediaUrls: [],
     status: RepairStatus.ĐÃ_HOÀN_THÀNH,
-    resolutionNotes:
-      "Đã thay WD Blue SSD mới 512GB, cài đặt lại hệ điều hành và phục hồi dữ liệu thành công từ backup",
+    resolutionNotes: "Đã thay màn hình mới HP P22v G4, kiểm tra hoạt động tốt",
     createdAt: "2024-01-12T09:00:00Z",
     acceptedAt: "2024-01-12T10:00:00Z",
     completedAt: "2024-01-13T16:00:00Z",
-    unit: "Phòng Quản trị",
+    unit: "Khoa Công nghệ Thông tin",
   },
   {
     id: "req-004",
     requestCode: "YCSC-2025-0004",
-    assetId: "ASSET004",
+    computerAssetId: "ASSET004",
     assetCode: "PC-A102-01",
     assetName: "PC Lenovo ThinkCentre - Máy 01",
-    machineLabel: "01",
-    componentId: "COMP034",
-    componentName: "Lenovo ThinkVision E24-20",
     reporterId: "user-8",
     reporterName: "Anh Tuấn",
     reporterRole: "Kỹ thuật viên",
     assignedTechnicianId: "tech-004",
     assignedTechnicianName: "Hoàng Văn E",
-    roomId: "ROOM002",
     roomName: "H102",
+    machineLabel: "01",
     buildingName: "Tòa H",
     errorTypeId: "ET007",
     errorTypeName: "Máy hư màn hình",
@@ -171,19 +158,16 @@ export const mockRepairRequests: RepairRequest[] = [
   {
     id: "req-005",
     requestCode: "YCSC-2025-0005",
-    assetId: "ASSET005",
+    computerAssetId: "ASSET005",
     assetCode: "PC-A102-02",
     assetName: "PC Dell Inspiron - Máy 02",
-    machineLabel: "02",
-    componentId: "COMP041",
-    componentName: "Intel Core i3-11100",
     reporterId: "user-9",
     reporterName: "Văn Đạt",
     reporterRole: "Kỹ thuật viên",
     assignedTechnicianId: "tech-005",
     assignedTechnicianName: "Lê Văn C",
-    roomId: "ROOM002",
     roomName: "H102",
+    machineLabel: "02",
     buildingName: "Tòa H",
     errorTypeId: "ET001",
     errorTypeName: "Máy không khởi động",
@@ -199,3 +183,136 @@ export const mockRepairRequests: RepairRequest[] = [
     unit: "Phòng Quản trị",
   },
 ];
+
+// Data for repair request components (bảng trung gian many-to-many) - Synchronized with database-sync.json
+export const mockRepairRequestComponents: RepairRequestComponent[] = [
+  {
+    repairRequestId: "req-001",
+    componentId: "CC005",
+    note: "Nguồn điện bị cháy, có mùi khét",
+  },
+  {
+    repairRequestId: "req-002",
+    componentId: "CC013",
+    note: "SSD có bad sectors nghiêm trọng",
+  },
+  {
+    repairRequestId: "req-002",
+    componentId: "CC012",
+    note: "RAM gây lỗi màn hình xanh",
+  },
+  {
+    repairRequestId: "req-003",
+    componentId: "CC024",
+    note: "Màn hình nhấp nháy, có đường kẻ",
+  },
+  {
+    repairRequestId: "req-004",
+    componentId: "COMP034",
+    note: "Màn hình không hiển thị, hỏng backlight",
+  },
+  {
+    repairRequestId: "req-005",
+    componentId: "COMP041",
+    note: "CPU quá nhiệt, cần thay tản nhiệt",
+  },
+];
+
+// Import other required data
+import { mockComputerComponents } from "./computerComponents";
+import { comprehensiveAssets } from "./assets";
+import { mockComputers } from "./computers";
+import { mockRooms } from "./rooms";
+import { users } from "../sampleData/database-sync.json";
+import { errorTypes } from "./errorTypes";
+
+// Helper function để join dữ liệu và tạo RepairRequestWithDetails
+export function getRepairRequestWithDetails(requestId: string): RepairRequestWithDetails | null {
+  const request = mockRepairRequests.find(r => r.id === requestId);
+  if (!request) return null;
+
+  // Lấy thông tin asset từ comprehensiveAssets 
+  const asset = comprehensiveAssets.find(a => a.id === request.computerAssetId);
+  
+  // Lấy thông tin computer
+  const computer = mockComputers.find(c => c.assetId === request.computerAssetId);
+  
+  // Lấy thông tin room
+  const room = computer ? mockRooms.find(r => r.id === computer.roomId) : null;
+  
+  // Lấy thông tin reporter
+  const reporter = users.find(u => u.id === request.reporterId);
+  
+  // Lấy thông tin technician
+  const technician = request.assignedTechnicianId ? 
+    users.find(u => u.id === request.assignedTechnicianId) : null;
+  
+  // Lấy thông tin error type
+  const errorType = request.errorTypeId ? 
+    errorTypes.find(e => e.id === request.errorTypeId) : null;
+
+  // Lấy danh sách linh kiện bị lỗi
+  const requestComponents = mockRepairRequestComponents.filter(
+    rc => rc.repairRequestId === requestId
+  );
+  
+  const faultyComponents = requestComponents.map(rc => {
+    const component = mockComputerComponents.find(c => c.id === rc.componentId);
+    return {
+      componentId: rc.componentId,
+      componentName: component?.name || "Unknown",
+      componentType: component?.componentType || "OTHER",
+      componentSpecs: component?.componentSpecs || "",
+      serialNumber: component?.serialNumber,
+      note: rc.note
+    };
+  });
+
+  const detailedRequest: RepairRequestWithDetails = {
+    ...request,
+    // Asset info
+    assetCode: asset?.ktCode || request.assetCode || "",
+    assetName: asset?.name || request.assetName || "",
+    assetSpecs: asset?.specs || "",
+    
+    // Computer info
+    machineLabel: computer?.machineLabel || request.machineLabel || "",
+    
+    // Room info
+    roomName: room?.roomNumber || request.roomName || "",
+    buildingName: room?.building || request.buildingName || "",
+    
+    // User info
+    reporterName: reporter?.fullName || request.reporterName || "",
+    reporterRole: request.reporterRole || "Unknown",
+    assignedTechnicianName: technician?.fullName || request.assignedTechnicianName,
+    
+    // Error type info
+    errorTypeName: errorType?.name || request.errorTypeName,
+    
+    // Unit info (from room)
+    unit: request.unit || "Unknown",
+    
+    // Faulty components details
+    faultyComponents
+  };
+
+  return detailedRequest;
+}
+
+// Helper function để lấy tất cả RepairRequests với details
+export function getAllRepairRequestsWithDetails(): RepairRequestWithDetails[] {
+  return mockRepairRequests.map(request => 
+    getRepairRequestWithDetails(request.id)
+  ).filter((req): req is RepairRequestWithDetails => req !== null);
+}
+
+// Helper function để lấy RepairRequests theo status với details
+export function getRepairRequestsWithDetailsByStatus(status: RepairStatus): RepairRequestWithDetails[] {
+  return getAllRepairRequestsWithDetails().filter(req => req.status === status);
+}
+
+// Helper function để lấy RepairRequests theo reporter với details
+export function getRepairRequestsWithDetailsByReporter(reporterId: string): RepairRequestWithDetails[] {
+  return getAllRepairRequestsWithDetails().filter(req => req.reporterId === reporterId);
+}

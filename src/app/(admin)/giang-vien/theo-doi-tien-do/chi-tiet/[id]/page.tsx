@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import { Breadcrumb } from "antd";
-import { mockRepairRequests } from "@/lib/mockData";
+import { getRepairRequestWithDetails } from "@/lib/mockData";
 import { RequestDetailContainer } from "@/components/lecturer/progress";
 
 export default function ChiTietTheoDaoTienDoPage() {
@@ -11,7 +11,7 @@ export default function ChiTietTheoDaoTienDoPage() {
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
   const request = useMemo(
-    () => mockRepairRequests.find((r) => r.id === id),
+    () => getRepairRequestWithDetails(id),
     [id]
   );
 

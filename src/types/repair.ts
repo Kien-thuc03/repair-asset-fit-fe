@@ -16,26 +16,31 @@ export interface Computer {
   notes?: string; // Ghi chú
 }
 
+// Interface cho bảng trung gian RepairRequestComponents (quan hệ nhiều-nhiều)
+export interface RepairRequestComponent {
+  repairRequestId: string; // FK to repairRequests.id
+  componentId: string; // FK to computerComponents.id
+  note?: string; // Ghi chú về linh kiện bị lỗi cụ thể
+}
+
 // Interface cho yêu cầu sửa chữa
 export interface RepairRequest {
   id: string;
   requestCode: string; // Mã yêu cầu tự tăng: YCSC-2025-0001
-  assetId: string;
-  assetCode: string; // Mã tài sản QR code được in từ bảng assets
-  assetName: string;
-  componentId?: string;
-  componentName?: string; // Tên linh kiện cụ thể bị lỗi
+  computerAssetId: string; // FK to assets.id (thay đổi từ assetId)
+  assetCode?: string; // Mã tài sản QR code được in từ bảng assets (computed)
+  assetName?: string; // Tên tài sản (computed)
+  componentName?: string; // Tên linh kiện cụ thể bị lỗi (computed for display)
   reporterId: string;
-  reporterName: string; // Tên người báo lỗi
-  reporterRole: string; // Vai trò: Giảng viên/KTV
+  reporterName?: string; // Tên người báo lỗi (computed)
+  reporterRole?: string; // Vai trò: Giảng viên/KTV (computed)
   assignedTechnicianId?: string;
-  assignedTechnicianName?: string;
-  roomId: string;
-  roomName: string; // Tên phòng máy
-  machineLabel: string; // Số máy từ bảng computers
-  buildingName: string; // Tên tòa nhà
+  assignedTechnicianName?: string; // Tên KTV (computed)
+  roomName?: string; // Tên phòng máy (computed từ computerAssetId)
+  machineLabel?: string; // Số máy từ bảng computers (computed)
+  buildingName?: string; // Tên tòa nhà (computed)
   errorTypeId?: string;
-  errorTypeName?: string; // Tên loại lỗi
+  errorTypeName?: string; // Tên loại lỗi (computed)
   description: string; // Mô tả chi tiết lỗi
   mediaUrls?: string[]; // Mảng URL ảnh/video minh họa
   status: RepairStatus;
@@ -43,7 +48,46 @@ export interface RepairRequest {
   createdAt: string; // Thời điểm báo lỗi
   acceptedAt?: string; // Thời điểm KTV tiếp nhận
   completedAt?: string; // Thời điểm hoàn tất
-  unit: string; // Đơn vị/Khoa
+  unit?: string; // Đơn vị/Khoa (computed)
+
+  // Optional: Để hiển thị danh sách linh kiện khi cần
+  components?: RepairRequestComponent[];
+}
+
+// Interface cho RepairRequest với thông tin chi tiết đầy đủ (computed từ join các bảng)
+export interface RepairRequestWithDetails extends RepairRequest {
+  // Thông tin từ bảng assets
+  assetCode: string;
+  assetName: string;
+  assetSpecs: string;
+  
+  // Thông tin từ bảng computers
+  machineLabel: string;
+  
+  // Thông tin từ bảng rooms (qua computers.roomId)
+  roomName: string;
+  buildingName: string;
+  
+  // Thông tin từ bảng users
+  reporterName: string;
+  reporterRole: string;
+  assignedTechnicianName?: string;
+  
+  // Thông tin từ bảng errorTypes
+  errorTypeName?: string;
+  
+  // Đơn vị từ bảng units (qua rooms.unitId)
+  unit: string;
+  
+  // Danh sách chi tiết linh kiện bị lỗi với thông tin đầy đủ
+  faultyComponents: Array<{
+    componentId: string;
+    componentName: string;
+    componentType: string;
+    componentSpecs: string;
+    serialNumber?: string;
+    note?: string; // Ghi chú từ RepairRequestComponents
+  }>;
 }
 
 // Interface cho danh sách đề xuất thay thế trong trang duyệt đề xuất
@@ -155,12 +199,12 @@ export const RoleInfo = {
 
 // Định nghĩa trạng thái báo cáo lỗi
 export enum RepairStatus {
-  CHỜ_TIẾP_NHẬN = "CHỜ_TIẾP_NHẬN",     // Giảng viên vừa tạo, chờ KTV tiếp nhận
-  ĐÃ_TIẾP_NHẬN = "ĐÃ_TIẾP_NHẬN",      // KTV xem yêu cầu sẽ tự dộng chuyển sang trạng thái này
-  ĐANG_XỬ_LÝ = "ĐANG_XỬ_LÝ",        // KTV đang trong quá trình kiểm tra, sửa chữa
-  CHỜ_THAY_THẾ = "CHỜ_THAY_THẾ",      // Lỗi phần cứng, đã tạo đề xuất thay thế và đang chờ duyệt/mua sắm
-  ĐÃ_HOÀN_THÀNH = "ĐÃ_HOÀN_THÀNH",     // Đã sửa chữa hoặc thay thế xong
-  ĐÃ_HỦY = "ĐÃ_HỦY",            // Yêu cầu bị hủy bởi giảng viên với yêu cầu là báo lỗi chưa được tiếp nhận
+  CHỜ_TIẾP_NHẬN = "CHỜ_TIẾP_NHẬN", // Giảng viên vừa tạo, chờ KTV tiếp nhận
+  ĐÃ_TIẾP_NHẬN = "ĐÃ_TIẾP_NHẬN", // KTV xem yêu cầu sẽ tự dộng chuyển sang trạng thái này
+  ĐANG_XỬ_LÝ = "ĐANG_XỬ_LÝ", // KTV đang trong quá trình kiểm tra, sửa chữa
+  CHỜ_THAY_THẾ = "CHỜ_THAY_THẾ", // Lỗi phần cứng, đã tạo đề xuất thay thế và đang chờ duyệt/mua sắm
+  ĐÃ_HOÀN_THÀNH = "ĐÃ_HOÀN_THÀNH", // Đã sửa chữa hoặc thay thế xong
+  ĐÃ_HỦY = "ĐÃ_HỦY", // Yêu cầu bị hủy bởi giảng viên với yêu cầu là báo lỗi chưa được tiếp nhận
 }
 
 // Type cho user
@@ -193,10 +237,10 @@ export interface ErrorReport {
 
 export enum ReplacementStatus {
   CHỜ_TỔ_TRƯỞNG_DUYỆT = "CHỜ_TỔ_TRƯỞNG_DUYỆT",
-  CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH",          // Chờ Phòng Quản trị cử người xuống xác minh thực tế
-  ĐÃ_DUYỆT = "ĐÃ_DUYỆT",              // Đã được duyệt, chờ mua sắm
+  CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH", // Chờ Phòng Quản trị cử người xuống xác minh thực tế
+  ĐÃ_DUYỆT = "ĐÃ_DUYỆT", // Đã được duyệt, chờ mua sắm
   ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI",
-  ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM",   // Đã có thiết bị mới
+  ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM", // Đã có thiết bị mới
 }
 
 // Type cho đề xuất thay thế
@@ -370,7 +414,7 @@ export interface SimpleAsset {
 
 // Asset Type enum - Synchronized with database-sync.json
 export enum AssetType {
-  TSCD = "TSCD", // Tài sản cố định 
+  TSCD = "TSCD", // Tài sản cố định
   CCDC = "CCDC", // Công cụ dụng cụ
 }
 
@@ -383,7 +427,7 @@ export enum AssetShape {
 // Asset Status enum - Synchronized with database-sync.json
 export enum AssetStatus {
   DANG_SU_DUNG = "đang_sử_dụng",
-  CHO_BAN_GIAO = "chờ_bàn_giao", 
+  CHO_BAN_GIAO = "chờ_bàn_giao",
   CHO_TIEP_NHAN = "chờ_tiếp_nhận",
   HU_HONG = "hư_hỏng",
   DA_MAT = "đã_mất", // Updated from MAT_TICH
