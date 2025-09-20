@@ -1,5 +1,5 @@
 "use client";
-import { AssetLookupContainer } from "@/components/lecturer/lookup";
+import { AssetLookupContainer } from "@/components/leadTechnician/lookup";
 
 export default function TraCuuThietBiPage() {
   return <AssetLookupContainer />;
