@@ -1,5 +1,5 @@
 "use client";
-import { AssetDetailContainer } from "@/components/lecturer/lookup";
+import { AssetDetailContainer } from "@/components/leadTechnician/lookup";
 
 export default function ChiTietThietBiPage() {
   return <AssetDetailContainer />;

@@ -3,17 +3,14 @@
 import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import { Breadcrumb } from "antd";
-import { mockRepairRequests } from "@/lib/mockData";
+import { getRepairRequestWithDetails } from "@/lib/mockData";
 import { RequestDetailContainer } from "@/components/lecturer/progress";
 
 export default function ChiTietTheoDaoTienDoPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
-  const request = useMemo(
-    () => mockRepairRequests.find((r) => r.id === id),
-    [id]
-  );
+  const request = useMemo(() => getRepairRequestWithDetails(id), [id]);
 
   return (
     <div className="space-y-6">

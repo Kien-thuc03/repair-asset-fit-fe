@@ -13,37 +13,38 @@ export interface AssetSoftware {
   notes: string;
 }
 
-// Software Proposal Types
+// Software Proposal Types - Synchronized with database-sync.json
 export interface SoftwareProposal {
   id: string;
   proposalCode: string;
-  assetId: string;
+  proposerId: string;
+  approverId: string | null;
   roomId: string;
-  proposerId: string; // user who creates the proposal
-  assignedTechnicianId?: string; // technician assigned to review
-  softwareName: string;
-  softwareVersion?: string;
-  publisher?: string;
-  description: string;
-  justification: string; // why this software is needed
-  targetUsers?: string; // who will use this software
-  educationalPurpose: string; // for what educational activities
+  reason: string;
   status: SoftwareProposalStatus;
-  reviewNotes?: string;
   createdAt: string;
-  reviewedAt?: string;
-  approvedAt?: string;
-  rejectedAt?: string;
+  updatedAt: string;
+}
+
+export interface SoftwareProposalItem {
+  id: string;
+  proposalId: string;
+  softwareName: string;
+  version: string;
+  publisher: string;
+  quantity: number;
+  licenseType: string;
+  newlyAcquiredSoftwareId: string | null;
 }
 
 export enum SoftwareProposalStatus {
-  CHỜ_XEM_XÉT = "CHỜ_XEM_XÉT", // Waiting for review
-  ĐANG_XEM_XÉT = "ĐANG_XEM_XÉT", // Under review by technician
-  ĐÃ_DUYỆT = "ĐÃ_DUYỆT", // Approved by technician
-  ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI", // Rejected by technician
-  ĐÃ_CÀI_ĐẶT = "ĐÃ_CÀI_ĐẶT", // Software installed
+  CHỜ_DUYỆT = "CHỜ_DUYỆT", // Waiting for approval
+  ĐÃ_DUYỆT = "ĐÃ_DUYỆT", // Approved
+  ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI", // Rejected
+  ĐÃ_TRANG_BỊ = "ĐÃ_TRANG_BỊ", // Software equipped
 }
 
+// Legacy form type - maintaining backward compatibility
 export interface SoftwareProposalForm {
   assetId: string;
   roomId: string;
@@ -54,4 +55,19 @@ export interface SoftwareProposalForm {
   justification: string;
   targetUsers: string;
   educationalPurpose: string;
+}
+
+export interface SoftwareItemForm {
+  softwareName: string;
+  version: string;
+  publisher: string;
+  quantity: number;
+  licenseType: string;
+}
+
+// New form type for multiple software items
+export interface NewSoftwareProposalForm {
+  roomId: string;
+  reason: string;
+  softwareItems: SoftwareItemForm[];
 }

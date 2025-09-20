@@ -3,16 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { XCircle, ArrowLeft } from "lucide-react";
-import { RepairRequest } from "@/types";
+import { RepairRequest, RepairRequestWithDetails } from "@/types";
 import DetailHeader from "./DetailHeader";
 import RequestInfo from "./RequestInfo";
 import ResolutionNotes from "./ResolutionNotes";
 import ProgressTimeline from "./ProgressTimeline";
 import AdditionalInfo from "./AdditionalInfo";
 import CancelRequestModal from "./CancelRequestModal";
+import FaultyComponentsDisplay from "./FaultyComponentsDisplay";
 
 interface RequestDetailContainerProps {
-  request: RepairRequest | undefined;
+  request: RepairRequest | RepairRequestWithDetails | undefined | null;
 }
 
 export default function RequestDetailContainer({
@@ -29,14 +30,16 @@ export default function RequestDetailContainer({
   const handleEditRequest = () => {
     if (!request) return;
 
+    // For backward compatibility with old RepairRequest structure
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const legacyRequest = request as any;
+
     // Prepare data for editing
     const editData = {
       requestId: request.id,
-      assetId: request.assetId,
+      computerAssetId: request.computerAssetId || legacyRequest.assetId,
       assetName: request.assetName,
-      roomId: request.roomId,
       roomName: request.roomName,
-      componentId: request.componentId,
       componentName: request.componentName,
       errorTypeId: request.errorTypeId || "",
       errorTypeName: request.errorTypeName || "",
@@ -99,6 +102,12 @@ export default function RequestDetailContainer({
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <RequestInfo request={request} formatDate={formatDate} />
+          {/* Display faulty components details if available */}
+          {"faultyComponents" in request && (
+            <FaultyComponentsDisplay
+              request={request as RepairRequestWithDetails}
+            />
+          )}
           <ResolutionNotes resolutionNotes={request.resolutionNotes} />
         </div>
 

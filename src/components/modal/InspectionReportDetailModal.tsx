@@ -1,7 +1,35 @@
 "use client";
 import React from "react";
 import { X, Signature, Send } from "lucide-react";
-import { InspectionReport } from "@/lib/mockData/inspectionReports";
+
+interface InspectionItem {
+  id: string;
+  assetCode: string;
+  assetName: string;
+  location: string;
+  condition: string;
+  proposedSolution: string;
+  quantity: number;
+  unit: string;
+  estimatedCost: number;
+}
+
+interface InspectionReport {
+  id: string;
+  reportNumber: string;
+  title: string;
+  relatedReportTitle: string;
+  inspectionDate: string;
+  department: string;
+  createdBy: string;
+  status: "pending" | "signed" | "sent_back";
+  leaderSignature?: string;
+  leaderSignedAt?: string;
+  inspectorSignature?: string;
+  inspectorName?: string;
+  items: InspectionItem[];
+  notes?: string;
+}
 
 interface InspectionReportDetailModalProps {
   show: boolean;
