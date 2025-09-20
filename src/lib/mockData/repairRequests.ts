@@ -213,12 +213,12 @@ export const mockRepairRequestComponents: RepairRequestComponent[] = [
   },
   {
     repairRequestId: "req-004",
-    componentId: "COMP034",
+    componentId: "CC031",
     note: "Màn hình không hiển thị, hỏng backlight",
   },
   {
     repairRequestId: "req-005",
-    componentId: "COMP041",
+    componentId: "CC032",
     note: "CPU quá nhiệt, cần thay tản nhiệt",
   },
 ];
