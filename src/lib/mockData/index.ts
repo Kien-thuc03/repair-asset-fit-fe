@@ -45,11 +45,19 @@ export {
 // Export software proposals
 export {
   mockSoftwareProposals,
-  getSoftwareProposalsByStatus,
-  getSoftwareProposalsByProposer,
-  getSoftwareProposalsByTechnician,
+  mockSoftwareProposalItems,
   getSoftwareProposalById,
+  getSoftwareProposalsByProposerId,
+  getSoftwareProposalsByRoomId,
+  getSoftwareProposalsByStatus,
+  getSoftwareProposalItemsByProposalId,
+  getSoftwareProposalWithItems,
+  getAllSoftwareProposalsWithItems,
   getSoftwareProposalStats,
+} from "./softwareProposals";
+export type {
+  SoftwareProposal,
+  SoftwareProposalItem,
 } from "./softwareProposals";
 
 // Export component types and other enums from the main types file for convenience
