@@ -60,25 +60,25 @@ export interface RepairRequestWithDetails extends RepairRequest {
   assetCode: string;
   assetName: string;
   assetSpecs: string;
-  
+
   // Thông tin từ bảng computers
   machineLabel: string;
-  
+
   // Thông tin từ bảng rooms (qua computers.roomId)
   roomName: string;
   buildingName: string;
-  
+
   // Thông tin từ bảng users
   reporterName: string;
   reporterRole: string;
   assignedTechnicianName?: string;
-  
+
   // Thông tin từ bảng errorTypes
   errorTypeName?: string;
-  
+
   // Đơn vị từ bảng units (qua rooms.unitId)
   unit: string;
-  
+
   // Danh sách chi tiết linh kiện bị lỗi với thông tin đầy đủ
   faultyComponents: Array<{
     componentId: string;

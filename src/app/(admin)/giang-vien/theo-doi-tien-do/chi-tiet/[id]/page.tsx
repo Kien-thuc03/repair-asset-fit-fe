@@ -10,10 +10,7 @@ export default function ChiTietTheoDaoTienDoPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
-  const request = useMemo(
-    () => getRepairRequestWithDetails(id),
-    [id]
-  );
+  const request = useMemo(() => getRepairRequestWithDetails(id), [id]);
 
   return (
     <div className="space-y-6">

@@ -2,7 +2,10 @@
 export { errorTypes, type ErrorType } from "./errorTypes";
 export { mockAssets, comprehensiveAssets } from "./assets";
 export { mockComputers, type Computer } from "./computers";
-export { mockComputerComponents, type ComputerComponent } from "./computerComponents";
+export {
+  mockComputerComponents,
+  type ComputerComponent,
+} from "./computerComponents";
 export { mockRooms, mockSimpleRooms, type SimpleRoom } from "./rooms";
 export { mockComponents } from "./components";
 export {

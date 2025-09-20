@@ -1,4 +1,9 @@
-import { RepairRequest, RepairStatus, RepairRequestComponent, RepairRequestWithDetails } from "@/types";
+import {
+  RepairRequest,
+  RepairStatus,
+  RepairRequestComponent,
+  RepairRequestWithDetails,
+} from "@/types";
 import {
   Clock,
   CheckCircle,
@@ -227,44 +232,56 @@ import { users } from "../sampleData/database-sync.json";
 import { errorTypes } from "./errorTypes";
 
 // Helper function để join dữ liệu và tạo RepairRequestWithDetails
-export function getRepairRequestWithDetails(requestId: string): RepairRequestWithDetails | null {
-  const request = mockRepairRequests.find(r => r.id === requestId);
+export function getRepairRequestWithDetails(
+  requestId: string
+): RepairRequestWithDetails | null {
+  const request = mockRepairRequests.find((r) => r.id === requestId);
   if (!request) return null;
 
-  // Lấy thông tin asset từ comprehensiveAssets 
-  const asset = comprehensiveAssets.find(a => a.id === request.computerAssetId);
-  
+  // Lấy thông tin asset từ comprehensiveAssets
+  const asset = comprehensiveAssets.find(
+    (a) => a.id === request.computerAssetId
+  );
+
   // Lấy thông tin computer
-  const computer = mockComputers.find(c => c.assetId === request.computerAssetId);
-  
+  const computer = mockComputers.find(
+    (c) => c.assetId === request.computerAssetId
+  );
+
   // Lấy thông tin room
-  const room = computer ? mockRooms.find(r => r.id === computer.roomId) : null;
-  
+  const room = computer
+    ? mockRooms.find((r) => r.id === computer.roomId)
+    : null;
+
   // Lấy thông tin reporter
-  const reporter = users.find(u => u.id === request.reporterId);
-  
+  const reporter = users.find((u) => u.id === request.reporterId);
+
   // Lấy thông tin technician
-  const technician = request.assignedTechnicianId ? 
-    users.find(u => u.id === request.assignedTechnicianId) : null;
-  
+  const technician = request.assignedTechnicianId
+    ? users.find((u) => u.id === request.assignedTechnicianId)
+    : null;
+
   // Lấy thông tin error type
-  const errorType = request.errorTypeId ? 
-    errorTypes.find(e => e.id === request.errorTypeId) : null;
+  const errorType = request.errorTypeId
+    ? errorTypes.find((e) => e.id === request.errorTypeId)
+    : null;
 
   // Lấy danh sách linh kiện bị lỗi
   const requestComponents = mockRepairRequestComponents.filter(
-    rc => rc.repairRequestId === requestId
+    (rc) => rc.repairRequestId === requestId
   );
-  
-  const faultyComponents = requestComponents.map(rc => {
-    const component = mockComputerComponents.find(c => c.id === rc.componentId);
+
+  const faultyComponents = requestComponents.map((rc) => {
+    const component = mockComputerComponents.find(
+      (c) => c.id === rc.componentId
+    );
     return {
       componentId: rc.componentId,
       componentName: component?.name || "Unknown",
       componentType: component?.componentType || "OTHER",
       componentSpecs: component?.componentSpecs || "",
       serialNumber: component?.serialNumber,
-      note: rc.note
+      note: rc.note,
     };
   });
 
@@ -274,27 +291,28 @@ export function getRepairRequestWithDetails(requestId: string): RepairRequestWit
     assetCode: asset?.ktCode || request.assetCode || "",
     assetName: asset?.name || request.assetName || "",
     assetSpecs: asset?.specs || "",
-    
+
     // Computer info
     machineLabel: computer?.machineLabel || request.machineLabel || "",
-    
+
     // Room info
     roomName: room?.roomNumber || request.roomName || "",
     buildingName: room?.building || request.buildingName || "",
-    
+
     // User info
     reporterName: reporter?.fullName || request.reporterName || "",
     reporterRole: request.reporterRole || "Unknown",
-    assignedTechnicianName: technician?.fullName || request.assignedTechnicianName,
-    
+    assignedTechnicianName:
+      technician?.fullName || request.assignedTechnicianName,
+
     // Error type info
     errorTypeName: errorType?.name || request.errorTypeName,
-    
+
     // Unit info (from room)
     unit: request.unit || "Unknown",
-    
+
     // Faulty components details
-    faultyComponents
+    faultyComponents,
   };
 
   return detailedRequest;
@@ -302,17 +320,25 @@ export function getRepairRequestWithDetails(requestId: string): RepairRequestWit
 
 // Helper function để lấy tất cả RepairRequests với details
 export function getAllRepairRequestsWithDetails(): RepairRequestWithDetails[] {
-  return mockRepairRequests.map(request => 
-    getRepairRequestWithDetails(request.id)
-  ).filter((req): req is RepairRequestWithDetails => req !== null);
+  return mockRepairRequests
+    .map((request) => getRepairRequestWithDetails(request.id))
+    .filter((req): req is RepairRequestWithDetails => req !== null);
 }
 
 // Helper function để lấy RepairRequests theo status với details
-export function getRepairRequestsWithDetailsByStatus(status: RepairStatus): RepairRequestWithDetails[] {
-  return getAllRepairRequestsWithDetails().filter(req => req.status === status);
+export function getRepairRequestsWithDetailsByStatus(
+  status: RepairStatus
+): RepairRequestWithDetails[] {
+  return getAllRepairRequestsWithDetails().filter(
+    (req) => req.status === status
+  );
 }
 
 // Helper function để lấy RepairRequests theo reporter với details
-export function getRepairRequestsWithDetailsByReporter(reporterId: string): RepairRequestWithDetails[] {
-  return getAllRepairRequestsWithDetails().filter(req => req.reporterId === reporterId);
+export function getRepairRequestsWithDetailsByReporter(
+  reporterId: string
+): RepairRequestWithDetails[] {
+  return getAllRepairRequestsWithDetails().filter(
+    (req) => req.reporterId === reporterId
+  );
 }

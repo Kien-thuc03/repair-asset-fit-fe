@@ -26,7 +26,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "CPU001",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "Original CPU, working perfectly"
+    notes: "Original CPU, working perfectly",
   },
   {
     id: "CC002",
@@ -37,7 +37,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "RAM001",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "High-performance RAM module"
+    notes: "High-performance RAM module",
   },
   {
     id: "CC003",
@@ -48,7 +48,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "SSD001",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "Primary storage drive"
+    notes: "Primary storage drive",
   },
   {
     id: "CC004",
@@ -58,7 +58,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     componentSpecs: "Intel B460 chipset, Micro ATX",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "OEM motherboard"
+    notes: "OEM motherboard",
   },
   {
     id: "CC005",
@@ -68,7 +68,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     componentSpecs: "200W 80+ Bronze certified",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "OEM power supply unit"
+    notes: "OEM power supply unit",
   },
   {
     id: "CC006",
@@ -79,7 +79,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "MON001",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "Primary display monitor"
+    notes: "Primary display monitor",
   },
   {
     id: "CC007",
@@ -90,7 +90,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "KB001",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "Standard Dell keyboard"
+    notes: "Standard Dell keyboard",
   },
   {
     id: "CC008",
@@ -101,7 +101,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "MS001",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "Standard optical mouse"
+    notes: "Standard optical mouse",
   },
 
   // ASSET002 Components
@@ -114,7 +114,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "CPU002",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "CPU running normally"
+    notes: "CPU running normally",
   },
   {
     id: "CC012",
@@ -125,7 +125,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "RAM002",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "Memory working properly"
+    notes: "Memory working properly",
   },
   {
     id: "CC013",
@@ -136,7 +136,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "SSD002",
     status: "FAULTY" as ComponentStatus,
     installedAt: "2023-01-15T08:00:00Z",
-    notes: "SSD showing bad sectors, needs replacement"
+    notes: "SSD showing bad sectors, needs replacement",
   },
 
   // ASSET003 Components
@@ -149,7 +149,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "CPU003",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-03-20T09:15:00Z",
-    notes: "Entry-level CPU, adequate performance"
+    notes: "Entry-level CPU, adequate performance",
   },
   {
     id: "CC022",
@@ -160,7 +160,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "RAM003",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-03-20T09:15:00Z",
-    notes: "Standard capacity RAM"
+    notes: "Standard capacity RAM",
   },
   {
     id: "CC023",
@@ -171,7 +171,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "SSD003",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-03-20T09:15:00Z",
-    notes: "Standard SATA SSD, good performance"
+    notes: "Standard SATA SSD, good performance",
   },
   {
     id: "CC024",
@@ -182,7 +182,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "MON003",
     status: "FAULTY" as ComponentStatus,
     installedAt: "2023-03-20T09:15:00Z",
-    notes: "Monitor flickering, possible backlight issue"
+    notes: "Monitor flickering, possible backlight issue",
   },
 
   // ASSET004 Components
@@ -195,7 +195,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "CPU004",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-02-10T08:30:00Z",
-    notes: "11th gen Intel processor"
+    notes: "11th gen Intel processor",
   },
 
   // ASSET005 Components
@@ -208,7 +208,7 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "CPU005",
     status: "FAULTY" as ComponentStatus,
     installedAt: "2023-04-05T07:45:00Z",
-    notes: "CPU undergoing thermal paste replacement"
+    notes: "CPU undergoing thermal paste replacement",
   },
 
   // ASSET006 Components
@@ -221,6 +221,6 @@ export const mockComputerComponents: ComputerComponent[] = [
     serialNumber: "CPU006",
     status: "INSTALLED" as ComponentStatus,
     installedAt: "2023-05-12T09:00:00Z",
-    notes: "AMD processor with integrated graphics"
+    notes: "AMD processor with integrated graphics",
   },
 ];

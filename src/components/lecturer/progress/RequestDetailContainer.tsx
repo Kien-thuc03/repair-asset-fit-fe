@@ -33,7 +33,7 @@ export default function RequestDetailContainer({
     // For backward compatibility with old RepairRequest structure
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const legacyRequest = request as any;
-    
+
     // Prepare data for editing
     const editData = {
       requestId: request.id,
@@ -103,8 +103,10 @@ export default function RequestDetailContainer({
         <div className="lg:col-span-2 space-y-6">
           <RequestInfo request={request} formatDate={formatDate} />
           {/* Display faulty components details if available */}
-          {'faultyComponents' in request && (
-            <FaultyComponentsDisplay request={request as RepairRequestWithDetails} />
+          {"faultyComponents" in request && (
+            <FaultyComponentsDisplay
+              request={request as RepairRequestWithDetails}
+            />
           )}
           <ResolutionNotes resolutionNotes={request.resolutionNotes} />
         </div>
