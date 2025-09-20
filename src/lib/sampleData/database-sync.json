@@ -653,6 +653,98 @@
       "createdAt": "2023-07-15T09:30:00Z",
       "updatedAt": "2023-07-15T09:30:00Z",
       "deletedAt": null
+    },
+    {
+      "id": "ASSET009",
+      "ktCode": "19-0210/01",
+      "fixedCode": "2023.009",
+      "name": "PC ASUS VivoBook",
+      "specs": "AMD Ryzen 7 5700U, 16GB RAM, 1TB SSD, Windows 11 Pro",
+      "entrydate": "2023-08-10",
+      "currentRoomId": "ROOM003",
+      "unit": "chiếc",
+      "quantity": 1,
+      "origin": "ASUS Vietnam",
+      "purchasePackage": 8,
+      "type": "TSCD",
+      "isHandover": true,
+      "isLocked": true,
+      "categoryId": "4",
+      "shape": "COMPUTER",
+      "status": "đang_sử_dụng",
+      "createdBy": "user-2",
+      "createdAt": "2023-08-10T10:00:00Z",
+      "updatedAt": "2024-05-15T14:20:00Z",
+      "deletedAt": null
+    },
+    {
+      "id": "ASSET010",
+      "ktCode": "19-0211/01",
+      "fixedCode": "2023.010",
+      "name": "PC MSI Modern",
+      "specs": "Intel Core i7-12700H, 32GB RAM, 1TB NVMe SSD, Windows 11 Pro",
+      "entrydate": "2023-09-05",
+      "currentRoomId": "ROOM004",
+      "unit": "chiếc",
+      "quantity": 1,
+      "origin": "MSI Vietnam",
+      "purchasePackage": 9,
+      "type": "TSCD",
+      "isHandover": true,
+      "isLocked": true,
+      "categoryId": "4",
+      "shape": "COMPUTER",
+      "status": "đang_sử_dụng",
+      "createdBy": "user-3",
+      "createdAt": "2023-09-05T11:15:00Z",
+      "updatedAt": "2024-07-20T16:30:00Z",
+      "deletedAt": null
+    },
+    {
+      "id": "ASSET011",
+      "ktCode": "19-0303/01",
+      "fixedCode": "2023.011",
+      "name": "Máy in HP LaserJet Pro",
+      "specs": "Laser printer, A4/A3, 25ppm, Network, Duplex",
+      "entrydate": "2023-10-12",
+      "currentRoomId": "ROOM005",
+      "unit": "chiếc",
+      "quantity": 1,
+      "origin": "HP Vietnam",
+      "purchasePackage": 10,
+      "type": "TSCD",
+      "isHandover": true,
+      "isLocked": true,
+      "categoryId": "5",
+      "shape": "GENERIC",
+      "status": "đang_sử_dụng",
+      "createdBy": "user-1",
+      "createdAt": "2023-10-12T09:00:00Z",
+      "updatedAt": "2024-08-15T13:45:00Z",
+      "deletedAt": null
+    },
+    {
+      "id": "ASSET012",
+      "ktCode": "19-0212/01",
+      "fixedCode": "2023.012",
+      "name": "Projector Epson EB-X06",
+      "specs": "3LCD, 3600 lumens, XGA 1024x768, HDMI/VGA",
+      "entrydate": "2023-11-20",
+      "currentRoomId": "ROOM006",
+      "unit": "chiếc",
+      "quantity": 1,
+      "origin": "Epson Vietnam",
+      "purchasePackage": 11,
+      "type": "TSCD",
+      "isHandover": true,
+      "isLocked": true,
+      "categoryId": "3",
+      "shape": "GENERIC",
+      "status": "đang_sử_dụng",
+      "createdBy": "user-2",
+      "createdAt": "2023-11-20T08:30:00Z",
+      "updatedAt": "2024-09-10T10:15:00Z",
+      "deletedAt": null
     }
   ],
 
@@ -698,6 +790,20 @@
       "roomId": "ROOM002",
       "machineLabel": "03",
       "notes": "Máy thực hành sinh viên"
+    },
+    {
+      "id": "COMP007",
+      "assetId": "ASSET009",
+      "roomId": "ROOM003",
+      "machineLabel": "01",
+      "notes": "Máy giảng viên"
+    },
+    {
+      "id": "COMP008",
+      "assetId": "ASSET010",
+      "roomId": "ROOM004",
+      "machineLabel": "01",
+      "notes": "Máy phòng lab cao cấp"
     }
   ],
 
@@ -917,6 +1023,126 @@
       "installedAt": "2023-05-12T09:00:00Z",
       "removedAt": null,
       "notes": "AMD processor with integrated graphics"
+    },
+    {
+      "id": "CC041",
+      "computerAssetId": "ASSET009",
+      "componentType": "CPU",
+      "name": "AMD Ryzen 7 5700U",
+      "componentSpecs": "8 cores, 16 threads, 1.8GHz base, 4.3GHz boost",
+      "serialNumber": "CPU007",
+      "status": "INSTALLED",
+      "installedAt": "2023-08-10T10:00:00Z",
+      "removedAt": null,
+      "notes": "High-performance mobile processor"
+    },
+    {
+      "id": "CC042",
+      "computerAssetId": "ASSET009",
+      "componentType": "RAM",
+      "name": "Corsair Vengeance LPX DDR4",
+      "componentSpecs": "16GB 3200MHz DDR4",
+      "serialNumber": "RAM007",
+      "status": "INSTALLED",
+      "installedAt": "2023-08-10T10:00:00Z",
+      "removedAt": null,
+      "notes": "High-speed gaming RAM"
+    },
+    {
+      "id": "CC043",
+      "computerAssetId": "ASSET009",
+      "componentType": "STORAGE",
+      "name": "WD Black SN850 NVMe",
+      "componentSpecs": "1TB NVMe M.2 PCIe 4.0",
+      "serialNumber": "SSD007",
+      "status": "INSTALLED",
+      "installedAt": "2023-08-10T10:00:00Z",
+      "removedAt": null,
+      "notes": "High-performance gaming SSD"
+    },
+    {
+      "id": "CC044",
+      "computerAssetId": "ASSET009",
+      "componentType": "COOLING",
+      "name": "ASUS ROG Strix LC 240",
+      "componentSpecs": "240mm AIO liquid cooler",
+      "serialNumber": "COOL001",
+      "status": "INSTALLED",
+      "installedAt": "2023-08-10T10:00:00Z",
+      "removedAt": null,
+      "notes": "Liquid cooling system for high performance"
+    },
+    {
+      "id": "CC051",
+      "computerAssetId": "ASSET010",
+      "componentType": "CPU",
+      "name": "Intel Core i7-12700H",
+      "componentSpecs": "12 cores, 20 threads, 2.3GHz base, 4.7GHz boost",
+      "serialNumber": "CPU008",
+      "status": "INSTALLED",
+      "installedAt": "2023-09-05T11:15:00Z",
+      "removedAt": null,
+      "notes": "Latest generation Intel processor"
+    },
+    {
+      "id": "CC052",
+      "computerAssetId": "ASSET010",
+      "componentType": "RAM",
+      "name": "G.Skill Trident Z RGB DDR4",
+      "componentSpecs": "32GB 3600MHz DDR4 (2x16GB)",
+      "serialNumber": "RAM008",
+      "status": "INSTALLED",
+      "installedAt": "2023-09-05T11:15:00Z",
+      "removedAt": null,
+      "notes": "High-capacity RGB RAM kit"
+    },
+    {
+      "id": "CC053",
+      "computerAssetId": "ASSET010",
+      "componentType": "STORAGE",
+      "name": "Samsung 980 PRO NVMe",
+      "componentSpecs": "1TB NVMe M.2 PCIe 4.0",
+      "serialNumber": "SSD008",
+      "status": "INSTALLED",
+      "installedAt": "2023-09-05T11:15:00Z",
+      "removedAt": null,
+      "notes": "Professional grade NVMe SSD"
+    },
+    {
+      "id": "CC054",
+      "computerAssetId": "ASSET010",
+      "componentType": "GPU",
+      "name": "NVIDIA RTX 4060 Ti",
+      "componentSpecs": "16GB GDDR6, 4352 CUDA cores",
+      "serialNumber": "GPU001",
+      "status": "INSTALLED",
+      "installedAt": "2023-09-05T11:15:00Z",
+      "removedAt": null,
+      "notes": "High-end graphics card for rendering"
+    },
+    {
+      "id": "CC055",
+      "computerAssetId": "ASSET010",
+      "componentType": "NETWORK_CARD",
+      "name": "Intel Wi-Fi 6E AX211",
+      "componentSpecs": "Wi-Fi 6E, Bluetooth 5.3",
+      "serialNumber": "NET001",
+      "status": "INSTALLED",
+      "installedAt": "2023-09-05T11:15:00Z",
+      "removedAt": null,
+      "notes": "Latest wireless networking card"
+    },
+    {
+      "id": "CC056",
+      "computerAssetId": "ASSET010",
+      "componentType": "SOUND_CARD",
+      "name": "Creative Sound Blaster AE-9",
+      "componentSpecs": "32-bit/384kHz, PCIe interface",
+      "serialNumber": "SOUND001",
+      "status": "INSTALLED",
+      "installedAt": "2023-09-05T11:15:00Z",
+      "removedAt": null,
+      "notes": "Professional audio card for multimedia"
     }
   ],
 
@@ -1033,6 +1259,51 @@
       "createdAt": "2024-01-12T09:00:00Z",
       "acceptedAt": "2024-01-12T10:00:00Z",
       "completedAt": "2024-01-13T16:00:00Z"
+    },
+    {
+      "id": "req-004",
+      "requestCode": "YCSC-2025-0004",
+      "computerAssetId": "ASSET004",
+      "reporterId": "user-5",
+      "assignedTechnicianId": "user-8",
+      "errorTypeId": "ET006",
+      "description": "Máy không kết nối được mạng, không thể truy cập internet",
+      "mediaUrls": [],
+      "status": "ĐÃ_TIẾP_NHẬN",
+      "resolutionNotes": null,
+      "createdAt": "2024-01-16T10:30:00Z",
+      "acceptedAt": "2024-01-16T11:00:00Z",
+      "completedAt": null
+    },
+    {
+      "id": "req-005",
+      "requestCode": "YCSC-2025-0005",
+      "computerAssetId": "ASSET005",
+      "reporterId": "user-5",
+      "assignedTechnicianId": "user-9",
+      "errorTypeId": "ET008",
+      "description": "Chuột máy tính bị mất, cần thay thế chuột mới",
+      "mediaUrls": [],
+      "status": "CHỜ_THAY_THẾ",
+      "resolutionNotes": "Đã xác nhận chuột bị mất, đang chờ chuột mới",
+      "createdAt": "2024-01-17T14:20:00Z",
+      "acceptedAt": "2024-01-17T15:00:00Z",
+      "completedAt": null
+    },
+    {
+      "id": "req-006",
+      "requestCode": "YCSC-2025-0006",
+      "computerAssetId": "ASSET009",
+      "reporterId": "user-5",
+      "assignedTechnicianId": "user-4",
+      "errorTypeId": "ET004",
+      "description": "Chuột không hoạt động được, con trỏ không di chuyển",
+      "mediaUrls": [],
+      "status": "CHỜ_TIẾP_NHẬN",
+      "resolutionNotes": null,
+      "createdAt": "2024-01-18T09:15:00Z",
+      "acceptedAt": null,
+      "completedAt": null
     }
   ],
 
@@ -1056,6 +1327,21 @@
       "repairRequestId": "req-003",
       "componentId": "CC024",
       "note": "Màn hình nhấp nháy, có đường kẻ"
+    },
+    {
+      "repairRequestId": "req-004",
+      "componentId": "CC031",
+      "note": "Card mạng không hoạt động"
+    },
+    {
+      "repairRequestId": "req-005",
+      "componentId": "CC032",
+      "note": "Chuột bị mất"
+    },
+    {
+      "repairRequestId": "req-006",
+      "componentId": "CC044",
+      "note": "Chuột không phản hồi"
     }
   ],
 
@@ -1410,6 +1696,66 @@
       "toStatus": "ĐÃ_HOÀN_THÀNH",
       "comment": "Đã thay màn hình mới thành công",
       "createdAt": "2024-01-13T16:00:00Z"
+    },
+    {
+      "id": "LOG008",
+      "repairRequestId": "req-004",
+      "actorId": "user-5",
+      "action": "Tạo yêu cầu",
+      "fromStatus": null,
+      "toStatus": "CHỜ_TIẾP_NHẬN",
+      "comment": "Báo cáo lỗi mạng",
+      "createdAt": "2024-01-16T10:30:00Z"
+    },
+    {
+      "id": "LOG009",
+      "repairRequestId": "req-004",
+      "actorId": "user-8",
+      "action": "Tiếp nhận xử lý",
+      "fromStatus": "CHỜ_TIẾP_NHẬN",
+      "toStatus": "ĐÃ_TIẾP_NHẬN",
+      "comment": "Đã tiếp nhận yêu cầu kiểm tra mạng",
+      "createdAt": "2024-01-16T11:00:00Z"
+    },
+    {
+      "id": "LOG010",
+      "repairRequestId": "req-005",
+      "actorId": "user-5",
+      "action": "Tạo yêu cầu",
+      "fromStatus": null,
+      "toStatus": "CHỜ_TIẾP_NHẬN",
+      "comment": "Báo cáo chuột bị mất",
+      "createdAt": "2024-01-17T14:20:00Z"
+    },
+    {
+      "id": "LOG011",
+      "repairRequestId": "req-005",
+      "actorId": "user-9",
+      "action": "Tiếp nhận xử lý",
+      "fromStatus": "CHỜ_TIẾP_NHẬN",
+      "toStatus": "ĐÃ_TIẾP_NHẬN",
+      "comment": "Đã tiếp nhận, xác nhận chuột bị mất",
+      "createdAt": "2024-01-17T15:00:00Z"
+    },
+    {
+      "id": "LOG012",
+      "repairRequestId": "req-005",
+      "actorId": "user-9",
+      "action": "Chờ thay thế",
+      "fromStatus": "ĐÃ_TIẾP_NHẬN",
+      "toStatus": "CHỜ_THAY_THẾ",
+      "comment": "Đang chờ chuột mới để thay thế",
+      "createdAt": "2024-01-17T15:30:00Z"
+    },
+    {
+      "id": "LOG013",
+      "repairRequestId": "req-006",
+      "actorId": "user-5",
+      "action": "Tạo yêu cầu",
+      "fromStatus": null,
+      "toStatus": "CHỜ_TIẾP_NHẬN",
+      "comment": "Báo cáo lỗi chuột không hoạt động",
+      "createdAt": "2024-01-18T09:15:00Z"
     }
   ],
 
