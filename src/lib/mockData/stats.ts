@@ -35,7 +35,7 @@ export const lecturerStats: StatItem[] = [
 export const teamLeaderStats: StatItem[] = [
   {
     name: "Kỹ thuật viên",
-    value: "5",
+    value: "2",
     changeType: "neutral",
     icon: Users,
     color: "bg-blue-500",
