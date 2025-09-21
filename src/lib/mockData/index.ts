@@ -9,6 +9,12 @@ export {
 export { mockRooms, mockSimpleRooms, type SimpleRoom } from "./rooms";
 export { mockComponents } from "./components";
 export {
+  technicianAssignments,
+  getTechnicianForArea,
+  getAssignedAreas,
+  getAssignedFloorsForBuilding,
+} from "./technicianAssignments";
+export {
   mockRepairRequests,
   mockRepairRequestComponents,
   repairRequestStatusConfig,
@@ -75,4 +81,4 @@ export * from "./roles_permissions";
 export * from "./units";
 export * from "./users";
 export * from "./users_roles";
-export * from './repairHistory'
+export * from "./repairHistory";

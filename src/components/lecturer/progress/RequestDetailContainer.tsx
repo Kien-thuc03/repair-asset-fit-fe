@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { XCircle, ArrowLeft } from "lucide-react";
-import { RepairRequest, RepairRequestWithDetails } from "@/types";
+import { RepairRequest, RepairRequestWithDetails, UserRole } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 import DetailHeader from "./DetailHeader";
 import RequestInfo from "./RequestInfo";
 import ResolutionNotes from "./ResolutionNotes";
@@ -14,16 +15,30 @@ import FaultyComponentsDisplay from "./FaultyComponentsDisplay";
 
 interface RequestDetailContainerProps {
   request: RepairRequest | RepairRequestWithDetails | undefined | null;
+  backUrl?: string;
 }
 
 export default function RequestDetailContainer({
   request,
+  backUrl = "/giang-vien/theo-doi-tien-do",
 }: RequestDetailContainerProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString("vi-VN");
+  };
+
+  // Check if current user has permission to edit/cancel requests
+  const canEditRequest = () => {
+    if (!user) return false;
+
+    // Only GIANG_VIEN (lecturer) can edit their own requests
+    // TO_TRUONG_KY_THUAT (lead technician) can only view
+    return (
+      user.activeRole === UserRole.GIANG_VIEN && request?.reporterId === user.id
+    );
   };
 
   // Handle edit request
@@ -66,7 +81,7 @@ export default function RequestDetailContainer({
     console.log("Cancel request:", request?.id);
     setShowCancelModal(false);
     // After successful cancellation, redirect back
-    router.push("/giang-vien/theo-doi-tien-do");
+    router.push(backUrl);
   };
 
   // If request not found, show error state
@@ -81,7 +96,7 @@ export default function RequestDetailContainer({
           Yêu cầu với ID này không tồn tại hoặc đã bị xóa.
         </p>
         <button
-          onClick={() => router.push("/giang-vien/theo-doi-tien-do")}
+          onClick={() => router.push(backUrl)}
           className="mt-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Quay lại
@@ -96,6 +111,8 @@ export default function RequestDetailContainer({
         request={request}
         onEditRequest={handleEditRequest}
         onCancelRequest={handleCancelRequest}
+        showActionButtons={canEditRequest()}
+        backUrl={backUrl}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

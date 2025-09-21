@@ -56,3 +56,10 @@ export interface Technician {
   assignedAreas: string[];
   currentTask?: string;
 }
+
+// Interface cho phân công khu vực cho kỹ thuật viên
+export interface TechnicianAssignment {
+  technicianId: string; // ID của Kỹ thuật viên
+  building: string; // Tên tòa nhà được phân công
+  floor: string; // Tên tầng được phân công
+}
