@@ -225,19 +225,6 @@ export default function DuyetDeXuatPage() {
 
       {/* Table and Mobile View Container */}
       <div className="bg-white shadow rounded-lg overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] flex flex-col">
-        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-medium text-gray-900">
-              Danh sách đề xuất ({filteredRequests.length})
-            </h2>
-            {selectedItems.length > 0 && (
-              <div className="text-xs sm:text-sm text-blue-600 font-medium">
-                Đã chọn: {selectedItems.length} mục
-              </div>
-            )}
-          </div>
-        </div>
-
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           {/* Mobile Card View */}
           <ApprovalMobileCards
