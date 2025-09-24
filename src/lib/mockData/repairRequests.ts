@@ -187,6 +187,34 @@ export const mockRepairRequests: RepairRequest[] = [
     completedAt: "",
     unit: "Phòng Quản trị",
   },
+  {
+    id: "req-006",
+    requestCode: "YCSC-2025-0006",
+    computerAssetId: "ASSET006",
+    assetCode: "PC-A102-03",
+    assetName: "PC AMD Ryzen",
+    machineLabel: "03",
+    reporterId: "user-6",
+    reporterName: "Giảng viên kiêm QTV",
+    reporterRole: "Quản trị viên Khoa",
+    assignedTechnicianId: "user-4",
+    assignedTechnicianName: "Kỹ thuật viên",
+    roomName: "H102",
+    buildingName: "Tòa H",
+    errorTypeId: "ET006",
+    errorTypeName: "Máy không kết nối mạng",
+    description:
+      "Không thể kết nối internet, card mạng không được nhận dạng, cần kiểm tra driver và cáp mạng",
+    mediaUrls: [
+      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop",
+    ],
+    status: RepairStatus.CHỜ_TIẾP_NHẬN,
+    resolutionNotes: "",
+    createdAt: "2024-01-17T09:15:00",
+    acceptedAt: "",
+    completedAt: "",
+    unit: "Khoa Công nghệ Thông tin",
+  },
 ];
 
 // Data for repair request components (bảng trung gian many-to-many) - Synchronized with database-sync.json
@@ -220,6 +248,11 @@ export const mockRepairRequestComponents: RepairRequestComponent[] = [
     repairRequestId: "req-005",
     componentId: "CC032",
     note: "CPU quá nhiệt, cần thay tản nhiệt và keo tản nhiệt",
+  },
+  {
+    repairRequestId: "req-006",
+    componentId: "CC051",
+    note: "Card mạng không được nhận dạng, có thể lỗi driver hoặc hardware",
   },
 ];
 

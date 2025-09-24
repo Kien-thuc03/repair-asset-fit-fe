@@ -234,4 +234,15 @@ export const mockComputerComponents: ComputerComponent[] = [
     installedAt: "2023-05-12T09:00:00Z",
     notes: "AMD processor with integrated graphics",
   },
+  {
+    id: "CC051",
+    computerAssetId: "ASSET006",
+    componentType: "OTHER" as ComponentType,
+    name: "Realtek PCIe GbE Family Controller",
+    componentSpecs: "Gigabit Ethernet Network Card",
+    serialNumber: "NIC006",
+    status: "FAULTY" as ComponentStatus,
+    installedAt: "2023-05-12T09:00:00Z",
+    notes: "Network card not recognized by system, driver issue",
+  },
 ];
