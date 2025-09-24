@@ -2,46 +2,66 @@
 
 import { Card, Tag, Timeline, Empty } from 'antd'
 import { Clock, User, Wrench, CheckCircle, AlertCircle } from 'lucide-react'
-import { mockRepairHistory } from '@/lib/mockData/repairHistory'
+import { repairLogs } from '@/lib/mockData'
 
 interface Props {
 	assetId: string
 }
 
 export default function HistoryCard({ assetId }: Props) {
-	const items = mockRepairHistory.filter((h) => h.assetId === assetId).slice(0, 8)
+	// Get repair logs for this asset, sorted by date (newest first)
+	const items = repairLogs
+		.filter(log => log.computerAssetId === assetId)
+		.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+		.slice(0, 10)
 
-	const getStatusColor = (status: string) => {
-		switch (status.toLowerCase()) {
-			case 'hoàn thành':
-			case 'đã hoàn thành':
+	const getStatusColor = (toStatus: string) => {
+		switch (toStatus) {
+			case 'ĐÃ_HOÀN_THÀNH':
 				return 'green'
-			case 'đang xử lý':
+			case 'ĐANG_XỬ_LÝ':
 				return 'blue'
-			case 'chờ tiếp nhận':
+			case 'CHỜ_TIẾP_NHẬN':
 				return 'orange'
-			case 'hủy bỏ':
-			case 'đã hủy':
+			case 'ĐÃ_TIẾP_NHẬN':
+				return 'cyan'
+			case 'CHỜ_THAY_THẾ':
+				return 'purple'
+			case 'ĐÃ_HỦY':
 				return 'red'
 			default:
 				return 'default'
 		}
 	}
 
-	const getStatusIcon = (status: string) => {
-		switch (status.toLowerCase()) {
-			case 'hoàn thành':
-			case 'đã hoàn thành':
+	const getStatusIcon = (toStatus: string) => {
+		switch (toStatus) {
+			case 'ĐÃ_HOÀN_THÀNH':
 				return <CheckCircle className="w-4 h-4" />
-			case 'đang xử lý':
+			case 'ĐANG_XỬ_LÝ':
 				return <Wrench className="w-4 h-4" />
-			case 'chờ tiếp nhận':
+			case 'CHỜ_TIẾP_NHẬN':
 				return <Clock className="w-4 h-4" />
-			case 'hủy bỏ':
-			case 'đã hủy':
+			case 'ĐÃ_TIẾP_NHẬN':
+				return <CheckCircle className="w-4 h-4" />
+			case 'CHỜ_THAY_THẾ':
+				return <AlertCircle className="w-4 h-4" />
+			case 'ĐÃ_HỦY':
 				return <AlertCircle className="w-4 h-4" />
 			default:
 				return <Clock className="w-4 h-4" />
+		}
+	}
+
+	const getDisplayStatus = (toStatus: string) => {
+		switch (toStatus) {
+			case 'CHỜ_TIẾP_NHẬN': return 'Chờ tiếp nhận'
+			case 'ĐÃ_TIẾP_NHẬN': return 'Đã tiếp nhận'
+			case 'ĐANG_XỬ_LÝ': return 'Đang xử lý'
+			case 'CHỜ_THAY_THẾ': return 'Chờ thay thế'
+			case 'ĐÃ_HOÀN_THÀNH': return 'Đã hoàn thành'
+			case 'ĐÃ_HỦY': return 'Đã hủy'
+			default: return toStatus
 		}
 	}
 
@@ -62,43 +82,47 @@ export default function HistoryCard({ assetId }: Props) {
 				/>
 			) : (
 				<Timeline
-					items={items.map((item, index) => ({
-						color: getStatusColor(item.status),
-						dot: getStatusIcon(item.status),
+					items={items.map((item) => ({
+						color: getStatusColor(item.toStatus),
+						dot: getStatusIcon(item.toStatus),
 						children: (
 							<div className="pb-4" key={item.id}>
 								<div className="flex items-center justify-between mb-2">
 									<h4 className="font-medium text-gray-900 text-sm">
 										{item.requestCode}
 									</h4>
-									<Tag color={getStatusColor(item.status)} className="text-xs">
-										{item.status}
+									<Tag color={getStatusColor(item.toStatus)} className="text-xs">
+										{getDisplayStatus(item.toStatus)}
 									</Tag>
 								</div>
-								<p className="text-sm text-gray-600 mb-2">
-									<strong>Lỗi:</strong> {item.errorType}
-								</p>
-								<p className="text-sm text-gray-600 mb-2">
-									{item.description}
-								</p>
-								{item.solution && (
-									<div className="bg-green-50 p-2 rounded-md mb-2 border-l-4 border-green-400">
-										<p className="text-sm text-green-800">
-											<strong>Giải pháp:</strong> {item.solution}
-										</p>
+								<div className="mb-2">
+									<p className="text-sm font-medium text-gray-700 mb-1">
+										{item.action}
+									</p>
+									<p className="text-sm text-gray-600">
+										<strong>Loại lỗi:</strong> {item.errorTypeName}
+									</p>
+								</div>
+								<div className="bg-gray-50 p-2 rounded-md mb-2">
+									<p className="text-sm text-gray-700">
+										{item.comment}
+									</p>
+								</div>
+								{item.fromStatus && (
+									<div className="text-xs text-gray-500 mb-2">
+										<span className="font-medium">Chuyển từ:</span> {getDisplayStatus(item.fromStatus)} 
+										<span className="mx-1">→</span>
+										<span className="font-medium">{getDisplayStatus(item.toStatus)}</span>
 									</div>
 								)}
 								<div className="flex items-center justify-between text-xs text-gray-500">
 									<span className="flex items-center gap-1">
 										<Clock className="w-3 h-3" />
-										{new Date(item.reportDate).toLocaleDateString('vi-VN')}
-										{item.completedDate && item.completedDate !== item.reportDate && (
-											<> → {new Date(item.completedDate).toLocaleDateString('vi-VN')}</>
-										)}
+										{new Date(item.createdAt).toLocaleString('vi-VN')}
 									</span>
 									<span className="flex items-center gap-1">
 										<User className="w-3 h-3" />
-										{item.technicianName}
+										{item.actorName}
 									</span>
 								</div>
 							</div>

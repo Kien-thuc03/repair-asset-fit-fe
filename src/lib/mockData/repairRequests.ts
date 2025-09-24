@@ -1,56 +1,11 @@
-import {
-  RepairRequest,
-  RepairStatus,
-  RepairRequestComponent,
-  RepairRequestWithDetails,
-} from "@/types";
-import {
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  X,
-  FileCheck,
-  CircleAlert,
-} from "lucide-react";
+import { RepairRequest, RepairStatus } from '@/types'
+import { CheckCircle, Clock, Wrench, XCircle, Pause } from 'lucide-react'
 
-export const repairRequestStatusConfig = {
-  [RepairStatus.CHỜ_TIẾP_NHẬN]: {
-    label: "Chờ tiếp nhận",
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    icon: Clock,
-  },
-  [RepairStatus.ĐÃ_TIẾP_NHẬN]: {
-    label: "Đã tiếp nhận",
-    color: "bg-blue-100 text-blue-800 border-blue-200",
-    icon: AlertTriangle,
-  },
-  [RepairStatus.ĐANG_XỬ_LÝ]: {
-    label: "Đang xử lý",
-    color: "bg-blue-100 text-blue-800 border-blue-200",
-    icon: CircleAlert,
-  },
-  [RepairStatus.CHỜ_THAY_THẾ]: {
-    label: "Chờ thay thế",
-    color: "bg-purple-100 text-purple-800 border-purple-200",
-    icon: FileCheck,
-  },
-  [RepairStatus.ĐÃ_HOÀN_THÀNH]: {
-    label: "Hoàn thành",
-    color: "bg-green-100 text-green-800 border-green-200",
-    icon: CheckCircle,
-  },
-  [RepairStatus.ĐÃ_HỦY]: {
-    label: "Hủy bỏ",
-    color: "bg-gray-100 text-gray-800 border-gray-200",
-    icon: X,
-  },
-};
-
-// Data for repair requests list (for quan-ly-bao-loi page) - Synchronized with database-sync.json
+// Mock repair requests data - Synchronized with database
 export const mockRepairRequests: RepairRequest[] = [
   {
     id: "req-001",
-    requestCode: "YCSC-2024-001",
+    requestCode: "YCSC-2025-0001",
     computerAssetId: "ASSET001",
     assetCode: "19-0205/01",
     assetName: "PC Dell OptiPlex 3080",
@@ -64,42 +19,55 @@ export const mockRepairRequests: RepairRequest[] = [
     buildingName: "Tòa H",
     errorTypeId: "ET001",
     errorTypeName: "Máy không khởi động",
-    description:
-      "Máy tính không khởi động được, có mùi cháy từ nguồn điện 500W, cần thay thay nguồn mới ngay lập tức",
+    description: "Máy tính không khởi động được, có mùi cháy từ nguồn điện 500W, cần thay thay nguồn mới ngay lập tức",
     mediaUrls: [
       "https://vr360.vn/wp-content/uploads/2015/07/nguyen-nhan-khien-may-tinh-khong-the-khoi-dong-vao-windows-300x138.jpg",
-      "https://ictsaigon.com.vn/storage/news/may-tinh-khong-khoi-dong-duoc/may-tinh-khong-khoi-dong-duoc-8.webp",
+      "https://ictsaigon.com.vn/storage/news/may-tinh-khong-khoi-dong-duoc/may-tinh-khong-khoi-dong-duoc-8.webp"
     ],
     status: RepairStatus.CHỜ_TIẾP_NHẬN,
-    resolutionNotes: "",
-    createdAt: "2024-01-15T08:30:00Z",
-    acceptedAt: "",
-    completedAt: "",
-    unit: "Khoa Công nghệ Thông tin",
+    resolutionNotes: undefined,
+    createdAt: "2024-01-15T01:30:00.000Z",
+    acceptedAt: undefined,
+    completedAt: undefined,
+    unit: "Khoa Công nghệ Thông tin"
   },
   {
     id: "req-002",
-    requestCode: "YCSC-2024-002",
+    requestCode: "YCSC-2025-0002",
     computerAssetId: "ASSET002",
     assetCode: "19-0205/02",
     assetName: "PC Dell OptiPlex 3080",
+<<<<<<< HEAD
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
+    reporterRole: "Giảng viên",
+    assignedTechnicianId: "user-4",
+    assignedTechnicianName: "Kỹ thuật viên",
+=======
     machineLabel: "02",
     reporterId: "user-8",
     reporterName: "Anh Tuấn",
     reporterRole: "Kỹ thuật viên",
     assignedTechnicianId: "user-9",
     assignedTechnicianName: "Văn Đạt",
+>>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
     roomName: "H101",
+    machineLabel: "02",
     buildingName: "Tòa H",
     errorTypeId: "ET002",
-    errorTypeName: "Lỗi phần cứng - SSD",
-    description:
-      "SSD Samsung 980 bị bad sectors, máy không khởi động được, mất dữ liệu",
+    errorTypeName: "Máy hư phần mềm",
+    description: "SSD Samsung 980 bị bad sectors, máy không khởi động được, mất dữ liệu",
     mediaUrls: [
-      "https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/131734/Originals/loi-man-hinh-xanh.png",
+      "https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/131734/Originals/loi-man-hinh-xanh.png"
     ],
     status: RepairStatus.ĐANG_XỬ_LÝ,
     resolutionNotes: "Đã kiểm tra SSD, đang chờ linh kiện mới",
+<<<<<<< HEAD
+    createdAt: "2024-01-14T07:15:00.000Z",
+    acceptedAt: "2024-01-14T08:00:00.000Z",
+    completedAt: undefined,
+    unit: "Khoa Công nghệ Thông tin"
+=======
     createdAt: "2024-01-14T14:15:00Z",
     acceptedAt: "2024-01-14T15:00:00Z",
     completedAt: "",
@@ -130,63 +98,203 @@ export const mockRepairRequests: RepairRequest[] = [
     acceptedAt: "2024-01-12T10:00:00Z",
     completedAt: "2024-01-13T16:00:00Z",
     unit: "Khoa Công nghệ Thông tin",
+>>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
   },
   {
     id: "req-004",
     requestCode: "YCSC-2025-0004",
     computerAssetId: "ASSET004",
-    assetCode: "PC-A102-01",
+    assetCode: "19-0207/01",
     assetName: "PC Lenovo ThinkCentre",
+<<<<<<< HEAD
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
+    reporterRole: "Giảng viên",
+    assignedTechnicianId: "user-8",
+    assignedTechnicianName: "Anh Tuấn",
+=======
     machineLabel: "01",
     reporterId: "user-8",
     reporterName: "Anh Tuấn",
     reporterRole: "Kỹ thuật viên",
     assignedTechnicianId: "user-9",
     assignedTechnicianName: "Văn Đạt",
+>>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
     roomName: "H102",
+    machineLabel: "01",
     buildingName: "Tòa H",
     errorTypeId: "ET002",
-    errorTypeName: "Lỗi phần mềm",
-    description:
-      "Màn hình Lenovo ThinkVision E24-20 bị lỗi, không hiển thị hình ảnh, có dấu hiệu hỏng backlight",
-    mediaUrls: [
-      "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400&h=300&fit=crop",
-      "https://images.unsplash.com/photo-1551808525-51a94da548ce?w=400&h=300&fit=crop",
-    ],
-    status: RepairStatus.CHỜ_TIẾP_NHẬN,
-    resolutionNotes: "",
-    createdAt: "2024-01-13T11:20:00",
-    acceptedAt: "",
-    completedAt: "",
-    unit: "Phòng Quản trị",
+    errorTypeName: "Máy hư phần mềm",
+    description: "Máy không kết nối được mạng, không thể truy cập internet",
+    mediaUrls: [],
+    status: RepairStatus.ĐÃ_TIẾP_NHẬN,
+    resolutionNotes: undefined,
+    createdAt: "2024-01-16T03:30:00.000Z",
+    acceptedAt: "2024-01-16T04:00:00.000Z",
+    completedAt: undefined,
+    unit: "Khoa Công nghệ Thông tin"
   },
   {
     id: "req-005",
     requestCode: "YCSC-2025-0005",
     computerAssetId: "ASSET005",
-    assetCode: "PC-A102-02",
+    assetCode: "19-0208/01",
     assetName: "PC Dell Inspiron",
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
+    reporterRole: "Giảng viên",
+    assignedTechnicianId: "user-9",
+    assignedTechnicianName: "Văn Đạt",
+    roomName: "H102",
     machineLabel: "02",
+<<<<<<< HEAD
+    buildingName: "Tòa H",
+    errorTypeId: "ET008",
+    errorTypeName: "Máy mất chuột",
+    description: "Chuột máy tính bị mất, cần thay thế chuột mới",
+    mediaUrls: [],
+    status: RepairStatus.CHỜ_THAY_THẾ,
+    resolutionNotes: "Đã xác nhận chuột bị mất, đang chờ chuột mới",
+    createdAt: "2024-01-17T07:20:00.000Z",
+    acceptedAt: "2024-01-17T08:00:00.000Z",
+    completedAt: undefined,
+    unit: "Khoa Công nghệ Thông tin"
+  },
+  {
+    id: "req-006",
+    requestCode: "YCSC-2025-0006",
+    computerAssetId: "ASSET009",
+    assetCode: "19-0210/01",
+    assetName: "PC ASUS VivoBook",
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
+    reporterRole: "Giảng viên",
+    assignedTechnicianId: "user-4",
+    assignedTechnicianName: "Kỹ thuật viên",
+    roomName: "H103",
+    machineLabel: "01",
+    buildingName: "Tòa H",
+    errorTypeId: "ET004",
+    errorTypeName: "Máy hư chuột",
+    description: "Chuột không hoạt động được, con trỏ không di chuyển",
+    mediaUrls: [],
+    status: RepairStatus.CHỜ_TIẾP_NHẬN,
+    resolutionNotes: undefined,
+    createdAt: "2024-01-18T02:15:00.000Z",
+    acceptedAt: undefined,
+    completedAt: undefined,
+    unit: "Khoa Công nghệ Thông tin"
+  },
+  // Thêm một số dữ liệu mẫu khác với trạng thái đã hoàn thành và đã hủy
+  {
+    id: "req-003",
+    requestCode: "YCSC-2025-0003",
+    computerAssetId: "ASSET003",
+    assetCode: "19-0206/01",
+    assetName: "PC HP Pavilion",
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
+    reporterRole: "Giảng viên",
+    assignedTechnicianId: "user-4",
+    assignedTechnicianName: "Kỹ thuật viên",
+    roomName: "H101",
+    machineLabel: "03",
+    buildingName: "Tòa H",
+    errorTypeId: "ET002",
+    errorTypeName: "Máy hư phần mềm",
+    description: "Windows bị lỗi, không thể khởi động được hệ điều hành",
+    mediaUrls: [],
+    status: RepairStatus.ĐÃ_HOÀN_THÀNH,
+    resolutionNotes: "Đã cài đặt lại Windows 11, khôi phục dữ liệu người dùng",
+    createdAt: "2024-01-13T09:00:00.000Z",
+    acceptedAt: "2024-01-13T09:30:00.000Z",
+    completedAt: "2024-01-13T14:30:00.000Z",
+    unit: "Khoa Công nghệ Thông tin"
+  },
+  {
+    id: "req-007",
+    requestCode: "YCSC-2025-0007",
+    computerAssetId: "ASSET007",
+    assetCode: "19-0209/01",
+    assetName: "PC Acer Aspire",
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
+    reporterRole: "Giảng viên",
+    assignedTechnicianId: undefined,
+    assignedTechnicianName: undefined,
+    roomName: "H103",
+    machineLabel: "02",
+    buildingName: "Tòa H",
+    errorTypeId: "ET004",
+    errorTypeName: "Máy hư chuột",
+    description: "Báo nhầm, chuột vẫn hoạt động bình thường",
+    mediaUrls: [],
+    status: RepairStatus.ĐÃ_HỦY,
+    resolutionNotes: undefined,
+    createdAt: "2024-01-19T08:45:00.000Z",
+    acceptedAt: undefined,
+    completedAt: undefined,
+    unit: "Khoa Công nghệ Thông tin"
+  },
+  // Thêm request với nhiều hình ảnh để test ImageViewer
+  {
+    id: "req-008",
+    requestCode: "YCSC-2025-0008",
+    computerAssetId: "ASSET008",
+    assetCode: "19-0211/02",
+    assetName: "PC Dell Precision",
+    reporterId: "user-5",
+    reporterName: "Giảng viên",
+    reporterRole: "Giảng viên",
+    assignedTechnicianId: "user-4",
+    assignedTechnicianName: "Kỹ thuật viên",
+    roomName: "H104",
+    machineLabel: "05",
+=======
     reporterId: "user-9",
     reporterName: "Văn Đạt",
     reporterRole: "Kỹ thuật viên",
     assignedTechnicianId: "user-8",
     assignedTechnicianName: "Anh Tuấn",
     roomName: "H102",
+>>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
     buildingName: "Tòa H",
     errorTypeId: "ET001",
     errorTypeName: "Máy không khởi động",
-    description:
-      "CPU Intel Core i3-11100 bị quá nhiệt, máy tự động tắt liên tục sau 5-10 phút sử dụng, cần thay tản nhiệt",
-    mediaUrls: ["cpu_temp.jpg"],
+    description: "Máy tính không khởi động được sau khi mất điện đột ngột. Đèn nguồn không sáng, không có tiếng quạt chạy. Nghi ngờ nguồn điện bị hỏng.",
+    mediaUrls: [
+      "https://vr360.vn/wp-content/uploads/2015/07/nguyen-nhan-khien-may-tinh-khong-the-khoi-dong-vao-windows-300x138.jpg",
+      "https://ictsaigon.com.vn/storage/news/may-tinh-khong-khoi-dong-duoc/may-tinh-khong-khoi-dong-duoc-8.webp",
+      "https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/131734/Originals/loi-man-hinh-xanh.png"
+    ],
     status: RepairStatus.ĐANG_XỬ_LÝ,
-    resolutionNotes:
-      "Đang thay tản nhiệt mới và kiểm tra CPU, có thể cần thay CPU",
-    createdAt: "2024-01-16T07:45:00",
-    acceptedAt: "2024-01-16T08:30:00",
-    completedAt: "",
-    unit: "Phòng Quản trị",
+    resolutionNotes: "Đã kiểm tra nguồn điện, xác nhận hỏng. Đang đặt hàng nguồn mới 650W.",
+    createdAt: "2024-01-20T10:30:00.000Z",
+    acceptedAt: "2024-01-20T11:00:00.000Z",
+    completedAt: undefined,
+    unit: "Khoa Công nghệ Thông tin"
+  }
+]
+
+// Configuration for repair request status display
+export const repairRequestStatusConfig = {
+  [RepairStatus.CHỜ_TIẾP_NHẬN]: {
+    label: 'Chờ tiếp nhận',
+    color: 'border-yellow-200 text-yellow-800 bg-yellow-50',
+    icon: Clock,
+    bgColor: 'bg-yellow-50',
+    textColor: 'text-yellow-800',
+    borderColor: 'border-yellow-200'
   },
+<<<<<<< HEAD
+  [RepairStatus.ĐÃ_TIẾP_NHẬN]: {
+    label: 'Đã tiếp nhận',
+    color: 'border-blue-200 text-blue-800 bg-blue-50',
+    icon: CheckCircle,
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-800',
+    borderColor: 'border-blue-200'
+=======
   {
     id: "req-006",
     requestCode: "YCSC-2025-0006",
@@ -223,22 +331,43 @@ export const mockRepairRequestComponents: RepairRequestComponent[] = [
     repairRequestId: "req-001",
     componentId: "CC005",
     note: "Nguồn điện bị cháy, có mùi khét, cần thay thế ngay",
+>>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
   },
-  {
-    repairRequestId: "req-002",
-    componentId: "CC013",
-    note: "SSD có bad sectors nghiêm trọng, mất dữ liệu",
+  [RepairStatus.ĐANG_XỬ_LÝ]: {
+    label: 'Đang xử lý',
+    color: 'border-purple-200 text-purple-800 bg-purple-50',
+    icon: Wrench,
+    bgColor: 'bg-purple-50',
+    textColor: 'text-purple-800',
+    borderColor: 'border-purple-200'
   },
-  {
-    repairRequestId: "req-002",
-    componentId: "CC012",
-    note: "RAM gây lỗi màn hình xanh, có thể liên quan đến SSD",
+  [RepairStatus.CHỜ_THAY_THẾ]: {
+    label: 'Chờ thay thế',
+    color: 'border-orange-200 text-orange-800 bg-orange-50',
+    icon: Pause,
+    bgColor: 'bg-orange-50',
+    textColor: 'text-orange-800',
+    borderColor: 'border-orange-200'
   },
-  {
-    repairRequestId: "req-003",
-    componentId: "CC024",
-    note: "Màn hình nhấp nháy, có đường kẻ dọc, hỏng backlight",
+  [RepairStatus.ĐÃ_HOÀN_THÀNH]: {
+    label: 'Đã hoàn thành',
+    color: 'border-green-200 text-green-800 bg-green-50',
+    icon: CheckCircle,
+    bgColor: 'bg-green-50',
+    textColor: 'text-green-800',
+    borderColor: 'border-green-200'
   },
+<<<<<<< HEAD
+  [RepairStatus.ĐÃ_HỦY]: {
+    label: 'Đã hủy',
+    color: 'border-red-200 text-red-800 bg-red-50',
+    icon: XCircle,
+    bgColor: 'bg-red-50',
+    textColor: 'text-red-800',
+    borderColor: 'border-red-200'
+  }
+} as const
+=======
   {
     repairRequestId: "req-004",
     componentId: "CC041",
@@ -255,123 +384,51 @@ export const mockRepairRequestComponents: RepairRequestComponent[] = [
     note: "Card mạng không được nhận dạng, có thể lỗi driver hoặc hardware",
   },
 ];
+>>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
 
-// Import other required data
-import { mockComputerComponents } from "./computerComponents";
-import { comprehensiveAssets } from "./assets";
-import { mockComputers } from "./computers";
-import { mockRooms } from "./rooms";
-import { users } from "./users";
-import { errorTypes } from "./errorTypes";
-
-// Helper function để join dữ liệu và tạo RepairRequestWithDetails
-export function getRepairRequestWithDetails(
-  requestId: string
-): RepairRequestWithDetails | null {
-  const request = mockRepairRequests.find((r) => r.id === requestId);
-  if (!request) return null;
-
-  // Lấy thông tin asset từ comprehensiveAssets
-  const asset = comprehensiveAssets.find(
-    (a) => a.id === request.computerAssetId
-  );
-
-  // Lấy thông tin computer
-  const computer = mockComputers.find(
-    (c) => c.assetId === request.computerAssetId
-  );
-
-  // Lấy thông tin room
-  const room = computer
-    ? mockRooms.find((r) => r.id === computer.roomId)
-    : null;
-
-  // Lấy thông tin reporter
-  const reporter = users.find((u) => u.id === request.reporterId);
-
-  // Lấy thông tin technician
-  const technician = request.assignedTechnicianId
-    ? users.find((u) => u.id === request.assignedTechnicianId)
-    : null;
-
-  // Lấy thông tin error type
-  const errorType = request.errorTypeId
-    ? errorTypes.find((e) => e.id === request.errorTypeId)
-    : null;
-
-  // Lấy danh sách linh kiện bị lỗi
-  const requestComponents = mockRepairRequestComponents.filter(
-    (rc) => rc.repairRequestId === requestId
-  );
-
-  const faultyComponents = requestComponents.map((rc) => {
-    const component = mockComputerComponents.find(
-      (c) => c.id === rc.componentId
-    );
-    return {
-      componentId: rc.componentId,
-      componentName: component?.name || "Unknown",
-      componentType: component?.componentType || "OTHER",
-      componentSpecs: component?.componentSpecs || "",
-      serialNumber: component?.serialNumber,
-      note: rc.note,
-    };
-  });
-
-  const detailedRequest: RepairRequestWithDetails = {
-    ...request,
-    // Asset info
-    assetCode: asset?.ktCode || request.assetCode || "",
-    assetName: asset?.name || request.assetName || "",
-    assetSpecs: asset?.specs || "",
-
-    // Computer info
-    machineLabel: computer?.machineLabel || request.machineLabel || "",
-
-    // Room info
-    roomName: room?.roomNumber || request.roomName || "",
-    buildingName: room?.building || request.buildingName || "",
-
-    // User info
-    reporterName: reporter?.fullName || request.reporterName || "",
-    reporterRole: request.reporterRole || "Unknown",
-    assignedTechnicianName:
-      technician?.fullName || request.assignedTechnicianName,
-
-    // Error type info
-    errorTypeName: errorType?.name || request.errorTypeName,
-
-    // Unit info (from room)
-    unit: request.unit || "Unknown",
-
-    // Faulty components details
-    faultyComponents,
-  };
-
-  return detailedRequest;
+// Helper function để lấy repair requests theo status
+export const getRepairRequestsByStatus = (status: RepairStatus): RepairRequest[] => {
+  return mockRepairRequests.filter(request => request.status === status)
 }
 
-// Helper function để lấy tất cả RepairRequests với details
-export function getAllRepairRequestsWithDetails(): RepairRequestWithDetails[] {
+// Helper function để lấy repair requests theo technician
+export const getRepairRequestsByTechnician = (technicianId: string): RepairRequest[] => {
+  return mockRepairRequests.filter(request => request.assignedTechnicianId === technicianId)
+}
+
+// Helper function để lấy repair requests gần đây nhất
+export const getRecentRepairRequests = (limit: number = 6): RepairRequest[] => {
   return mockRepairRequests
-    .map((request) => getRepairRequestWithDetails(request.id))
-    .filter((req): req is RepairRequestWithDetails => req !== null);
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, limit)
 }
 
-// Helper function để lấy RepairRequests theo status với details
-export function getRepairRequestsWithDetailsByStatus(
-  status: RepairStatus
-): RepairRequestWithDetails[] {
-  return getAllRepairRequestsWithDetails().filter(
-    (req) => req.status === status
-  );
+// Helper function để đếm số lượng requests theo status
+export const countRepairRequestsByStatus = (status: RepairStatus): number => {
+  return mockRepairRequests.filter(request => request.status === status).length
 }
 
-// Helper function để lấy RepairRequests theo reporter với details
-export function getRepairRequestsWithDetailsByReporter(
-  reporterId: string
-): RepairRequestWithDetails[] {
-  return getAllRepairRequestsWithDetails().filter(
-    (req) => req.reporterId === reporterId
-  );
+// Helper function để lấy repair request theo ID
+export const getRepairRequestById = (id: string): RepairRequest | undefined => {
+  return mockRepairRequests.find(request => request.id === id)
+}
+
+// Helper function để cập nhật trạng thái repair request (mock)
+export const updateRepairRequestStatus = (id: string, status: RepairStatus, notes?: string): RepairRequest | null => {
+  const request = mockRepairRequests.find(r => r.id === id)
+  if (!request) return null
+  
+  // Cập nhật trạng thái và thời gian
+  request.status = status
+  if (notes) request.resolutionNotes = notes
+  
+  const now = new Date().toISOString()
+  if (status === RepairStatus.ĐÃ_TIẾP_NHẬN && !request.acceptedAt) {
+    request.acceptedAt = now
+  }
+  if (status === RepairStatus.ĐÃ_HOÀN_THÀNH && !request.completedAt) {
+    request.completedAt = now
+  }
+  
+  return request
 }
