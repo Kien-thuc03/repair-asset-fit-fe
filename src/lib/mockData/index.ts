@@ -1,84 +1,9 @@
-// Export all mock data from a central location - Synchronized with database-sync.json
-export { errorTypes, type ErrorType } from "./errorTypes";
-export { mockAssets, comprehensiveAssets } from "./assets";
-export { mockComputers, type Computer } from "./computers";
-export {
-  mockComputerComponents,
-  type ComputerComponent,
-} from "./computerComponents";
-export { mockRooms, mockSimpleRooms, type SimpleRoom } from "./rooms";
-export { mockComponents } from "./components";
-export {
-  technicianAssignments,
-  getTechnicianForArea,
-  getAssignedAreas,
-  getAssignedFloorsForBuilding,
-} from "./technicianAssignments";
-export {
-  mockRepairRequests,
-  mockRepairRequestComponents,
-  repairRequestStatusConfig,
-  getRepairRequestWithDetails,
-  getAllRepairRequestsWithDetails,
-  getRepairRequestsWithDetailsByStatus,
-  getRepairRequestsWithDetailsByReporter,
-} from "./repairRequests";
-
-// Export new data from database-sync.json
-export { categories, type Category } from "./categories";
-export {
-  mockReplacementRequestsForTechnician,
-  mockComponentsFromReportsWithStatus,
-} from "./replacementRequests";
-
-// Export replacement proposals for to-truong-ky-thuat
-export {
-  mockReplacementProposals,
-  mockReplacementItems,
-  replacementProposalStatusConfig,
-  type ReplacementProposal,
-  type ReplacementItem,
-} from "./replacementProposals";
-
-// Export software data
-export {
-  mockSoftware,
-  mockAssetSoftware,
-  getSoftwareByAssetId,
-  getAssetSoftwareDetails,
-} from "./software";
-
-// Export software proposals
-export {
-  mockSoftwareProposals,
-  mockSoftwareProposalItems,
-  getSoftwareProposalById,
-  getSoftwareProposalsByProposerId,
-  getSoftwareProposalsByRoomId,
-  getSoftwareProposalsByStatus,
-  getSoftwareProposalItemsByProposalId,
-  getSoftwareProposalWithItems,
-  getAllSoftwareProposalsWithItems,
-  getSoftwareProposalStats,
-} from "./softwareProposals";
-export type {
-  SoftwareProposal,
-  SoftwareProposalItem,
-} from "./softwareProposals";
-
-// Export component types and other enums from the main types file for convenience
-export { ComponentType, ComponentStatus, ReplacementStatus } from "@/types";
-export type { Component } from "@/types";
-
-// Export room types
-export { RoomStatus } from "@/types/unit";
-export type { Room } from "@/types/unit";
-
-// Export from other existing mock data files - Synchronized with database-sync.json
+export * from "./components";
 export * from "./permissions";
+export * from "./repairRequests";
+export * from "./repairHistory";
 export * from "./roles";
 export * from "./roles_permissions";
 export * from "./units";
 export * from "./users";
 export * from "./users_roles";
-export * from "./repairHistory";

@@ -1,12 +1,11 @@
 'use client'
 
-import { mockRepairRequests, repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
+import { getRecentRepairRequests, repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
+import { RepairRequest } from '@/types'
 import Link from 'next/link'
 
 export default function RecentRequests() {
-	const items = mockRepairRequests
-		.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-		.slice(0, 6)
+	const items = getRecentRepairRequests(6)
 
 	return (
 		<div className="bg-white shadow rounded-lg">
@@ -18,7 +17,7 @@ export default function RecentRequests() {
 					</Link>
 				</div>
 				<div className="divide-y">
-					{items.map((req) => {
+					{items.map((req: RepairRequest) => {
 						const cfg = repairRequestStatusConfig[req.status]
 						return (
 							<Link key={req.id} href={`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${req.id}`} className="flex items-center justify-between py-3 hover:bg-gray-50">

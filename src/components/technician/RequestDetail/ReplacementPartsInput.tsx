@@ -3,18 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Button, Form, Popconfirm, Select, InputNumber, Input } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
-import { Component, ComponentType, ComponentStatus } from '@/types'
-import { mockComponents } from '@/lib/mockData/components'
-
-export interface ReplacementPart {
-	id: string
-	componentId: string // Thay đổi từ name sang componentId
-	componentType: ComponentType
-	componentName: string
-	componentSpecs?: string
-	quantity: number
-	note?: string
-}
+import { Component, ComponentType } from '@/types'
+import { getAvailableComponentsForReplacement, ReplacementPart } from '@/lib/mockData'
 
 interface Props {
 	value?: ReplacementPart[]
@@ -29,9 +19,7 @@ export default function ReplacementPartsInput({ value = [], onChange, assetId }:
 	// Lọc components theo assetId
 	useEffect(() => {
 		if (assetId) {
-			const filtered = mockComponents.filter(
-				(comp) => comp.computerAssetId === assetId && comp.status === ComponentStatus.INSTALLED
-			)
+			const filtered = getAvailableComponentsForReplacement(assetId)
 			setAvailableComponents(filtered)
 		} else {
 			setAvailableComponents([])
@@ -55,11 +43,11 @@ export default function ReplacementPartsInput({ value = [], onChange, assetId }:
 		triggerChange(newParts)
 	}
 
-	const handlePartChange = (id: string, field: keyof ReplacementPart, fieldValue: any) => {
+	const handlePartChange = (id: string, field: keyof ReplacementPart, fieldValue: string | number) => {
 		const newParts = parts.map((part) => {
 			if (part.id === id) {
 				// Nếu thay đổi componentId, cập nhật thông tin component
-				if (field === 'componentId') {
+				if (field === 'componentId' && typeof fieldValue === 'string') {
 					const selectedComponent = availableComponents.find(comp => comp.id === fieldValue)
 					if (selectedComponent) {
 						return {
@@ -118,7 +106,7 @@ export default function ReplacementPartsInput({ value = [], onChange, assetId }:
 				</div>
 			) : (
 				<>
-					{parts.map((part, index) => {
+					{parts.map((part) => {
 						const selectedComponent = availableComponents.find(comp => comp.id === part.componentId)
 						return (
 							<div key={part.id} className="flex items-start gap-2 p-3 border rounded-md bg-gray-50">

@@ -1,23 +1,23 @@
 'use client'
 
 import { RepairStatus } from '@/types'
-import { useState, useEffect } from 'react'
+import { ReplacementPart } from '@/lib/mockData'
+import { useState } from 'react'
 import { Button, Form, Input, Radio, Card, Alert } from 'antd'
 import { CheckCircle, Settings, Package, FileText } from 'lucide-react'
-import ReplacementPartsInput, { ReplacementPart } from './ReplacementPartsInput'
+import ReplacementPartsInput from './ReplacementPartsInput'
 
 const { TextArea } = Input
 
 interface Props {
 	initStatus: RepairStatus
-	requestId?: string
 	assetId?: string // Thêm prop assetId
 	errorTypeName?: string // Thêm prop errorTypeName để xác định loại lỗi
 	onCreateReplacement: (parts: ReplacementPart[]) => void
 	onStatusUpdate?: (newStatus: RepairStatus, notes: string) => void
 }
 
-export default function ActionPanel({ initStatus, requestId, assetId, errorTypeName, onCreateReplacement, onStatusUpdate }: Props) {
+export default function ActionPanel({ initStatus, assetId, errorTypeName, onCreateReplacement, onStatusUpdate }: Props) {
 	const [form] = Form.useForm()
 	const [status, setStatus] = useState<RepairStatus>(initStatus)
 	const [inspectionResult, setInspectionResult] = useState<'software' | 'hardware' | 'replacement' | ''>('')

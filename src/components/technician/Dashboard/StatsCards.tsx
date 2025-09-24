@@ -1,16 +1,13 @@
 'use client'
 
-import { mockRepairRequests } from '@/lib/mockData/repairRequests'
+import { getRepairRequestsByStatus } from '@/lib/mockData'
+import { RepairStatus } from '@/types'
 import { FileCheck, AlertTriangle, Clock } from 'lucide-react'
 
-function countByStatus(status: string) {
-	return mockRepairRequests.filter((r) => r.status === status).length
-}
-
 export default function StatsCards() {
-	const waitingCount = countByStatus('CHỜ_TIẾP_NHẬN')
-	const inProgressCount = countByStatus('ĐANG_XỬ_LÝ')
-	const waitingReplacementCount = 0 // Chưa có mẫu trong mock, giữ 0 để hiển thị
+	const waitingCount = getRepairRequestsByStatus(RepairStatus.CHỜ_TIẾP_NHẬN).length
+	const inProgressCount = getRepairRequestsByStatus(RepairStatus.ĐANG_XỬ_LÝ).length
+	const waitingReplacementCount = getRepairRequestsByStatus(RepairStatus.CHỜ_THAY_THẾ).length
 
 	const items = [
 		{
