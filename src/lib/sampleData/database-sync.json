@@ -42,14 +42,14 @@
         "CPU",
         "RAM",
         "STORAGE",
-        "MOTHERBOARD",
+        "MAINBOARD",
         "PSU",
         "GPU",
         "MONITOR",
         "KEYBOARD",
         "MOUSE",
         "CASE",
-        "COOLING",
+        "COOLER",
         "OPTICAL_DRIVE",
         "NETWORK_CARD",
         "SOUND_CARD",
@@ -891,7 +891,7 @@
     {
       "id": "CC004",
       "computerAssetId": "ASSET001",
-      "componentType": "MOTHERBOARD",
+      "componentType": "MAINBOARD",
       "name": "Dell OptiPlex 3080 Motherboard",
       "componentSpecs": "Intel B460 chipset, Micro ATX",
       "serialNumber": null,
@@ -1107,14 +1107,14 @@
     {
       "id": "CC044",
       "computerAssetId": "ASSET009",
-      "componentType": "COOLING",
+      "componentType": "COOLER",
       "name": "ASUS ROG Strix LC 240",
       "componentSpecs": "240mm AIO liquid cooler",
       "serialNumber": "COOL001",
       "status": "INSTALLED",
       "installedAt": "2023-08-10T10:00:00Z",
       "removedAt": null,
-      "notes": "Liquid cooling system for high performance"
+      "notes": "Liquid COOLER system for high performance"
     },
     {
       "id": "CC051",
