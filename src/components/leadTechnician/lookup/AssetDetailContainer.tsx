@@ -1,7 +1,13 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { mockAssetsLookup, mockRepairHistoryLookup } from "@/lib/mockData";
+import { Asset, ComprehensiveAsset } from "@/types";
+import {
+  comprehensiveAssets,
+  mockRooms,
+  categories,
+  mockRepairHistory,
+} from "@/lib/mockData";
 import AssetDetailHeader from "./AssetDetailHeader";
 import AssetNotFound from "./AssetNotFound";
 import AssetTabNavigation from "./AssetTabNavigation";
@@ -9,6 +15,27 @@ import AssetBasicInfo from "./AssetBasicInfo";
 import AssetWarrantyInfo from "./AssetWarrantyInfo";
 import AssetSpecifications from "./AssetSpecifications";
 import RepairHistoryTab from "./RepairHistoryTab";
+
+// Helper function to convert ComprehensiveAsset to Asset
+const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
+  const room = mockRooms.find((r) => r.id === comprehensive.currentRoomId);
+  const category = categories.find((c) => c.id === comprehensive.categoryId);
+
+  return {
+    id: comprehensive.id,
+    assetCode: comprehensive.ktCode,
+    name: comprehensive.name,
+    category: category?.name || "Không xác định",
+    model: comprehensive.specs || "Không có thông số",
+    serialNumber: comprehensive.fixedCode,
+    roomId: comprehensive.currentRoomId || "",
+    roomName: room?.roomNumber || "Không xác định",
+    status: comprehensive.status,
+    purchaseDate: comprehensive.entryDate,
+    warrantyExpiry: "2025-12-31", // Default warranty
+    qrCode: `QR_${comprehensive.ktCode}`,
+  };
+};
 
 export default function AssetDetailContainer() {
   const params = useParams();
@@ -18,7 +45,12 @@ export default function AssetDetailContainer() {
   // State for tabs
   const [showRepairHistory, setShowRepairHistory] = useState(false);
 
-  const asset = useMemo(() => mockAssetsLookup.find((a) => a.id === id), [id]);
+  // Convert comprehensive assets to Asset format
+  const convertedAssets = comprehensiveAssets.map(convertToAsset);
+  const asset = useMemo(
+    () => convertedAssets.find((a) => a.id === id),
+    [id, convertedAssets]
+  );
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN");
@@ -40,9 +72,7 @@ export default function AssetDetailContainer() {
   };
 
   const getRepairHistory = (assetId: string) => {
-    return mockRepairHistoryLookup.filter(
-      (repair) => repair.assetId === assetId
-    );
+    return mockRepairHistory.filter((repair) => repair.assetId === assetId);
   };
 
   const handleGoBack = () => {

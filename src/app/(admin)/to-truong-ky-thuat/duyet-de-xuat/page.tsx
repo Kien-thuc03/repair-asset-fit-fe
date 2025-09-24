@@ -1,32 +1,53 @@
 "use client";
 import { useState } from "react";
-import { ReplacementRequestForList, ReplacementStatus } from "@/types";
+import { ReplacementRequestItem, ReplacementStatus } from "@/types";
 import { mockReplacementProposals } from "@/lib/mockData/replacementProposals";
 import ExportExcelSuccessModal from "./modal/ExportExcelSuccessModal";
 import ExportExcelErrorModal from "./modal/ExportExcelErrorModal";
 import { Breadcrumb } from "antd";
+import { Pagination } from "@/components/common";
 import {
-  ApprovalHeader,
-  ApprovalFilters,
-  ApprovalTable,
-  ApprovalMobileCards,
-  getComponentInfo,
-} from "@/components/leadTechnician/approval";
+  ProposalHeader,
+  ProposalFilters,
+  ProposalTable,
+  STATUS_CONFIG,
+  filterProposals,
+  sortProposals,
+} from "@/components/leadTechnician/proposalApproval";
 
 export default function DuyetDeXuatPage() {
-  const [requests, setRequests] = useState<ReplacementRequestForList[]>(
+  const [requests, setRequests] = useState<ReplacementRequestItem[]>(
     mockReplacementProposals.map((proposal) => ({
       id: proposal.id,
-      assetCode: proposal.assetCode || "",
-      assetName: proposal.assetName || "",
-      requestedBy: proposal.proposerName,
-      unit: "Khoa CNTT", // Default unit from database
-      location: proposal.roomName || "",
-      reason: proposal.reason || "",
-      status: proposal.status as ReplacementStatus,
-      requestDate: proposal.createdAt,
-      estimatedCost: 500000, // Placeholder cost
-      description: `Đề xuất thay thế ${proposal.componentName || "linh kiện"}`,
+      requestCode: proposal.proposalCode,
+      title: `Đề xuất thay thế - ${proposal.componentName || "linh kiện"}`,
+      description: proposal.reason || "Không có mô tả",
+      components: [
+        {
+          id: proposal.id + "_comp",
+          assetId: proposal.assetCode || "",
+          assetCode: proposal.assetCode || "",
+          assetName: proposal.assetName || "",
+          componentId: proposal.id,
+          componentName: proposal.componentName || "Linh kiện không xác định",
+          componentSpecs: "",
+          roomId: "room_" + proposal.roomName,
+          roomName: proposal.roomName || "",
+          buildingName: "Nhà A",
+          machineLabel: "Máy 01",
+          reason: proposal.reason || "",
+          quantity: 1,
+        },
+      ],
+      status:
+        proposal.status === "CHỜ_ADMIN_XÁC_NHẬN"
+          ? ReplacementStatus.CHỜ_XÁC_MINH
+          : (proposal.status as ReplacementStatus),
+      createdAt: proposal.createdAt,
+      updatedAt: proposal.updatedAt,
+      createdBy: proposal.proposerName,
+      approvedBy: proposal.teamLeadApproverName,
+      unit: "Khoa CNTT",
     }))
   );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -36,7 +57,9 @@ export default function DuyetDeXuatPage() {
   const [exportCount, setExportCount] = useState(0);
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Handle actions
   const handleApprove = (requestId: string) => {
@@ -67,60 +90,14 @@ export default function DuyetDeXuatPage() {
     console.log("Rejected request:", requestId);
   };
 
-  const filteredRequests = requests
-    .filter((request) => {
-      const matchesStatus =
-        selectedStatus === "all" ||
-        (selectedStatus === "pending" &&
-          (request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
-            request.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT)) ||
-        (selectedStatus === "approved" &&
-          request.status === ReplacementStatus.ĐÃ_DUYỆT) ||
-        (selectedStatus === "rejected" &&
-          request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI);
-      const matchesSearch =
-        searchTerm === "" ||
-        request.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.requestedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        getComponentInfo()
-          .componentName.toLowerCase()
-          .includes(searchTerm.toLowerCase());
+  // Use helper functions
+  const filteredData = filterProposals(requests, selectedStatus, searchTerm);
+  const sortedData = sortProposals(filteredData, sortField, sortDirection);
 
-      return matchesStatus && matchesSearch;
-    })
-    .sort((a, b) => {
-      // Chỉ sắp xếp khi có sortField được chọn
-      if (!sortField) return 0;
-
-      let aValue: string | number | Date;
-      let bValue: string | number | Date;
-
-      // Handle component name sorting
-      if (sortField === "componentName") {
-        aValue = getComponentInfo().componentName.toLowerCase();
-        bValue = getComponentInfo().componentName.toLowerCase();
-      } else {
-        aValue = a[sortField as keyof ReplacementRequestForList];
-        bValue = b[sortField as keyof ReplacementRequestForList];
-      }
-
-      // Handle date sorting
-      if (sortField === "requestDate") {
-        aValue = new Date(aValue as string).getTime();
-        bValue = new Date(bValue as string).getTime();
-      }
-
-      // Handle string sorting
-      if (typeof aValue === "string") {
-        aValue = aValue.toLowerCase();
-        bValue = (bValue as string).toLowerCase();
-      }
-
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
+  // Pagination
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = sortedData.slice(startIndex, endIndex);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -138,30 +115,29 @@ export default function DuyetDeXuatPage() {
   };
 
   // Xử lý checkbox
-  const handleSelectItem = (itemId: string) => {
-    setSelectedItems((prev) => {
-      const newSelected = prev.includes(itemId)
-        ? prev.filter((id) => id !== itemId)
-        : [...prev, itemId];
-
+  const handleRowSelect = (itemId: string, checked: boolean) => {
+    setSelectedRowKeys((prev) => {
+      const newSelected = checked
+        ? [...prev, itemId]
+        : prev.filter((id) => id !== itemId);
       return newSelected;
     });
   };
 
-  const handleSelectAll = () => {
-    if (selectedItems.length === filteredRequests.length) {
-      setSelectedItems([]);
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedRowKeys(paginatedData.map((req) => req.id));
     } else {
-      setSelectedItems(filteredRequests.map((req) => req.id));
+      setSelectedRowKeys([]);
     }
   };
 
   // Xử lý xuất Excel
   const handleExportExcel = () => {
     const itemsToExport =
-      selectedItems.length > 0
-        ? filteredRequests.filter((req) => selectedItems.includes(req.id))
-        : filteredRequests;
+      selectedRowKeys.length > 0
+        ? sortedData.filter((req) => selectedRowKeys.includes(req.id))
+        : sortedData;
 
     if (itemsToExport.length === 0) {
       setShowExportErrorModal(true);
@@ -169,22 +145,12 @@ export default function DuyetDeXuatPage() {
     }
 
     console.log("Xuất Excel:", itemsToExport);
-    // TODO: Implement actual Excel export logic
     setExportCount(itemsToExport.length);
     setShowExportSuccessModal(true);
   };
 
-  // Lấy các đề xuất đã được duyệt
-  const getApprovedRequests = () => {
-    return requests.filter(
-      (request) => request.status === ReplacementStatus.ĐÃ_DUYỆT
-    );
-  };
-
-  const approvedRequests = getApprovedRequests();
-
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 ">
+    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4">
       <div className="mb-2">
         <Breadcrumb
           items={[
@@ -207,60 +173,49 @@ export default function DuyetDeXuatPage() {
         />
       </div>
 
-      {/* Header */}
-      <ApprovalHeader
-        approvedRequestsCount={approvedRequests.length}
-        selectedItemsCount={selectedItems.length}
-        filteredRequestsCount={filteredRequests.length}
+      {/* Header với thống kê */}
+      <ProposalHeader
+        totalCount={sortedData.length}
+        selectedCount={selectedRowKeys.length}
         onExportExcel={handleExportExcel}
       />
 
       {/* Filters */}
-      <ApprovalFilters
+      <ProposalFilters
         searchTerm={searchTerm}
         selectedStatus={selectedStatus}
         onSearchChange={setSearchTerm}
         onStatusChange={setSelectedStatus}
       />
 
-      {/* Table and Mobile View Container */}
-      <div className="bg-white shadow rounded-lg overflow-hidden h-[400px] sm:h-[500px] lg:h-[600px] flex flex-col">
-        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base sm:text-lg font-medium text-gray-900">
-              Danh sách đề xuất ({filteredRequests.length})
-            </h2>
-            {selectedItems.length > 0 && (
-              <div className="text-xs sm:text-sm text-blue-600 font-medium">
-                Đã chọn: {selectedItems.length} mục
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Table */}
+      <ProposalTable
+        paginatedData={paginatedData}
+        selectedRowKeys={selectedRowKeys}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        statusConfig={STATUS_CONFIG}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSelectAll={handleSelectAll}
+        onRowSelect={handleRowSelect}
+        onSort={handleSort}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
 
-        <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-          {/* Mobile Card View */}
-          <ApprovalMobileCards
-            filteredRequests={filteredRequests}
-            selectedItems={selectedItems}
-            onSelectItem={handleSelectItem}
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
-
-          {/* Desktop Table View */}
-          <ApprovalTable
-            filteredRequests={filteredRequests}
-            selectedItems={selectedItems}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSelectItem={handleSelectItem}
-            onSelectAll={handleSelectAll}
-            onSort={handleSort}
-            onApprove={handleApprove}
-            onReject={handleReject}
-          />
-        </div>
+      <div className="mt-4">
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={sortedData.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          showSizeChanger={true}
+          pageSizeOptions={[10, 20, 50, 100]}
+          showQuickJumper={true}
+          showTotal={true}
+        />
       </div>
 
       {/* Success Modals */}

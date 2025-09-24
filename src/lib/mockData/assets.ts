@@ -5,6 +5,17 @@ import {
   AssetShape,
   AssetStatus,
 } from "@/types";
+import {
+  CheckCircle,
+  Clock,
+  XCircle,
+  Search,
+  FileText,
+  Archive,
+  Monitor,
+  Printer,
+  FileSpreadsheet,
+} from "lucide-react";
 
 // Simple assets for forms (backward compatibility) - Synchronized with database-sync.json
 export const mockAssets: Asset[] = [
@@ -360,3 +371,49 @@ export const comprehensiveAssets: ComprehensiveAsset[] = [
     updatedAt: "2024-08-10T11:30:00Z",
   },
 ];
+
+// Asset status configuration for UI display
+export const assetStatusConfig = {
+  [AssetStatus.DANG_SU_DUNG]: {
+    label: "Đang sử dụng",
+    color: "bg-green-50 text-green-700 border-green-200",
+    icon: CheckCircle,
+  },
+  [AssetStatus.CHO_BAN_GIAO]: {
+    label: "Chờ bàn giao",
+    color: "bg-blue-50 text-blue-700 border-blue-200",
+    icon: Clock,
+  },
+  [AssetStatus.CHO_TIEP_NHAN]: {
+    label: "Chờ tiếp nhận",
+    color: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    icon: Clock,
+  },
+  [AssetStatus.HU_HONG]: {
+    label: "Hư hỏng",
+    color: "bg-red-50 text-red-700 border-red-200",
+    icon: XCircle,
+  },
+  [AssetStatus.DA_MAT]: {
+    label: "Đã mất",
+    color: "bg-gray-50 text-gray-700 border-gray-200",
+    icon: Search,
+  },
+  [AssetStatus.DE_XUAT_THANH_LY]: {
+    label: "Đề xuất thanh lý",
+    color: "bg-orange-50 text-orange-700 border-orange-200",
+    icon: FileText,
+  },
+  [AssetStatus.DA_THANH_LY]: {
+    label: "Đã thanh lý",
+    color: "bg-gray-50 text-gray-700 border-gray-200",
+    icon: Archive,
+  },
+};
+
+// Category icons configuration for UI display
+export const categoryIcons = {
+  "Máy tính": Monitor,
+  "Máy in": Printer,
+  "Thiết bị văn phòng": FileSpreadsheet,
+};

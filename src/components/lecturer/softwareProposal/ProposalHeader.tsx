@@ -20,7 +20,7 @@ const ProposalHeader: React.FC<ProposalHeaderProps> = ({
           <h1 className="text-2xl font-bold text-gray-900">
             {isEditMode
               ? "Chỉnh sửa đề xuất phần mềm"
-              : "Đề xuất cài đặt phần mềm"}
+              : "Đề xuất phần mềm"}
           </h1>
           <p className="text-gray-600">
             {isEditMode

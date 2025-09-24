@@ -20,7 +20,9 @@ export default function DanhSachBaoLoiPage() {
   const [selectedErrorType, setSelectedErrorType] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<string>("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">("none");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
+    "none"
+  );
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,18 +37,34 @@ export default function DanhSachBaoLoiPage() {
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
 
-  // Inject CSS vào head để xử lý scrollbar cho toàn trang
+  // Inject CSS vào head để tắt scrollbar và tối ưu diện tích màn hình
   useEffect(() => {
     const style = document.createElement("style");
     style.textContent = `
       html {
-        overflow-y: scroll;
-        scrollbar-gutter: stable;
+        overflow-y: auto;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+      }
+      
+      html::-webkit-scrollbar {
+        display: none; /* Chrome, Safari and Opera */
+        width: 0px;
+        background: transparent;
       }
       
       body {
         min-height: 100vh;
         overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      
+      body::-webkit-scrollbar {
+        display: none;
+        width: 0px;
+        background: transparent;
       }
       
       .main-content {
@@ -54,12 +72,19 @@ export default function DanhSachBaoLoiPage() {
         width: 100vw;
         max-width: 100%;
         box-sizing: border-box;
+        overflow-x: hidden;
       }
       
-      /* Cố định width để tránh nhảy khi scrollbar xuất hiện/biến mất */
+      /* Ẩn scrollbar cho tất cả các container */
       .table-container {
-        overflow-y: scroll;
-        scrollbar-gutter: stable;
+        overflow-y: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      
+      .table-container::-webkit-scrollbar {
+        display: none;
+        width: 0px;
       }
       
       .container {
@@ -67,12 +92,26 @@ export default function DanhSachBaoLoiPage() {
         max-width: none !important;
         margin-left: auto !important;
         margin-right: auto !important;
+        overflow-x: hidden;
       }
       
       /* Cố định layout cho filter section */
       .filter-section {
         position: relative;
         width: 100%;
+        overflow-x: hidden;
+      }
+      
+      /* Ẩn scrollbar cho tất cả elements */
+      * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      
+      *::-webkit-scrollbar {
+        display: none;
+        width: 0px;
+        background: transparent;
       }
     `;
     document.head.appendChild(style);
@@ -108,9 +147,15 @@ export default function DanhSachBaoLoiPage() {
       request.errorTypeName === selectedErrorType;
     const matchesSearch =
       searchTerm === "" ||
-      request.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.requestCode.toLowerCase().includes(searchTerm.toLowerCase());
+      (request.assetCode ?? "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (request.assetName ?? "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (request.requestCode ?? "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
     return matchesStatus && matchesErrorType && matchesSearch;
   });
@@ -124,16 +169,16 @@ export default function DanhSachBaoLoiPage() {
 
     switch (sortField) {
       case "requestCode":
-        aValue = a.requestCode;
-        bValue = b.requestCode;
+        aValue = a.requestCode ?? "";
+        bValue = b.requestCode ?? "";
         break;
       case "assetCode":
-        aValue = a.assetCode;
-        bValue = b.assetCode;
+        aValue = a.assetCode ?? "";
+        bValue = b.assetCode ?? "";
         break;
       case "reporterName":
-        aValue = a.reporterName;
-        bValue = b.reporterName;
+        aValue = a.reporterName ?? "";
+        bValue = b.reporterName ?? "";
         break;
       case "errorTypeName":
         aValue = a.errorTypeName || "";
@@ -200,7 +245,9 @@ export default function DanhSachBaoLoiPage() {
 
   // View details handler
   const handleViewDetails = (requestId: string) => {
-    router.push(`/to-truong-ky-thuat/danh-sach-bao-loi/chi-tiet?id=${requestId}`);
+    router.push(
+      `/to-truong-ky-thuat/danh-sach-bao-loi/chi-tiet?id=${requestId}`
+    );
   };
 
   // Reset pagination when changing filters or search

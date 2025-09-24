@@ -63,6 +63,17 @@ export default function DetailHeader({
                 </button>
               </div>
             )}
+          {/* Show info message when user cannot edit */}
+          {!showActionButtons && request.status === "CHỜ_TIẾP_NHẬN" && (
+            <div className="text-sm text-gray-500 italic">
+              Chỉ giảng viên hoặc QTV khoa tạo yêu cầu mới có thể chỉnh sửa
+            </div>
+          )}
+          {showActionButtons && request.status !== "CHỜ_TIẾP_NHẬN" && (
+            <div className="text-sm text-gray-500 italic">
+              Chỉ có thể chỉnh sửa khi ở trạng thái &ldquo;Chờ tiếp nhận&rdquo;
+            </div>
+          )}
           {/* Status badge */}
           <div
             className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium border ${
