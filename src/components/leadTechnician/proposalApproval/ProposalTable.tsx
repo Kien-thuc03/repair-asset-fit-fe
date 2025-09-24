@@ -142,7 +142,7 @@ export default function ProposalTable({
               onSort={onSort}>
               Ngày tạo
             </ProposalSortableHeader>
-            <th className="px-4 py-3 text-left text-xs uppercase font-medium text-gray-500 tracking-wider">
+            <th className="px-4 py-3 text-center text-xs uppercase font-medium text-gray-500 tracking-wider">
               Thao tác
             </th>
           </tr>
@@ -191,7 +191,7 @@ export default function ProposalTable({
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                   {new Date(record.createdAt).toLocaleDateString("vi-VN")}
                 </td>
-                <td className="px-4 py-3 items-center whitespace-nowrap text-right text-sm space-x-2">
+                <td className="px-4 py-3 items-center whitespace-nowrap text-center text-sm space-x-2">
                   <Link
                     href={`/to-truong-ky-thuat/duyet-de-xuat/chi-tiet/${record.id}`}>
                     <button
