@@ -6,7 +6,7 @@ export const users = [
     id: "user-1",
     username: "qtv", // Tài khoản đăng nhập
     password: "qtv123",
-    fullName: "Quản trị viên Khoa",
+    fullName: "Lê Minh Quản",
     email: "qtv@iuh.edu.vn",
     unitId: "unit-1", // Khoa CNTT
     phoneNumber: "0901234001",
@@ -20,7 +20,7 @@ export const users = [
     id: "user-2",
     username: "quantri",
     password: "quantri123",
-    fullName: "Nhân viên Phòng Quản trị",
+    fullName: "Phạm Văn Trị",
     email: "quantri@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị
     phoneNumber: "0901234002",
@@ -34,7 +34,7 @@ export const users = [
     id: "user-3",
     username: "totruong",
     password: "totruong123",
-    fullName: "Tổ trưởng Kỹ thuật",
+    fullName: "Hoàng Đức Trưởng",
     email: "totruong@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
     phoneNumber: "0901234003",
@@ -48,7 +48,7 @@ export const users = [
     id: "user-4",
     username: "kythuat",
     password: "kythuat123",
-    fullName: "Kỹ thuật viên",
+    fullName: "Nguyễn Văn Hỗ",
     email: "kythuat@iuh.edu.vn",
     unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
     phoneNumber: "0901234004",
@@ -62,7 +62,7 @@ export const users = [
     id: "user-5",
     username: "giangvien",
     password: "giangvien123",
-    fullName: "Giảng viên",
+    fullName: "Nguyễn Thị Hạnh",
     email: "giangvien@iuh.edu.vn",
     unitId: "unit-1", // Khoa CNTT
     phoneNumber: "0901234005",
@@ -76,7 +76,7 @@ export const users = [
     id: "user-6",
     username: "gvqtv",
     password: "gvqtv123",
-    fullName: "Giảng viên kiêm QTV",
+    fullName: "Đỗ Thị Mai",
     email: "gv_qtv@iuh.edu.vn",
     unitId: "unit-1", // Khoa CNTT
     phoneNumber: "0901234006",
@@ -90,7 +90,7 @@ export const users = [
     id: "user-7",
     username: "kehoach",
     password: "kehoach123",
-    fullName: "Trưởng phòng Kế hoạch Đầu tư",
+    fullName: "Vũ Minh Hoạch",
     email: "kehoach@iuh.edu.vn",
     unitId: "unit-3", // Phòng Kế hoạch Đầu tư
     phoneNumber: "0901234007",

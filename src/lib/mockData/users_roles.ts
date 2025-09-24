@@ -14,8 +14,8 @@ export const users_roles: UserRole[] = [
   // Tổ trưởng Kỹ thuật
   { userId: "user-3", roleId: "role-3" },
 
-  // Kỹ thuật viên
-  { userId: "user-4", roleId: "role-2" },
+  // Nhân viên hỗ trợ
+  { userId: "user-4", roleId: "role-4" },
 
   // Giảng viên
   { userId: "user-5", roleId: "role-1" },
