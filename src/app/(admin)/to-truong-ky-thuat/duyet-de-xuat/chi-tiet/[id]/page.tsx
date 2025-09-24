@@ -1,28 +1,32 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Breadcrumb } from "antd";
+import { useParams } from "next/navigation";
 import {
-  ArrowLeft,
-  User,
-  Calendar,
-  MapPin,
+  Breadcrumb,
+  Card,
+  Tag,
+  Descriptions,
+  Button,
+  Timeline,
+  Alert,
+  Table,
+} from "antd";
+import {
   Package,
-  FileText,
+  Clock,
   CheckCircle,
   XCircle,
-  Hash,
-  DollarSign,
-  Clock,
-  Info,
+  AlertTriangle,
 } from "lucide-react";
-import { mockReplacementRequests } from "@/lib/mockData/replacementRequests";
-import { ReplacementStatus } from "@/types";
+import {
+  mockReplacementProposals,
+  mockReplacementItems,
+  ReplacementItem,
+} from "@/lib/mockData/replacementProposals";
 
 export default function ChiTietDuyetDeXuatPage() {
   const params = useParams();
-  const router = useRouter();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
   // State for actions
@@ -31,60 +35,131 @@ export default function ChiTietDuyetDeXuatPage() {
   const [rejectReason, setRejectReason] = useState("");
 
   const request = useMemo(
-    () => mockReplacementRequests.find((r) => r.id === id),
+    () => mockReplacementProposals.find((r) => r.id === id),
+    [id]
+  );
+
+  // Get replacement items for this proposal
+  const replacementItems = useMemo(
+    () => mockReplacementItems.filter((item) => item.proposalId === id),
     [id]
   );
 
   if (!request) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Không tìm thấy đề xuất
-          </h2>
-          <button
-            onClick={() => router.back()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-            Quay lại
-          </button>
-        </div>
+      <div className="space-y-4">
+        <Breadcrumb
+          items={[
+            { href: "/to-truong-ky-thuat", title: "Trang chủ" },
+            {
+              href: "/to-truong-ky-thuat/duyet-de-xuat",
+              title: "Duyệt đề xuất",
+            },
+            { title: "Chi tiết" },
+          ]}
+        />
+        <h1 className="text-2xl font-bold text-gray-900">
+          Không tìm thấy đề xuất
+        </h1>
       </div>
     );
   }
 
-  const getStatusBadge = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.CHỜ_XÁC_MINH:
-        return "bg-yellow-100 text-yellow-800";
-      case ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT:
-        return "bg-blue-100 text-blue-800";
-      case ReplacementStatus.ĐÃ_DUYỆT:
-        return "bg-green-100 text-green-800";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI:
-        return "bg-red-100 text-red-800";
-      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  // Status configuration
+  const statusConfig = {
+    CHỜ_TỔ_TRƯỞNG_DUYỆT: {
+      color: "orange",
+      text: "Chờ tổ trưởng duyệt",
+      icon: Clock,
+    },
+    CHỜ_ADMIN_XÁC_NHẬN: {
+      color: "blue",
+      text: "Chờ admin xác nhận",
+      icon: AlertTriangle,
+    },
+    ĐÃ_DUYỆT: {
+      color: "green",
+      text: "Đã duyệt",
+      icon: CheckCircle,
+    },
+    ĐÃ_TỪ_CHỐI: {
+      color: "red",
+      text: "Đã từ chối",
+      icon: XCircle,
+    },
   };
 
-  const getStatusText = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.CHỜ_XÁC_MINH:
-        return "Chờ xác minh";
-      case ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT:
-        return "Chờ tổ trưởng duyệt";
-      case ReplacementStatus.ĐÃ_DUYỆT:
-        return "Đã duyệt";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI:
-        return "Đã từ chối";
-      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
-        return "Đã hoàn tất mua sắm";
-      default:
-        return "Không xác định";
-    }
-  };
+  const currentStatus = statusConfig[request.status];
+
+  // Component columns configuration
+  const componentColumns = [
+    {
+      title: "STT",
+      key: "index",
+      width: 60,
+      render: (_: any, __: any, index: number) => index + 1,
+    },
+    {
+      title: "Tên linh kiện",
+      dataIndex: "oldComponentName",
+      key: "oldComponentName",
+      render: (text: string, record: ReplacementItem) => (
+        <div>
+          <div className="font-medium">{text}</div>
+          {record.newItemSpecs && (
+            <div className="text-sm text-gray-500">{record.newItemSpecs}</div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Linh kiện thay thế",
+      key: "newItem",
+      render: (record: ReplacementItem) => (
+        <div>
+          <div className="font-medium">{record.newItemName}</div>
+          <div className="text-sm text-gray-500">{record.newItemSpecs}</div>
+        </div>
+      ),
+    },
+    {
+      title: "Tài sản",
+      key: "asset",
+      render: () => (
+        <div>
+          <div className="font-medium">{request.assetName}</div>
+          <div className="text-sm text-gray-500">Mã: {request.assetCode}</div>
+        </div>
+      ),
+    },
+    {
+      title: "Vị trí",
+      key: "location",
+      render: () => (
+        <div>
+          <div className="font-medium">{request.roomName}</div>
+        </div>
+      ),
+    },
+    {
+      title: "Số lượng",
+      dataIndex: "quantity",
+      key: "quantity",
+      align: "center" as const,
+      width: 100,
+      render: (quantity: number) => (
+        <span className="font-medium text-blue-600">{quantity}</span>
+      ),
+    },
+    {
+      title: "Lý do thay thế",
+      dataIndex: "reason",
+      key: "reason",
+      render: (reason: string) => (
+        <div className="text-sm text-gray-700">{reason}</div>
+      ),
+    },
+  ];
 
   const handleApprove = () => {
     console.log("Approving request:", id);
@@ -104,320 +179,227 @@ export default function ChiTietDuyetDeXuatPage() {
   };
 
   const canApproveOrReject =
-    request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
-    request.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT;
+    request.status === "CHỜ_TỔ_TRƯỞNG_DUYỆT" ||
+    request.status === "CHỜ_ADMIN_XÁC_NHẬN";
+
+  // Timeline items
+  const timelineItems = [
+    {
+      color: "blue",
+      children: (
+        <div>
+          <p className="font-medium">Tạo đề xuất thay thế</p>
+          <p className="text-sm text-gray-500">
+            {new Date(request.createdAt).toLocaleString("vi-VN")}
+          </p>
+        </div>
+      ),
+    },
+    ...(request.status !== "CHỜ_TỔ_TRƯỞNG_DUYỆT"
+      ? [
+          {
+            color: request.status === "ĐÃ_TỪ_CHỐI" ? "red" : "green",
+            children: (
+              <div>
+                <p className="font-medium">
+                  {request.status === "ĐÃ_TỪ_CHỐI"
+                    ? "Từ chối đề xuất"
+                    : "Chấp thuận đề xuất"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {request.teamLeadApproverName &&
+                    `Người duyệt: ${request.teamLeadApproverName}`}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {new Date(request.updatedAt).toLocaleString("vi-VN")}
+                </p>
+              </div>
+            ),
+          },
+        ]
+      : []),
+    ...(request.status === "ĐÃ_DUYỆT"
+      ? [
+          {
+            color: "green",
+            children: (
+              <div>
+                <p className="font-medium">Hoàn tất duyệt đề xuất</p>
+                <p className="text-sm text-gray-500">
+                  Đề xuất đã được phê duyệt và chuyển đi xử lý
+                </p>
+              </div>
+            ),
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="space-y-6">
       {/* Breadcrumb */}
       <Breadcrumb
-        className="mt-0 mb-6"
         items={[
           {
+            href: "/to-truong-ky-thuat",
+            title: "Trang chủ",
+          },
+          {
+            href: "/to-truong-ky-thuat/duyet-de-xuat",
             title: (
-              <span
-                className="cursor-pointer hover:text-blue-600"
-                onClick={() => router.push("/to-truong-ky-thuat")}>
-                Tổ trưởng kỹ thuật
-              </span>
+              <div className="flex items-center gap-1">
+                <span>Duyệt đề xuất thay thế linh kiện</span>
+              </div>
             ),
           },
           {
-            title: (
-              <span
-                className="cursor-pointer hover:text-blue-600"
-                onClick={() =>
-                  router.push("/to-truong-ky-thuat/duyet-de-xuat")
-                }>
-                Duyệt đề xuất
-              </span>
-            ),
-          },
-          {
-            title: "Chi tiết đề xuất",
+            title: `Chi tiết • ${request.proposalCode}`,
           },
         ]}
       />
 
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.back()}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <ArrowLeft className="h-5 w-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Chi tiết đề xuất thay thế linh kiện
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  Mã đề xuất: {request.id}
-                </p>
-              </div>
-            </div>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(
-                request.status
-              )}`}>
-              {getStatusText(request.status)}
-            </span>
-          </div>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            Chi tiết đề xuất • {request.proposalCode}
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Thông tin chi tiết về đề xuất thay thế linh kiện
+          </p>
         </div>
-
-        {/* Action Buttons */}
-        {canApproveOrReject && (
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowApproveModal(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4" />
-                <span>Phê duyệt</span>
-              </button>
-              <button
-                onClick={() => setShowRejectModal(true)}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 flex items-center space-x-2">
-                <XCircle className="h-4 w-4" />
-                <span>Từ chối</span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
+      {/* Status Alert */}
+      {request.status === "ĐÃ_TỪ_CHỐI" && (
+        <Alert
+          message="Đề xuất đã bị từ chối"
+          description="Đề xuất này đã bị từ chối bởi tổ trưởng kỹ thuật"
+          type="error"
+          showIcon
+        />
+      )}
+
+      {request.status === "ĐÃ_DUYỆT" && (
+        <Alert
+          message="Đề xuất đã được phê duyệt"
+          description="Đề xuất này đã được phê duyệt và chuyển tiếp để xử lý."
+          type="success"
+          showIcon
+        />
+      )}
+
+      {/* Action Buttons */}
+      {canApproveOrReject && (
+        <Card className="shadow">
+          <div className="flex space-x-3">
+            <Button
+              type="primary"
+              icon={<CheckCircle className="h-4 w-4" />}
+              onClick={() => setShowApproveModal(true)}>
+              Phê duyệt
+            </Button>
+            <Button
+              danger
+              icon={<XCircle className="h-4 w-4" />}
+              onClick={() => setShowRejectModal(true)}>
+              Từ chối
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
+        {/* Main Info */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Basic Information */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Info className="h-5 w-5 mr-2 text-blue-600" />
-                Thông tin cơ bản
-              </h3>
-            </div>
-            <div className="px-6 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <User className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Người yêu cầu
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {request.requestedBy}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Ngày yêu cầu
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(request.requestDate).toLocaleDateString(
-                          "vi-VN",
-                          {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
-                      </p>
-                    </div>
-                  </div>
+          {/* Basic Info */}
+          <Card title="Thông tin cơ bản" className="shadow">
+            <Descriptions column={2} bordered>
+              <Descriptions.Item label="Mã đề xuất" span={1}>
+                <span className="font-mono font-medium text-blue-600">
+                  {request.proposalCode}
+                </span>
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái">
+                <Tag
+                  color={currentStatus.color}
+                  icon={<currentStatus.icon className="w-3 h-3" />}>
+                  {currentStatus.text}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Người đề xuất" span={1}>
+                <div className="font-medium">{request.proposerName}</div>
+              </Descriptions.Item>
+              <Descriptions.Item label="Ngày tạo" span={1}>
+                <div>
+                  {new Date(request.createdAt).toLocaleDateString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </div>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <MapPin className="h-5 w-5 text-gray-400 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Vị trí
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {request.location}
-                      </p>
-                    </div>
-                  </div>
+              </Descriptions.Item>
+              <Descriptions.Item label="Số lượng linh kiện" span={2}>
+                <span className="font-medium text-blue-600">
+                  {replacementItems.length} linh kiện
+                </span>
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
 
+          {/* Components List */}
+          <Card
+            title={`Danh sách linh kiện cần thay thế (${replacementItems.length})`}
+            className="shadow">
+            <Table
+              dataSource={replacementItems}
+              columns={componentColumns}
+              rowKey="id"
+              pagination={false}
+              size="middle"
+            />
+          </Card>
+
+          {/* File attachments */}
+          <Card title="Tài liệu đính kèm" className="shadow">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Package className="h-5 w-5 text-blue-600" />
+                  <div>
+                    <p className="font-medium">Biểu mẫu đề xuất</p>
+                    <p className="text-sm text-gray-500">PDF Document</p>
+                  </div>
                 </div>
+                <Button size="small" type="link">
+                  Xem
+                </Button>
               </div>
-            </div>
-          </div>
-
-          {/* Component Details */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Package className="h-5 w-5 mr-2 text-blue-600" />
-                Chi tiết linh kiện
-              </h3>
-            </div>
-            <div className="px-6 py-4">
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <Hash className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Mã tài sản
-                    </p>
-                    <p className="text-sm text-gray-600">{request.assetCode}</p>
+              {request.verificationReportUrl && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Package className="h-5 w-5 text-green-600" />
+                    <div>
+                      <p className="font-medium">Báo cáo xác minh</p>
+                      <p className="text-sm text-gray-500">PDF Document</p>
+                    </div>
                   </div>
+                  <Button size="small" type="link">
+                    Xem
+                  </Button>
                 </div>
-                <div className="flex items-start space-x-3">
-                  <Package className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Tên linh kiện
-                    </p>
-                    <p className="text-sm text-gray-600">{request.assetName}</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <FileText className="h-5 w-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Lý do thay thế
-                    </p>
-                    <p className="text-sm text-gray-600">{request.reason}</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
-          </div>
-
-          {/* Description */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                Mô tả
-              </h3>
-            </div>
-            <div className="px-6 py-4">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                {request.description || "Không có mô tả"}
-              </p>
-            </div>
-          </div>
+          </Card>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Status Timeline */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-blue-600" />
-                Trạng thái
-              </h3>
-            </div>
-            <div className="px-6 py-4">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="flex-shrink-0">
-                    <div
-                      className={`w-3 h-3 rounded-full ${
-                        request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
-                        request.status ===
-                          ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT ||
-                        request.status === ReplacementStatus.ĐÃ_DUYỆT ||
-                        request.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
-                          ? "bg-green-500"
-                          : "bg-gray-300"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Đề xuất đã được tạo
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(request.requestDate).toLocaleDateString(
-                        "vi-VN"
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {request.status !== ReplacementStatus.CHỜ_XÁC_MINH && (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div
-                        className={`w-3 h-3 rounded-full ${
-                          request.status ===
-                            ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT ||
-                          request.status === ReplacementStatus.ĐÃ_DUYỆT ||
-                          request.status ===
-                            ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
-                            ? "bg-green-500"
-                            : request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI
-                            ? "bg-red-500"
-                            : "bg-gray-300"
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Đã xác minh
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {(request.status === ReplacementStatus.ĐÃ_DUYỆT ||
-                  request.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM) && (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-3 h-3 rounded-full bg-green-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Đã phê duyệt
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI && (
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-3 h-3 rounded-full bg-red-500" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Đã từ chối
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Thao tác nhanh
-              </h3>
-            </div>
-            <div className="px-6 py-4 space-y-3">
-              <button
-                onClick={() => router.back()}
-                className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 flex items-center justify-center space-x-2">
-                <ArrowLeft className="h-4 w-4" />
-                <span>Quay lại danh sách</span>
-              </button>
-            </div>
-          </div>
+        {/* Timeline */}
+        <div className="lg:col-span-1">
+          <Card title="Tiến trình xử lý" className="shadow">
+            <Timeline items={timelineItems} />
+          </Card>
         </div>
       </div>
 
@@ -432,16 +414,14 @@ export default function ChiTietDuyetDeXuatPage() {
               Bạn có chắc chắn muốn phê duyệt đề xuất này không?
             </p>
             <div className="flex space-x-3">
-              <button
-                onClick={handleApprove}
-                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+              <Button type="primary" onClick={handleApprove} className="flex-1">
                 Phê duyệt
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setShowApproveModal(false)}
-                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">
+                className="flex-1">
                 Hủy
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -462,19 +442,17 @@ export default function ChiTietDuyetDeXuatPage() {
               className="w-full p-3 border border-gray-300 rounded-md mb-6 h-24 resize-none"
             />
             <div className="flex space-x-3">
-              <button
-                onClick={handleReject}
-                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
+              <Button danger onClick={handleReject} className="flex-1">
                 Từ chối
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => {
                   setShowRejectModal(false);
                   setRejectReason("");
                 }}
-                className="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">
+                className="flex-1">
                 Hủy
-              </button>
+              </Button>
             </div>
           </div>
         </div>
