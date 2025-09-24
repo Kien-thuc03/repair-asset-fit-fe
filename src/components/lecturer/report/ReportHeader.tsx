@@ -16,7 +16,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ isEditMode }) => {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {isEditMode ? "Chỉnh sửa báo cáo lỗi" : "Báo cáo lỗi thiết bị"}
+            {isEditMode ? "Chỉnh sửa báo cáo lỗi" : "Quản lý báo lỗi"}
           </h1>
           <p className="text-gray-600">
             {isEditMode
