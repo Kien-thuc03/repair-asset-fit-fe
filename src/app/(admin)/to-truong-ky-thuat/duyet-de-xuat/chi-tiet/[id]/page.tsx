@@ -97,7 +97,7 @@ export default function ChiTietDuyetDeXuatPage() {
       title: "STT",
       key: "index",
       width: 60,
-      render: (_: any, __: any, index: number) => index + 1,
+      render: (_: unknown, __: unknown, index: number) => index + 1,
     },
     {
       title: "Tên linh kiện",
