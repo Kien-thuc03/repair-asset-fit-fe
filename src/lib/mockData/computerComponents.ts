@@ -197,6 +197,17 @@ export const mockComputerComponents: ComputerComponent[] = [
     installedAt: "2023-02-10T08:30:00Z",
     notes: "11th gen Intel processor",
   },
+  {
+    id: "CC041",
+    computerAssetId: "ASSET004",
+    componentType: "MONITOR" as ComponentType,
+    name: "Lenovo ThinkVision E24-20",
+    componentSpecs: "24 inch 1920x1080 IPS",
+    serialNumber: "MON004",
+    status: "FAULTY" as ComponentStatus,
+    installedAt: "2023-02-10T08:30:00Z",
+    notes: "Monitor not displaying, completely faulty",
+  },
 
   // ASSET005 Components
   {
