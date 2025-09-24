@@ -1,6 +1,11 @@
 // Export all mock data from a central location - Synchronized with database-sync.json
 export { errorTypes, type ErrorType } from "./errorTypes";
-export { mockAssets, comprehensiveAssets } from "./assets";
+export {
+  mockAssets,
+  comprehensiveAssets,
+  assetStatusConfig,
+  categoryIcons,
+} from "./assets";
 export { mockComputers, type Computer } from "./computers";
 export {
   mockComputerComponents,

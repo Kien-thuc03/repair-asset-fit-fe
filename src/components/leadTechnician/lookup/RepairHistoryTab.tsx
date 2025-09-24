@@ -13,7 +13,7 @@ interface RepairHistory {
   status: string;
   errorType: string;
   description: string;
-  solution: string;
+  solution?: string; // Made optional to match RepairHistoryItem
   reportDate: string;
   completedDate?: string;
   technicianName: string;
@@ -103,12 +103,18 @@ export default function RepairHistoryTab({
                     </p>
                   </div>
 
-                  <h6 className="font-medium text-gray-900 mb-3 mt-4">
-                    Giải pháp:
-                  </h6>
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-700">{repair.solution}</p>
-                  </div>
+                  {repair.solution && (
+                    <>
+                      <h6 className="font-medium text-gray-900 mb-3 mt-4">
+                        Giải pháp:
+                      </h6>
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <p className="text-sm text-gray-700">
+                          {repair.solution}
+                        </p>
+                      </div>
+                    </>
+                  )}
 
                   <div className="mt-4 flex items-center space-x-2 text-sm text-gray-600">
                     <User className="w-4 h-4" />

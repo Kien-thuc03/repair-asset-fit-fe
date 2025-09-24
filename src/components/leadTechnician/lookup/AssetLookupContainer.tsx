@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Asset } from "@/types";
-import { mockAssetsLookup } from "@/lib/mockData";
+import { Asset, ComprehensiveAsset } from "@/types";
+import { comprehensiveAssets, mockRooms, categories } from "@/lib/mockData";
 import { Breadcrumb } from "antd";
 import Pagination from "@/components/common/Pagination";
 import AssetLookupHeader from "./AssetLookupHeader";
@@ -10,11 +10,34 @@ import AssetStatsCards from "./AssetStatsCards";
 import AssetFilters from "./AssetFilters";
 import AssetGrid from "./AssetGrid";
 
+// Helper function to convert ComprehensiveAsset to Asset
+const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
+  const room = mockRooms.find((r) => r.id === comprehensive.currentRoomId);
+  const category = categories.find((c) => c.id === comprehensive.categoryId);
+
+  return {
+    id: comprehensive.id,
+    assetCode: comprehensive.ktCode,
+    name: comprehensive.name,
+    category: category?.name || "Không xác định",
+    model: comprehensive.specs || "Không có thông số",
+    serialNumber: comprehensive.fixedCode,
+    roomId: comprehensive.currentRoomId || "",
+    roomName: room?.roomNumber || "Không xác định",
+    status: comprehensive.status,
+    purchaseDate: comprehensive.entryDate,
+    warrantyExpiry: "2025-12-31", // Default warranty
+    qrCode: `QR_${comprehensive.ktCode}`,
+  };
+};
+
 export default function AssetLookupContainer() {
   const router = useRouter();
-  const [assets] = useState<Asset[]>(mockAssetsLookup);
+  // Convert comprehensive assets to Asset format
+  const convertedAssets = comprehensiveAssets.map(convertToAsset);
+  const [assets] = useState<Asset[]>(convertedAssets);
   const [filteredAssets, setFilteredAssets] =
-    useState<Asset[]>(mockAssetsLookup);
+    useState<Asset[]>(convertedAssets);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [floorFilter, setFloorFilter] = useState<string>("all");
@@ -62,7 +85,9 @@ export default function AssetLookupContainer() {
   // Simulate QR scan for demo
   const simulateQRScan = () => {
     const randomAsset = assets[Math.floor(Math.random() * assets.length)];
-    router.push(`/to-truong-ky-thuat/tra-cuu-tai-san/chi-tiet/${randomAsset.id}`);
+    router.push(
+      `/to-truong-ky-thuat/tra-cuu-tai-san/chi-tiet/${randomAsset.id}`
+    );
   };
 
   // Handle view detail
