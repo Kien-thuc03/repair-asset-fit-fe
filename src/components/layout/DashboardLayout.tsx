@@ -124,14 +124,9 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: FileCheck,
         children: [
           {
-            name: "Danh sách đề xuất phần cứng",
+            name: "Danh sách đề xuất",
             href: "/to-truong-ky-thuat/duyet-de-xuat",
             icon: FileCheck,
-          },
-          {
-            name: "Danh sách đề xuất phần mềm",
-            href: "/to-truong-ky-thuat/danh-sach-de-xuat-phan-mem",
-            icon: FolderCode,
           },
           {
             name: "Quản lý tờ trình",

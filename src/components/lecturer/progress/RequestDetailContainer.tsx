@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { XCircle, ArrowLeft } from "lucide-react";
-import { RepairRequest, RepairRequestWithDetails, UserRole } from "@/types";
+import {
+  RepairRequest,
+  RepairRequestWithDetails,
+  UserRole,
+  RepairStatus,
+} from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import DetailHeader from "./DetailHeader";
 import RequestInfo from "./RequestInfo";
@@ -34,10 +39,34 @@ export default function RequestDetailContainer({
   const canEditRequest = () => {
     if (!user) return false;
 
-    // Only GIANG_VIEN (lecturer) can edit their own requests
-    // TO_TRUONG_KY_THUAT (lead technician) can only view
+    console.log("=== canEditRequest Debug ===");
+    console.log("Current user:", user);
+    console.log("User active role:", user.activeRole);
+    console.log("Request reporter ID:", request?.reporterId);
+    console.log("User ID:", user.id);
+    console.log("Request status:", request?.status);
+    console.log("Is GIANG_VIEN:", user.activeRole === UserRole.GIANG_VIEN);
+    console.log("Is QTV_KHOA:", user.activeRole === UserRole.QTV_KHOA);
+    console.log("Is own request:", request?.reporterId === user.id);
+    console.log(
+      "Is CHỜ_TIẾP_NHẬN:",
+      request?.status === RepairStatus.CHỜ_TIẾP_NHẬN
+    );
+    console.log(
+      "Final can edit result:",
+      (user.activeRole === UserRole.GIANG_VIEN ||
+        user.activeRole === UserRole.QTV_KHOA) &&
+        request?.reporterId === user.id &&
+        request?.status === RepairStatus.CHỜ_TIẾP_NHẬN
+    );
+    console.log("=== End Debug ===");
+
+    // GIANG_VIEN (lecturer) and QTV_KHOA can only edit their own requests and only when pending
     return (
-      user.activeRole === UserRole.GIANG_VIEN && request?.reporterId === user.id
+      (user.activeRole === UserRole.GIANG_VIEN ||
+        user.activeRole === UserRole.QTV_KHOA) &&
+      request?.reporterId === user.id &&
+      request?.status === RepairStatus.CHỜ_TIẾP_NHẬN
     );
   };
 
