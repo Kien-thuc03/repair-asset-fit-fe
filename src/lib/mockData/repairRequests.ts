@@ -10,10 +10,10 @@ export const mockRepairRequests: RepairRequest[] = [
     assetCode: "19-0205/01",
     assetName: "PC Dell OptiPlex 3080",
     reporterId: "user-5",
-    reporterName: "Nguyễn Thị Hạnh",
+    reporterName: "Giảng viên",
     reporterRole: "Giảng viên",
-    assignedTechnicianId: "user-8",
-    assignedTechnicianName: "Anh Tuấn",
+    assignedTechnicianId: "user-4",
+    assignedTechnicianName: "Kỹ thuật viên",
     roomName: "H101",
     machineLabel: "01",
     buildingName: "Tòa H",
@@ -37,20 +37,11 @@ export const mockRepairRequests: RepairRequest[] = [
     computerAssetId: "ASSET002",
     assetCode: "19-0205/02",
     assetName: "PC Dell OptiPlex 3080",
-<<<<<<< HEAD
     reporterId: "user-5",
     reporterName: "Giảng viên",
     reporterRole: "Giảng viên",
     assignedTechnicianId: "user-4",
     assignedTechnicianName: "Kỹ thuật viên",
-=======
-    machineLabel: "02",
-    reporterId: "user-8",
-    reporterName: "Anh Tuấn",
-    reporterRole: "Kỹ thuật viên",
-    assignedTechnicianId: "user-9",
-    assignedTechnicianName: "Văn Đạt",
->>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
     roomName: "H101",
     machineLabel: "02",
     buildingName: "Tòa H",
@@ -62,43 +53,10 @@ export const mockRepairRequests: RepairRequest[] = [
     ],
     status: RepairStatus.ĐANG_XỬ_LÝ,
     resolutionNotes: "Đã kiểm tra SSD, đang chờ linh kiện mới",
-<<<<<<< HEAD
     createdAt: "2024-01-14T07:15:00.000Z",
     acceptedAt: "2024-01-14T08:00:00.000Z",
     completedAt: undefined,
     unit: "Khoa Công nghệ Thông tin"
-=======
-    createdAt: "2024-01-14T14:15:00Z",
-    acceptedAt: "2024-01-14T15:00:00Z",
-    completedAt: "",
-    unit: "Khoa Công nghệ Thông tin",
-  },
-  {
-    id: "req-003",
-    requestCode: "YCSC-2024-003",
-    computerAssetId: "ASSET003",
-    assetCode: "19-0206/01",
-    assetName: "PC HP ProDesk 400",
-    machineLabel: "03",
-    reporterId: "user-9",
-    reporterName: "Văn Đạt",
-    reporterRole: "Kỹ thuật viên",
-    assignedTechnicianId: "user-8",
-    assignedTechnicianName: "Anh Tuấn",
-    roomName: "H102",
-    buildingName: "Tòa H",
-    errorTypeId: "ET007",
-    errorTypeName: "Máy hư màn hình",
-    description:
-      "Màn hình HP P22v G4 bị nhấp nháy và có đường kẻ, không thể sử dụng được",
-    mediaUrls: [],
-    status: RepairStatus.ĐÃ_HOÀN_THÀNH,
-    resolutionNotes: "Đã thay màn hình mới HP P22v G4, kiểm tra hoạt động tốt",
-    createdAt: "2024-01-12T09:00:00Z",
-    acceptedAt: "2024-01-12T10:00:00Z",
-    completedAt: "2024-01-13T16:00:00Z",
-    unit: "Khoa Công nghệ Thông tin",
->>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
   },
   {
     id: "req-004",
@@ -106,20 +64,11 @@ export const mockRepairRequests: RepairRequest[] = [
     computerAssetId: "ASSET004",
     assetCode: "19-0207/01",
     assetName: "PC Lenovo ThinkCentre",
-<<<<<<< HEAD
     reporterId: "user-5",
     reporterName: "Giảng viên",
     reporterRole: "Giảng viên",
     assignedTechnicianId: "user-8",
     assignedTechnicianName: "Anh Tuấn",
-=======
-    machineLabel: "01",
-    reporterId: "user-8",
-    reporterName: "Anh Tuấn",
-    reporterRole: "Kỹ thuật viên",
-    assignedTechnicianId: "user-9",
-    assignedTechnicianName: "Văn Đạt",
->>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
     roomName: "H102",
     machineLabel: "01",
     buildingName: "Tòa H",
@@ -147,7 +96,6 @@ export const mockRepairRequests: RepairRequest[] = [
     assignedTechnicianName: "Văn Đạt",
     roomName: "H102",
     machineLabel: "02",
-<<<<<<< HEAD
     buildingName: "Tòa H",
     errorTypeId: "ET008",
     errorTypeName: "Máy mất chuột",
@@ -250,14 +198,6 @@ export const mockRepairRequests: RepairRequest[] = [
     assignedTechnicianName: "Kỹ thuật viên",
     roomName: "H104",
     machineLabel: "05",
-=======
-    reporterId: "user-9",
-    reporterName: "Văn Đạt",
-    reporterRole: "Kỹ thuật viên",
-    assignedTechnicianId: "user-8",
-    assignedTechnicianName: "Anh Tuấn",
-    roomName: "H102",
->>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
     buildingName: "Tòa H",
     errorTypeId: "ET001",
     errorTypeName: "Máy không khởi động",
@@ -286,7 +226,6 @@ export const repairRequestStatusConfig = {
     textColor: 'text-yellow-800',
     borderColor: 'border-yellow-200'
   },
-<<<<<<< HEAD
   [RepairStatus.ĐÃ_TIẾP_NHẬN]: {
     label: 'Đã tiếp nhận',
     color: 'border-blue-200 text-blue-800 bg-blue-50',
@@ -294,44 +233,6 @@ export const repairRequestStatusConfig = {
     bgColor: 'bg-blue-50',
     textColor: 'text-blue-800',
     borderColor: 'border-blue-200'
-=======
-  {
-    id: "req-006",
-    requestCode: "YCSC-2025-0006",
-    computerAssetId: "ASSET006",
-    assetCode: "PC-A102-03",
-    assetName: "PC AMD Ryzen",
-    machineLabel: "03",
-    reporterId: "user-6",
-    reporterName: "Đỗ Thị Mai",
-    reporterRole: "Quản trị viên Khoa",
-    assignedTechnicianId: "user-9",
-    assignedTechnicianName: "Văn Đạt",
-    roomName: "H102",
-    buildingName: "Tòa H",
-    errorTypeId: "ET006",
-    errorTypeName: "Máy không kết nối mạng",
-    description:
-      "Không thể kết nối internet, card mạng không được nhận dạng, cần kiểm tra driver và cáp mạng",
-    mediaUrls: [
-      "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop",
-    ],
-    status: RepairStatus.CHỜ_TIẾP_NHẬN,
-    resolutionNotes: "",
-    createdAt: "2024-01-17T09:15:00",
-    acceptedAt: "",
-    completedAt: "",
-    unit: "Khoa Công nghệ Thông tin",
-  },
-];
-
-// Data for repair request components (bảng trung gian many-to-many) - Synchronized with database-sync.json
-export const mockRepairRequestComponents: RepairRequestComponent[] = [
-  {
-    repairRequestId: "req-001",
-    componentId: "CC005",
-    note: "Nguồn điện bị cháy, có mùi khét, cần thay thế ngay",
->>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
   },
   [RepairStatus.ĐANG_XỬ_LÝ]: {
     label: 'Đang xử lý',
@@ -357,7 +258,6 @@ export const mockRepairRequestComponents: RepairRequestComponent[] = [
     textColor: 'text-green-800',
     borderColor: 'border-green-200'
   },
-<<<<<<< HEAD
   [RepairStatus.ĐÃ_HỦY]: {
     label: 'Đã hủy',
     color: 'border-red-200 text-red-800 bg-red-50',
@@ -367,24 +267,6 @@ export const mockRepairRequestComponents: RepairRequestComponent[] = [
     borderColor: 'border-red-200'
   }
 } as const
-=======
-  {
-    repairRequestId: "req-004",
-    componentId: "CC041",
-    note: "Màn hình không hiển thị, hỏng hoàn toàn",
-  },
-  {
-    repairRequestId: "req-005",
-    componentId: "CC032",
-    note: "CPU quá nhiệt, cần thay tản nhiệt và keo tản nhiệt",
-  },
-  {
-    repairRequestId: "req-006",
-    componentId: "CC051",
-    note: "Card mạng không được nhận dạng, có thể lỗi driver hoặc hardware",
-  },
-];
->>>>>>> 9c567a0873e1450b894ddb45eff5759324ef6a12
 
 // Helper function để lấy repair requests theo status
 export const getRepairRequestsByStatus = (status: RepairStatus): RepairRequest[] => {
