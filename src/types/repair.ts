@@ -292,21 +292,23 @@ export interface Asset {
 export enum ComponentType {
   CPU = "CPU",
   RAM = "RAM",
+  MAINBOARD = "MAINBOARD", // Updated to match database
   STORAGE = "STORAGE",
-  MOTHERBOARD = "MOTHERBOARD",
-  PSU = "PSU", // Power Supply Unit
-  GPU = "GPU", // Graphics Card
-  MONITOR = "MONITOR",
-  KEYBOARD = "KEYBOARD",
-  MOUSE = "MOUSE",
+  GPU = "GPU",
+  PSU = "PSU",
   CASE = "CASE",
-  COOLING = "COOLING", // Cooling system
-  OPTICAL_DRIVE = "OPTICAL_DRIVE", // CD/DVD Drive
-  NETWORK_CARD = "NETWORK_CARD",
-  SOUND_CARD = "SOUND_CARD",
-  SPEAKER = "SPEAKER",
-  WEBCAM = "WEBCAM",
+  MONITOR = "MONITOR",
+  KEYBOARD = "KEYBOARD", 
+  MOUSE = "MOUSE",
+  NETWORK = "NETWORK", // Updated to match database
+  OPTICAL_DRIVE = "OPTICAL_DRIVE",
+  COOLER = "COOLER", // Updated to match database
+  UPS = "UPS", // Added from database
   OTHER = "OTHER",
+  NETWORK_CARD = "NETWORK_CARD", // Added from database
+  SOUND_CARD = "SOUND_CARD", // Added from database
+  SPEAKER = "SPEAKER", // Added from database
+  WEBCAM = "WEBCAM", // Added from database
 }
 
 // Component Status enum
@@ -381,15 +383,21 @@ export interface RepairHistoryItem {
   logs?: RepairLog[]; // Optional logs for detailed history
 }
 
-// Interface for replacement requests displayed in technician pages
+// Interface for replacement requests displayed in technician pages - Khớp với database ReplacementProposals
 export interface ReplacementRequestForTechnician {
   id: string;
-  requestCode: string;
-  title: string;
-  description: string;
+  proposalCode: string; // Thay đổi từ requestCode để khớp database
+  proposerId: string;
+  teamLeadApproverId?: string;
+  adminVerifierId?: string;
+  title: string; // Tiêu đề đề xuất (từ database)
+  description: string; // Mô tả chi tiết (từ database)
   status: ReplacementStatus;
+  submissionFormUrl?: string;
+  verificationReportUrl?: string;
   createdAt: string;
-  createdBy?: string;
+  updatedAt: string;
+  createdBy?: string; // Tên người tạo (computed từ proposerId)
   components: ComponentFromRequest[];
 }
 

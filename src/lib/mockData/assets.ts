@@ -1,4 +1,4 @@
-import { SimpleAsset, AssetStatus, AssetType, AssetShape } from '@/types';
+import { SimpleAsset } from '@/types';
 
 // Mock assets data - Khớp hoàn toàn với database schema
 // Chỉ bao gồm các tài sản máy tính (computers) để phù hợp với repair processing workflow

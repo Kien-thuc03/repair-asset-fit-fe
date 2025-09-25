@@ -18,7 +18,7 @@ import {
   mockComputers,
   getSoftwareByAssetId,
 } from "@/lib/mockData";
-import { useRepairProcessing } from "@/hooks";
+
 import { SuccessModal } from "@/components/modal";
 import { TechnicianReportSteps } from "@/components/technician/TechnicianReportHelpers";
 import { Breadcrumb, Card, Form, Button, Input, Select, Radio, Image, Alert } from "antd";

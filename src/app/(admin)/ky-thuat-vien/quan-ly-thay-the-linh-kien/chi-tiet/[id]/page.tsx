@@ -1,15 +1,14 @@
 "use client"
 
 import { useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Breadcrumb, Card, Tag, Descriptions, Button, Space, Timeline, Alert, Table } from 'antd'
-import { Package, ArrowLeft, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
-import { mockReplacementRequestsForTechnician } from '@/lib/mockData/replacementRequests'
-import { ReplacementStatus, ReplacementRequestItem, ReplacementComponent } from '@/types'
+import { useParams } from 'next/navigation'
+import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table } from 'antd'
+import { Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import { mockReplacementRequestsForTechnician } from '@/lib/mockData'
+import { ReplacementStatus, ComponentFromRequest } from '@/types'
 
 export default function ChiTietThayThePage() {
 	const params = useParams()
-	const router = useRouter()
 	const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string)
 
 	const request = useMemo(() => 
@@ -69,17 +68,17 @@ export default function ChiTietThayThePage() {
 			title: 'STT',
 			key: 'index',
 			width: 60,
-			render: (_: any, __: any, index: number) => index + 1,
+			render: (_: unknown, __: unknown, index: number) => index + 1,
 		},
 		{
 			title: 'Tên linh kiện',
 			dataIndex: 'componentName',
 			key: 'componentName',
-			render: (text: string, record: ReplacementComponent) => (
+			render: (text: string, record: ComponentFromRequest) => (
 				<div>
 					<div className="font-medium">{text}</div>
-					{record.componentSpecs && (
-						<div className="text-sm text-gray-500">{record.componentSpecs}</div>
+					{record.newItemSpecs && (
+						<div className="text-sm text-gray-500">{record.newItemSpecs}</div>
 					)}
 				</div>
 			),
@@ -87,7 +86,7 @@ export default function ChiTietThayThePage() {
 		{
 			title: 'Tài sản',
 			key: 'asset',
-			render: (record: ReplacementComponent) => (
+			render: (record: ComponentFromRequest) => (
 				<div>
 					<div className="font-medium">{record.assetName}</div>
 					<div className="text-sm text-gray-500">Mã: {record.assetCode}</div>
@@ -97,7 +96,7 @@ export default function ChiTietThayThePage() {
 		{
 			title: 'Vị trí',
 			key: 'location',
-			render: (record: ReplacementComponent) => (
+			render: (record: ComponentFromRequest) => (
 				<div>
 					<div className="font-medium">{record.buildingName} - {record.roomName}</div>
 					{record.machineLabel && (
@@ -151,10 +150,10 @@ export default function ChiTietThayThePage() {
 						{request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI ? 'Từ chối đề xuất' : 'Chấp thuận đề xuất'}
 					</p>
 					<p className="text-sm text-gray-500">
-						{request.approvedBy && `Người duyệt: ${request.approvedBy}`}
+						{request.createdBy && `Người duyệt: ${request.createdBy}`}
 					</p>
 					<p className="text-sm text-gray-500">
-						{new Date(request.updatedAt).toLocaleString('vi-VN')}
+						{new Date(request.createdAt).toLocaleString('vi-VN')}
 					</p>
 				</div>
 			),
@@ -188,7 +187,7 @@ export default function ChiTietThayThePage() {
 						),
 					},
 					{
-						title: `Chi tiết • ${request.requestCode}`,
+						title: `Chi tiết • ${request.proposalCode}`,
 					},
 				]}
 			/>
@@ -197,7 +196,7 @@ export default function ChiTietThayThePage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-						Chi tiết đề xuất • {request.requestCode}
+						Chi tiết đề xuất • {request.proposalCode}
 					</h1>
 					<p className="mt-2 text-gray-600">
 						Thông tin chi tiết về đề xuất thay thế linh kiện
@@ -206,10 +205,10 @@ export default function ChiTietThayThePage() {
 			</div>
 
 			{/* Status Alert */}
-			{request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI && request.rejectedReason && (
+			{request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI && (
 				<Alert
 					message="Đề xuất đã bị từ chối"
-					description={request.rejectedReason}
+					description="Đề xuất này đã bị từ chối bởi cấp trên"
 					type="error"
 					showIcon
 				/>
@@ -232,7 +231,7 @@ export default function ChiTietThayThePage() {
 						<Descriptions column={2} bordered>
 							<Descriptions.Item label="Mã đề xuất" span={1}>
 								<span className="font-mono font-medium text-blue-600">
-									{request.requestCode}
+									{request.proposalCode}
 								</span>
 							</Descriptions.Item>
 							<Descriptions.Item label="Trạng thái">
@@ -246,8 +245,8 @@ export default function ChiTietThayThePage() {
 							<Descriptions.Item label="Tiêu đề đề xuất" span={2}>
 								<div className="font-medium">{request.title}</div>
 							</Descriptions.Item>
-							<Descriptions.Item label="Đơn vị quản lý" span={2}>
-								<div className="font-medium">{request.unit}</div>
+							<Descriptions.Item label="Người tạo" span={2}>
+								<div className="font-medium">{request.createdBy || 'N/A'}</div>
 							</Descriptions.Item>
 							<Descriptions.Item label="Số lượng linh kiện" span={2}>
 								<span className="font-medium text-blue-600">
@@ -274,6 +273,18 @@ export default function ChiTietThayThePage() {
 					{/* Description */}
 					<Card title="Mô tả chi tiết" className="shadow">
 						<p className="text-gray-700 leading-relaxed">{request.description}</p>
+					</Card>
+
+					{/* Component Details */}
+					<Card title="Lý do thay thế từng linh kiện" className="shadow">
+						<div className="space-y-3">
+							{request.components.map((component) => (
+								<div key={component.id} className="border-l-4 border-blue-200 pl-4">
+									<div className="font-medium text-gray-900">{component.componentName}</div>
+									<div className="text-gray-600 text-sm mt-1">{component.reason}</div>
+								</div>
+							))}
+						</div>
 					</Card>
 				</div>
 

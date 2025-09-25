@@ -133,7 +133,6 @@ export const mockRepairRequests: RepairRequest[] = [
     completedAt: undefined,
     unit: "Khoa Công nghệ Thông tin"
   },
-  // Thêm một số dữ liệu mẫu khác với trạng thái đã hoàn thành và đã hủy
   {
     id: "req-003",
     requestCode: "YCSC-2025-0003",
@@ -157,61 +156,6 @@ export const mockRepairRequests: RepairRequest[] = [
     createdAt: "2024-01-13T09:00:00.000Z",
     acceptedAt: "2024-01-13T09:30:00.000Z",
     completedAt: "2024-01-13T14:30:00.000Z",
-    unit: "Khoa Công nghệ Thông tin"
-  },
-  {
-    id: "req-007",
-    requestCode: "YCSC-2025-0007",
-    computerAssetId: "ASSET007",
-    assetCode: "19-0209/01",
-    assetName: "PC Acer Aspire",
-    reporterId: "user-5",
-    reporterName: "Giảng viên",
-    reporterRole: "Giảng viên",
-    assignedTechnicianId: undefined,
-    assignedTechnicianName: undefined,
-    roomName: "H103",
-    machineLabel: "02",
-    buildingName: "Tòa H",
-    errorTypeId: "ET004",
-    errorTypeName: "Máy hư chuột",
-    description: "Báo nhầm, chuột vẫn hoạt động bình thường",
-    mediaUrls: [],
-    status: RepairStatus.ĐÃ_HỦY,
-    resolutionNotes: undefined,
-    createdAt: "2024-01-19T08:45:00.000Z",
-    acceptedAt: undefined,
-    completedAt: undefined,
-    unit: "Khoa Công nghệ Thông tin"
-  },
-  // Thêm request với nhiều hình ảnh để test ImageViewer
-  {
-    id: "req-008",
-    requestCode: "YCSC-2025-0008",
-    computerAssetId: "ASSET008",
-    assetCode: "19-0211/02",
-    assetName: "PC Dell Precision",
-    reporterId: "user-5",
-    reporterName: "Giảng viên",
-    reporterRole: "Giảng viên",
-    assignedTechnicianId: "user-4",
-    assignedTechnicianName: "Kỹ thuật viên",
-    roomName: "H104",
-    machineLabel: "05",
-    buildingName: "Tòa H",
-    errorTypeId: "ET001",
-    errorTypeName: "Máy không khởi động",
-    description: "Máy tính không khởi động được sau khi mất điện đột ngột. Đèn nguồn không sáng, không có tiếng quạt chạy. Nghi ngờ nguồn điện bị hỏng.",
-    mediaUrls: [
-      "https://vr360.vn/wp-content/uploads/2015/07/nguyen-nhan-khien-may-tinh-khong-the-khoi-dong-vao-windows-300x138.jpg",
-      "https://ictsaigon.com.vn/storage/news/may-tinh-khong-khoi-dong-duoc/may-tinh-khong-khoi-dong-duoc-8.webp",
-      "https://cdn2.fptshop.com.vn/unsafe/Uploads/images/tin-tuc/131734/Originals/loi-man-hinh-xanh.png"
-    ],
-    status: RepairStatus.ĐANG_XỬ_LÝ,
-    resolutionNotes: "Đã kiểm tra nguồn điện, xác nhận hỏng. Đang đặt hàng nguồn mới 650W.",
-    createdAt: "2024-01-20T10:30:00.000Z",
-    acceptedAt: "2024-01-20T11:00:00.000Z",
-    completedAt: undefined,
     unit: "Khoa Công nghệ Thông tin"
   }
 ]
