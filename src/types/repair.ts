@@ -1,3 +1,11 @@
+// Interface cho ErrorTypes - Khớp với database schema
+export interface ErrorType {
+  id: string; // UUID primary key
+  name: string; // Tên loại lỗi (required)
+  description?: string; // Mô tả chi tiết (optional)
+  createdAt?: string; // Timestamp (ISO string)
+}
+
 // Định nghĩa các vai trò trong hệ thống sửa chữa tài sản
 export enum UserRole {
   GIANG_VIEN = "GIANG_VIEN", // Giảng viên
