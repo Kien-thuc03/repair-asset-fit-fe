@@ -72,11 +72,6 @@ export default function ReportTable({
     return config ? config.label : status;
   };
 
-  const getStatusIcon = (status: RepairStatus) => {
-    const config = repairRequestStatusConfig[status];
-    const IconComponent = config ? config.icon : Eye;
-    return <IconComponent className="h-4 w-4" />;
-  };
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">

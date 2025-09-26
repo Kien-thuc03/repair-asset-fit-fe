@@ -12,7 +12,9 @@ import {
   QRScannerSection,
   ProposalHeader,
 } from "@/components/lecturer/softwareProposal";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, Select } from "antd";
+
+const { Option } = Select;
 
 export default function DeXuatPhanMemPage() {
   const router = useRouter();
@@ -31,9 +33,34 @@ export default function DeXuatPhanMemPage() {
     ],
   });
 
+  // State cho việc chọn vị trí 3 bước
+  const [locationData, setLocationData] = useState({
+    building: "",
+    floor: "",
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Lấy danh sách tòa nhà duy nhất từ mockRooms
+  const buildings = Array.from(
+    new Set(mockRooms.map((room) => room.building).filter(Boolean))
+  );
+
+  // Lấy danh sách tầng dựa trên tòa nhà đã chọn
+  const filteredFloors = mockRooms
+    .filter((room) => room.building === locationData.building)
+    .map((room) => room.floor)
+    .filter(Boolean)
+    .filter((floor, index, arr) => arr.indexOf(floor) === index); // Remove duplicates
+
+  // Lấy danh sách phòng dựa trên tòa nhà và tầng đã chọn
+  const filteredRooms = mockRooms.filter(
+    (room) =>
+      room.building === locationData.building &&
+      room.floor === locationData.floor
+  );
 
   // Detect if user is on mobile device
   useEffect(() => {
@@ -44,6 +71,30 @@ export default function DeXuatPhanMemPage() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Xử lý thay đổi tòa nhà
+  const handleBuildingChange = (building: string) => {
+    setLocationData({
+      building,
+      floor: "", // Reset floor khi thay đổi building
+    });
+    setFormData((prev) => ({
+      ...prev,
+      roomId: "", // Reset room khi thay đổi building
+    }));
+  };
+
+  // Xử lý thay đổi tầng
+  const handleFloorChange = (floor: string) => {
+    setLocationData((prev) => ({
+      ...prev,
+      floor,
+    }));
+    setFormData((prev) => ({
+      ...prev,
+      roomId: "", // Reset room khi thay đổi floor
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,23 +270,72 @@ export default function DeXuatPhanMemPage() {
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h3 className="text-lg font-semibold mb-4">Thông tin đề xuất</h3>
 
-        {/* Room Selection */}
+        {/* Location Selection - 3 steps */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Phòng máy <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={formData.roomId}
-            onChange={(e) => handleRoomChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required>
-            <option value="">Chọn phòng máy</option>
-            {mockRooms.map((room) => (
-              <option key={room.id} value={room.id}>
-                {room.roomNumber}
-              </option>
-            ))}
-          </select>
+          <h4 className="text-md font-medium text-gray-700 mb-4">
+            Chọn vị trí <span className="text-red-500">*</span>
+          </h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Tòa nhà */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tòa nhà <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={locationData.building}
+                onChange={handleBuildingChange}
+                placeholder="Chọn tòa nhà"
+                className="w-full"
+                size="large">
+                {buildings.map((building) => (
+                  <Option key={building} value={building}>
+                    {building}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+
+            {/* Tầng */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tầng <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={locationData.floor}
+                onChange={handleFloorChange}
+                placeholder="Chọn tầng"
+                className="w-full"
+                size="large"
+                disabled={!locationData.building}>
+                {filteredFloors.map((floor) => (
+                  <Option key={floor} value={floor}>
+                    {floor}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+
+            {/* Phòng */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phòng máy <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={formData.roomId}
+                onChange={(value) => handleRoomChange(value)}
+                placeholder="Chọn phòng máy"
+                className="w-full"
+                size="large"
+                disabled={!locationData.floor}>
+                {filteredRooms.map((room) => (
+                  <Option key={room.id} value={room.id}>
+                    {room.roomNumber}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+          </div>
         </div>
 
         {/* Reason */}
