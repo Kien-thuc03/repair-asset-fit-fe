@@ -6,8 +6,8 @@ import { Breadcrumb, Steps, Tag, Card, Divider, Spin, Alert } from 'antd'
 import { Clock, User, MapPin, Wrench, Calendar, FileText, AlertCircle, CheckCircle, Settings, Package, Monitor, Info } from 'lucide-react'
 import { mockRepairRequests, repairRequestStatusConfig } from '@/lib/mockData'
 import { RepairStatus, RepairRequest } from '@/types'
-import ActionPanel from '@/components/technician/RequestDetail/ActionPanel'
-import HistoryCard from '@/components/technician/RequestDetail/HistoryCard'
+import ActionPanel from '@/components/technician/requestDetail/ActionPanel'
+import HistoryCard from '@/components/technician/requestDetail/HistoryCard'
 import ImageViewer from '@/components/ui/ImageViewer'
 
 

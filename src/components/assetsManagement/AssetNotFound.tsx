@@ -2,17 +2,17 @@
 import { ArrowLeft, XCircle } from "lucide-react";
 import { Breadcrumb } from "antd";
 
-interface AssetNotFoundProps {
+interface DeviceNotFoundProps {
   onGoBack: () => void;
 }
 
-export default function AssetNotFound({ onGoBack }: AssetNotFoundProps) {
+export default function DeviceNotFound({ onGoBack }: DeviceNotFoundProps) {
   return (
     <div className="space-y-4">
       <Breadcrumb
         items={[
           {
-            href: "/giang-vien",
+            href: "/ky-thuat-vien",
             title: (
               <div className="flex items-center">
                 <span>Trang chủ</span>
@@ -20,10 +20,10 @@ export default function AssetNotFound({ onGoBack }: AssetNotFoundProps) {
             ),
           },
           {
-            href: "/giang-vien/tra-cuu-thiet-bi",
+            href: "/ky-thuat-vien/quan-ly-thiet-bi",
             title: (
               <div className="flex items-center">
-                <span>Tra cứu thiết bị</span>
+                <span>Quản lý thiết bị</span>
               </div>
             ),
           },

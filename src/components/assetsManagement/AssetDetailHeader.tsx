@@ -1,10 +1,10 @@
 "use client";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Monitor, Wrench } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { Asset } from "@/types";
-import { assetStatusConfig, categoryIcons } from "@/lib/mockData";
+import { assetStatusConfig } from "@/lib/mockData";
 
-interface AssetDetailHeaderProps {
+interface TechnicianDeviceDetailHeaderProps {
   asset: Asset;
   warrantyStatus: {
     label: string;
@@ -13,13 +13,37 @@ interface AssetDetailHeaderProps {
   onGoBack: () => void;
 }
 
-export default function AssetDetailHeader({
+export default function TechnicianDeviceDetailHeader({
   asset,
   warrantyStatus,
   onGoBack,
-}: AssetDetailHeaderProps) {
-  const StatusIcon = assetStatusConfig[asset.status].icon;
-  const CategoryIcon = categoryIcons[asset.category] || ArrowLeft;
+}: TechnicianDeviceDetailHeaderProps) {
+  const getStatusConfig = (status: string) => {
+    const config = assetStatusConfig[status as keyof typeof assetStatusConfig];
+    if (!config) {
+      return {
+        label: status,
+        color: "bg-gray-100 text-gray-800 border-gray-200"
+      };
+    }
+    
+    const colorMap: { [key: string]: string } = {
+      green: "bg-green-100 text-green-800 border-green-200",
+      blue: "bg-blue-100 text-blue-800 border-blue-200",
+      orange: "bg-orange-100 text-orange-800 border-orange-200",
+      red: "bg-red-100 text-red-800 border-red-200",
+      gray: "bg-gray-100 text-gray-800 border-gray-200",
+      purple: "bg-purple-100 text-purple-800 border-purple-200",
+      black: "bg-gray-100 text-gray-800 border-gray-200"
+    };
+
+    return {
+      label: config.label,
+      color: colorMap[config.color] || "bg-gray-100 text-gray-800 border-gray-200"
+    };
+  };
+
+  const statusConfig = getStatusConfig(asset.status);
 
   return (
     <>
@@ -27,7 +51,7 @@ export default function AssetDetailHeader({
       <Breadcrumb
         items={[
           {
-            href: "/giang-vien",
+            href: "/ky-thuat-vien",
             title: (
               <div className="flex items-center">
                 <span>Trang chủ</span>
@@ -35,10 +59,10 @@ export default function AssetDetailHeader({
             ),
           },
           {
-            href: "/giang-vien/tra-cuu-thiet-bi",
+            href: "/ky-thuat-vien/quan-ly-thiet-bi",
             title: (
               <div className="flex items-center">
-                <span>Tra cứu thiết bị</span>
+                <span>Quản lý thiết bị</span>
               </div>
             ),
           },
@@ -64,13 +88,16 @@ export default function AssetDetailHeader({
             </button>
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
-                <CategoryIcon className="h-10 w-10 text-blue-600" />
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Monitor className="h-7 w-7 text-blue-600" />
+                </div>
               </div>
               <div>
                 <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
                   {asset.name}
                 </h1>
-                <p className="text-gray-600 text-sm lg:text-base">
+                <p className="text-gray-600 text-sm lg:text-base flex items-center">
+                  <Wrench className="w-4 h-4 mr-1" />
                   {asset.assetCode} • {asset.category}
                 </p>
               </div>
@@ -79,15 +106,12 @@ export default function AssetDetailHeader({
           <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
             {/* Status badge */}
             <div
-              className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium border ${
-                assetStatusConfig[asset.status].color
-              }`}>
-              <StatusIcon className="w-4 h-4 mr-2" />
-              {assetStatusConfig[asset.status].label}
+              className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium border ${statusConfig.color}`}>
+              {statusConfig.label}
             </div>
             {/* Warranty status */}
-            <div className={`text-sm font-medium ${warrantyStatus.color}`}>
-              Bảo hành: {warrantyStatus.label}
+            <div className={`text-sm font-medium ${warrantyStatus.color} flex items-center`}>
+              📋 Bảo hành: {warrantyStatus.label}
             </div>
           </div>
         </div>

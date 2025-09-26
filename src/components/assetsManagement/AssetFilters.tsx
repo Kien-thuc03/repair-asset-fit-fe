@@ -1,7 +1,7 @@
 "use client";
-import { Search } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 
-interface AssetFiltersProps {
+interface DeviceFiltersProps {
   searchTerm: string;
   statusFilter: string;
   floorFilter: string;
@@ -11,7 +11,7 @@ interface AssetFiltersProps {
   floors: string[];
 }
 
-export default function AssetFilters({
+export default function DeviceFilters({
   searchTerm,
   statusFilter,
   floorFilter,
@@ -19,7 +19,7 @@ export default function AssetFilters({
   onStatusChange,
   onFloorChange,
   floors,
-}: AssetFiltersProps) {
+}: DeviceFiltersProps) {
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -42,13 +42,14 @@ export default function AssetFilters({
           <select
             value={statusFilter}
             onChange={(e) => onStatusChange(e.target.value)}
+            title="Chọn trạng thái thiết bị"
             className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
             <option value="all">Tất cả trạng thái</option>
             <option value="đang_sử_dụng">Đang sử dụng</option>
             <option value="chờ_bàn_giao">Chờ bàn giao</option>
             <option value="chờ_tiếp_nhận">Chờ tiếp nhận</option>
             <option value="hư_hỏng">Hư hỏng</option>
-            <option value="mất_tích">Mất tích</option>
+            <option value="đã_mất">Đã mất</option>
             <option value="đề_xuất_thanh_lý">Đề xuất thanh lý</option>
             <option value="đã_thanh_lý">Đã thanh lý</option>
           </select>
@@ -59,6 +60,7 @@ export default function AssetFilters({
           <select
             value={floorFilter}
             onChange={(e) => onFloorChange(e.target.value)}
+            title="Chọn tầng làm việc"
             className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
             <option value="all">Tất cả tầng</option>
             {floors.map((floor) => (

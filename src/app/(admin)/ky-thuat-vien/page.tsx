@@ -1,10 +1,10 @@
 "use client"
 
 import { useAuth } from '@/contexts/AuthContext'
-import StatsCards from '@/components/technician/Dashboard/StatsCards'
-import RecentRequests from '@/components/technician/Dashboard/RecentRequests'
-import Announcements from '@/components/technician/Dashboard/Announcements'
-import QuickLinks from '@/components/technician/Dashboard/QuickLinks'
+import StatsCards from '@/components/technician/dashboard/StatsCards'
+import RecentRequests from '@/components/technician/dashboard/RecentRequests'
+import Announcements from '@/components/technician/dashboard/Announcements'
+import QuickLinks from '@/components/technician/dashboard/QuickLinks'
 
 export default function KyThuatVienDashboard() {
 	const { user } = useAuth()
