@@ -90,10 +90,10 @@ const AreasTable: React.FC<AreasTableProps> = ({
       </div>
 
       <div className="overflow-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-gray-200 table-fixed">
           <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
-              <th className="px-3 py-3 text-left">
+              <th className="px-3 py-3 text-left w-12">
                 <button
                   onClick={() => onSelectAll(!selectAll)}
                   className="text-gray-400 hover:text-gray-600">
@@ -105,7 +105,7 @@ const AreasTable: React.FC<AreasTableProps> = ({
                 </button>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-1/4"
                 onClick={() => onSort("name")}>
                 <div className="flex items-center space-x-1">
                   <span>Phòng/Khu vực</span>
@@ -113,7 +113,7 @@ const AreasTable: React.FC<AreasTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-32"
                 onClick={() => onSort("building")}>
                 <div className="flex items-center space-x-1">
                   <span>Tòa nhà</span>
@@ -121,7 +121,7 @@ const AreasTable: React.FC<AreasTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-24"
                 onClick={() => onSort("floors")}>
                 <div className="flex items-center space-x-1">
                   <span>Tầng</span>
@@ -129,14 +129,14 @@ const AreasTable: React.FC<AreasTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group w-80"
                 onClick={() => onSort("technician")}>
                 <div className="flex items-center space-x-1">
                   <span>Kỹ thuật viên phụ trách</span>
                   {getSortIcon("technician")}
                 </div>
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
                 Thao tác
               </th>
             </tr>
@@ -145,7 +145,7 @@ const AreasTable: React.FC<AreasTableProps> = ({
             {rooms.length > 0 ? (
               rooms.map((room) => (
                 <tr key={room.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-4">
+                  <td className="px-3 py-4 w-12">
                     <button
                       onClick={() =>
                         onSelectItem(room.id, !selectedItems.includes(room.id))
@@ -158,41 +158,41 @@ const AreasTable: React.FC<AreasTableProps> = ({
                       )}
                     </button>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap w-1/4">
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 text-gray-400 mr-3 flex-shrink-0" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-gray-900 truncate">
                           {room.roomNumber}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 truncate">
                           Mã: {room.id}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap w-32">
                     <div className="flex items-center">
                       <Building2 className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-gray-900 truncate">
                         {room.building || "N/A"}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap w-24">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {room.floor || "N/A"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap w-80">
                     {editingRoom === room.id ? (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-1 min-h-[2.5rem]">
                         <select
                           value={selectedTechnician}
                           onChange={(e) =>
                             onSetSelectedTechnician(e.target.value)
                           }
-                          className="block w-48 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                          className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                           <option value="">Chưa phân công</option>
                           {technicians.map((tech) => (
                             <option key={tech.id} value={tech.id}>
@@ -204,20 +204,20 @@ const AreasTable: React.FC<AreasTableProps> = ({
                           onClick={() =>
                             onAssignTechnician(room.id, selectedTechnician)
                           }
-                          className="inline-flex items-center p-2 border border-transparent rounded text-green-600 hover:bg-green-100">
+                          className="inline-flex items-center p-2 border border-transparent rounded text-green-600 hover:bg-green-100 flex-shrink-0">
                           <Save className="h-4 w-4" />
                         </button>
                         <button
                           onClick={onCancelEdit}
-                          className="inline-flex items-center p-2 border border-transparent rounded text-red-600 hover:bg-red-100">
+                          className="inline-flex items-center p-2 border border-transparent rounded text-red-600 hover:bg-red-100 flex-shrink-0">
                           <X className="h-4 w-4" />
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-center">
+                      <div className="flex items-center min-h-[2.5rem]">
                         <User className="h-4 w-4 text-gray-400 mr-3 flex-shrink-0" />
                         <span
-                          className={`text-sm ${
+                          className={`text-sm truncate ${
                             room.assignedTechnician
                               ? "text-gray-900 font-medium"
                               : "text-gray-500 italic"
@@ -227,7 +227,7 @@ const AreasTable: React.FC<AreasTableProps> = ({
                       </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <td className="px-6 py-4 whitespace-nowrap text-center w-32">
                     <button
                       onClick={() =>
                         onEditRoom(room.id, room.assignedTechnician || "")
