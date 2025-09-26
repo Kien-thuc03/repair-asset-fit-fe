@@ -1,7 +1,7 @@
-import { ReplacementRequestForTechnician, ComponentFromRequest, ReplacementStatus, ComponentType } from '@/types/repair';
+import { ReplacementRequestItem, ComponentFromRequest, ReplacementStatus, ComponentType } from '@/types/repair';
 
 // Mock replacement requests data - Khớp chính xác với database ReplacementProposals (chỉ 2 bản ghi)
-export const mockReplacementRequestsForTechnician: ReplacementRequestForTechnician[] = [
+export const mockReplacementRequestItem: ReplacementRequestItem[] = [
   {
     id: "RP001",
     proposalCode: "DXTT-2025-0001",
@@ -84,16 +84,16 @@ export const mockReplacementRequestsForTechnician: ReplacementRequestForTechnici
 ];
 
 // Helper functions
-export const getReplacementRequestById = (id: string): ReplacementRequestForTechnician | undefined => {
-  return mockReplacementRequestsForTechnician.find(request => request.id === id);
+export const getReplacementRequestById = (id: string): ReplacementRequestItem | undefined => {
+  return mockReplacementRequestItem.find(request => request.id === id);
 };
 
-export const getReplacementRequestsByStatus = (status: ReplacementStatus): ReplacementRequestForTechnician[] => {
-  return mockReplacementRequestsForTechnician.filter(request => request.status === status);
+export const getReplacementRequestsByStatus = (status: ReplacementStatus): ReplacementRequestItem[] => {
+  return mockReplacementRequestItem.filter(request => request.status === status);
 };
 
-export const getReplacementRequestsByAssetId = (assetId: string): ReplacementRequestForTechnician[] => {
-  return mockReplacementRequestsForTechnician.filter(request => 
+export const getReplacementRequestsByAssetId = (assetId: string): ReplacementRequestItem[] => {
+  return mockReplacementRequestItem.filter(request =>
     request.components.some(component => component.assetId === assetId)
   );
 };

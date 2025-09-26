@@ -130,22 +130,6 @@ export interface ReplacementComponent {
   quantity: number; // Số lượng cần thay
 }
 
-// Interface cho đề xuất thay thế (chứa nhiều linh kiện)
-export interface ReplacementRequestItem {
-  id: string;
-  requestCode: string; // Mã đề xuất thay thế
-  title: string; // Tiêu đề đề xuất
-  description: string; // Mô tả tổng quan
-  components: ReplacementComponent[]; // Danh sách linh kiện cần thay
-  status: ReplacementStatus;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string; // Kỹ thuật viên tạo đề xuất
-  approvedBy?: string;
-  rejectedReason?: string;
-  unit: string;
-}
-
 // Định nghĩa thông tin chi tiết về vai trò
 export const RoleInfo = {
   [UserRole.GIANG_VIEN]: {
@@ -384,7 +368,7 @@ export interface RepairHistoryItem {
 }
 
 // Interface for replacement requests displayed in technician pages - Khớp với database ReplacementProposals
-export interface ReplacementRequestForTechnician {
+export interface ReplacementRequestItem {
   id: string;
   proposalCode: string; // Thay đổi từ requestCode để khớp database
   proposerId: string;

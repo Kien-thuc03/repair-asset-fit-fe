@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types";
-import { mockReplacementProposals } from "@/lib/mockData/replacementProposals";
+import { mockReplacementRequestItem } from "@/lib/mockData";
 import ExportExcelSuccessModal from "./modal/ExportExcelSuccessModal";
 import ExportExcelErrorModal from "./modal/ExportExcelErrorModal";
 import { Breadcrumb } from "antd";
@@ -17,37 +17,10 @@ import {
 
 export default function DuyetDeXuatPage() {
   const [requests, setRequests] = useState<ReplacementRequestItem[]>(
-    mockReplacementProposals.map((proposal) => ({
-      id: proposal.id,
-      requestCode: proposal.proposalCode,
-      title: `Đề xuất thay thế - ${proposal.componentName || "linh kiện"}`,
-      description: proposal.reason || "Không có mô tả",
-      components: [
-        {
-          id: proposal.id + "_comp",
-          assetId: proposal.assetCode || "",
-          assetCode: proposal.assetCode || "",
-          assetName: proposal.assetName || "",
-          componentId: proposal.id,
-          componentName: proposal.componentName || "Linh kiện không xác định",
-          componentSpecs: "",
-          roomId: "room_" + proposal.roomName,
-          roomName: proposal.roomName || "",
-          buildingName: "Nhà A",
-          machineLabel: "Máy 01",
-          reason: proposal.reason || "",
-          quantity: 1,
-        },
-      ],
-      status:
-        proposal.status === "CHỜ_ADMIN_XÁC_NHẬN"
-          ? ReplacementStatus.CHỜ_XÁC_MINH
-          : (proposal.status as ReplacementStatus),
-      createdAt: proposal.createdAt,
-      updatedAt: proposal.updatedAt,
-      createdBy: proposal.proposerName,
-      approvedBy: proposal.teamLeadApproverName,
-      unit: "Khoa CNTT",
+    mockReplacementRequestItem.map((proposal) => ({
+      //get id
+    
+      ...proposal,
     }))
   );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
