@@ -7,17 +7,18 @@ import Link from 'next/link'
 import { mockReplacementRequestsForTechnician } from '@/lib/mockData'
 import { ReplacementStatus, ReplacementRequestForTechnician, ComponentFromRequest } from '@/types'
 import { Pagination } from '@/components/ui'
+import type { Dayjs } from 'dayjs'
 
 const { RangePicker } = DatePicker
 const { Option } = Select
 
-type SortField = "requestCode" | "title" | "componentsCount" | "status" | "createdAt"
+type SortField = "proposalCode" | "title" | "componentsCount" | "status" | "createdAt"
 type SortDirection = "asc" | "desc" | "none"
 
 export default function QuanLyThayTheLinhKienPage() {
 	const [searchText, setSearchText] = useState('')
 	const [statusFilter, setStatusFilter] = useState<ReplacementStatus | ''>('')
-	const [dateRange, setDateRange] = useState<[any, any] | null>(null)
+	const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
 	const [sortField, setSortField] = useState<SortField | "">("")
 	const [sortDirection, setSortDirection] = useState<SortDirection>("none")
 	const [currentPage, setCurrentPage] = useState(1)
@@ -100,7 +101,7 @@ export default function QuanLyThayTheLinhKienPage() {
 			// Tạo dữ liệu Excel
 			const excelData = selectedData.map((item: ReplacementRequestForTechnician, index: number) => ({
 				'STT': index + 1,
-				'Mã yêu cầu': item.requestCode,
+				'Mã đề xuất': item.proposalCode,
 				'Tiêu đề đề xuất': item.title,
 				'Mô tả': item.description,
 				'Số linh kiện': item.components.length,
@@ -142,7 +143,7 @@ export default function QuanLyThayTheLinhKienPage() {
 			const assetCodes = item.components.map((c: ComponentFromRequest) => c.assetCode).join(' ')
 			
 			const matchesSearch = searchText ? 
-				[assetCodes, assetNames, componentNames, item.requestCode, item.title]
+				[assetCodes, assetNames, componentNames, item.proposalCode, item.title]
 					.filter(Boolean)
 					.join(' ')
 					.toLowerCase()
@@ -151,8 +152,8 @@ export default function QuanLyThayTheLinhKienPage() {
 			const matchesStatus = statusFilter ? item.status === statusFilter : true
 
 			const createdAt = new Date(item.createdAt)
-			const matchesDateRange = dateRange ? 
-				createdAt >= dateRange[0]?.toDate() && createdAt <= dateRange[1]?.toDate() : true
+			const matchesDateRange = dateRange && dateRange[0] && dateRange[1] ? 
+				createdAt >= dateRange[0].toDate() && createdAt <= dateRange[1].toDate() : true
 
 			return matchesSearch && matchesStatus && matchesDateRange
 		})
@@ -165,9 +166,9 @@ export default function QuanLyThayTheLinhKienPage() {
 			let bValue: string | Date | number = ""
 
 			switch (sortField) {
-				case "requestCode":
-					aValue = a.requestCode
-					bValue = b.requestCode
+				case "proposalCode":
+					aValue = a.proposalCode
+					bValue = b.proposalCode
 					break
 				case "title":
 					aValue = a.title
@@ -226,71 +227,7 @@ export default function QuanLyThayTheLinhKienPage() {
 		},
 	}
 
-	const columns = [
-		{
-			title: 'Mã yêu cầu',
-			dataIndex: 'requestCode',
-			key: 'requestCode',
-			width: 120,
-			render: (text: string) => (
-				<span className="font-medium text-blue-600">{text}</span>
-			),
-		},
-		{
-			title: 'Tiêu đề đề xuất',
-			key: 'title',
-			width: 250,
-			render: (_: any, record: ReplacementRequestForTechnician) => (
-				<div>
-					<div className="font-medium">{record.title}</div>
-					<div className="text-xs text-gray-500 line-clamp-2">{record.description}</div>
-				</div>
-			),
-		},
-		{
-			title: 'Số linh kiện',
-			key: 'componentsCount',
-			width: 100,
-			render: (_: any, record: ReplacementRequestForTechnician) => (
-				<div className="text-center">
-					<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-						{record.components.length} linh kiện
-					</span>
-				</div>
-			),
-		},
-		{
-			title: 'Trạng thái',
-			dataIndex: 'status',
-			key: 'status',
-			width: 140,
-			render: (status: ReplacementStatus) => {
-				const config = statusConfig[status]
-				return <Tag color={config.color}>{config.text}</Tag>
-			},
-		},
-		{
-			title: 'Ngày tạo',
-			dataIndex: 'createdAt',
-			key: 'createdAt',
-			width: 110,
-			render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
-		},
-		{
-			title: 'Thao tác',
-			key: 'action',
-			width: 80,
-			render: (_: any, record: ReplacementRequestForTechnician) => (
-				<Link href={`/ky-thuat-vien/quan-ly-thay-the-linh-kien/chi-tiet/${record.id}`}>
-					<button 
-					title='Xem chi tiết' 
-					className="text-blue-600 hover:text-blue-900 inline-flex items-center">
-                        <Eye className="w-4 h-4" />
-					</button>
-				</Link>
-			),
-		},
-	]
+
 
 	return (
 		<div className="space-y-6">
@@ -372,7 +309,7 @@ export default function QuanLyThayTheLinhKienPage() {
 						placeholder={['Từ ngày', 'Đến ngày']}
 						format="DD/MM/YYYY"
 						value={dateRange}
-						onChange={setDateRange}
+						onChange={(dates) => setDateRange(dates)}
 					/>
 
 					<Button
@@ -405,11 +342,11 @@ export default function QuanLyThayTheLinhKienPage() {
 							</th>
 							<th 
 								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-								onClick={() => handleSort("requestCode")}
+								onClick={() => handleSort("proposalCode")}
 							>
 								<div className="flex items-center uppercase space-x-1">
-									<span>Mã yêu cầu</span>
-									{getSortIcon("requestCode")}
+									<span>Mã đề xuất</span>
+									{getSortIcon("proposalCode")}
 								</div>
 							</th>
 							<th 
@@ -465,13 +402,13 @@ export default function QuanLyThayTheLinhKienPage() {
 												className="rounded border-gray-300"
 												checked={selectedRowKeys.includes(record.id)}
 												onChange={(e) => handleRowSelect(record.id, e.target.checked)}
-												aria-label={`Chọn đề xuất ${record.requestCode}`}
+												aria-label={`Chọn đề xuất ${record.proposalCode}`}
 											/>
 											<span>{(currentPage - 1) * pageSize + index + 1}</span>
 										</div>
 									</td>
 									<td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
-										{record.requestCode}
+										{record.proposalCode}
 									</td>
 									<td className="px-4 py-3 text-sm text-gray-700">
 										<div>

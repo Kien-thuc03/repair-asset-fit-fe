@@ -42,7 +42,7 @@ export const mockComponents: Component[] = [
   {
     id: "CC004",
     computerAssetId: "ASSET001",
-    componentType: ComponentType.MOTHERBOARD,
+    componentType: ComponentType.MAINBOARD,
     name: "Dell OptiPlex 3080 Motherboard",
     componentSpecs: "Intel B460 chipset, Micro ATX",
     serialNumber: undefined,
@@ -140,7 +140,7 @@ export const mockComponents: Component[] = [
   {
     id: "CC014",
     computerAssetId: "ASSET002",
-    componentType: ComponentType.MOTHERBOARD,
+    componentType: ComponentType.MAINBOARD,
     name: "Dell OptiPlex 3080 Motherboard",
     componentSpecs: "Intel B460 chipset, Micro ATX",
     serialNumber: undefined,
@@ -350,7 +350,7 @@ export const mockComponents: Component[] = [
   {
     id: "CC054",
     computerAssetId: "ASSET009",
-    componentType: ComponentType.COOLING,
+    componentType: ComponentType.COOLER,
     name: "ASUS ROG Strix LC 240",
     componentSpecs: "240mm AIO liquid cooler",
     serialNumber: "COOL001",

@@ -1,15 +1,12 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Button, Input, Modal, Form, message, Breadcrumb, Select, DatePicker, Tag } from "antd";
+import { Button, Input, Modal, Form, message, Breadcrumb } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { Search, ChevronUp, ChevronDown } from "lucide-react";
 import { Pagination } from "@/components/ui";
 import { mockComponentsFromReportsWithStatus } from "@/lib/mockData";
 import { ReplacementStatus, ComponentFromReport } from "@/types";
-
-const { RangePicker } = DatePicker;
-const { Option } = Select;
 
 interface ProposalFormData {
   title: string;
@@ -26,7 +23,6 @@ export default function CreateProposalPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
   const [sortField, setSortField] = useState<SortField | "">("");
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
   const [form] = Form.useForm();
@@ -86,9 +82,7 @@ export default function CreateProposalPage() {
           .toLowerCase()
           .includes(searchText.toLowerCase()) : true;
 
-      const matchesStatus = statusFilter ? item.status === statusFilter : true;
-
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
 
     // Sắp xếp dữ liệu
@@ -127,7 +121,7 @@ export default function CreateProposalPage() {
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
-  }, [searchText, statusFilter, sortField, sortDirection]);
+  }, [searchText, sortField, sortDirection]);
 
   // Dữ liệu phân trang
   const paginatedData = useMemo(() => {

@@ -11,13 +11,14 @@ import {
 } from "@/types";
 import { Room } from "@/types/unit";
 import {
-  errorTypes,
+  mockErrorTypes,
   mockAssets,
   mockRooms,
   mockComponents,
   mockComputers,
   getSoftwareByAssetId,
 } from "@/lib/mockData";
+
 import { SuccessModal } from "@/components/modal";
 import { TechnicianReportSteps } from "@/components/technician/TechnicianReportHelpers";
 import { Breadcrumb, Card, Form, Button, Input, Select, Radio, Image, Alert } from "antd";
@@ -256,9 +257,9 @@ export default function GhiNhanXuLyLoiPage() {
   // Filter error types based on category
   const getFilteredErrorTypes = () => {
     if (formData.errorCategory === "software") {
-      return errorTypes.filter(error => error.name.includes("phần mềm") || error.id === "ET002");
+      return mockErrorTypes.filter(error => error.name.includes("phần mềm") || error.id === "ET002");
     }
-    return errorTypes.filter(error => !error.name.includes("phần mềm") && error.id !== "ET002");
+    return mockErrorTypes.filter(error => !error.name.includes("phần mềm") && error.id !== "ET002");
   };
 
   return (
@@ -769,7 +770,7 @@ export default function GhiNhanXuLyLoiPage() {
                     <p><strong>Thiết bị:</strong> {filteredAssets.find(a => a.id === formData.assetId)?.name}</p>
                     <p><strong>Phân loại:</strong> {formData.errorCategory === 'hardware' ? 'Lỗi phần cứng' : 'Lỗi phần mềm'}</p>
                     {formData.errorCategory === "hardware" && formData.errorTypeId && (
-                      <p><strong>Loại lỗi:</strong> {errorTypes.find(e => e.id === formData.errorTypeId)?.name}</p>
+                      <p><strong>Loại lỗi:</strong> {mockErrorTypes.find(e => e.id === formData.errorTypeId)?.name}</p>
                     )}
                     <p><strong>Kết quả xử lý:</strong> {
                       formData.repairMethod === 'software_fixed' ? 'Lỗi phần mềm - Đã sửa được' :

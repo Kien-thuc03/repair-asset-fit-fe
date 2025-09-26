@@ -1,18 +1,18 @@
 import { UserStatus } from "@/types/user";
 
-// Mock users - Synchronized with database-sync.json
+// Mock users - Synchronized with actual database via MCP
 export const users = [
   {
     id: "user-1",
-    username: "qtv", // Tài khoản đăng nhập
+    username: "qtv",
     password: "qtv123",
-    fullName: "Lê Minh Quản",
+    fullName: "Quản trị viên Khoa",
     email: "qtv@iuh.edu.vn",
-    unitId: "unit-1", // Khoa CNTT
+    unitId: "unit-1",
     phoneNumber: "0901234001",
-    birthDate: "1985-01-15T00:00:00Z", // Updated to ISO string format to match sampleData
+    birthDate: "1985-01-15T00:00:00Z",
     status: UserStatus.ACTIVE,
-    createdAt: "2023-01-01T00:00:00Z", // Updated to ISO string format
+    createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z",
     deletedAt: null,
   },
@@ -20,9 +20,9 @@ export const users = [
     id: "user-2",
     username: "quantri",
     password: "quantri123",
-    fullName: "Phạm Văn Trị",
+    fullName: "Nhân viên Phòng Quản trị",
     email: "quantri@iuh.edu.vn",
-    unitId: "unit-2", // Phòng Quản trị
+    unitId: "unit-2",
     phoneNumber: "0901234002",
     birthDate: "1987-03-20T00:00:00Z",
     status: UserStatus.ACTIVE,
@@ -34,9 +34,9 @@ export const users = [
     id: "user-3",
     username: "totruong",
     password: "totruong123",
-    fullName: "Hoàng Đức Trưởng",
+    fullName: "Tổ trưởng Kỹ thuật",
     email: "totruong@iuh.edu.vn",
-    unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
+    unitId: "unit-2",
     phoneNumber: "0901234003",
     birthDate: "1980-05-10T00:00:00Z",
     status: UserStatus.ACTIVE,
@@ -48,9 +48,9 @@ export const users = [
     id: "user-4",
     username: "kythuat",
     password: "kythuat123",
-    fullName: "Nguyễn Văn Hỗ",
+    fullName: "Kỹ thuật viên",
     email: "kythuat@iuh.edu.vn",
-    unitId: "unit-2", // Phòng Quản trị - Tổ Kỹ thuật
+    unitId: "unit-2",
     phoneNumber: "0901234004",
     birthDate: "1990-07-25T00:00:00Z",
     status: UserStatus.ACTIVE,
@@ -62,9 +62,9 @@ export const users = [
     id: "user-5",
     username: "giangvien",
     password: "giangvien123",
-    fullName: "Nguyễn Thị Hạnh",
+    fullName: "Giảng viên",
     email: "giangvien@iuh.edu.vn",
-    unitId: "unit-1", // Khoa CNTT
+    unitId: "unit-1",
     phoneNumber: "0901234005",
     birthDate: "1988-11-30T00:00:00Z",
     status: UserStatus.ACTIVE,
@@ -76,9 +76,9 @@ export const users = [
     id: "user-6",
     username: "gvqtv",
     password: "gvqtv123",
-    fullName: "Đỗ Thị Mai",
+    fullName: "Giảng viên kiêm QTV",
     email: "gv_qtv@iuh.edu.vn",
-    unitId: "unit-1", // Khoa CNTT
+    unitId: "unit-1",
     phoneNumber: "0901234006",
     birthDate: "1982-09-05T00:00:00Z",
     status: UserStatus.ACTIVE,
@@ -90,9 +90,9 @@ export const users = [
     id: "user-7",
     username: "kehoach",
     password: "kehoach123",
-    fullName: "Vũ Minh Hoạch",
+    fullName: "Trưởng phòng Kế hoạch Đầu tư",
     email: "kehoach@iuh.edu.vn",
-    unitId: "unit-3", // Phòng Kế hoạch Đầu tư
+    unitId: "unit-3",
     phoneNumber: "0901234007",
     birthDate: "1975-04-12T00:00:00Z",
     status: UserStatus.ACTIVE,
