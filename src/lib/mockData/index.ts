@@ -5,6 +5,7 @@ export * from "./componentsFromReports";
 export * from "./errorTypes";
 export * from "./permissions";
 export * from "./repairRequests";
+export * from "./repairRequestComponents";
 export * from "./repairHistory";
 export * from "./replacementRequests";
 export * from "./roles";

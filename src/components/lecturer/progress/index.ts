@@ -13,3 +13,4 @@ export { default as AdditionalInfo } from "./AdditionalInfo";
 export { default as CancelRequestModal } from "./CancelRequestModal";
 export { default as RequestDetailContainer } from "./RequestDetailContainer";
 export { default as FaultyComponentsDisplay } from "./FaultyComponentsDisplay";
+export { default as FaultyComponentsList } from "./FaultyComponentsList";

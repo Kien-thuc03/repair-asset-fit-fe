@@ -100,6 +100,7 @@ export const mockComponents: Component[] = [
     notes: "Standard optical mouse"
   },
 
+
   // ASSET002 - PC Dell OptiPlex 3080 (19-0205/02)
   {
     id: "CC011",
