@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table } from 'antd'
 import { Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
-import { mockReplacementRequestsForTechnician } from '@/lib/mockData'
+import { mockReplacementRequestItem } from '@/lib/mockData'
 import { ReplacementStatus, ComponentFromRequest } from '@/types'
 
 export default function ChiTietThayThePage() {
@@ -12,7 +12,7 @@ export default function ChiTietThayThePage() {
 	const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string)
 
 	const request = useMemo(() => 
-		mockReplacementRequestsForTechnician.find((item) => item.id === id), 
+		mockReplacementRequestItem.find((item) => item.id === id), 
 		[id]
 	)
 

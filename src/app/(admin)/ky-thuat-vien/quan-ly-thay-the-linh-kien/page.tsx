@@ -4,8 +4,8 @@ import { useState, useMemo } from 'react'
 import { Breadcrumb, Input, Select, DatePicker, Tag, Button, message } from 'antd'
 import { Search, Eye, ChevronUp, ChevronDown, Download } from 'lucide-react'
 import Link from 'next/link'
-import { mockReplacementRequestsForTechnician } from '@/lib/mockData'
-import { ReplacementStatus, ReplacementRequestForTechnician, ComponentFromRequest } from '@/types'
+import { mockReplacementRequestItem } from '@/lib/mockData'
+import { ReplacementStatus, ReplacementRequestItem, ComponentFromRequest } from '@/types'
 import { Pagination } from '@/components/ui'
 import type { Dayjs } from 'dayjs'
 
@@ -99,7 +99,7 @@ export default function QuanLyThayTheLinhKienPage() {
 			const XLSX = await import('xlsx')
 			
 			// Tạo dữ liệu Excel
-			const excelData = selectedData.map((item: ReplacementRequestForTechnician, index: number) => ({
+			const excelData = selectedData.map((item: ReplacementRequestItem, index: number) => ({
 				'STT': index + 1,
 				'Mã đề xuất': item.proposalCode,
 				'Tiêu đề đề xuất': item.title,
@@ -137,7 +137,7 @@ export default function QuanLyThayTheLinhKienPage() {
 		setCurrentPage(1)
 
 		// Lọc dữ liệu
-		const filtered = mockReplacementRequestsForTechnician.filter((item: ReplacementRequestForTechnician) => {
+		const filtered = mockReplacementRequestItem.filter((item: ReplacementRequestItem) => {
 			const componentNames = item.components.map((c: ComponentFromRequest) => c.componentName).join(' ')
 			const assetNames = item.components.map((c: ComponentFromRequest) => c.assetName).join(' ')
 			const assetCodes = item.components.map((c: ComponentFromRequest) => c.assetCode).join(' ')
@@ -333,7 +333,7 @@ export default function QuanLyThayTheLinhKienPage() {
 									<input
 										type="checkbox"
 										className="rounded border-gray-300"
-										checked={paginatedData.length > 0 && paginatedData.every((row: ReplacementRequestForTechnician) => selectedRowKeys.includes(row.id))}
+										checked={paginatedData.length > 0 && paginatedData.every((row: ReplacementRequestItem) => selectedRowKeys.includes(row.id))}
 										onChange={(e) => handleSelectAll(e.target.checked)}
 										aria-label="Chọn tất cả đề xuất"
 									/>
@@ -391,7 +391,7 @@ export default function QuanLyThayTheLinhKienPage() {
 						</tr>
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
-						{paginatedData.map((record: ReplacementRequestForTechnician, index: number) => {
+						{paginatedData.map((record: ReplacementRequestItem, index: number) => {
 							const config = statusConfig[record.status as ReplacementStatus]
 							return (
 								<tr key={record.id} className="hover:bg-gray-50">

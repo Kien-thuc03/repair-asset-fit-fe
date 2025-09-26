@@ -14,6 +14,7 @@ import TechnicianDeviceTabNavigation from "./AssetTabNavigation";
 import TechnicianDeviceBasicInfo from "./AssetBasicInfo";
 import TechnicianDeviceWarrantyInfo from "./AssetWarrantyInfo";
 import TechnicianDeviceSpecifications from "./AssetSpecifications";
+import AssetSoftwareInfo from "./AssetSoftwareInfo";
 import TechnicianRepairHistoryTab from "./RepairHistoryTab";
 
 // Helper function to convert ComprehensiveAsset to Asset
@@ -119,6 +120,8 @@ export default function TechnicianDeviceDetailContainer() {
               />
 
               <TechnicianDeviceSpecifications asset={asset} />
+
+              <AssetSoftwareInfo asset={asset} />
             </div>
           ) : (
             // Repair History Tab

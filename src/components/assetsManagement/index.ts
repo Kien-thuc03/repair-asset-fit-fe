@@ -11,4 +11,5 @@ export { default as TechnicianDeviceTabNavigation } from './AssetTabNavigation';
 export { default as TechnicianDeviceBasicInfo } from './AssetBasicInfo';
 export { default as TechnicianDeviceWarrantyInfo } from './AssetWarrantyInfo';
 export { default as TechnicianDeviceSpecifications } from './AssetSpecifications';
+export { default as AssetSoftwareInfo } from './AssetSoftwareInfo';
 export { default as TechnicianRepairHistoryTab } from './RepairHistoryTab';
