@@ -12,11 +12,7 @@ import ComponentSelector from "./ComponentSelector";
 import SoftwareSelector from "./SoftwareSelector";
 import MediaUploader from "./MediaUploader";
 import ReportFormActions from "./ReportFormActions";
-
-interface Room {
-  id: string;
-  name: string;
-}
+import { Room } from "@/types";
 
 interface Computer {
   assetId: string;

@@ -164,13 +164,13 @@ export default function ProposalTable({
                       className="rounded border-gray-300"
                       checked={selectedRowKeys.includes(record.id)}
                       onChange={(e) => onRowSelect(record.id, e.target.checked)}
-                      aria-label={`Chọn đề xuất ${record.requestCode}`}
+                      aria-label={`Chọn đề xuất ${record.proposalCode}`}
                     />
                     <span>{(currentPage - 1) * pageSize + index + 1}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
-                  {record.requestCode}
+                  {record.proposalCode}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700">
                   <div>

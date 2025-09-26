@@ -130,22 +130,6 @@ export interface ReplacementComponent {
   quantity: number; // Số lượng cần thay
 }
 
-// Interface cho đề xuất thay thế (chứa nhiều linh kiện)
-export interface ReplacementRequestItem {
-  id: string;
-  requestCode: string; // Mã đề xuất thay thế
-  title: string; // Tiêu đề đề xuất
-  description: string; // Mô tả tổng quan
-  components: ReplacementComponent[]; // Danh sách linh kiện cần thay
-  status: ReplacementStatus;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string; // Kỹ thuật viên tạo đề xuất
-  approvedBy?: string;
-  rejectedReason?: string;
-  unit: string;
-}
-
 // Định nghĩa thông tin chi tiết về vai trò
 export const RoleInfo = {
   [UserRole.GIANG_VIEN]: {
@@ -298,7 +282,7 @@ export enum ComponentType {
   PSU = "PSU",
   CASE = "CASE",
   MONITOR = "MONITOR",
-  KEYBOARD = "KEYBOARD", 
+  KEYBOARD = "KEYBOARD",
   MOUSE = "MOUSE",
   NETWORK = "NETWORK", // Updated to match database
   OPTICAL_DRIVE = "OPTICAL_DRIVE",
@@ -334,7 +318,7 @@ export interface Component {
 
 // Repair history interface
 export interface RepairHistory {
-  id: string; // This would be the repairRequestId 
+  id: string; // This would be the repairRequestId
   assetId: string; // Computer asset ID
   requestCode: string; // Request code like YCSC-2025-0001
   reportDate: string; // Initial creation date
@@ -362,7 +346,7 @@ export interface RepairLog {
   actorName: string; // Name of the person who performed the action
   action: string; // Action performed, e.g., "Tạo yêu cầu", "Tiếp nhận xử lý", "Hoàn tất"
   fromStatus: RepairStatus | null; // Status before change
-  toStatus: RepairStatus; // Status after change  
+  toStatus: RepairStatus; // Status after change
   comment: string; // Notes for this action
   createdAt: string; // ISO timestamp when action was performed
 }
@@ -384,7 +368,7 @@ export interface RepairHistoryItem {
 }
 
 // Interface for replacement requests displayed in technician pages - Khớp với database ReplacementProposals
-export interface ReplacementRequestForTechnician {
+export interface ReplacementRequestItem {
   id: string;
   proposalCode: string; // Thay đổi từ requestCode để khớp database
   proposerId: string;
@@ -498,11 +482,25 @@ export interface ComprehensiveAsset {
   type: AssetType; // Loại tài sản
   isHandover: boolean; // Flag bàn giao
   isLocked: boolean; // Khi đã sử dụng thì không cho cập nhật lại
-  categoryId: string; // Danh mục - 4: máy tính, 3: thiết bị văn phòng, 5: máy in
-  shape: AssetShape; // Cột xác định hình thái của tài sản
+  categoryId: string; // FK to categories.id
+  shape: AssetShape; // Hình dạng tài sản (COMPUTER, GENERIC)
   status: AssetStatus; // Trạng thái tài sản
-  createdBy: string; // User who initiated the handover
-  createdAt: string; // timestamp ISO string
-  updatedAt: string; // timestamp ISO string
-  deletedAt?: string; // timestamp ISO string (soft delete)
+  createdBy: string; // FK to users.id - Người tạo
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
+  deletedAt?: string; // ISO timestamp (soft delete)
+}
+
+// Interface cho bảng TechnicianAssignments - Phân công kỹ thuật viên theo khu vực
+export interface TechnicianAssignment {
+  id: string; // UUID primary key
+  technicianId: string; // FK to users.id (kỹ thuật viên)
+  building: string; // Tòa nhà được phân công (vd: "Tòa A", "Tòa H")
+  floors: string[]; // Danh sách tầng được phân công (vd: ["1", "2", "3"])
+  isActive: boolean; // Trạng thái phân công có hiệu lực
+  assignedBy: string; // FK to users.id (tổ trưởng kỹ thuật phân công)
+  assignedAt: string; // Thời điểm phân công (ISO timestamp)
+  notes?: string; // Ghi chú phân công
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
 }

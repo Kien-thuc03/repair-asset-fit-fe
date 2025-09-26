@@ -1,6 +1,6 @@
 import { Search } from "lucide-react";
 import { RepairStatus } from "@/types";
-import { errorTypes } from "@/lib/mockData";
+import { mockErrorTypes } from "@/lib/mockData";
 
 interface ReportFiltersProps {
   searchTerm: string;
@@ -65,7 +65,7 @@ export default function ReportFilters({
             value={selectedErrorType}
             onChange={(e) => onErrorTypeChange(e.target.value)}>
             <option value="all">Tất cả</option>
-            {errorTypes.map((errorType) => (
+            {mockErrorTypes.map((errorType) => (
               <option key={errorType.id} value={errorType.name}>
                 {errorType.name}
               </option>

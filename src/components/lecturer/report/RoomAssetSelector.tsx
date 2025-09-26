@@ -1,10 +1,6 @@
 import React from "react";
 import { SimpleAsset as Asset } from "@/types";
-
-interface Room {
-  id: string;
-  name: string;
-}
+import { Room } from "@/types";
 
 interface Computer {
   assetId: string;
@@ -48,7 +44,7 @@ const RoomAssetSelector: React.FC<RoomAssetSelectorProps> = ({
           <option value="">Chọn phòng</option>
           {rooms.map((room) => (
             <option key={room.id} value={room.id}>
-              {room.name}
+              {room.roomNumber}
             </option>
           ))}
         </select>

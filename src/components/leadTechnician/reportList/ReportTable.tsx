@@ -72,11 +72,6 @@ export default function ReportTable({
     return config ? config.label : status;
   };
 
-  const getStatusIcon = (status: RepairStatus) => {
-    const config = repairRequestStatusConfig[status];
-    const IconComponent = config ? config.icon : Eye;
-    return <IconComponent className="h-4 w-4" />;
-  };
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -238,9 +233,6 @@ export default function ReportTable({
                     </td>
                     <td className="px-1 py-2">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          {getStatusIcon(request.status)}
-                        </div>
                         <span
                           className={`ml-1 inline-flex px-1 py-1 text-xs font-semibold rounded-full truncate ${getStatusBadge(
                             request.status
@@ -266,6 +258,7 @@ export default function ReportTable({
                           {new Date(request.createdAt).toLocaleDateString(
                             "vi-VN",
                             {
+                              year: "numeric",
                               month: "2-digit",
                               day: "2-digit",
                             }

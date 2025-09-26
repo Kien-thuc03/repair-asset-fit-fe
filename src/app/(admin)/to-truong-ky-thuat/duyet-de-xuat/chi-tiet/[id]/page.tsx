@@ -19,11 +19,9 @@ import {
   XCircle,
   AlertTriangle,
 } from "lucide-react";
-import {
-  mockReplacementProposals,
-  mockReplacementItems,
-  ReplacementItem,
-} from "@/lib/mockData/replacementProposals";
+import { mockReplacementRequestItem, users } from "@/lib/mockData";
+import { ComponentFromRequest } from "@/types/repair";
+import { User } from "@/types";
 
 export default function ChiTietDuyetDeXuatPage() {
   const params = useParams();
@@ -35,14 +33,28 @@ export default function ChiTietDuyetDeXuatPage() {
   const [rejectReason, setRejectReason] = useState("");
 
   const request = useMemo(
-    () => mockReplacementProposals.find((r) => r.id === id),
+    () => mockReplacementRequestItem.find((r) => r.id === id),
     [id]
   );
 
-  // Get replacement items for this proposal
-  const replacementItems = useMemo(
-    () => mockReplacementItems.filter((item) => item.proposalId === id),
-    [id]
+  // Get replacement components for this proposal
+  const replacementItems = useMemo(() => request?.components || [], [request]);
+
+  // Get user names
+  const proposerName = useMemo(
+    () =>
+      users.find((u) => u.id === request?.proposerId)?.fullName ||
+      "Không xác định",
+    [request?.proposerId]
+  );
+
+  const teamLeadApproverName = useMemo(
+    () =>
+      request?.teamLeadApproverId
+        ? users.find((u) => u.id === request.teamLeadApproverId)
+            ?.fullName || "Không xác định"
+        : undefined,
+    [request?.teamLeadApproverId]
   );
 
   if (!request) {
@@ -65,16 +77,31 @@ export default function ChiTietDuyetDeXuatPage() {
     );
   }
 
+  // Define the possible statuses as a union type
+  type ReplacementStatusType =
+    | "CHỜ_TỔ_TRƯỞNG_DUYỆT"
+    | "CHỜ_XÁC_MINH"
+    | "ĐÃ_DUYỆT"
+    | "ĐÃ_TỪ_CHỐI"
+    | "ĐÃ_HOÀN_TẤT_MUA_SẮM";
+
   // Status configuration
-  const statusConfig = {
+  const statusConfig: Record<
+    ReplacementStatusType,
+    {
+      color: string;
+      text: string;
+      icon: React.ElementType;
+    }
+  > = {
     CHỜ_TỔ_TRƯỞNG_DUYỆT: {
       color: "orange",
       text: "Chờ tổ trưởng duyệt",
       icon: Clock,
     },
-    CHỜ_ADMIN_XÁC_NHẬN: {
+    CHỜ_XÁC_MINH: {
       color: "blue",
-      text: "Chờ admin xác nhận",
+      text: "Chờ xác minh",
       icon: AlertTriangle,
     },
     ĐÃ_DUYỆT: {
@@ -87,9 +114,14 @@ export default function ChiTietDuyetDeXuatPage() {
       text: "Đã từ chối",
       icon: XCircle,
     },
+    ĐÃ_HOÀN_TẤT_MUA_SẮM: {
+      color: "green",
+      text: "Đã hoàn tất mua sắm",
+      icon: CheckCircle,
+    },
   };
 
-  const currentStatus = statusConfig[request.status];
+  const currentStatus = statusConfig[request.status as ReplacementStatusType];
 
   // Component columns configuration
   const componentColumns = [
@@ -100,22 +132,22 @@ export default function ChiTietDuyetDeXuatPage() {
       render: (_: unknown, __: unknown, index: number) => index + 1,
     },
     {
-      title: "Tên linh kiện",
-      dataIndex: "oldComponentName",
-      key: "oldComponentName",
-      render: (text: string, record: ReplacementItem) => (
+      title: "Tên linh kiện hiện tại",
+      dataIndex: "componentName",
+      key: "componentName",
+      render: (text: string, record: ComponentFromRequest) => (
         <div>
           <div className="font-medium">{text}</div>
-          {record.newItemSpecs && (
-            <div className="text-sm text-gray-500">{record.newItemSpecs}</div>
-          )}
+          <div className="text-sm text-gray-500">
+            Loại: {record.componentType}
+          </div>
         </div>
       ),
     },
     {
       title: "Linh kiện thay thế",
       key: "newItem",
-      render: (record: ReplacementItem) => (
+      render: (record: ComponentFromRequest) => (
         <div>
           <div className="font-medium">{record.newItemName}</div>
           <div className="text-sm text-gray-500">{record.newItemSpecs}</div>
@@ -125,19 +157,25 @@ export default function ChiTietDuyetDeXuatPage() {
     {
       title: "Tài sản",
       key: "asset",
-      render: () => (
+      render: (record: ComponentFromRequest) => (
         <div>
-          <div className="font-medium">{request.assetName}</div>
-          <div className="text-sm text-gray-500">Mã: {request.assetCode}</div>
+          <div className="font-medium">{record.assetName}</div>
+          <div className="text-sm text-gray-500">Mã: {record.assetCode}</div>
+          {record.machineLabel && (
+            <div className="text-sm text-blue-600">
+              Máy số: {record.machineLabel}
+            </div>
+          )}
         </div>
       ),
     },
     {
       title: "Vị trí",
       key: "location",
-      render: () => (
+      render: (record: ComponentFromRequest) => (
         <div>
-          <div className="font-medium">{request.roomName}</div>
+          <div className="font-medium">{record.roomName}</div>
+          <div className="text-sm text-gray-500">{record.buildingName}</div>
         </div>
       ),
     },
@@ -180,7 +218,7 @@ export default function ChiTietDuyetDeXuatPage() {
 
   const canApproveOrReject =
     request.status === "CHỜ_TỔ_TRƯỞNG_DUYỆT" ||
-    request.status === "CHỜ_ADMIN_XÁC_NHẬN";
+    request.status === "CHỜ_XÁC_MINH";
 
   // Timeline items
   const timelineItems = [
@@ -207,8 +245,8 @@ export default function ChiTietDuyetDeXuatPage() {
                     : "Chấp thuận đề xuất"}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {request.teamLeadApproverName &&
-                    `Người duyệt: ${request.teamLeadApproverName}`}
+                  {teamLeadApproverName &&
+                    `Người duyệt: ${teamLeadApproverName}`}
                 </p>
                 <p className="text-sm text-gray-500">
                   {new Date(request.updatedAt).toLocaleString("vi-VN")}
@@ -328,7 +366,7 @@ export default function ChiTietDuyetDeXuatPage() {
                 </Tag>
               </Descriptions.Item>
               <Descriptions.Item label="Người đề xuất" span={1}>
-                <div className="font-medium">{request.proposerName}</div>
+                <div className="font-medium">{proposerName}</div>
               </Descriptions.Item>
               <Descriptions.Item label="Ngày tạo" span={1}>
                 <div>

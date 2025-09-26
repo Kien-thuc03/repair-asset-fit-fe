@@ -4,7 +4,11 @@ import { Technician } from "@/types";
 import { Room } from "@/types/unit";
 import { mockRooms as originalMockRooms } from "@/lib/mockData/rooms";
 import { users } from "@/lib/mockData/users";
-import { getTechnicianForArea } from "@/lib/mockData/technicianAssignments";
+import {
+  getPrimaryTechnicianForArea,
+  getAssignmentsForTechnician,
+  mockTechnicianAssignments,
+} from "@/lib/mockData/technicianAssignments";
 import { Breadcrumb } from "antd";
 import Pagination from "@/components/common/Pagination";
 import {
@@ -17,11 +21,34 @@ import {
 } from "@/components/leadTechnician/assignment";
 
 export default function PhanCongPage() {
-  // Create technicians from users data using technician assignments
+  // Tạo danh sách technicians từ TechnicianAssignments và users data
   const mockTechnicians: Technician[] = users
-    .filter((user) => user.id === "user-8" || user.id === "user-9")
+    .filter((user) => {
+      // Lọc users có trong mockTechnicianAssignments và là active
+      return mockTechnicianAssignments.some(
+        (assignment) =>
+          assignment.technicianId === user.id && assignment.isActive
+      );
+    })
     .map((user) => {
-      const areaRanges = user.id === "user-8" ? ["Tầng 1-5"] : ["Tầng 6-9"];
+      // Lấy tất cả assignments của technician này
+      const assignments = getAssignmentsForTechnician(user.id);
+
+      // Tạo assignedAreas từ assignments
+      const assignedAreas = assignments.map(
+        (assignment) =>
+          `${assignment.building} - Tầng ${assignment.floors.join(", ")}`
+      );
+
+      // Tạo current task dựa trên assignments
+      const currentTask =
+        assignments.length > 0
+          ? `Phụ trách ${assignments[0].building} ${
+              assignments[0].floors.length > 1
+                ? `tầng ${assignments[0].floors.join("-")}`
+                : `tầng ${assignments[0].floors[0]}`
+            }`
+          : "Chưa có phân công";
 
       return {
         id: user.id,
@@ -29,20 +56,20 @@ export default function PhanCongPage() {
         email: user.email,
         phone: user.phoneNumber,
         status: "active" as const,
-        assignedAreas: areaRanges,
-        currentTask:
-          user.id === "user-8"
-            ? "Kiểm tra hệ thống mạng tầng 3"
-            : "Bảo trì máy tính phòng H601",
+        assignedAreas,
+        currentTask,
       };
     });
 
-  // Sử dụng rooms từ mockData và mapping lại assignedTechnician dựa trên technicianAssignments
+  // Sử dụng rooms từ mockData và mapping assignedTechnician dựa trên TechnicianAssignments
   const mockRooms: Room[] = originalMockRooms.map((room) => {
-    // Tìm kỹ thuật viên được phân công cho khu vực này
-    const assignedTechnician = getTechnicianForArea(
+    // Chuyển đổi format tầng từ "Tầng 1" -> "1"
+    const floorNumber = room.floor?.replace("Tầng ", "") || "1";
+
+    // Tìm kỹ thuật viên được phân công cho khu vực này từ database
+    const assignedTechnician = getPrimaryTechnicianForArea(
       room.building || "Tòa H",
-      room.floor || ""
+      floorNumber
     );
 
     return {
