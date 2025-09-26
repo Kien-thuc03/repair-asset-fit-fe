@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Breadcrumb } from "antd";
 import { ArrowLeft, FileText, Printer, Save } from "lucide-react";
-import { getReportListsByStatus } from "@/lib/mockData/reportLists";
+import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
+import { ReplacementStatus } from "@/types/repair";
+import { users } from "@/lib/mockData/users";
 import SaveDraftSuccessModal from "../modal/SaveDraftSuccessModal";
 import SubmitReportSuccessModal from "../modal/SubmitReportSuccessModal";
 
@@ -13,24 +15,78 @@ export default function LapToTrinhPage() {
   const router = useRouter();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
+  // Lấy đề xuất thay thế đã được duyệt (ĐÃ_DUYỆT) để lập tờ trình
+  // Lấy đề xuất thay thế đã được duyệt (ĐÃ_DUYỆT) để lập tờ trình
   const selectedRequest = useMemo(() => {
-    // Lấy tất cả các items từ các danh sách đã tạo có trạng thái "CHỜ_LẬP_TỜ_TRÌNH"
-    const reportLists = getReportListsByStatus("CHỜ_LẬP_TỜ_TRÌNH");
-    const allItems = reportLists.flatMap((list) => list.items);
-    return allItems.find((r) => r.id === id);
+    return mockReplacementRequestItem.find(
+      (request) =>
+        request.id === id && request.status === ReplacementStatus.ĐÃ_DUYỆT
+    );
   }, [id]);
 
+  // Lấy thông tin từ các components trong đề xuất để hiển thị
+  const proposalInfo = useMemo(() => {
+    if (!selectedRequest) return null;
+
+    // Lấy thông tin người đề xuất
+    const proposer = users.find((u) => u.id === selectedRequest.proposerId);
+
+    // Tính toán thông tin tổng hợp từ components
+    const firstComponent = selectedRequest.components[0];
+    const allAssetCodes = [
+      ...new Set(selectedRequest.components.map((c) => c.assetCode)),
+    ];
+    const allAssetNames = [
+      ...new Set(selectedRequest.components.map((c) => c.assetName)),
+    ];
+    const allLocations = [
+      ...new Set(
+        selectedRequest.components.map(
+          (c) => `${c.buildingName} - ${c.roomName}`
+        )
+      ),
+    ];
+    const allReasons = [
+      ...new Set(selectedRequest.components.map((c) => c.reason)),
+    ];
+
+    return {
+      assetCodes: allAssetCodes.join(", "),
+      assetNames: allAssetNames.join(", "),
+      locations: allLocations.join(", "),
+      proposerName: proposer?.fullName || "Không xác định",
+      reasons: allReasons.join("; "),
+      primaryAssetCode: firstComponent?.assetCode || "",
+      primaryAssetName: firstComponent?.assetName || "",
+    };
+  }, [selectedRequest]);
+
   const [reportData, setReportData] = useState({
-    submittedBy: "Giảng Thanh Trọn",
+    submittedBy: "Giảng Thanh Trọn", // Sẽ được cập nhật khi proposalInfo có sẵn
     position: "Tổ trưởng kỹ thuật",
     department: "Khoa Công Nghệ Thông Tin",
     recipientDepartment: "Phòng Quản trị",
-    subject: "Khoa Công nghệ Thông tin",
-    attachments: "()",
+    subject: "Đề xuất thay thế linh kiện thiết bị",
+    attachments: selectedRequest?.proposalCode
+      ? `Đề xuất ${selectedRequest.proposalCode}`
+      : "()",
     content: "",
     director: "TS. Lê Nhất Duy",
     rector: "TS. Phan Hồng Hải",
   });
+
+  // Cập nhật thông tin khi proposalInfo có sẵn
+  useEffect(() => {
+    if (
+      proposalInfo?.proposerName &&
+      reportData.submittedBy === "Giảng Thanh Trọn"
+    ) {
+      setReportData((prev) => ({
+        ...prev,
+        submittedBy: proposalInfo.proposerName,
+      }));
+    }
+  }, [proposalInfo, reportData.submittedBy]);
 
   const [showSaveDraftModal, setShowSaveDraftModal] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -45,18 +101,30 @@ export default function LapToTrinhPage() {
   };
 
   const generateContent = () => {
-    if (!selectedRequest) return "";
+    if (!selectedRequest || !proposalInfo) return "";
 
-    return `Phòng Lab H8.1, H8.2, H8.3 của Khoa CNTT đang cần thay thế thiết bị. Hệ điều hành Windows 10 và một số phần mềm chuyên ngành Khoa học máy tính đã lỗi thời. Máy tính hiện tại không đáp ứng được yêu cầu sử dụng phần mềm chuyên ngành phù hợp với giáo trình và học liệu mới. Hệ điều hành cũ, CPU đã quá lạc hậu so với phiên bản mới nhất. Cần nâng cấp phần mềm mới Intel H310, không thể sử dụng được nâng cấp để tối ưu hiệu suất. Ổ đĩa cứng SSD và RAM máy tính vẫn sử dụng hệ thống cũ. Ổ cứng SSD cũ 256GB, và thông số Ram: DDR4 8GB cần được nâng cấp.
+    // Tạo danh sách chi tiết các linh kiện cần thay thế
+    const componentsList = selectedRequest.components
+      .map(
+        (comp) =>
+          `- ${comp.componentName} (${comp.assetCode}) tại ${comp.roomName}: ${comp.reason} → Thay thế bằng ${comp.newItemName} (${comp.newItemSpecs})`
+      )
+      .join("\n");
 
-Khoa CNTT kính trình Ban Giám hiệu phê duyệt chi ngân sách cho Phòng Quản trị tiến hành nâng cấp thiết bị để phục vụ công tác giảng dạy cho sinh viên được tốt hơn.
+    return `Phòng Lab ${proposalInfo.locations} của Khoa CNTT đang cần thay thế thiết bị. Một số linh kiện máy tính đã hư hỏng và cần được thay thế để đảm bảo hoạt động ổn định của hệ thống.
 
-Thông tin thiết bị cần thay thế:
-- Mã tài sản: ${selectedRequest.assetCode}
-- Tên thiết bị: ${selectedRequest.assetName}
-- Vị trí: ${selectedRequest.location}
-- Người đề xuất: ${selectedRequest.requestedBy}
-- Lý do: ${selectedRequest.reason}
+Thông tin chi tiết về đề xuất thay thế:
+
+${componentsList}
+
+Khoa CNTT kính trình Ban Giám hiệu phê duyệt chi ngân sách cho Phòng Quản trị tiến hành thay thế các linh kiện để phục vụ công tác giảng dạy cho sinh viên được tốt hơn.
+
+Thông tin tổng hợp:
+- Mã đề xuất: ${selectedRequest.proposalCode}
+- Tiêu đề: ${selectedRequest.title}
+- Người đề xuất: ${proposalInfo.proposerName}
+- Tổng số linh kiện cần thay: ${selectedRequest.components.length}
+- Lý do chung: ${proposalInfo.reasons}
 
 Khoa rất mong Ban Giám hiệu xem xét và đồng ý cho thực hiện.
 
@@ -80,6 +148,13 @@ Trân trọng kính trình.`;
                 .content { text-align: justify; margin: 20px 0; }
                 .signature { margin-top: 50px; }
                 .signature-section { float: right; text-align: center; width: 200px; margin-left: 20px; }
+                .signature-left { float: left; text-align: center; width: 200px; margin-right: 20px; }
+                .clearfix { clear: both; }
+                table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+                th, td { border: 1px solid #000; padding: 4px 6px; font-size: 12px; }
+                th { background-color: #f5f5f5; font-weight: bold; text-align: center; }
+                .text-center { text-align: center; }
+                .font-mono { font-family: monospace; }
                 .signature-left { float: left; text-align: center; width: 200px; margin-right: 20px; }
                 .clearfix { clear: both; }
                 @media print {
@@ -159,7 +234,7 @@ Trân trọng kính trình.`;
             {
               title: (
                 <div className="flex items-center">
-                  <span>Lập tờ trình #{selectedRequest.id}</span>
+                  <span>Lập tờ trình #{selectedRequest.proposalCode}</span>
                 </div>
               ),
             },
@@ -179,7 +254,7 @@ Trân trọng kính trình.`;
           <div className="flex items-center">
             <FileText className="h-6 w-6 text-blue-600 mr-2" />
             <h1 className="text-2xl font-bold text-gray-900">
-              Lập tờ trình - {selectedRequest.assetName}
+              Lập tờ trình - {selectedRequest.title}
             </h1>
           </div>
         </div>
@@ -370,12 +445,67 @@ Trân trọng kính trình.`;
               </div>
 
               <div className="mb-6">
-                <div className="bg-gray-50 p-4 rounded border text-sm">
-                  <strong>Thông tin thiết bị:</strong>
-                  <br />
-                  <strong>Mã:</strong> {selectedRequest.assetCode}
-                  <br />
-                  <strong>Tên:</strong> {selectedRequest.assetName}
+                <div className="text-sm">
+                  <strong>Thông tin đề xuất:</strong>{" "}{selectedRequest.title}
+                </div>
+                <div className="mt-3">
+                  <table className="w-full border-collapse border border-gray-400 text-xs">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border border-gray-400 px-2 py-1 text-left">
+                          STT
+                        </th>
+                        <th className="border border-gray-400 px-2 py-1 text-left">
+                          Tên linh kiện
+                        </th>
+                        <th className="border border-gray-400 px-2 py-1 text-left">
+                          Mã tài sản
+                        </th>
+                        <th className="border border-gray-400 px-2 py-1 text-left">
+                          Vị trí
+                        </th>
+                        <th className="border border-gray-400 px-2 py-1 text-left">
+                          Lý do thay thế
+                        </th>
+                        <th className="border border-gray-400 px-2 py-1 text-left">
+                          Linh kiện thay thế
+                        </th>
+                        <th className="border border-gray-400 px-2 py-1 text-center">
+                          SL
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedRequest.components.map((component, index) => (
+                        <tr key={component.id}>
+                          <td className="border border-gray-400 px-2 py-1 text-center">
+                            {index + 1}
+                          </td>
+                          <td className="border border-gray-400 px-2 py-1">
+                            {component.componentName}
+                          </td>
+                          <td className="border border-gray-400 px-2 py-1 font-mono">
+                            {component.assetCode}
+                          </td>
+                          <td className="border border-gray-400 px-2 py-1">
+                            {component.buildingName} - {component.roomName}
+                          </td>
+                          <td className="border border-gray-400 px-2 py-1">
+                            {component.reason}
+                          </td>
+                          <td className="border border-gray-400 px-2 py-1">
+                            <div>{component.newItemName}</div>
+                            <div className="text-gray-600 text-xs">
+                              {component.newItemSpecs}
+                            </div>
+                          </td>
+                          <td className="border border-gray-400 px-2 py-1 text-center">
+                            {component.quantity}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 

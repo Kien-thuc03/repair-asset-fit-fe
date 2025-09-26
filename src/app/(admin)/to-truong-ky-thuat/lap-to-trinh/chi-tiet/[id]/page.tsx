@@ -14,7 +14,7 @@ import {
   Clock,
   Info,
 } from "lucide-react";
-import { getReportListsByStatus } from "@/lib/mockData/reportLists";
+import { getReportListsByStatus } from "@/lib/mockData";
 import { ReplacementStatus } from "@/types";
 
 export default function ChiTietLapToTrinhPage() {
@@ -160,10 +160,10 @@ export default function ChiTietLapToTrinhPage() {
                 <Package className="h-5 w-5 text-gray-400 mt-0.5" />
                 <div>
                   <div className="text-sm font-medium text-gray-500">
-                    Tên tài sản
+                    Tiêu đề
                   </div>
                   <div className="text-sm text-gray-900">
-                    {request.assetName}
+                    {request.title}
                   </div>
                 </div>
               </div>
