@@ -206,7 +206,6 @@ export default function TechnicianDeviceManagementContainer() {
       {/* Device Grid */}
       <DeviceGrid
         assets={paginatedAssets}
-        totalAssets={filteredAssets.length}
         onViewDetail={handleViewDetail}
       />
       

@@ -1,33 +1,19 @@
 "use client";
-import { Search, Monitor } from "lucide-react";
+import { Search } from "lucide-react";
 import { Asset } from "@/types";
 import DeviceCard from "./AssetCard";
 
 interface DeviceGridProps {
   assets: Asset[];
-  totalAssets: number;
   onViewDetail: (assetId: string) => void;
 }
 
 export default function DeviceGrid({
   assets,
-  totalAssets,
   onViewDetail,
 }: DeviceGridProps) {
   return (
     <>
-      {/* Device Grid Header */}
-      <div className="bg-white shadow rounded-lg p-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Monitor className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-medium text-gray-900">
-              Danh sách thiết bị ({totalAssets} tổng)
-            </h3>
-          </div>
-        </div>
-      </div>
-
       {/* Device Grid */}
       <div className="min-h-96">
         {assets.length === 0 ? (
