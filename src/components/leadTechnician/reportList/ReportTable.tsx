@@ -238,9 +238,6 @@ export default function ReportTable({
                     </td>
                     <td className="px-1 py-2">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          {getStatusIcon(request.status)}
-                        </div>
                         <span
                           className={`ml-1 inline-flex px-1 py-1 text-xs font-semibold rounded-full truncate ${getStatusBadge(
                             request.status
