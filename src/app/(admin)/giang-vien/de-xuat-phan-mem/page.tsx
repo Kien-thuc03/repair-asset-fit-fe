@@ -6,7 +6,7 @@ import {
   NewSoftwareProposalForm as ProposalFormType,
   SoftwareItemForm,
 } from "@/types";
-import { mockAssets, mockSimpleRooms, mockComputers } from "@/lib/mockData";
+import { mockAssets, mockRooms, mockComputers } from "@/lib/mockData";
 import { SuccessModal } from "@/components/modal";
 import {
   QRScannerSection,
@@ -152,7 +152,7 @@ export default function DeXuatPhanMemPage() {
 
     if (asset) {
       // Tự động điền thông tin từ QR code
-      const room = mockSimpleRooms.find((room) => room.id === asset.roomId);
+      const room = mockRooms.find((room) => room.id === asset.roomId);
       console.log("Found room:", room);
 
       if (room) {
@@ -169,7 +169,7 @@ export default function DeXuatPhanMemPage() {
           const machineLabel = computer?.machineLabel || "N/A";
 
           alert(
-            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.name}\n\nTiếp theo:\n- Bước 2: Nhập thông tin phần mềm\n- Bước 3: Lý do đề xuất và mục đích sử dụng`
+            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.roomNumber}\n\nTiếp theo:\n- Bước 2: Nhập thông tin phần mềm\n- Bước 3: Lý do đề xuất và mục đích sử dụng`
           );
         }, 100);
       }
@@ -230,9 +230,9 @@ export default function DeXuatPhanMemPage() {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required>
             <option value="">Chọn phòng máy</option>
-            {mockSimpleRooms.map((room) => (
+            {mockRooms.map((room) => (
               <option key={room.id} value={room.id}>
-                {room.name}
+                {room.roomNumber}
               </option>
             ))}
           </select>
@@ -426,7 +426,7 @@ export default function DeXuatPhanMemPage() {
         message={`Cảm ơn bạn đã gửi đề xuất trang bị ${
           formData.softwareItems.length
         } phần mềm cho phòng ${
-          mockSimpleRooms.find((r) => r.id === formData.roomId)?.name ||
+          mockRooms.find((r) => r.id === formData.roomId)?.roomNumber ||
           formData.roomId
         }. Kỹ thuật viên sẽ xem xét và phản hồi trong thời gian sớm nhất. Bạn có thể theo dõi trạng thái đề xuất trong mục quản lý đề xuất.`}
       />
