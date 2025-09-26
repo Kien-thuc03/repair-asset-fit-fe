@@ -49,8 +49,7 @@ export default function TechnicianDeviceSpecifications({
   return (
     <div className="lg:col-span-2">
       <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center space-x-2">
-        <Cpu className="w-5 h-5 text-purple-600" />
-        <span>Thông số kỹ thuật</span>
+        <span>Linh kiện trong máy</span>
       </h4>
       
       {hasSpecs ? (

@@ -77,15 +77,9 @@ export default function TechnicianDeviceDetailHeader({
       />
 
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className=" rounded-lg p-6">
         <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
           <div className="flex items-center space-x-4">
-            <button
-              onClick={onGoBack}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Quay lại
-            </button>
             <div className="flex items-center space-x-3">
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -111,7 +105,7 @@ export default function TechnicianDeviceDetailHeader({
             </div>
             {/* Warranty status */}
             <div className={`text-sm font-medium ${warrantyStatus.color} flex items-center`}>
-              📋 Bảo hành: {warrantyStatus.label}
+              Bảo hành: {warrantyStatus.label}
             </div>
           </div>
         </div>
