@@ -28,6 +28,7 @@ import {
   Select,
   Alert,
   Steps,
+  Radio,
 } from "antd";
 import {
   DeleteOutlined,
@@ -77,6 +78,9 @@ export default function BaoCaoLoiPage() {
   const [showSoftwareSelection, setShowSoftwareSelection] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errorCategory, setErrorCategory] = useState<
+    "hardware" | "software" | ""
+  >(""); // Phân loại lỗi phần cứng/phần mềm
 
   // Danh sách tòa nhà duy nhất từ mockRooms
   const buildings = [
@@ -91,8 +95,11 @@ export default function BaoCaoLoiPage() {
     if (!formData.assetId) {
       return 1; // Bước 2: Chọn thiết bị
     }
-    if (!formData.errorTypeId) {
-      return 2; // Bước 3: Chọn loại lỗi
+    if (!errorCategory) {
+      return 2; // Bước 3: Chọn loại lỗi (phần cứng/phần mềm)
+    }
+    if (errorCategory === "hardware" && !formData.errorTypeId) {
+      return 2; // Bước 3: Vẫn cần chọn loại lỗi cụ thể cho phần cứng
     }
     // Bước 4 luôn available sau khi chọn loại lỗi (optional step)
     if (!formData.description) {
@@ -284,6 +291,7 @@ export default function BaoCaoLoiPage() {
       description: "",
       mediaFiles: [],
     });
+    setErrorCategory("");
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
     setShowComponentSelection(false);
@@ -305,9 +313,6 @@ export default function BaoCaoLoiPage() {
   const handleCancel = () => {
     router.push("/giang-vien");
   };
-
-  // Check if selected error type is "Máy hư phần mềm" (ET002)
-  const isSoftwareError = formData.errorTypeId === "ET002";
 
   return (
     <div className="space-y-6">
@@ -554,35 +559,83 @@ export default function BaoCaoLoiPage() {
               />
             )}
 
-            <Form.Item label="Loại lỗi" required>
-              <Select
-                placeholder={
-                  !formData.assetId
-                    ? "Vui lòng chọn thiết bị trước"
-                    : "Chọn loại lỗi"
-                }
-                value={formData.errorTypeId}
-                onChange={(errorTypeId) =>
-                  setFormData((prev) => ({ ...prev, errorTypeId }))
-                }
+            {/* Radio buttons cho phân loại lỗi */}
+            <Form.Item label="Phân loại lỗi" required>
+              <Radio.Group
+                value={errorCategory}
+                onChange={(e) => {
+                  const newCategory = e.target.value;
+                  setErrorCategory(newCategory);
+                  // Reset errorTypeId khi thay đổi category
+                  if (newCategory === "software") {
+                    // Nếu chọn lỗi phần mềm, tự động set errorTypeId
+                    const softwareErrorType = mockErrorTypes.find(
+                      (type) => type.name === "Máy hư phần mềm"
+                    );
+                    if (softwareErrorType) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        errorTypeId: softwareErrorType.id,
+                      }));
+                    }
+                  } else {
+                    setFormData((prev) => ({ ...prev, errorTypeId: "" }));
+                  }
+                }}
                 disabled={!formData.assetId}>
-                {mockErrorTypes.map((errorType) => (
-                  <Option key={errorType.id} value={errorType.id}>
-                    {errorType.name}
-                  </Option>
-                ))}
-              </Select>
+                <Radio value="hardware">Lỗi phần cứng</Radio>
+                <Radio value="software">Lỗi phần mềm</Radio>
+              </Radio.Group>
             </Form.Item>
+
+            {/* Danh sách loại lỗi cụ thể - chỉ hiện khi chọn lỗi phần cứng */}
+            {errorCategory === "hardware" && (
+              <Form.Item label="Loại lỗi cụ thể" required>
+                <Select
+                  placeholder="Chọn loại lỗi phần cứng"
+                  value={formData.errorTypeId}
+                  onChange={(errorTypeId) =>
+                    setFormData((prev) => ({ ...prev, errorTypeId }))
+                  }>
+                  {mockErrorTypes
+                    .filter((errorType) => errorType.name !== "Máy hư phần mềm")
+                    .map((errorType) => (
+                      <Option key={errorType.id} value={errorType.id}>
+                        {errorType.name}
+                      </Option>
+                    ))}
+                </Select>
+              </Form.Item>
+            )}
+
+            {/* Thông báo khi chọn lỗi phần mềm */}
+            {errorCategory === "software" && (
+              <Alert
+                message="Đã chọn lỗi phần mềm"
+                description="Bạn đã chọn loại lỗi phần mềm. Có thể tiếp tục sang bước tiếp theo để mô tả chi tiết."
+                type="success"
+                showIcon
+                className="mt-4"
+              />
+            )}
           </div>
 
           {/* Bước 4: Chọn linh kiện/phần mềm cụ thể */}
-          <div className={`mb-6 ${!formData.errorTypeId ? "opacity-50" : ""}`}>
+          <div
+            className={`mb-6 ${
+              !errorCategory ||
+              (errorCategory === "hardware" && !formData.errorTypeId)
+                ? "opacity-50"
+                : ""
+            }`}>
             <h3 className="text-lg font-semibold mb-4 text-blue-900">
-              Bước 4: Chọn {isSoftwareError ? "phần mềm" : "linh kiện"} bị lỗi
+              Bước 4: Chọn{" "}
+              {errorCategory === "software" ? "phần mềm" : "linh kiện"} bị lỗi
               (tùy chọn)
             </h3>
 
-            {!formData.errorTypeId && (
+            {(!errorCategory ||
+              (errorCategory === "hardware" && !formData.errorTypeId)) && (
               <Alert
                 message="Vui lòng chọn loại lỗi trước"
                 description="Bạn cần hoàn thành bước 3 để có thể chọn linh kiện hoặc phần mềm cụ thể."
@@ -592,11 +645,11 @@ export default function BaoCaoLoiPage() {
               />
             )}
 
-            {isSoftwareError ? (
+            {errorCategory === "software" ? (
               <div>
                 <Button
                   type={showSoftwareSelection ? "primary" : "dashed"}
-                  disabled={!formData.errorTypeId}
+                  disabled={errorCategory !== "software"}
                   onClick={() =>
                     setShowSoftwareSelection(!showSoftwareSelection)
                   }
@@ -612,7 +665,7 @@ export default function BaoCaoLoiPage() {
                       mode="multiple"
                       placeholder="Chọn các phần mềm bị lỗi"
                       value={selectedSoftwareIds}
-                      disabled={!formData.errorTypeId}
+                      disabled={errorCategory !== "software"}
                       onChange={setSelectedSoftwareIds}>
                       {filteredSoftware.map((software) => (
                         <Option key={software.id} value={software.id}>
@@ -628,7 +681,9 @@ export default function BaoCaoLoiPage() {
               <div>
                 <Button
                   type={showComponentSelection ? "primary" : "dashed"}
-                  disabled={!formData.errorTypeId}
+                  disabled={
+                    errorCategory !== "hardware" || !formData.errorTypeId
+                  }
                   onClick={() =>
                     setShowComponentSelection(!showComponentSelection)
                   }
@@ -644,7 +699,9 @@ export default function BaoCaoLoiPage() {
                       mode="multiple"
                       placeholder="Chọn các linh kiện bị lỗi"
                       value={selectedComponentIds}
-                      disabled={!formData.errorTypeId}
+                      disabled={
+                        errorCategory !== "hardware" || !formData.errorTypeId
+                      }
                       onChange={setSelectedComponentIds}>
                       {filteredComponents.map((component) => (
                         <Option key={component.id} value={component.id}>
@@ -763,7 +820,8 @@ export default function BaoCaoLoiPage() {
                 !formData.building ||
                 !formData.roomId ||
                 !formData.assetId ||
-                !formData.errorTypeId ||
+                !errorCategory ||
+                (errorCategory === "hardware" && !formData.errorTypeId) ||
                 !formData.description
               }>
               {isSubmitting ? "Đang xử lý..." : "Gửi báo cáo lỗi"}
