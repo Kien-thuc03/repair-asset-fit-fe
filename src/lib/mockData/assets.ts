@@ -1,4 +1,4 @@
-import { SimpleAsset } from '@/types';
+import { AssetStatus, SimpleAsset } from '@/types';
 
 // Mock assets data - Khớp hoàn toàn với database schema
 // Chỉ bao gồm các tài sản máy tính (computers) để phù hợp với repair processing workflow
@@ -82,6 +82,36 @@ export const mockAllAssets: SimpleAsset[] = [
   }
 ];
 
+export const assetStatusConfig = {
+  [AssetStatus.CHO_BAN_GIAO]: {
+    label: "Chờ bàn giao",
+    color: "blue"
+  },
+  [AssetStatus.CHO_TIEP_NHAN]: {
+    label: "Chờ tiếp nhận",
+    color: "orange"
+  },
+  [AssetStatus.DANG_SU_DUNG]: {
+    label: "Đang sử dụng",
+    color: "green"
+  },
+  [AssetStatus.DA_MAT]: {
+    label: "Đã mất",
+    color: "gray"
+  },
+  [AssetStatus.DE_XUAT_THANH_LY]: {
+    label: "Đề xuất thanh lý",
+    color: "purple"
+  },
+  [AssetStatus.DA_THANH_LY]: {
+    label: "Đã thanh lý",
+    color: "black"
+  },
+  [AssetStatus.HU_HONG]: {
+    label: "Hư hỏng",
+    color: "red"
+  }
+};
 
 // Helper functions
 export const getAssetById = (id: string): SimpleAsset | undefined => {

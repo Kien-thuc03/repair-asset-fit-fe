@@ -3,9 +3,9 @@ import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Asset, ComprehensiveAsset } from "@/types";
 import {
-  comprehensiveAssets,
+  mockDetailedAssets,
   mockRooms,
-  categories,
+  mockCategories,
   mockRepairHistory,
 } from "@/lib/mockData";
 import AssetDetailHeader from "./AssetDetailHeader";
@@ -19,7 +19,7 @@ import RepairHistoryTab from "./RepairHistoryTab";
 // Helper function to convert ComprehensiveAsset to Asset
 const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
   const room = mockRooms.find((r) => r.id === comprehensive.currentRoomId);
-  const category = categories.find((c) => c.id === comprehensive.categoryId);
+  const category = mockCategories.find((c) => c.id === comprehensive.categoryId);
 
   return {
     id: comprehensive.id,
@@ -46,7 +46,7 @@ export default function AssetDetailContainer() {
   const [showRepairHistory, setShowRepairHistory] = useState(false);
 
   // Convert comprehensive assets to Asset format
-  const convertedAssets = comprehensiveAssets.map(convertToAsset);
+  const convertedAssets = mockDetailedAssets.map(convertToAsset);
   const asset = useMemo(
     () => convertedAssets.find((a) => a.id === id),
     [id, convertedAssets]

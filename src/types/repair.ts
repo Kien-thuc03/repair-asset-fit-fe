@@ -506,3 +506,11 @@ export interface ComprehensiveAsset {
   updatedAt: string; // timestamp ISO string
   deletedAt?: string; // timestamp ISO string (soft delete)
 }
+
+// Categories interface based on database schema
+export interface Category {
+  id: string;
+  name: string;
+  code: string;
+  parentId: string | null;
+}

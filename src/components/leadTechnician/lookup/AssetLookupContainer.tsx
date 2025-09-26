@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Asset, ComprehensiveAsset } from "@/types";
-import { comprehensiveAssets, mockRooms, categories } from "@/lib/mockData";
+import { mockDetailedAssets, mockRooms, mockCategories } from "@/lib/mockData";
 import { Breadcrumb } from "antd";
 import Pagination from "@/components/common/Pagination";
 import AssetLookupHeader from "./AssetLookupHeader";
@@ -13,7 +13,7 @@ import AssetGrid from "./AssetGrid";
 // Helper function to convert ComprehensiveAsset to Asset
 const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
   const room = mockRooms.find((r) => r.id === comprehensive.currentRoomId);
-  const category = categories.find((c) => c.id === comprehensive.categoryId);
+  const category = mockCategories.find((c) => c.id === comprehensive.categoryId);
 
   return {
     id: comprehensive.id,
@@ -34,7 +34,7 @@ const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
 export default function AssetLookupContainer() {
   const router = useRouter();
   // Convert comprehensive assets to Asset format
-  const convertedAssets = comprehensiveAssets.map(convertToAsset);
+  const convertedAssets = mockDetailedAssets.map(convertToAsset);
   const [assets] = useState<Asset[]>(convertedAssets);
   const [filteredAssets, setFilteredAssets] =
     useState<Asset[]>(convertedAssets);

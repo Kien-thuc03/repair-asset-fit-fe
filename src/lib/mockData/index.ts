@@ -1,4 +1,6 @@
 export * from "./assets";
+export * from "./detailedAssets";
+export * from "./categories";
 export * from "./components";
 export * from "./computers";
 export * from "./componentsFromReports";
