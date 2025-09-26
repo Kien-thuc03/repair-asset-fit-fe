@@ -149,10 +149,10 @@ export default function RequestDetailContainer({
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <RequestInfo request={request} formatDate={formatDate} />
-          
+
           {/* Display components from RepairRequestComponents table */}
           <FaultyComponentsList repairRequestId={request.id} />
-          
+
           {/* Display faulty components details if available */}
           {"faultyComponents" in request && (
             <FaultyComponentsDisplay
