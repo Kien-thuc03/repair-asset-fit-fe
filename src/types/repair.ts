@@ -504,3 +504,11 @@ export interface TechnicianAssignment {
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
 }
+
+// Categories interface based on database schema
+export interface Category {
+  id: string;
+  name: string;
+  code: string;
+  parentId: string | null;
+}

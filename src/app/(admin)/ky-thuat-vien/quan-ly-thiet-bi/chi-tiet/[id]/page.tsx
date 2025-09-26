@@ -1,6 +1,6 @@
 "use client";
 import { TechnicianDeviceDetailContainer } from "@/components/assetsManagement";
 
-export default function TraCuuThietBiPage() {
+export default function ChiTietThietBiPage() {
   return <TechnicianDeviceDetailContainer />;
 }

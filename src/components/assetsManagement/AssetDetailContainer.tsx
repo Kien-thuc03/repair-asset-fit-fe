@@ -3,23 +3,23 @@ import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Asset, ComprehensiveAsset } from "@/types";
 import {
-  comprehensiveAssets,
+  mockDetailedAssets,
   mockRooms,
-  categories,
+  mockCategories,
   mockRepairHistory,
 } from "@/lib/mockData";
-import AssetDetailHeader from "./AssetDetailHeader";
-import AssetNotFound from "./AssetNotFound";
-import AssetTabNavigation from "./AssetTabNavigation";
-import AssetBasicInfo from "./AssetBasicInfo";
-import AssetWarrantyInfo from "./AssetWarrantyInfo";
-import AssetSpecifications from "./AssetSpecifications";
-import RepairHistoryTab from "./RepairHistoryTab";
+import TechnicianDeviceDetailHeader from "./AssetDetailHeader";
+import DeviceNotFound from "./AssetNotFound";
+import TechnicianDeviceTabNavigation from "./AssetTabNavigation";
+import TechnicianDeviceBasicInfo from "./AssetBasicInfo";
+import TechnicianDeviceWarrantyInfo from "./AssetWarrantyInfo";
+import TechnicianDeviceSpecifications from "./AssetSpecifications";
+import TechnicianRepairHistoryTab from "./RepairHistoryTab";
 
 // Helper function to convert ComprehensiveAsset to Asset
 const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
   const room = mockRooms.find((r) => r.id === comprehensive.currentRoomId);
-  const category = categories.find((c) => c.id === comprehensive.categoryId);
+  const category = mockCategories.find((c) => c.id === comprehensive.categoryId);
 
   return {
     id: comprehensive.id,
@@ -37,7 +37,7 @@ const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
   };
 };
 
-export default function AssetDetailContainer() {
+export default function TechnicianDeviceDetailContainer() {
   const params = useParams();
   const router = useRouter();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
@@ -46,7 +46,7 @@ export default function AssetDetailContainer() {
   const [showRepairHistory, setShowRepairHistory] = useState(false);
 
   // Convert comprehensive assets to Asset format
-  const convertedAssets = comprehensiveAssets.map(convertToAsset);
+  const convertedAssets = mockDetailedAssets.map(convertToAsset);
   const asset = useMemo(
     () => convertedAssets.find((a) => a.id === id),
     [id, convertedAssets]
@@ -84,7 +84,7 @@ export default function AssetDetailContainer() {
   };
 
   if (!asset) {
-    return <AssetNotFound onGoBack={handleGoBack} />;
+    return <DeviceNotFound onGoBack={handleGoBack} />;
   }
 
   const warrantyStatus = getWarrantyStatus(asset.warrantyExpiry);
@@ -92,7 +92,7 @@ export default function AssetDetailContainer() {
 
   return (
     <div className="space-y-6">
-      <AssetDetailHeader
+      <TechnicianDeviceDetailHeader
         asset={asset}
         warrantyStatus={warrantyStatus}
         onGoBack={handleGoBack}
@@ -100,7 +100,7 @@ export default function AssetDetailContainer() {
 
       {/* Tab Content */}
       <div className="bg-white shadow rounded-lg">
-        <AssetTabNavigation
+        <TechnicianDeviceTabNavigation
           showRepairHistory={showRepairHistory}
           repairHistoryCount={repairHistory.length}
           onTabChange={handleTabChange}
@@ -110,19 +110,19 @@ export default function AssetDetailContainer() {
           {!showRepairHistory ? (
             // Device Information Tab
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AssetBasicInfo asset={asset} />
+              <TechnicianDeviceBasicInfo asset={asset} />
 
-              <AssetWarrantyInfo
+              <TechnicianDeviceWarrantyInfo
                 asset={asset}
                 warrantyStatus={warrantyStatus}
                 formatDate={formatDate}
               />
 
-              <AssetSpecifications asset={asset} />
+              <TechnicianDeviceSpecifications asset={asset} />
             </div>
           ) : (
             // Repair History Tab
-            <RepairHistoryTab
+            <TechnicianRepairHistoryTab
               repairHistory={repairHistory}
               formatDate={formatDate}
             />

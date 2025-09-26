@@ -2,18 +2,15 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Asset, ComprehensiveAsset } from "@/types";
-import { comprehensiveAssets, mockRooms, categories } from "@/lib/mockData";
+import { mockDetailedAssets, mockRooms, mockCategories } from "@/lib/mockData";
 import { Breadcrumb } from "antd";
 import Pagination from "@/components/common/Pagination";
-import AssetLookupHeader from "./AssetLookupHeader";
-import AssetStatsCards from "./AssetStatsCards";
-import AssetFilters from "./AssetFilters";
-import AssetGrid from "./AssetGrid";
+import { DeviceManagementHeader, DeviceStatsCards, DeviceFilters, DeviceGrid } from "@/components/assetsManagement";
 
 // Helper function to convert ComprehensiveAsset to Asset
 const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
   const room = mockRooms.find((r) => r.id === comprehensive.currentRoomId);
-  const category = categories.find((c) => c.id === comprehensive.categoryId);
+  const category = mockCategories.find((c) => c.id === comprehensive.categoryId);
 
   return {
     id: comprehensive.id,
@@ -31,13 +28,13 @@ const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
   };
 };
 
-export default function AssetLookupContainer() {
+export default function TechnicianDeviceManagementContainer() {
   const router = useRouter();
+  
   // Convert comprehensive assets to Asset format
-  const convertedAssets = comprehensiveAssets.map(convertToAsset);
+  const convertedAssets = mockDetailedAssets.map(convertToAsset);
   const [assets] = useState<Asset[]>(convertedAssets);
-  const [filteredAssets, setFilteredAssets] =
-    useState<Asset[]>(convertedAssets);
+  const [filteredAssets, setFilteredAssets] = useState<Asset[]>(convertedAssets);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [floorFilter, setFloorFilter] = useState<string>("all");
@@ -86,13 +83,13 @@ export default function AssetLookupContainer() {
   const simulateQRScan = () => {
     const randomAsset = assets[Math.floor(Math.random() * assets.length)];
     router.push(
-      `/to-truong-ky-thuat/tra-cuu-tai-san/chi-tiet/${randomAsset.id}`
+      `/ky-thuat-vien/quan-ly-thiet-bi/chi-tiet/${randomAsset.id}`
     );
   };
 
   // Handle view detail
   const handleViewDetail = (assetId: string) => {
-    router.push(`/to-truong-ky-thuat/tra-cuu-tai-san/chi-tiet/${assetId}`);
+    router.push(`/ky-thuat-vien/quan-ly-thiet-bi/chi-tiet/${assetId}`);
   };
 
   // Function to extract floor from room name
@@ -171,7 +168,7 @@ export default function AssetLookupContainer() {
         <Breadcrumb
           items={[
             {
-              href: "/giang-vien",
+              href: "/ky-thuat-vien",
               title: (
                 <div className="flex items-center">
                   <span>Trang chủ</span>
@@ -181,33 +178,37 @@ export default function AssetLookupContainer() {
             {
               title: (
                 <div className="flex items-center">
-                  <span>Tra cứu thiết bị</span>
+                  <span>Quản lý thiết bị</span>
                 </div>
               ),
             },
           ]}
         />
       </div>
+      
       {/* Header */}
-      <AssetLookupHeader isMobile={isMobile} onQRScan={simulateQRScan} />
+      <DeviceManagementHeader isMobile={isMobile} onQRScan={simulateQRScan} />
+      
       {/* Quick Stats */}
-      <AssetStatsCards assets={assets} />
+      <DeviceStatsCards assets={assets} />
+      
       {/* Filters */}
-      <AssetFilters
+      <DeviceFilters
         searchTerm={searchTerm}
-        statusFilter={statusFilter}
+        statusFilter={statusFilter}  
         floorFilter={floorFilter}
         onSearchChange={setSearchTerm}
         onStatusChange={setStatusFilter}
         onFloorChange={setFloorFilter}
         floors={floors}
-      />{" "}
-      {/* Asset Grid */}
-      <AssetGrid
+      />
+      
+      {/* Device Grid */}
+      <DeviceGrid
         assets={paginatedAssets}
-        totalAssets={filteredAssets.length}
         onViewDetail={handleViewDetail}
       />
+      
       {/* Pagination */}
       {filteredAssets.length > 0 && (
         <div className="bg-white shadow rounded-lg">
