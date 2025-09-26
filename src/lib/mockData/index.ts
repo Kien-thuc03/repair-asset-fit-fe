@@ -14,6 +14,7 @@ export * from "./rooms";
 export * from "./software";
 export * from "./statisticsData";
 export * from "./stats";
+export * from "./technicianAssignments";
 export * from "./units";
 export * from "./users";
 export * from "./users_roles";
