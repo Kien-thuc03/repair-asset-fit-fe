@@ -9,9 +9,9 @@ import {
   Software,
 } from "@/types";
 import {
-  errorTypes,
+  mockErrorTypes,
   mockAssets,
-  mockSimpleRooms,
+  mockRooms,
   mockComponents,
   mockComputers,
   getSoftwareByAssetId,
@@ -206,7 +206,7 @@ export default function BaoCaoLoiPage() {
 
     if (asset) {
       // Tự động điền thông tin từ QR code
-      const room = mockSimpleRooms.find((room) => room.id === asset.roomId);
+      const room = mockRooms.find((room) => room.id === asset.roomId);
       console.log("Found room:", room);
 
       if (room) {
@@ -227,7 +227,7 @@ export default function BaoCaoLoiPage() {
           console.log("Filtered components after QR scan:", components);
 
           alert(
-            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.name}\nSố linh kiện: ${components.length}\n\nTiếp theo:\n- Bước 3: Chọn loại lỗi\n- Bước 4: Mô tả chi tiết (tùy chọn)\n- Bước 5: Chọn linh kiện cụ thể (nếu cần)\n- Bước 6: Đính kèm hình ảnh (tùy chọn)`
+            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.roomNumber}\nSố linh kiện: ${components.length}\n\nTiếp theo:\n- Bước 3: Chọn loại lỗi\n- Bước 4: Mô tả chi tiết (tùy chọn)\n- Bước 5: Chọn linh kiện cụ thể (nếu cần)\n- Bước 6: Đính kèm hình ảnh (tùy chọn)`
           );
         }, 100);
       }
@@ -317,8 +317,8 @@ export default function BaoCaoLoiPage() {
         selectedSoftwareIds={selectedSoftwareIds}
         showComponentSelection={showComponentSelection}
         showSoftwareSelection={showSoftwareSelection}
-        rooms={mockSimpleRooms}
-        errorTypes={errorTypes}
+        rooms={mockRooms}
+        errorTypes={mockErrorTypes}
         computers={mockComputers}
         onSubmit={handleSubmit}
         onCancel={handleCancel}

@@ -1,15 +1,6 @@
 import React from "react";
 import Link from "next/link";
-
-interface RepairRequest {
-  id: string;
-  requestCode: string;
-  assetName: string;
-  roomName: string;
-  createdAt: string;
-  acceptedAt?: string;
-  completedAt?: string;
-}
+import { RepairRequest } from "@/types/repair";
 
 interface ActivityItem extends RepairRequest {
   activityType: "created" | "processing" | "completed";
