@@ -400,37 +400,6 @@ export default function ChiTietDuyetDeXuatPage() {
             />
           </Card>
 
-          {/* File attachments */}
-          <Card title="Tài liệu đính kèm" className="shadow">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Package className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium">Biểu mẫu đề xuất</p>
-                    <p className="text-sm text-gray-500">PDF Document</p>
-                  </div>
-                </div>
-                <Button size="small" type="link">
-                  Xem
-                </Button>
-              </div>
-              {request.verificationReportUrl && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <Package className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium">Báo cáo xác minh</p>
-                      <p className="text-sm text-gray-500">PDF Document</p>
-                    </div>
-                  </div>
-                  <Button size="small" type="link">
-                    Xem
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Card>
         </div>
 
         {/* Timeline */}

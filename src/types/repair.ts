@@ -98,20 +98,6 @@ export interface RepairRequestWithDetails extends RepairRequest {
   }>;
 }
 
-// Interface cho danh sách đề xuất thay thế trong trang duyệt đề xuất
-export interface ReplacementRequestForList {
-  id: string;
-  assetCode: string;
-  assetName: string;
-  requestedBy: string;
-  unit: string;
-  location: string;
-  reason: string;
-  status: ReplacementStatus;
-  requestDate: string;
-  estimatedCost: number;
-  description: string;
-}
 
 // Interface cho 1 linh kiện trong đề xuất thay thế
 export interface ReplacementComponent {
@@ -232,6 +218,10 @@ export enum ReplacementStatus {
   CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH", // Chờ Phòng Quản trị cử người xuống xác minh thực tế
   ĐÃ_DUYỆT = "ĐÃ_DUYỆT", // Đã được duyệt, chờ mua sắm
   ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI",
+  ĐÃ_XÁC_MINH = "ĐÃ_XÁC_MINH", // Phòng Quản trị đã xác minh xong, chờ lập tờ trình
+  ĐÃ_LẬP_TỜ_TRÌNH = "ĐÃ_LẬP_TỜ_TRÌNH", // Tổ trưởng kỹ thuật đã lập tờ trình gửi Phòng Quản trị
+  ĐÃ_DUYỆT_TỜ_TRÌNH = "ĐÃ_DUYỆT_TỜ_TRÌNH", // Phòng Quản trị đã duyệt tờ trình, chờ mua sắm
+  ĐÃ_TỪ_CHỐI_TỜ_TRÌNH = "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH", // Phòng Quản trị từ chối tờ trình, cần lập lại
   ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM", // Đã có thiết bị mới
 }
 

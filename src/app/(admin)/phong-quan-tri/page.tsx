@@ -43,7 +43,7 @@ export default function PhongQuanTriDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard Phòng quản trị</h1>
         <p className="mt-2 text-gray-600">
-          Chào mừng {user?.name}! Quản lý toàn bộ hệ thống sửa chữa trường học.
+          Chào mừng {user?.fullName}! Quản lý toàn bộ hệ thống sửa chữa trường học.
         </p>
       </div>
 

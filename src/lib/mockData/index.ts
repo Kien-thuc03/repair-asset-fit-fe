@@ -10,6 +10,7 @@ export * from "./repairRequests";
 export * from "./repairRequestComponents";
 export * from "./repairHistory";
 export * from "./replacementRequests";
+export * from "./reportLists";
 export * from "./roles";
 export * from "./roles_permissions";
 export * from "./rooms";
