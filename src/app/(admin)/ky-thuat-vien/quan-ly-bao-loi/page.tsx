@@ -411,9 +411,6 @@ export default function DanhSachBaoLoiPage() {
 											<div className="font-medium truncate" title={record.assetName}>
 												{record.assetName}
 											</div>
-											<div className="text-xs text-gray-500 truncate" title={record.componentName || "Linh kiện chưa xác định"}>
-												{record.componentName ? record.componentName : "Chưa xác định"}
-											</div>
 										</div>
 									</td>
 									<td className="px-2 py-3 text-sm text-gray-700 w-32">

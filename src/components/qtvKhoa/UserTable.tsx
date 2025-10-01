@@ -1,23 +1,42 @@
 import { IUserWithRoles, UserStatus } from "@/types";
-import { MoreVertical, Eye, Edit, Lock, Unlock, Trash2, Users } from "lucide-react";
+import { MoreVertical, Eye, Edit, Lock, Unlock, Trash2, Users, ChevronUp, ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { Pagination } from "@/components/common";
+
+type SortField = "fullName" | "username" | "email" | "unit" | "roles" | "status" | "createdAt";
+type SortDirection = "asc" | "desc" | "none";
 
 interface UserTableProps {
   users: IUserWithRoles[];
+  loading?: boolean;
   onViewUser: (user: IUserWithRoles) => void;
   onEditUser: (user: IUserWithRoles) => void;
   onToggleStatus: (user: IUserWithRoles) => void;
   onDeleteUser: (user: IUserWithRoles) => void;
+  // Pagination props
+  currentPage?: number;
+  pageSize?: number;
+  total?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
 }
 
 export default function UserTable({
   users,
+  loading = false,
   onViewUser,
   onEditUser,
   onToggleStatus,
   onDeleteUser,
+  currentPage = 1,
+  pageSize = 10,
+  total = 0,
+  onPageChange,
+  onPageSizeChange,
 }: UserTableProps) {
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField | "">("");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("none");
 
   const toggleDropdown = (userId: string) => {
     setOpenDropdownId(openDropdownId === userId ? null : userId);
@@ -28,25 +47,155 @@ export default function UserTable({
     setOpenDropdownId(null);
   };
 
+  // Hàm xử lý sắp xếp 3 trạng thái
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection("none");
+        setSortField("");
+      } else {
+        setSortDirection("asc");
+      }
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Hàm lấy icon sắp xếp
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field || sortDirection === "none") {
+      return (
+        <div className="flex flex-col opacity-50 group-hover:opacity-75 transition-opacity">
+          <ChevronUp className="h-3 w-3 text-gray-400" />
+          <ChevronDown className="h-3 w-3 -mt-1 text-gray-400" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col">
+        <ChevronUp
+          className={`h-3 w-3 ${sortDirection === "asc" ? "text-blue-600" : "text-gray-300"}`}
+        />
+        <ChevronDown
+          className={`h-3 w-3 -mt-1 ${sortDirection === "desc" ? "text-blue-600" : "text-gray-300"}`}
+        />
+      </div>
+    );
+  };
+
+  // Sắp xếp dữ liệu
+  const sortedUsers = () => {
+    if (!sortField || sortDirection === "none") return users;
+
+    return [...users].sort((a, b) => {
+      let aValue: string | Date | number = "";
+      let bValue: string | Date | number = "";
+
+      switch (sortField) {
+        case "fullName":
+          aValue = a.fullName;
+          bValue = b.fullName;
+          break;
+        case "username":
+          aValue = a.username;
+          bValue = b.username;
+          break;
+        case "email":
+          aValue = a.email || "";
+          bValue = b.email || "";
+          break;
+        case "unit":
+          aValue = a.unit?.name || "";
+          bValue = b.unit?.name || "";
+          break;
+        case "roles":
+          aValue = a.roles.map(role => role.name).join(", ");
+          bValue = b.roles.map(role => role.name).join(", ");
+          break;
+        case "status":
+          aValue = a.status || "";
+          bValue = b.status || "";
+          break;
+        case "createdAt":
+          aValue = new Date(a.createdAt || 0);
+          bValue = new Date(b.createdAt || 0);
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="overflow-hidden shadow md:rounded-lg bg-white">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-sm text-gray-500">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const displayUsers = sortedUsers();
+
   return (
-    <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+    <div className="overflow-hidden shadow md:rounded-lg">
       <table className="min-w-full divide-y divide-gray-300">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Người dùng
+            <th 
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+              onClick={() => handleSort("fullName")}
+            >
+              <div className="flex items-center space-x-1">
+                <span>Người dùng</span>
+                {getSortIcon("fullName")}
+              </div>
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Đơn vị
+            <th 
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+              onClick={() => handleSort("unit")}
+            >
+              <div className="flex items-center space-x-1">
+                <span>Đơn vị</span>
+                {getSortIcon("unit")}
+              </div>
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Vai trò
+            <th 
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+              onClick={() => handleSort("roles")}
+            >
+              <div className="flex items-center space-x-1">
+                <span>Vai trò</span>
+                {getSortIcon("roles")}
+              </div>
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Trạng thái
+            <th 
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+              onClick={() => handleSort("status")}
+            >
+              <div className="flex items-center space-x-1">
+                <span>Trạng thái</span>
+                {getSortIcon("status")}
+              </div>
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Ngày tạo
+            <th 
+              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
+              onClick={() => handleSort("createdAt")}
+            >
+              <div className="flex items-center space-x-1">
+                <span>Ngày tạo</span>
+                {getSortIcon("createdAt")}
+              </div>
             </th>
             <th className="relative px-6 py-3">
               <span className="sr-only">Hành động</span>
@@ -54,7 +203,7 @@ export default function UserTable({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {users.map((user) => (
+          {displayUsers.map((user) => (
             <tr key={user.id} className="hover:bg-gray-50">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
@@ -171,7 +320,7 @@ export default function UserTable({
         </tbody>
       </table>
 
-      {users.length === 0 && (
+      {displayUsers.length === 0 && (
         <div className="text-center py-12">
           <Users className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">
@@ -181,6 +330,21 @@ export default function UserTable({
             Hãy thêm người dùng mới để bắt đầu quản lý.
           </p>
         </div>
+      )}
+      
+      {/* Pagination */}
+      {onPageChange && onPageSizeChange && total > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          showSizeChanger={true}
+          pageSizeOptions={[10, 20, 50, 100]}
+          showQuickJumper={true}
+          showTotal={true}
+        />
       )}
     </div>
   );

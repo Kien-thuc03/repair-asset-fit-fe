@@ -5,7 +5,6 @@ import { UserPlus, Search, Filter, Users as UsersIcon, UserCheck, UserX, Buildin
 import { useUsersManagement } from '@/hooks/useUsersManagement';
 import { IUserWithRoles, UserStatus, ICreateUserRequest, IUpdateUserRequest } from '@/types';
 import { UserTable, UserFormModal, UserDetailModal, UserConfirmModal } from '@/components/qtvKhoa';
-import { Pagination } from '@/components/common';
 
 export default function UsersManagementPage() {
   // Hooks
@@ -20,7 +19,6 @@ export default function UsersManagementPage() {
     page,
     limit,
     total,
-    totalPages,
     createUser,
     updateUser,
     toggleUserStatus,
@@ -313,35 +311,19 @@ export default function UsersManagementPage() {
 
       {/* Users Table */}
       <div className="bg-white shadow rounded-lg">
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-500">Đang tải dữ liệu...</p>
-          </div>
-        ) : (
-          <>
-            <UserTable
-              users={users}
-              onViewUser={handleViewUser}
-              onEditUser={handleEditUser}
-              onToggleStatus={handleToggleStatus}
-              onDeleteUser={handleDeleteUser}
-            />
-            
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t">
-                <Pagination
-                  currentPage={page}
-                  pageSize={limit}
-                  total={total}
-                  onPageChange={changePage}
-                  onPageSizeChange={changeLimit}
-                />
-              </div>
-            )}
-          </>
-        )}
+        <UserTable
+          users={users}
+          loading={loading}
+          onViewUser={handleViewUser}
+          onEditUser={handleEditUser}
+          onToggleStatus={handleToggleStatus}
+          onDeleteUser={handleDeleteUser}
+          currentPage={page}
+          pageSize={limit}
+          total={total}
+          onPageChange={changePage}
+          onPageSizeChange={changeLimit}
+        />
       </div>
 
       {/* Modals */}
