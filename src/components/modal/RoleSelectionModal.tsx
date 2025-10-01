@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserRole, RoleInfo } from '@/types/repair'
+import { IRole } from '@/types/user'
 import { useAuth } from '@/contexts/AuthContext'
 import { ShieldCheck, Users, Wrench, CheckCircle2 } from 'lucide-react'
 
@@ -22,7 +23,7 @@ const RoleIcons: Record<UserRole, React.ComponentType<{ className?: string }>> =
 export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps) {
   const { user, switchRole } = useAuth()
   const router = useRouter()
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null)
+  const [selectedRole, setSelectedRole] = useState<IRole | null>(null)
   const [isAutoSelectEnabled, setIsAutoSelectEnabled] = useState(true)
   const [countdown, setCountdown] = useState(10)
 
@@ -41,7 +42,7 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
       console.log("RoleModal - Active role:", user.activeRole);
       
       // Đặt vai trò đang hoạt động làm mặc định nếu có
-      if (user.activeRole && user.roles.includes(user.activeRole)) {
+      if (user.activeRole && user.roles.some(role => role.id === user.activeRole?.id)) {
         setSelectedRole(user.activeRole);
       } else {
         // Nếu không, đặt vai trò đầu tiên làm mặc định
@@ -85,7 +86,7 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
 
   if (!isOpen || !user || !user.roles || user.roles.length <= 1) return null
 
-  const handleRoleSelection = (role: UserRole) => {
+  const handleRoleSelection = (role: IRole) => {
     setSelectedRole(role)
   }
 
@@ -109,28 +110,28 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
           <div className="p-6">
             <div className="space-y-3">
               {user.roles.map((role) => {
-                const RoleIcon = RoleIcons[role] || Users
+                const RoleIcon = (role.code && RoleIcons[role.code as UserRole]) || Users
                 
                 return (
                   <button
-                    key={role}
+                    key={role.id}
                     onClick={() => handleRoleSelection(role)}
                     className={`flex items-center w-full p-4 rounded-lg border ${
-                      selectedRole === role
+                      selectedRole?.id === role.id
                         ? 'border-blue-500 bg-blue-50'
                         : 'border-gray-200 hover:bg-gray-50'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      selectedRole === role ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
+                      selectedRole?.id === role.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
                     }`}>
                       <RoleIcon className="w-5 h-5" />
                     </div>
                     <div className="ml-4 text-left">
-                      <h3 className="font-medium text-gray-900">{RoleInfo[role].name}</h3>
-                      <p className="text-sm text-gray-500">{RoleInfo[role].description}</p>
+                      <h3 className="font-medium text-gray-900">{role.name || (role.code && RoleInfo[role.code as UserRole]?.name) || 'Vai trò'}</h3>
+                      <p className="text-sm text-gray-500">{role.code && RoleInfo[role.code as UserRole]?.description}</p>
                     </div>
-                    {selectedRole === role && (
+                    {selectedRole?.id === role.id && (
                       <div className="ml-auto">
                         <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
                           <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -535,7 +535,7 @@ function Topbar({
                 </p>
                 <p className="text-xs text-green-600 truncate">
                   {user && user.roles.length >= 1
-                    ? `${RoleInfo[user.activeRole]?.name || user.activeRole}`
+                    ? `${user.activeRole?.name || (user.activeRole?.code && RoleInfo[user.activeRole.code as UserRole]?.name) || 'Chưa có vai trò'}`
                     : "Sinh viên"}
                 </p>
               </div>
@@ -557,7 +557,7 @@ function Topbar({
                   </p>
                   <p className="text-xs text-green-600 truncate">
                     {user && user.roles.length > 1
-                      ? `${RoleInfo[user.activeRole]?.name || user.activeRole}`
+                      ? `${user.activeRole?.name || (user.activeRole?.code && RoleInfo[user.activeRole.code as UserRole]?.name) || 'Chưa có vai trò'}`
                       : "Sinh viên"}
                   </p>
                 </div>
@@ -621,8 +621,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, isLoading, logout, isAuthenticated } = useAuth();
 
   // Get navigation based on user active role
-  const userNavigation = user?.activeRole
-    ? getNavigationByRole(user.activeRole)
+  const userNavigation = user?.activeRole?.code
+    ? getNavigationByRole(user.activeRole.code)
     : navigation;
 
   // Handle logout

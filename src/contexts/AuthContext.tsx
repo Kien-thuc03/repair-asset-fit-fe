@@ -10,7 +10,7 @@ import {
 import { UserRole } from "@/types/repair";
 import { users } from "@/lib/mockData/users";
 import { users_roles } from "@/lib/mockData/users_roles";
-import { AuthenticatedUser, UserStatus } from "@/types/user";
+import { AuthenticatedUser, UserStatus, IRole } from "@/types/user";
 import { roles } from "@/lib/mockData/roles";
 import { units } from "@/lib/mockData/units";
 
@@ -19,7 +19,7 @@ type AuthContextType = {
   user: AuthenticatedUser | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
-  switchRole: (role: UserRole) => void;
+  switchRole: (role: IRole) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitializing: boolean;
@@ -28,16 +28,20 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // Hàm helper để lấy các vai trò của user
-const getUserRoles = (userId: string): UserRole[] => {
+const getUserRoles = (userId: string): IRole[] => {
   // Lấy danh sách roleId của user
   const userRoleIds = users_roles
     .filter((ur) => ur.userId === userId)
     .map((ur) => ur.roleId);
 
-  // Lấy danh sách role code từ roleId
+  // Lấy danh sách IRole từ roleId
   return roles
     .filter((role) => userRoleIds.includes(role.id))
-    .map((role) => role.code as UserRole);
+    .map((role) => ({
+      id: role.id,
+      name: role.name,
+      code: role.code
+    }));
 };
 
 // Hàm helper để lấy đơn vị của user
@@ -127,6 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           unitId: foundUser.unitId,
           roles: userRolesList,
           activeRole: userRolesList[0], // Vai trò đầu tiên là vai trò mặc định
+          unit: foundUser.unitId ? units.find(u => u.id === foundUser.unitId) : undefined,
+          permissions: [], // Sẽ được tính dựa trên roles
           department: getUserDepartment(foundUser.unitId),
         };
 
@@ -159,8 +165,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   // Function to switch between roles for users with multiple roles
-  function switchRole(role: UserRole) {
-    if (user && user.roles.includes(role)) {
+  function switchRole(role: IRole) {
+    if (user && user.roles.some(r => r.code === role.code)) {
       const updatedUser = {
         ...user,
         activeRole: role,
@@ -175,10 +181,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Chuyển hướng tới URL tương ứng với vai trò được chọn
       // Sử dụng window.location thay vì router để đảm bảo làm mới toàn bộ trang
-      import("@/types/repair").then(({ RoleInfo }) => {
-        const defaultRoute = RoleInfo[role].defaultRoute;
-        window.location.href = defaultRoute;
-      });
+      if (role.code) {
+        import("@/types/repair").then(({ RoleInfo }) => {
+          const defaultRoute = RoleInfo[role.code as UserRole]?.defaultRoute || "/";
+          window.location.href = defaultRoute;
+        });
+      }
     }
   }
 

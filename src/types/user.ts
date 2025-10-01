@@ -1,9 +1,34 @@
-import { UserRole } from "./repair";
-
-// Định nghĩa trạng thái người dùng
+// Định nghĩa trạng thái người dùng khớp với database
 export enum UserStatus {
   ACTIVE = "ACTIVE", // Hoạt động
   INACTIVE = "INACTIVE", // Không hoạt động
+}
+
+// Interface cho vai trò từ database
+export interface IRole {
+  id: string;
+  name: string;
+  code?: string;
+}
+
+// Interface cho quyền từ database
+export interface IPermission {
+  id: string;
+  name: string;
+  code?: string;
+}
+
+// Interface quan hệ người dùng - vai trò
+export interface IUserRole {
+  userId: string;
+  roleId: string;
+  assignedAt?: Date;
+}
+
+// Interface quan hệ vai trò - quyền
+export interface IRolePermission {
+  roleId: string;
+  permissionId: string;
 }
 
 // Interface cho người dùng đầy đủ từ database
@@ -29,9 +54,37 @@ export interface UserRole_Relation {
 }
 
 // Interface người dùng đầy đủ thông tin để hiển thị
-export interface UserWithRoles extends Omit<UserEntity, "password"> {
-  roles: UserRole[];
-  activeRole: UserRole;
+export interface IUserWithRoles extends Omit<UserEntity, "password"> {
+  unit?: {
+    id: string;
+    name: string;
+    type: string;
+  };
+  roles: IRole[];
+  permissions: IPermission[];
+}
+
+// Interface để tạo người dùng mới
+export interface ICreateUserRequest {
+  username: string;
+  password: string;
+  fullName: string;
+  email: string;
+  unitId?: string;
+  phoneNumber?: string;
+  birthDate?: string;
+  roleIds: string[];
+}
+
+// Interface để cập nhật người dùng
+export interface IUpdateUserRequest {
+  fullName?: string;
+  email?: string;
+  unitId?: string;
+  phoneNumber?: string;
+  birthDate?: string;
+  status?: UserStatus;
+  roleIds?: string[];
 }
 
 // Interface người dùng đã đăng nhập
@@ -41,8 +94,14 @@ export interface AuthenticatedUser {
   fullName: string;
   email: string;
   unitId?: string;
-  roles: UserRole[];
-  activeRole: UserRole;
+  roles: IRole[];
+  activeRole?: IRole;
+  unit?: {
+    id: string;
+    name: string;
+    type: string;
+  };
+  permissions: IPermission[];
   department?: string; // Legacy field for backward compatibility
 }
 
