@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { UserPlus, Search, Filter, Users as UsersIcon, UserCheck, UserX, Building } from 'lucide-react';
+import { Breadcrumb } from 'antd';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
-import { IUserWithRoles, UserStatus, ICreateUserRequest, IUpdateUserRequest } from '@/types';
-import { UserTable, UserFormModal, UserDetailModal, UserConfirmModal } from '@/components/qtvKhoa';
+import { IUserWithRoles, UserStatus } from '@/types';
+import { UserTable } from '@/components/qtvKhoa';
 
 export default function UsersManagementPage() {
+  const router = useRouter();
+  
   // Hooks
   const {
     users,
@@ -19,10 +22,6 @@ export default function UsersManagementPage() {
     page,
     limit,
     total,
-    createUser,
-    updateUser,
-    toggleUserStatus,
-    deleteUser,
     updateFilters,
     resetFilters,
     changePage,
@@ -30,78 +29,50 @@ export default function UsersManagementPage() {
     clearError
   } = useUsersManagement();
 
-  // Modal states
-  const [selectedUser, setSelectedUser] = useState<IUserWithRoles | null>(null);
-  const [showFormModal, setShowFormModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
-  const [confirmAction, setConfirmAction] = useState<'toggle-status' | 'delete'>('toggle-status');
-
-  // Handlers
+  // Navigation handlers
   const handleCreateUser = () => {
-    setFormMode('create');
-    setSelectedUser(null);
-    setShowFormModal(true);
+    router.push('/qtv-khoa/quan-ly-nguoi-dung/tao-moi');
   };
 
   const handleEditUser = (user: IUserWithRoles) => {
-    setFormMode('edit');
-    setSelectedUser(user);
-    setShowFormModal(true);
+    router.push(`/qtv-khoa/quan-ly-nguoi-dung/chinh-sua/${user.id}`);
   };
 
   const handleViewUser = (user: IUserWithRoles) => {
-    setSelectedUser(user);
-    setShowDetailModal(true);
+    router.push(`/qtv-khoa/quan-ly-nguoi-dung/chi-tiet/${user.id}`);
   };
 
   const handleToggleStatus = (user: IUserWithRoles) => {
-    setSelectedUser(user);
-    setConfirmAction('toggle-status');
-    setShowConfirmModal(true);
+    router.push(`/qtv-khoa/quan-ly-nguoi-dung/xac-nhan/${user.id}?action=toggle-status`);
   };
 
   const handleDeleteUser = (user: IUserWithRoles) => {
-    setSelectedUser(user);
-    setConfirmAction('delete');
-    setShowConfirmModal(true);
-  };
-
-  const handleFormSubmit = async (userData: ICreateUserRequest | IUpdateUserRequest) => {
-    let success = false;
-    
-    if (formMode === 'create') {
-      success = await createUser(userData as ICreateUserRequest);
-    } else if (selectedUser) {
-      success = await updateUser(selectedUser.id, userData as IUpdateUserRequest);
-    }
-
-    if (success) {
-      setShowFormModal(false);
-      setSelectedUser(null);
-    }
-  };
-
-  const handleConfirmAction = async () => {
-    if (!selectedUser) return;
-    
-    let success = false;
-    
-    if (confirmAction === 'toggle-status') {
-      success = await toggleUserStatus(selectedUser.id);
-    } else if (confirmAction === 'delete') {
-      success = await deleteUser(selectedUser.id);
-    }
-
-    if (success) {
-      setShowConfirmModal(false);
-      setSelectedUser(null);
-    }
+    router.push(`/qtv-khoa/quan-ly-nguoi-dung/xac-nhan/${user.id}?action=delete`);
   };
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          {
+            href: '/qtv-khoa',
+            title: (
+              <div className="flex items-center">
+                <span>Trang chủ</span>
+              </div>
+            ),
+          },
+          {
+            title: (
+              <div className="flex items-center">
+                <span>Quản lý người dùng</span>
+              </div>
+            ),
+          },
+        ]}
+      />
+
       {/* Header */}
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
@@ -207,7 +178,7 @@ export default function UsersManagementPage() {
       {/* Filters */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -267,21 +238,19 @@ export default function UsersManagementPage() {
                 <option value={UserStatus.INACTIVE}>Bị khóa</option>
               </select>
             </div>
+
+            {/* Reset Filters Button */}
+            <div className="flex justify-between items-center">
+              <button
+                onClick={resetFilters}
+                className="inline-flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+              >
+                <Filter className="h-4 w-4 mr-1" />
+                Xóa bộ lọc
+              </button>
+            </div>
           </div>
 
-          <div className="mt-4 flex justify-between items-center">
-            <button
-              onClick={resetFilters}
-              className="inline-flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
-            >
-              <Filter className="h-4 w-4 mr-1" />
-              Xóa bộ lọc
-            </button>
-
-            <p className="text-sm text-gray-500">
-              Hiển thị {users.length} / {total} người dùng
-            </p>
-          </div>
         </div>
       </div>
 
@@ -325,42 +294,6 @@ export default function UsersManagementPage() {
           onPageSizeChange={changeLimit}
         />
       </div>
-
-      {/* Modals */}
-      <UserFormModal
-        isOpen={showFormModal}
-        onClose={() => {
-          setShowFormModal(false);
-          setSelectedUser(null);
-        }}
-        onSubmit={handleFormSubmit}
-        user={selectedUser}
-        mode={formMode}
-      />
-
-      {selectedUser && (
-        <>
-          <UserDetailModal
-            isOpen={showDetailModal}
-            onClose={() => {
-              setShowDetailModal(false);
-              setSelectedUser(null);
-            }}
-            user={selectedUser}
-          />
-
-          <UserConfirmModal
-            isOpen={showConfirmModal}
-            onClose={() => {
-              setShowConfirmModal(false);
-              setSelectedUser(null);
-            }}
-            onConfirm={handleConfirmAction}
-            user={selectedUser}
-            action={confirmAction}
-          />
-        </>
-      )}
     </div>
   );
 }
