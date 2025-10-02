@@ -37,10 +37,49 @@ export default function XuLyToTrinhDetailPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // State cho việc check components
+  const [checkedComponents, setCheckedComponents] = useState<Set<string>>(
+    new Set()
+  );
+  const [showCreateReportModal, setShowCreateReportModal] = useState(false);
+
   // Tìm proposal theo ID
   const proposal = useMemo(() => {
     return mockReplacementRequestItem.find((item) => item.id === id);
   }, [id]);
+
+  // Xử lý check/uncheck component
+  const handleComponentCheck = (componentId: string, checked: boolean) => {
+    const newCheckedComponents = new Set(checkedComponents);
+    if (checked) {
+      newCheckedComponents.add(componentId);
+    } else {
+      newCheckedComponents.delete(componentId);
+    }
+    setCheckedComponents(newCheckedComponents);
+  };
+
+  // Xử lý check/uncheck tất cả
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allComponentIds = proposal?.components.map((comp) => comp.id) || [];
+      setCheckedComponents(new Set(allComponentIds));
+    } else {
+      setCheckedComponents(new Set());
+    }
+  };
+
+  // Lập biên bản cho các components đã check
+  const handleCreateReport = () => {
+    const checkedComponentsList =
+      proposal?.components.filter((comp) => checkedComponents.has(comp.id)) ||
+      [];
+
+    console.log("Lập biên bản cho các linh kiện:", checkedComponentsList);
+    // TODO: Implement logic tạo biên bản
+    setShowCreateReportModal(false);
+    setCheckedComponents(new Set());
+  };
 
   if (!proposal) {
     return (
@@ -381,16 +420,41 @@ export default function XuLyToTrinhDetailPage() {
 
           {/* Components Table */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Danh sách linh kiện cần thay thế ({proposal.components.length}{" "}
-              linh kiện)
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Danh sách linh kiện cần thay thế ({proposal.components.length}{" "}
+                loại linh kiện)
+              </h3>
+              {checkedComponents.size > 0 && (
+                <button
+                  onClick={() => setShowCreateReportModal(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Lập biên bản ({checkedComponents.size} loại)
+                </button>
+              )}
+            </div>
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        checked={
+                          checkedComponents.size ===
+                            proposal.components.length &&
+                          proposal.components.length > 0
+                        }
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                      />
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       STT
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Phòng/Vị trí
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Linh kiện hiện tại
@@ -411,8 +475,34 @@ export default function XuLyToTrinhDetailPage() {
                     <tr
                       key={component.id}
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          checked={checkedComponents.has(component.id)}
+                          onChange={(e) =>
+                            handleComponentCheck(component.id, e.target.checked)
+                          }
+                        />
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {index + 1}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          <div className="flex items-center space-x-1">
+                            <Building className="w-3 h-3 text-gray-400" />
+                            <span className="font-medium">
+                              {component.buildingName}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-1 mt-1">
+                            <MapPin className="w-3 h-3 text-gray-400" />
+                            <span className="text-xs text-gray-500">
+                              {component.roomName}
+                            </span>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-start space-x-3">
@@ -440,8 +530,9 @@ export default function XuLyToTrinhDetailPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {component.quantity}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {component.quantity}{" "}
+                          {component.quantity > 1 ? "cái" : "cái"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -561,6 +652,61 @@ export default function XuLyToTrinhDetailPage() {
                   <X className="w-5 h-5 mr-2" />
                   Từ chối tờ trình
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Report Modal */}
+      {showCreateReportModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+                <FileText className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="mt-2 px-4 py-3 text-center">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Lập biên bản kiểm tra
+                </h3>
+                <div className="mt-2 px-2 py-2">
+                  <p className="text-sm text-gray-500">
+                    Bạn đã chọn <strong>{checkedComponents.size}</strong> loại
+                    linh kiện để lập biên bản kiểm tra thực tế.
+                  </p>
+                  <div className="mt-3 max-h-32 overflow-y-auto">
+                    <div className="text-left space-y-1">
+                      {proposal.components
+                        .filter((comp) => checkedComponents.has(comp.id))
+                        .map((component, index) => (
+                          <div
+                            key={component.id}
+                            className="text-xs text-gray-600 flex items-center space-x-2">
+                            <span className="w-4 text-center">
+                              {index + 1}.
+                            </span>
+                            <span className="flex-1">
+                              {component.roomName} - {component.componentType}{" "}
+                              (x{component.quantity})
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="items-center px-4 py-3 flex justify-center space-x-4">
+                  <button
+                    onClick={() => setShowCreateReportModal(false)}
+                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600">
+                    Hủy
+                  </button>
+                  <button
+                    onClick={handleCreateReport}
+                    className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700">
+                    Lập biên bản
+                  </button>
+                </div>
               </div>
             </div>
           </div>
