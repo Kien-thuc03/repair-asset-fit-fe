@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { UserPlus, Search, Filter, Users as UsersIcon, UserCheck, UserX, Building, Download } from 'lucide-react';
-import { Breadcrumb, message } from 'antd';
+import { UserPlus, Users as UsersIcon, UserCheck, UserX, Building, Download } from 'lucide-react';
+import { Breadcrumb, message, Input, Select, Button, Card, Row, Col, Alert } from 'antd';
+import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
 import { IUserWithRoles, UserStatus } from '@/types';
 import { UserTable } from '@/components/qtvKhoa';
@@ -132,211 +133,184 @@ export default function UsersManagementPage() {
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
-          <button
+          <Button
             onClick={handleExportExcel}
             disabled={selectedRowKeys.length === 0}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            icon={<Download className="h-4 w-4" />}
+            type="default"
           >
-            <Download className="h-4 w-4 mr-2" />
             Xuất Excel ({selectedRowKeys.length})
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleCreateUser}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            type="primary"
+            icon={<UserPlus className="h-4 w-4" />}
           >
-            <UserPlus className="h-4 w-4 mr-2" />
             Thêm người dùng
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <UsersIcon className="h-6 w-6 text-gray-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Tổng số người dùng
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.total}
-                  </dd>
-                </dl>
+                <div className="text-sm font-medium text-gray-500 truncate">
+                  Tổng số người dùng
+                </div>
+                <div className="text-lg font-medium text-gray-900">
+                  {stats.total}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </Card>
+        </Col>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <UserCheck className="h-6 w-6 text-green-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Đang hoạt động
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.active}
-                  </dd>
-                </dl>
+                <div className="text-sm font-medium text-gray-500 truncate">
+                  Đang hoạt động
+                </div>
+                <div className="text-lg font-medium text-gray-900">
+                  {stats.active}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </Card>
+        </Col>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <UserX className="h-6 w-6 text-red-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Bị khóa
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.inactive}
-                  </dd>
-                </dl>
+                <div className="text-sm font-medium text-gray-500 truncate">
+                  Bị khóa
+                </div>
+                <div className="text-lg font-medium text-gray-900">
+                  {stats.inactive}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </Card>
+        </Col>
 
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <Building className="h-6 w-6 text-blue-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Khoa CNTT
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.byUnit.find(u => u.unitName.includes('Công nghệ Thông tin'))?.count || 0}
-                  </dd>
-                </dl>
+                <div className="text-sm font-medium text-gray-500 truncate">
+                  Khoa CNTT
+                </div>
+                <div className="text-lg font-medium text-gray-900">
+                  {stats.byUnit.find(u => u.unitName.includes('Công nghệ Thông tin'))?.count || 0}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </Card>
+        </Col>
+      </Row>
 
       {/* Filters */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm theo tên, email..."
-                value={filters.search}
-                onChange={(e) => updateFilters({ search: e.target.value })}
-                className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+      <Card>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={6}>
+            <Input
+              placeholder="Tìm kiếm theo tên, email..."
+              prefix={<SearchOutlined />}
+              value={filters.search}
+              onChange={(e) => updateFilters({ search: e.target.value })}
+              allowClear
+            />
+          </Col>
+          
+          <Col xs={24} sm={12} md={5}>
+            <Select
+              placeholder="Tất cả đơn vị"
+              style={{ width: '100%' }}
+              value={filters.unitId || undefined}
+              onChange={(value) => updateFilters({ unitId: value || '' })}
+              allowClear
+            >
+              {units.map(unit => (
+                <Select.Option key={unit.id} value={unit.id}>
+                  {unit.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
 
-            {/* Unit Filter */}
-            <div>
-              <select
-                value={filters.unitId}
-                onChange={(e) => updateFilters({ unitId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="Lọc theo đơn vị"
-              >
-                <option value="">Tất cả đơn vị</option>
-                {units.map(unit => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <Col xs={24} sm={12} md={5}>
+            <Select
+              placeholder="Tất cả vai trò"
+              style={{ width: '100%' }}
+              value={filters.roleCode || undefined}
+              onChange={(value) => updateFilters({ roleCode: value || '' })}
+              allowClear
+            >
+              {roles.map(role => (
+                <Select.Option key={role.id} value={role.code}>
+                  {role.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
 
-            {/* Role Filter */}
-            <div>
-              <select
-                value={filters.roleCode}
-                onChange={(e) => updateFilters({ roleCode: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="Lọc theo vai trò"
-              >
-                <option value="">Tất cả vai trò</option>
-                {roles.map(role => (
-                  <option key={role.id} value={role.code}>
-                    {role.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <Col xs={24} sm={12} md={5}>
+            <Select
+              placeholder="Tất cả trạng thái"
+              style={{ width: '100%' }}
+              value={filters.status === 'all' ? undefined : filters.status}
+              onChange={(value) => updateFilters({ status: value || 'all' })}
+              allowClear
+            >
+              <Select.Option value={UserStatus.ACTIVE}>Đang hoạt động</Select.Option>
+              <Select.Option value={UserStatus.INACTIVE}>Bị khóa</Select.Option>
+            </Select>
+          </Col>
 
-            {/* Status Filter */}
-            <div>
-              <select
-                value={filters.status}
-                onChange={(e) => updateFilters({ status: e.target.value as UserStatus | 'all' })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="Lọc theo trạng thái"
-              >
-                <option value="all">Tất cả trạng thái</option>
-                <option value={UserStatus.ACTIVE}>Đang hoạt động</option>
-                <option value={UserStatus.INACTIVE}>Bị khóa</option>
-              </select>
-            </div>
-
-            {/* Reset Filters Button */}
-            <div className="flex justify-between items-center">
-              <button
-                onClick={resetFilters}
-                className="inline-flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
-              >
-                <Filter className="h-4 w-4 mr-1" />
-                Xóa bộ lọc
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+          <Col xs={24} sm={12} md={3}>
+            <Button
+              icon={<FilterOutlined />}
+              onClick={resetFilters}
+              type="default"
+              style={{ width: '100%' }}
+            >
+              Xóa bộ lọc
+            </Button>
+          </Col>
+        </Row>
+      </Card>
 
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
-                Có lỗi xảy ra
-              </h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>{error}</p>
-              </div>
-              <div className="mt-4">
-                <button
-                  onClick={clearError}
-                  className="text-sm bg-red-100 text-red-800 hover:bg-red-200 px-2 py-1 rounded"
-                >
-                  Đóng
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Alert
+          message="Có lỗi xảy ra"
+          description={error}
+          type="error"
+          showIcon
+          closable
+          onClose={clearError}
+        />
       )}
 
       {/* Users Table */}
-      <div className="bg-white shadow rounded-lg">
+      <Card>
         <UserTable
           users={users}
           loading={loading}
@@ -352,7 +326,7 @@ export default function UsersManagementPage() {
           selectedRowKeys={selectedRowKeys}
           onRowSelect={setSelectedRowKeys}
         />
-      </div>
+      </Card>
     </div>
   );
 }
