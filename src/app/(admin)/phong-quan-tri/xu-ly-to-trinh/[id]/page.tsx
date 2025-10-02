@@ -277,15 +277,6 @@ export default function XuLyToTrinhDetailPage() {
                     {proposal.components[0]?.roomName}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Monitor className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700">
-                    Mã tài sản:
-                  </span>
-                  <span className="text-sm text-gray-900">
-                    {proposal.components[0]?.assetCode}
-                  </span>
-                </div>
               </div>
             </div>
           </div>

@@ -183,6 +183,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         href: "/phong-quan-tri/lap-bien-ban",
         icon: ClipboardList,
       },
+      {
+        name: "Gửi đề xuất thay thế",
+        href: "/phong-quan-tri/gui-de-xuat-thay-the",
+        icon: FileCheck,
+      },
     ],
     [UserRole.QTV_KHOA]: [
       {

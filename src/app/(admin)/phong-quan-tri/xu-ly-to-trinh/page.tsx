@@ -289,7 +289,7 @@ export default function XuLyToTrinhPage() {
                   </div>
                 </th>
                 <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">
-                  Tài sản
+                  Vị trí
                 </th>
                 <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
                   Số lượng
@@ -349,17 +349,43 @@ export default function XuLyToTrinhPage() {
                     <div className="text-xs text-gray-900">
                       <div className="flex items-center space-x-1">
                         <Building className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                        <span
-                          className="truncate text-xs"
-                          title={`${item.components[0]?.buildingName} - ${item.components[0]?.roomName}`}>
-                          {item.components[0]?.buildingName} -{" "}
-                          {item.components[0]?.roomName}
+                        <span className="truncate text-xs">
+                          {(() => {
+                            // Lấy danh sách các phòng duy nhất
+                            const uniqueRooms = Array.from(
+                              new Set(
+                                item.components.map(
+                                  (comp) =>
+                                    `${comp.buildingName} - ${comp.roomName}`
+                                )
+                              )
+                            );
+
+                            // Nếu chỉ có 1 phòng, hiển thị bình thường
+                            if (uniqueRooms.length === 1) {
+                              return uniqueRooms[0];
+                            }
+
+                            // Nếu có nhiều phòng, hiển thị tóm tắt
+                            const roomCounts = item.components.reduce(
+                              (acc, comp) => {
+                                const roomKey = comp.roomName;
+                                acc[roomKey] = (acc[roomKey] || 0) + 1;
+                                return acc;
+                              },
+                              {} as Record<string, number>
+                            );
+
+                            const roomSummary = Object.entries(roomCounts)
+                              .map(
+                                ([room, count]) =>
+                                  `${room}: ${Math.floor(count / 2)} máy`
+                              ) // Chia 2 vì mỗi máy có 2 linh kiện (SSD + RAM)
+                              .join(", ");
+
+                            return `${item.components[0]?.buildingName} - ${roomSummary}`;
+                          })()}
                         </span>
-                      </div>
-                      <div
-                        className="text-xs text-gray-500 truncate"
-                        title={item.components[0]?.assetCode}>
-                        {item.components[0]?.assetCode}
                       </div>
                     </div>
                   </td>
@@ -385,6 +411,7 @@ export default function XuLyToTrinhPage() {
                         {new Date(item.createdAt).toLocaleDateString("vi-VN", {
                           day: "2-digit",
                           month: "2-digit",
+                          year: "numeric",
                         })}
                       </span>
                     </div>

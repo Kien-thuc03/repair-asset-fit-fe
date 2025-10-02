@@ -443,6 +443,137 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
       },
     ],
   },
+  // Thêm tờ trình nâng cấp hàng loạt cho Khoa CNTT - 3 phòng Lab
+  {
+    id: "RP008",
+    proposalCode: "DXTT-2025-0008",
+    proposerId: "user-4",
+    teamLeadApproverId: "user-3",
+    adminVerifierId: "user-2",
+    title:
+      "Đề xuất nâng cấp SSD và RAM cho các phòng Lab Khoa CNTT (H8.1, H8.2, H8.3)",
+    description:
+      "Đề xuất nâng cấp SSD và RAM cho tổng cộng 90 máy tính tại 3 phòng Lab của Khoa CNTT (H8.1: 30 máy, H8.2: 30 máy, H8.3: 30 máy). Mục đích phục vụ việc cập nhật phần mềm chuyên ngành mới nhất như Xử lý ảnh, Nhận dạng mẫu, Học sâu, Công nghệ mới để đáp ứng yêu cầu giảng dạy và nghiên cứu.",
+    status: ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+    submissionFormUrl: "/documents/proposals/DXTT-2025-0008-submission.pdf",
+    verificationReportUrl: "/documents/reports/DXTT-2025-0008-verification.pdf",
+    createdAt: "2024-03-01T09:00:00.000Z",
+    updatedAt: "2024-03-10T16:30:00.000Z",
+    createdBy: "Trưởng khoa CNTT",
+    components: [
+      // Lab H8.1 - 30 máy (SSD + RAM)
+      // SSD cho Lab H8.1
+      ...Array.from({ length: 30 }, (_, i) => ({
+        id: `RI_H81_SSD_${i + 1}`,
+        componentName: "SSD 120GB SATA",
+        componentType: ComponentType.STORAGE,
+        assetId: `ASSET_H81_${String(i + 1).padStart(2, "0")}`,
+        assetName: "PC Dell OptiPlex 3070",
+        assetCode: `H8.1-${String(i + 1).padStart(2, "0")}`,
+        buildingName: "Tòa H",
+        roomName: "H8.1",
+        newItemName: "SSD M.2 NVMe 240GB",
+        newItemSpecs:
+          "240GB M.2 NVMe PCIe 3.0 - Upgrade cho phần mềm chuyên ngành",
+        quantity: 1,
+        reason:
+          "SSD hiện tại chỉ 120GB không đủ cho các phần mềm xử lý ảnh và học sâu",
+        machineLabel: String(i + 1).padStart(2, "0"),
+      })),
+      // RAM cho Lab H8.1
+      ...Array.from({ length: 30 }, (_, i) => ({
+        id: `RI_H81_RAM_${i + 1}`,
+        componentName: "Kingston DDR4 8GB",
+        componentType: ComponentType.RAM,
+        assetId: `ASSET_H81_${String(i + 1).padStart(2, "0")}`,
+        assetName: "PC Dell OptiPlex 3070",
+        assetCode: `H8.1-${String(i + 1).padStart(2, "0")}`,
+        buildingName: "Tòa H",
+        roomName: "H8.1",
+        newItemName: "Kingston Fury Beast DDR4 16GB",
+        newItemSpecs:
+          "16GB DDR4 3200MHz - Upgrade cho ứng dụng AI và Machine Learning",
+        quantity: 1,
+        reason:
+          "RAM 8GB không đủ để chạy các framework học sâu TensorFlow, PyTorch",
+        machineLabel: String(i + 1).padStart(2, "0"),
+      })),
+
+      // Lab H8.2 - 30 máy (SSD + RAM)
+      // SSD cho Lab H8.2
+      ...Array.from({ length: 30 }, (_, i) => ({
+        id: `RI_H82_SSD_${i + 1}`,
+        componentName: "SSD 120GB SATA",
+        componentType: ComponentType.STORAGE,
+        assetId: `ASSET_H82_${String(i + 1).padStart(2, "0")}`,
+        assetName: "PC Dell OptiPlex 3070",
+        assetCode: `H8.2-${String(i + 1).padStart(2, "0")}`,
+        buildingName: "Tòa H",
+        roomName: "H8.2",
+        newItemName: "SSD M.2 NVMe 240GB",
+        newItemSpecs:
+          "240GB M.2 NVMe PCIe 3.0 - Upgrade cho phần mềm chuyên ngành",
+        quantity: 1,
+        reason: "SSD hiện tại chỉ 120GB không đủ cho dataset lớn và mô hình AI",
+        machineLabel: String(i + 1).padStart(2, "0"),
+      })),
+      // RAM cho Lab H8.2
+      ...Array.from({ length: 30 }, (_, i) => ({
+        id: `RI_H82_RAM_${i + 1}`,
+        componentName: "Kingston DDR4 8GB",
+        componentType: ComponentType.RAM,
+        assetId: `ASSET_H82_${String(i + 1).padStart(2, "0")}`,
+        assetName: "PC Dell OptiPlex 3070",
+        assetCode: `H8.2-${String(i + 1).padStart(2, "0")}`,
+        buildingName: "Tòa H",
+        roomName: "H8.2",
+        newItemName: "Kingston Fury Beast DDR4 16GB",
+        newItemSpecs:
+          "16GB DDR4 3200MHz - Upgrade cho ứng dụng AI và Machine Learning",
+        quantity: 1,
+        reason: "RAM 8GB không đủ để xử lý ảnh số và nhận dạng mẫu real-time",
+        machineLabel: String(i + 1).padStart(2, "0"),
+      })),
+
+      // Lab H8.3 - 30 máy (SSD + RAM)
+      // SSD cho Lab H8.3
+      ...Array.from({ length: 30 }, (_, i) => ({
+        id: `RI_H83_SSD_${i + 1}`,
+        componentName: "SSD 120GB SATA",
+        componentType: ComponentType.STORAGE,
+        assetId: `ASSET_H83_${String(i + 1).padStart(2, "0")}`,
+        assetName: "PC Dell OptiPlex 3070",
+        assetCode: `H8.3-${String(i + 1).padStart(2, "0")}`,
+        buildingName: "Tòa H",
+        roomName: "H8.3",
+        newItemName: "SSD M.2 NVMe 240GB",
+        newItemSpecs:
+          "240GB M.2 NVMe PCIe 3.0 - Upgrade cho phần mềm chuyên ngành",
+        quantity: 1,
+        reason:
+          "SSD hiện tại chỉ 120GB không đủ cho môi trường phát triển và IDE",
+        machineLabel: String(i + 1).padStart(2, "0"),
+      })),
+      // RAM cho Lab H8.3
+      ...Array.from({ length: 30 }, (_, i) => ({
+        id: `RI_H83_RAM_${i + 1}`,
+        componentName: "Kingston DDR4 8GB",
+        componentType: ComponentType.RAM,
+        assetId: `ASSET_H83_${String(i + 1).padStart(2, "0")}`,
+        assetName: "PC Dell OptiPlex 3070",
+        assetCode: `H8.3-${String(i + 1).padStart(2, "0")}`,
+        buildingName: "Tòa H",
+        roomName: "H8.3",
+        newItemName: "Kingston Fury Beast DDR4 16GB",
+        newItemSpecs:
+          "16GB DDR4 3200MHz - Upgrade cho ứng dụng AI và Machine Learning",
+        quantity: 1,
+        reason:
+          "RAM 8GB không đủ để chạy đồng thời nhiều công cụ phát triển AI",
+        machineLabel: String(i + 1).padStart(2, "0"),
+      })),
+    ],
+  },
 ];
 
 // Helper functions
