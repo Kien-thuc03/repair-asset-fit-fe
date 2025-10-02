@@ -263,6 +263,7 @@ export default function SoftwareProposalsPage() {
           
           <Select
             placeholder="Chọn trạng thái"
+            className="!h-full"
             value={statusFilter}
             onChange={setStatusFilter}
             allowClear
@@ -355,13 +356,13 @@ export default function SoftwareProposalsPage() {
                         {new Date(proposal.createdAt).toLocaleDateString('vi-VN')}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <button
+                        title='Xem chi tiết'
                         onClick={() => handleViewProposal(proposal)}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 focus:outline-none"
                       >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Xem chi tiết
+                        <Eye className="h-4 w-4 items-center" />
                       </button>
                     </td>
                   </tr>

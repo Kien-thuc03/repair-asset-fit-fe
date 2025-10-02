@@ -203,12 +203,6 @@ export default function SoftwareProposalDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            icon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => router.back()}
-          >
-            Quay lại
-          </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
               <Monitor className="h-6 w-6 text-blue-600" />

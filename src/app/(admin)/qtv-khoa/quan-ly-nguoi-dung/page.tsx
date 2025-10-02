@@ -308,7 +308,6 @@ export default function UsersManagementPage() {
               </button>
             </div>
           </div>
-
         </div>
       </div>
 
