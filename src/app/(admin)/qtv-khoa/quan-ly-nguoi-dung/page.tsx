@@ -6,12 +6,23 @@ import { Breadcrumb, message, Input, Select, Button, Card, Row, Col, Alert } fro
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
 import { IUserWithRoles, UserStatus } from '@/types';
-import { UserTable } from '@/components/qtvKhoa';
+import { UserTable, UserConfirmModal } from '@/components/qtvKhoa';
 import { useState } from 'react';
 
 export default function UsersManagementPage() {
   const router = useRouter();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  
+  // Modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    user: IUserWithRoles | null;
+    action: 'toggle-status' | 'delete';
+  }>({
+    isOpen: false,
+    user: null,
+    action: 'toggle-status',
+  });
   
   // Hooks
   const {
@@ -46,11 +57,61 @@ export default function UsersManagementPage() {
   };
 
   const handleToggleStatus = (user: IUserWithRoles) => {
-    router.push(`/qtv-khoa/quan-ly-nguoi-dung/xac-nhan/${user.id}?action=toggle-status`);
+    setConfirmModal({
+      isOpen: true,
+      user,
+      action: 'toggle-status',
+    });
   };
 
   const handleDeleteUser = (user: IUserWithRoles) => {
-    router.push(`/qtv-khoa/quan-ly-nguoi-dung/xac-nhan/${user.id}?action=delete`);
+    setConfirmModal({
+      isOpen: true,
+      user,
+      action: 'delete',
+    });
+  };
+
+  // Modal handlers
+  const handleCloseModal = () => {
+    setConfirmModal({
+      isOpen: false,
+      user: null,
+      action: 'toggle-status',
+    });
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmModal.user) return;
+
+    try {
+      // TODO: Implement actual API calls
+      if (confirmModal.action === 'toggle-status') {
+        const newStatus = confirmModal.user.status === UserStatus.ACTIVE 
+          ? UserStatus.INACTIVE 
+          : UserStatus.ACTIVE;
+        
+        // Simulate API call
+        console.log(`Toggling status for user ${confirmModal.user.id} to ${newStatus}`);
+        message.success(
+          `${newStatus === UserStatus.ACTIVE ? 'Mở khóa' : 'Khóa'} tài khoản thành công!`
+        );
+      } else if (confirmModal.action === 'delete') {
+        // Simulate API call
+        console.log(`Deleting user ${confirmModal.user.id}`);
+        message.success('Xóa tài khoản thành công!');
+      }
+      
+      // Close modal
+      handleCloseModal();
+      
+      // TODO: Refresh data sau khi thực hiện action
+      // Có thể gọi lại API hoặc update local state
+      
+    } catch (error) {
+      console.error('Error performing action:', error);
+      message.error('Có lỗi xảy ra khi thực hiện thao tác');
+    }
   };
 
   // Hàm xuất Excel
@@ -327,6 +388,17 @@ export default function UsersManagementPage() {
           onRowSelect={setSelectedRowKeys}
         />
       </Card>
+
+      {/* Confirm Modal */}
+      {confirmModal.user && (
+        <UserConfirmModal
+          isOpen={confirmModal.isOpen}
+          onClose={handleCloseModal}
+          onConfirm={handleConfirmAction}
+          user={confirmModal.user}
+          action={confirmModal.action}
+        />
+      )}
     </div>
   );
 }
