@@ -174,11 +174,6 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: FileText,
       },
       {
-        name: "Kiểm tra thực tế",
-        href: "/phong-quan-tri/kiem-tra-thuc-te",
-        icon: UserCheck,
-      },
-      {
         name: "Lập biên bản",
         href: "/phong-quan-tri/lap-bien-ban",
         icon: ClipboardList,

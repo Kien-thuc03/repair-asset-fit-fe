@@ -9,7 +9,6 @@ import {
   Search,
   Filter,
   Eye,
-  Download,
   User,
   CheckCircle,
   Clock,
@@ -22,6 +21,7 @@ import {
   ComponentFromRequest,
 } from "@/types/repair";
 import { SortableHeader } from "@/components/common";
+import { ExcelExportButton } from "@/components/common";
 
 export default function LapBienBanPage() {
   const router = useRouter();
@@ -38,6 +38,7 @@ export default function LapBienBanPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
     null
   );
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   // Handle sorting
   const handleSort = (field: keyof ReplacementRequestItem) => {
@@ -151,6 +152,38 @@ export default function LapBienBanPage() {
     router.push(`/phong-quan-tri/lap-bien-ban/${requestId}`);
   };
 
+  // Xử lý xuất Excel
+  const handleExportExcel = () => {
+    // TODO: Implement Excel export functionality
+    // Sẽ xuất dữ liệu đã chọn hoặc tất cả nếu không chọn gì
+    const dataToExport =
+      selectedItems.length > 0
+        ? filteredReports.filter((report) => selectedItems.includes(report.id))
+        : filteredReports;
+
+    console.log("Xuất Excel:", dataToExport);
+
+    // Tạm thời alert để demo
+    alert(`Đang xuất ${dataToExport.length} biên bản ra file Excel...`);
+  };
+
+  // Xử lý checkbox
+  const handleSelectItem = (itemId: string) => {
+    setSelectedItems((prev) =>
+      prev.includes(itemId)
+        ? prev.filter((id) => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.length === filteredReports.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredReports.map((report) => report.id));
+    }
+  };
+
   // Tính toán thống kê cho mỗi request
   const getRequestStatistics = (request: ReplacementRequestItem) => {
     const totalComponents = request.components.length;
@@ -178,7 +211,7 @@ export default function LapBienBanPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
             Danh sách biên bản kiểm tra
@@ -186,6 +219,16 @@ export default function LapBienBanPage() {
           <p className="text-gray-600">
             Quản lý các biên bản kiểm tra thực tế đã được tạo
           </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <ExcelExportButton
+            totalCount={filteredReports.length}
+            selectedCount={selectedItems.length}
+            onExport={handleExportExcel}
+            label="Xuất danh sách"
+            variant="primary"
+            size="md"
+          />
         </div>
       </div>
 
@@ -340,6 +383,17 @@ export default function LapBienBanPage() {
           <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="w-[5%] px-2 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedItems.length === filteredReports.length &&
+                      filteredReports.length > 0
+                    }
+                    onChange={handleSelectAll}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </th>
                 <SortableHeader<ReplacementRequestItem>
                   field="proposalCode"
                   sortField={sortField}
@@ -364,7 +418,7 @@ export default function LapBienBanPage() {
                   className="w-[15%] px-2">
                   Người tạo
                 </SortableHeader>
-                <th className="w-[30%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="w-[25%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Phòng/Linh kiện
                 </th>
                 <SortableHeader<ReplacementRequestItem>
@@ -385,6 +439,14 @@ export default function LapBienBanPage() {
                 const stats = getRequestStatistics(request);
                 return (
                   <tr key={request.id} className="hover:bg-gray-50">
+                    <td className="px-2 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.includes(request.id)}
+                        onChange={() => handleSelectItem(request.id)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </td>
                     <td className="px-2 py-4">
                       <div className="flex items-center">
                         <FileText className="h-4 w-4 text-blue-500 mr-1 flex-shrink-0" />
@@ -453,16 +515,12 @@ export default function LapBienBanPage() {
                       </span>
                     </td>
                     <td className="px-2 py-4">
-                      <div className="flex flex-col space-y-1">
-                        <button
-                          onClick={() => handleViewReport(request.id)}
-                          className="inline-flex items-center justify-center px-1 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 w-full">
-                          <Eye className="w-3 h-3" />
-                        </button>
-                        <button className="inline-flex items-center justify-center px-1 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500 w-full">
-                          <Download className="w-3 h-3" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleViewReport(request.id)}
+                        className="inline-flex items-center justify-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 w-full">
+                        <Eye className="w-3 h-3 mr-1" />
+                        Xem
+                      </button>
                     </td>
                   </tr>
                 );
