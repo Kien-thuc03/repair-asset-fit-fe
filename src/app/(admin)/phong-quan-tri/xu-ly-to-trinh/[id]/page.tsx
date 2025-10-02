@@ -258,26 +258,124 @@ export default function XuLyToTrinhDetailPage() {
               Thông tin vị trí
             </h3>
             <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Building className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700">
-                    Tòa nhà:
-                  </span>
-                  <span className="text-sm text-gray-900">
-                    {proposal.components[0]?.buildingName}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="w-5 h-5 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700">
-                    Phòng:
-                  </span>
-                  <span className="text-sm text-gray-900">
-                    {proposal.components[0]?.roomName}
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                // Lấy danh sách các phòng duy nhất từ tất cả components
+                const uniqueRooms = Array.from(
+                  new Set(
+                    proposal.components.map(
+                      (comp) => `${comp.buildingName}-${comp.roomName}`
+                    )
+                  )
+                ).map((roomKey) => {
+                  const [buildingName, roomName] = roomKey.split("-");
+                  return { buildingName, roomName };
+                });
+
+                // Đếm số lượng linh kiện theo từng phòng
+                const roomCounts = proposal.components.reduce((acc, comp) => {
+                  const roomKey = `${comp.buildingName}-${comp.roomName}`;
+                  acc[roomKey] = (acc[roomKey] || 0) + 1;
+                  return acc;
+                }, {} as Record<string, number>);
+
+                // Nếu chỉ có 1 phòng, hiển thị đơn giản
+                if (uniqueRooms.length === 1) {
+                  const room = uniqueRooms[0];
+                  return (
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <Building className="w-5 h-5 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Tòa nhà:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {room.buildingName}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="w-5 h-5 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Phòng:
+                        </span>
+                        <span className="text-sm text-gray-900">
+                          {room.roomName}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Nếu có nhiều phòng, hiển thị danh sách
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Building className="w-5 h-5 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-700">
+                        Tòa nhà:
+                      </span>
+                      <span className="text-sm text-gray-900">
+                        {uniqueRooms[0].buildingName}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-start space-x-2 mb-2">
+                        <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Các phòng thực hiện:
+                        </span>
+                      </div>
+                      <div className="ml-7 space-y-2">
+                        {uniqueRooms.map((room, index) => {
+                          const roomKey = `${room.buildingName}-${room.roomName}`;
+                          const componentCount = roomCounts[roomKey];
+                          const machineCount = Math.floor(componentCount / 2); // Chia 2 vì mỗi máy có 2 linh kiện (SSD + RAM)
+
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between bg-white p-2 rounded ">
+                              <span className="text-sm font-medium text-gray-900">
+                                {room.roomName}
+                              </span>
+                              <div className="text-xs text-gray-500">
+                                {machineCount > 0 && (
+                                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                    {machineCount} máy
+                                  </span>
+                                )}
+                                <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                                  {componentCount} linh kiện
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-gray-700">
+                            Tổng cộng:
+                          </span>
+                          <div className="space-x-2">
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+                              {uniqueRooms.reduce((total, room) => {
+                                const roomKey = `${room.buildingName}-${room.roomName}`;
+                                return (
+                                  total + Math.floor(roomCounts[roomKey] / 2)
+                                );
+                              }, 0)}{" "}
+                              máy
+                            </span>
+                            <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+                              {proposal.components.length} linh kiện
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
