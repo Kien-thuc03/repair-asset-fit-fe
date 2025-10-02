@@ -80,15 +80,6 @@ export default function LapBienBanPage() {
     }
   };
 
-  const getStatusText = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "Đã duyệt - Cần lập biên bản";
-      default:
-        return status;
-    }
-  };
-
   // Lọc và sắp xếp dữ liệu
   const filteredReports = useMemo(() => {
     let filtered = approvedRequests;
@@ -346,7 +337,7 @@ export default function LapBienBanPage() {
       {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="w-full">
-          <table className="w-full table-fixed divide-y divide-gray-200">
+          <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <SortableHeader<ReplacementRequestItem>
@@ -354,18 +345,15 @@ export default function LapBienBanPage() {
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-1/6 px-4">
+                  className="w-[18%] px-2">
                   Mã tờ trình
                 </SortableHeader>
-                <th className="w-1/6 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tờ trình gốc
-                </th>
                 <SortableHeader<ReplacementRequestItem>
                   field="updatedAt"
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-1/8 px-4">
+                  className="w-[12%] px-2">
                   Ngày cập nhật
                 </SortableHeader>
                 <SortableHeader<ReplacementRequestItem>
@@ -373,10 +361,10 @@ export default function LapBienBanPage() {
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-1/6 px-4">
+                  className="w-[15%] px-2">
                   Người tạo
                 </SortableHeader>
-                <th className="w-1/5 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="w-[30%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Phòng/Linh kiện
                 </th>
                 <SortableHeader<ReplacementRequestItem>
@@ -384,10 +372,10 @@ export default function LapBienBanPage() {
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-1/8 px-4">
+                  className="w-[15%] px-2">
                   Trạng thái
                 </SortableHeader>
-                <th className="w-1/8 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="w-[10%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
@@ -397,9 +385,9 @@ export default function LapBienBanPage() {
                 const stats = getRequestStatistics(request);
                 return (
                   <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4">
+                    <td className="px-2 py-4">
                       <div className="flex items-center">
-                        <FileText className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                        <FileText className="h-4 w-4 text-blue-500 mr-1 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-medium text-gray-900 truncate">
                             {request.proposalCode}
@@ -410,19 +398,14 @@ export default function LapBienBanPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="text-sm text-gray-900 truncate">
-                        {request.proposalCode}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4">
+                    <td className="px-2 py-4">
                       <div className="text-sm text-gray-900">
                         {new Date(request.updatedAt).toLocaleDateString(
                           "vi-VN"
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-2 py-4">
                       <div className="flex items-center">
                         <User className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
                         <div className="text-sm text-gray-900 truncate">
@@ -430,7 +413,7 @@ export default function LapBienBanPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-2 py-4">
                       <div className="space-y-1">
                         <div className="flex items-center text-xs text-gray-600">
                           <Building className="h-3 w-3 text-gray-400 mr-1" />
@@ -442,44 +425,42 @@ export default function LapBienBanPage() {
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {stats.roomsList
-                            .slice(0, 2)
+                            .slice(0, 1)
                             .map((room: string, index: number) => (
                               <span
                                 key={index}
-                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                {room}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-full">
+                                {room.length > 15
+                                  ? `${room.substring(0, 15)}...`
+                                  : room}
                               </span>
                             ))}
-                          {stats.roomsList.length > 2 && (
+                          {stats.roomsList.length > 1 && (
                             <span className="text-xs text-gray-400">
-                              +{stats.roomsList.length - 2}
+                              +{stats.roomsList.length - 1}
                             </span>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-2 py-4">
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
                           request.status
                         )}`}>
                         {getStatusIcon(request.status)}
-                        <span className="ml-1">
-                          {getStatusText(request.status)}
-                        </span>
+                        <span className="ml-1 truncate">Đã duyệt</span>
                       </span>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center space-x-1">
+                    <td className="px-2 py-4">
+                      <div className="flex flex-col space-y-1">
                         <button
                           onClick={() => handleViewReport(request.id)}
-                          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                          <Eye className="w-3 h-3 mr-1" />
-                          Xem
+                          className="inline-flex items-center justify-center px-1 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 w-full">
+                          <Eye className="w-3 h-3" />
                         </button>
-                        <button className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                          <Download className="w-3 h-3 mr-1" />
-                          Tạo biên bản
+                        <button className="inline-flex items-center justify-center px-1 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-500 w-full">
+                          <Download className="w-3 h-3" />
                         </button>
                       </div>
                     </td>
