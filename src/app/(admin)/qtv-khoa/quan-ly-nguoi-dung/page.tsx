@@ -1,14 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { UserPlus, Search, Filter, Users as UsersIcon, UserCheck, UserX, Building } from 'lucide-react';
-import { Breadcrumb } from 'antd';
+import { UserPlus, Search, Filter, Users as UsersIcon, UserCheck, UserX, Building, Download } from 'lucide-react';
+import { Breadcrumb, message } from 'antd';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
 import { IUserWithRoles, UserStatus } from '@/types';
 import { UserTable } from '@/components/qtvKhoa';
+import { useState } from 'react';
 
 export default function UsersManagementPage() {
   const router = useRouter();
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   
   // Hooks
   const {
@@ -50,6 +52,54 @@ export default function UsersManagementPage() {
     router.push(`/qtv-khoa/quan-ly-nguoi-dung/xac-nhan/${user.id}?action=delete`);
   };
 
+  // Hàm xuất Excel
+  const handleExportExcel = async () => {
+    const selectedData = users.filter(user => selectedRowKeys.includes(user.id));
+    
+    if (selectedData.length === 0) {
+      message.warning('Vui lòng chọn ít nhất một người dùng để xuất Excel');
+      return;
+    }
+
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import('xlsx');
+      
+      // Tạo dữ liệu Excel
+      const excelData = selectedData.map((user, index) => ({
+        'STT': index + 1,
+        'Họ và tên': user.fullName,
+        'Tên đăng nhập': user.username,
+        'Email': user.email || 'Chưa có',
+        'Số điện thoại': user.phoneNumber || 'Chưa có',
+        'Đơn vị': user.unit?.name || 'Chưa phân công',
+        'Vai trò': user.roles.map(role => role.name).join(', '),
+        'Trạng thái': user.status === UserStatus.ACTIVE ? 'Đang hoạt động' : 'Bị khóa',
+        'Ngày sinh': user.birthDate ? new Date(user.birthDate).toLocaleDateString('vi-VN') : 'Chưa có',
+        'Ngày tạo': user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'
+      }));
+
+      // Tạo workbook và worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Danh sách người dùng');
+
+      // Xuất file
+      const fileName = `danh-sach-nguoi-dung-${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      message.success(`Đã xuất ${selectedData.length} người dùng ra file ${fileName}`);
+      
+      // Reset selection sau khi xuất
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error('Lỗi xuất Excel:', error);
+      message.error('Có lỗi xảy ra khi xuất file Excel');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -81,7 +131,15 @@ export default function UsersManagementPage() {
             Quản lý tài khoản người dùng trong khoa và phân quyền truy cập hệ thống.
           </p>
         </div>
-        <div className="mt-4 sm:mt-0">
+        <div className="mt-4 sm:mt-0 flex space-x-3">
+          <button
+            onClick={handleExportExcel}
+            disabled={selectedRowKeys.length === 0}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Xuất Excel ({selectedRowKeys.length})
+          </button>
           <button
             onClick={handleCreateUser}
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -292,6 +350,8 @@ export default function UsersManagementPage() {
           total={total}
           onPageChange={changePage}
           onPageSizeChange={changeLimit}
+          selectedRowKeys={selectedRowKeys}
+          onRowSelect={setSelectedRowKeys}
         />
       </div>
     </div>

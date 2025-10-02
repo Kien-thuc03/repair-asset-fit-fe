@@ -19,6 +19,9 @@ interface UserTableProps {
   total?: number;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
+  // Selection props
+  selectedRowKeys?: string[];
+  onRowSelect?: (selectedKeys: string[]) => void;
 }
 
 export default function UserTable({
@@ -33,10 +36,42 @@ export default function UserTable({
   total = 0,
   onPageChange,
   onPageSizeChange,
+  selectedRowKeys = [],
+  onRowSelect,
 }: UserTableProps) {
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<SortField | "">("");
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
+
+  // Hàm xử lý chọn hàng
+  const handleRowSelect = (userId: string, selected: boolean) => {
+    if (!onRowSelect) return;
+    
+    if (selected) {
+      onRowSelect([...selectedRowKeys, userId]);
+    } else {
+      onRowSelect(selectedRowKeys.filter(key => key !== userId));
+    }
+  };
+
+  // Hàm xử lý chọn tất cả
+  const handleSelectAll = (selected: boolean) => {
+    if (!onRowSelect) return;
+    
+    if (selected) {
+      const currentPageKeys = users.map(user => user.id);
+      const newSelected = [...selectedRowKeys];
+      currentPageKeys.forEach(key => {
+        if (!newSelected.includes(key)) {
+          newSelected.push(key);
+        }
+      });
+      onRowSelect(newSelected);
+    } else {
+      const currentPageKeys = users.map(user => user.id);
+      onRowSelect(selectedRowKeys.filter(key => !currentPageKeys.includes(key)));
+    }
+  };
 
   const toggleDropdown = (userId: string) => {
     setOpenDropdownId(openDropdownId === userId ? null : userId);
@@ -152,6 +187,17 @@ export default function UserTable({
       <table className="min-w-full divide-y divide-gray-300">
         <thead className="bg-gray-50">
           <tr>
+            {onRowSelect && (
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  checked={users.length > 0 && users.every(user => selectedRowKeys.includes(user.id))}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  aria-label="Chọn tất cả"
+                />
+              </th>
+            )}
             <th 
               className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 group"
               onClick={() => handleSort("fullName")}
@@ -205,6 +251,17 @@ export default function UserTable({
         <tbody className="bg-white divide-y divide-gray-200">
           {displayUsers.map((user) => (
             <tr key={user.id} className="hover:bg-gray-50">
+              {onRowSelect && (
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    checked={selectedRowKeys.includes(user.id)}
+                    onChange={(e) => handleRowSelect(user.id, e.target.checked)}
+                    aria-label={`Chọn ${user.fullName}`}
+                  />
+                </td>
+              )}
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                   <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
