@@ -35,11 +35,11 @@ export default function XuLyToTrinhPage() {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    // Lọc dữ liệu: chỉ lấy các đề xuất có status là ĐÃ_LẬP_TỜ_TRÌNH, ĐÃ_DUYỆT_TỜ_TRÌNH, ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
+    // Lọc dữ liệu: chỉ lấy các đề xuất đã được lập tờ trình gửi lên Phòng Quản trị
     const relevantStatuses: ReplacementStatus[] = [
-      ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
-      ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
-      ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+      ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH, // Tổ trưởng đã lập tờ trình, chờ Phòng Quản trị xử lý
+      ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH, // Phòng Quản trị đã duyệt tờ trình
+      ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH, // Phòng Quản trị đã từ chối tờ trình
     ];
 
     let filtered = mockReplacementRequestItem.filter((item) =>
@@ -126,19 +126,6 @@ export default function XuLyToTrinhPage() {
     }
   };
 
-  const getStatusIcon = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return <FileText className="w-4 h-4" />;
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return <CheckCircle className="w-4 h-4" />;
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return <AlertCircle className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
-
   const getStatusText = (status: ReplacementStatus) => {
     switch (status) {
       case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
@@ -163,7 +150,12 @@ export default function XuLyToTrinhPage() {
       (item) => item.status === ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
     ).length;
 
-    return { choXuLy, daDuyet, daTuChoi, total: filteredData.length };
+    return {
+      choXuLy,
+      daDuyet,
+      daTuChoi,
+      total: filteredData.length,
+    };
   }, [filteredData]);
 
   return (
@@ -300,7 +292,7 @@ export default function XuLyToTrinhPage() {
                   Tài sản
                 </th>
                 <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
-                  SL
+                  Số lượng
                 </th>
                 <th
                   className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[12%]"
@@ -381,7 +373,6 @@ export default function XuLyToTrinhPage() {
                       className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
                         item.status
                       )}`}>
-                      <span className="mr-1">{getStatusIcon(item.status)}</span>
                       <span className="hidden lg:inline text-xs">
                         {getStatusText(item.status)}
                       </span>
