@@ -149,7 +149,7 @@ export default function RequestDetailPage() {
           </button>
           <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             <FileText className="w-4 h-4 mr-2" />
-            Lập biên bản kiểm tra
+            Gửi biên bản cho phòng kỹ thuật
           </button>
         </div>
       </div>
@@ -223,56 +223,6 @@ export default function RequestDetailPage() {
                   <p className="mt-1 text-sm text-gray-900">
                     {request.description}
                   </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Statistics */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Thống kê tổng quan
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <div className="text-center">
-                  <div className="text-2xl font-semibold text-blue-600">
-                    {statistics.totalComponents}
-                  </div>
-                  <div className="text-sm text-gray-600">Loại linh kiện</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-semibold text-green-600">
-                    {statistics.totalQuantity}
-                  </div>
-                  <div className="text-sm text-gray-600">Tổng số lượng</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-semibold text-purple-600">
-                    {statistics.totalRooms}
-                  </div>
-                  <div className="text-sm text-gray-600">Phòng thực hiện</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-semibold text-orange-600">
-                    {Math.floor(statistics.totalQuantity / 2)}
-                  </div>
-                  <div className="text-sm text-gray-600">Máy tính dự kiến</div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-4">
-                <div className="text-sm font-medium text-gray-700 mb-2">
-                  Danh sách phòng thực hiện:
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {statistics.roomsList.map((room: string, index: number) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {room}
-                    </span>
-                  ))}
                 </div>
               </div>
             </div>

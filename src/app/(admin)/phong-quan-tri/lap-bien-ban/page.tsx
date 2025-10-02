@@ -21,6 +21,7 @@ import {
   ReplacementStatus,
   ComponentFromRequest,
 } from "@/types/repair";
+import { SortableHeader } from "@/components/common";
 
 export default function LapBienBanPage() {
   const router = useRouter();
@@ -31,10 +32,30 @@ export default function LapBienBanPage() {
   const [statusFilter, setStatusFilter] = useState<string>(
     searchParams.get("status") || "ALL"
   );
-  const [sortBy, setSortBy] = useState<"date" | "proposalCode" | "status">(
-    "date"
+  const [sortField, setSortField] = useState<
+    keyof ReplacementRequestItem | null
+  >(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+    null
   );
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  // Handle sorting
+  const handleSort = (field: keyof ReplacementRequestItem) => {
+    if (sortField === field) {
+      // Toggle direction or reset
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortField(null);
+        setSortDirection(null);
+      } else {
+        setSortDirection("asc");
+      }
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   // Chỉ lấy các tờ trình đã được duyệt để tạo biên bản kiểm tra
   const approvedRequests = mockReplacementRequestItem.filter(
@@ -89,28 +110,38 @@ export default function LapBienBanPage() {
       filtered = filtered.filter((request) => request.status === statusFilter);
     }
 
-    // Sắp xếp
-    filtered.sort((a, b) => {
-      let compareValue = 0;
+    // Apply sorting
+    if (sortField && sortDirection) {
+      filtered.sort((a, b) => {
+        let compareValue = 0;
 
-      switch (sortBy) {
-        case "date":
-          compareValue =
-            new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-          break;
-        case "proposalCode":
-          compareValue = a.proposalCode.localeCompare(b.proposalCode);
-          break;
-        case "status":
-          compareValue = a.status.localeCompare(b.status);
-          break;
-      }
+        switch (sortField) {
+          case "updatedAt":
+            compareValue =
+              new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+            break;
+          case "proposalCode":
+            compareValue = a.proposalCode.localeCompare(b.proposalCode);
+            break;
+          case "status":
+            compareValue = a.status.localeCompare(b.status);
+            break;
+          case "createdBy":
+            compareValue = (a.createdBy || "").localeCompare(b.createdBy || "");
+            break;
+          case "title":
+            compareValue = a.title.localeCompare(b.title);
+            break;
+          default:
+            compareValue = 0;
+        }
 
-      return sortOrder === "asc" ? compareValue : -compareValue;
-    });
+        return sortDirection === "asc" ? compareValue : -compareValue;
+      });
+    }
 
     return filtered;
-  }, [approvedRequests, searchTerm, statusFilter, sortBy, sortOrder]);
+  }, [approvedRequests, searchTerm, statusFilter, sortField, sortDirection]);
 
   // Thống kê tổng quan
   const statistics = useMemo(() => {
@@ -278,19 +309,33 @@ export default function LapBienBanPage() {
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-500">Sắp xếp:</span>
                 <select
-                  value={`${sortBy}-${sortOrder}`}
+                  value={
+                    sortField && sortDirection
+                      ? `${sortField}-${sortDirection}`
+                      : ""
+                  }
                   onChange={(e) => {
-                    const [sort, order] = e.target.value.split("-");
-                    setSortBy(sort as typeof sortBy);
-                    setSortOrder(order as typeof sortOrder);
+                    if (e.target.value) {
+                      const [field, direction] = e.target.value.split("-");
+                      setSortField(field as keyof ReplacementRequestItem);
+                      setSortDirection(direction as "asc" | "desc");
+                    } else {
+                      setSortField(null);
+                      setSortDirection(null);
+                    }
                   }}
                   className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="date-desc">Ngày kiểm tra (Mới nhất)</option>
-                  <option value="date-asc">Ngày kiểm tra (Cũ nhất)</option>
-                  <option value="reportNumber-asc">Số biên bản (A-Z)</option>
-                  <option value="reportNumber-desc">Số biên bản (Z-A)</option>
+                  <option value="">Không sắp xếp</option>
+                  <option value="updatedAt-desc">
+                    Ngày cập nhật (Mới nhất)
+                  </option>
+                  <option value="updatedAt-asc">Ngày cập nhật (Cũ nhất)</option>
+                  <option value="proposalCode-asc">Mã tờ trình (A-Z)</option>
+                  <option value="proposalCode-desc">Mã tờ trình (Z-A)</option>
                   <option value="status-asc">Trạng thái (A-Z)</option>
                   <option value="status-desc">Trạng thái (Z-A)</option>
+                  <option value="createdBy-asc">Người tạo (A-Z)</option>
+                  <option value="createdBy-desc">Người tạo (Z-A)</option>
                 </select>
               </div>
             </div>
@@ -304,24 +349,44 @@ export default function LapBienBanPage() {
           <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="w-1/6 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader<ReplacementRequestItem>
+                  field="proposalCode"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-1/6 px-4">
                   Mã tờ trình
-                </th>
+                </SortableHeader>
                 <th className="w-1/6 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tờ trình gốc
                 </th>
-                <th className="w-1/8 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader<ReplacementRequestItem>
+                  field="updatedAt"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-1/8 px-4">
                   Ngày cập nhật
-                </th>
-                <th className="w-1/6 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader<ReplacementRequestItem>
+                  field="createdBy"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-1/6 px-4">
                   Người tạo
-                </th>
+                </SortableHeader>
                 <th className="w-1/5 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Phòng/Linh kiện
                 </th>
-                <th className="w-1/8 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader<ReplacementRequestItem>
+                  field="status"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-1/8 px-4">
                   Trạng thái
-                </th>
+                </SortableHeader>
                 <th className="w-1/8 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>

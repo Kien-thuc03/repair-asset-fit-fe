@@ -1,25 +1,24 @@
 "use client";
 
 import { ChevronUp, ChevronDown } from "lucide-react";
-import { RepairRequest } from "@/types";
 
-interface SortableHeaderProps {
-  field: keyof RepairRequest;
+interface SortableHeaderProps<T = Record<string, unknown>> {
+  field: keyof T;
   children: React.ReactNode;
-  sortField: keyof RepairRequest | null;
+  sortField: keyof T | null;
   sortDirection: "asc" | "desc" | null;
-  onSort: (field: keyof RepairRequest) => void;
+  onSort: (field: keyof T) => void;
   className?: string;
 }
 
-export default function SortableHeader({
+export default function SortableHeader<T = Record<string, unknown>>({
   field,
   children,
   sortField,
   sortDirection,
   onSort,
   className = "",
-}: SortableHeaderProps) {
+}: SortableHeaderProps<T>) {
   return (
     <th
       className={`px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none whitespace-nowrap ${className}`}
