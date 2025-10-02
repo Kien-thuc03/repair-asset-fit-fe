@@ -8,7 +8,6 @@ import {
   Filter,
   FileText,
   Calendar,
-  Building,
   AlertCircle,
   CheckCircle,
   Eye,
@@ -23,7 +22,12 @@ type FilterStatus =
   | "ĐÃ_LẬP_TỜ_TRÌNH"
   | "ĐÃ_DUYỆT_TỜ_TRÌNH"
   | "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH";
-type SortField = "proposalCode" | "createdAt" | "title" | "status";
+type SortField =
+  | "proposalCode"
+  | "createdAt"
+  | "title"
+  | "status"
+  | "createdBy";
 type SortDirection = "asc" | "desc";
 
 export default function XuLyToTrinhPage() {
@@ -82,6 +86,10 @@ export default function XuLyToTrinhPage() {
         case "status":
           aValue = a.status;
           bValue = b.status;
+          break;
+        case "createdBy":
+          aValue = a.createdBy || "";
+          bValue = b.createdBy || "";
           break;
         default:
           return 0;
@@ -288,8 +296,18 @@ export default function XuLyToTrinhPage() {
                       ))}
                   </div>
                 </th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">
-                  Vị trí
+                <th
+                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[20%]"
+                  onClick={() => handleSort("createdBy")}>
+                  <div className="flex items-center space-x-1">
+                    <span>Người tạo</span>
+                    {sortField === "createdBy" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="w-3 h-3" />
+                      ) : (
+                        <ChevronDown className="w-3 h-3" />
+                      ))}
+                  </div>
                 </th>
                 <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
                   Số lượng
@@ -348,43 +366,8 @@ export default function XuLyToTrinhPage() {
                   <td className="px-2 py-3">
                     <div className="text-xs text-gray-900">
                       <div className="flex items-center space-x-1">
-                        <Building className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                        <span className="truncate text-xs">
-                          {(() => {
-                            // Lấy danh sách các phòng duy nhất
-                            const uniqueRooms = Array.from(
-                              new Set(
-                                item.components.map(
-                                  (comp) =>
-                                    `${comp.buildingName} - ${comp.roomName}`
-                                )
-                              )
-                            );
-
-                            // Nếu chỉ có 1 phòng, hiển thị bình thường
-                            if (uniqueRooms.length === 1) {
-                              return uniqueRooms[0];
-                            }
-
-                            // Nếu có nhiều phòng, hiển thị tóm tắt
-                            const roomCounts = item.components.reduce(
-                              (acc, comp) => {
-                                const roomKey = comp.roomName;
-                                acc[roomKey] = (acc[roomKey] || 0) + 1;
-                                return acc;
-                              },
-                              {} as Record<string, number>
-                            );
-
-                            const roomSummary = Object.entries(roomCounts)
-                              .map(
-                                ([room, count]) =>
-                                  `${room}: ${Math.floor(count / 2)} máy`
-                              ) // Chia 2 vì mỗi máy có 2 linh kiện (SSD + RAM)
-                              .join(", ");
-
-                            return `${item.components[0]?.buildingName} - ${roomSummary}`;
-                          })()}
+                        <span className="truncate text-xs font-medium">
+                          {item.createdBy || "Chưa xác định"}
                         </span>
                       </div>
                     </div>
