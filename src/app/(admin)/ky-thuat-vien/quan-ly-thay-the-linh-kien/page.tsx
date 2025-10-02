@@ -105,7 +105,7 @@ export default function QuanLyThayTheLinhKienPage() {
 				'Tiêu đề đề xuất': item.title,
 				'Mô tả': item.description,
 				'Số linh kiện': item.components.length,
-				'Trạng thái': statusConfig[item.status as ReplacementStatus].text,
+				'Trạng thái': statusConfig[item.status as ReplacementStatus]?.text || item.status,
 				'Ngày tạo': new Date(item.createdAt).toLocaleDateString('vi-VN'),
 				'Người tạo': item.createdBy || 'N/A'
 			}))
@@ -220,6 +220,22 @@ export default function QuanLyThayTheLinhKienPage() {
 		[ReplacementStatus.ĐÃ_TỪ_CHỐI]: { 
 			color: 'red', 
 			text: 'Đã từ chối' 
+		},
+		[ReplacementStatus.ĐÃ_XÁC_MINH]: { 
+			color: 'purple', 
+			text: 'Đã xác minh' 
+		},
+		[ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
+			color: 'geekblue', 
+			text: 'Đã lập tờ trình' 
+		},
+		[ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+			color: 'lime', 
+			text: 'Đã duyệt tờ trình' 
+		},
+		[ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
+			color: 'volcano', 
+			text: 'Đã từ chối tờ trình' 
 		},
 		[ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
 			color: 'cyan', 
@@ -392,7 +408,10 @@ export default function QuanLyThayTheLinhKienPage() {
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
 						{paginatedData.map((record: ReplacementRequestItem, index: number) => {
-							const config = statusConfig[record.status as ReplacementStatus]
+							const config = statusConfig[record.status as ReplacementStatus] || { 
+								color: 'default', 
+								text: record.status 
+							}
 							return (
 								<tr key={record.id} className="hover:bg-gray-50">
 									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">

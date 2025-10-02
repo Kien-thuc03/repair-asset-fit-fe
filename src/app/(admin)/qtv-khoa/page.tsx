@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { Database, Shield, Users, Settings, Activity, Server } from 'lucide-react'
+import Link from 'next/link'
 
 const stats = [
   {
@@ -87,19 +88,19 @@ export default function QTVKhoaDashboard() {
             Quản trị hệ thống
           </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <button className="relative group bg-blue-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg hover:bg-blue-100 transition-colors">
+            <Link href="/qtv-khoa/users" className="relative group bg-blue-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg hover:bg-blue-100 transition-colors">
               <span className="rounded-lg inline-flex p-3 bg-blue-600 text-white">
                 <Users className="h-6 w-6" />
               </span>
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Quản lý tài khoản
+                  Quản lý người dùng
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Tạo, sửa, xóa tài khoản người dùng
+                  Tạo, cập nhật tài khoản và phân quyền
                 </p>
               </div>
-            </button>
+            </Link>
 
             <button className="relative group bg-green-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg hover:bg-green-100 transition-colors">
               <span className="rounded-lg inline-flex p-3 bg-green-600 text-white">

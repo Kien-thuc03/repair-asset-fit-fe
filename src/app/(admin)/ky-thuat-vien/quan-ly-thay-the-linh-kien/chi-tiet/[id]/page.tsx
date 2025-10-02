@@ -53,6 +53,26 @@ export default function ChiTietThayThePage() {
 			text: 'Đã từ chối',
 			icon: XCircle
 		},
+		[ReplacementStatus.ĐÃ_XÁC_MINH]: { 
+			color: 'purple', 
+			text: 'Đã xác minh',
+			icon: CheckCircle
+		},
+		[ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
+			color: 'geekblue', 
+			text: 'Đã lập tờ trình',
+			icon: CheckCircle
+		},
+		[ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+			color: 'lime', 
+			text: 'Đã duyệt tờ trình',
+			icon: CheckCircle
+		},
+		[ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
+			color: 'volcano', 
+			text: 'Đã từ chối tờ trình',
+			icon: XCircle
+		},
 		[ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
 			color: 'cyan', 
 			text: 'Đã hoàn tất mua sắm',
@@ -60,7 +80,11 @@ export default function ChiTietThayThePage() {
 		},
 	}
 
-	const currentStatus = statusConfig[request.status]
+	const currentStatus = statusConfig[request.status] || { 
+		color: 'default', 
+		text: request.status,
+		icon: Clock
+	}
 
 	// Cấu hình cột cho bảng linh kiện
 	const componentColumns = [

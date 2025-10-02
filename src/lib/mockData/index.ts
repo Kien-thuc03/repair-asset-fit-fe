@@ -21,3 +21,4 @@ export * from "./technicianAssignments";
 export * from "./units";
 export * from "./users";
 export * from "./users_roles";
+export * from "./usersManagement";

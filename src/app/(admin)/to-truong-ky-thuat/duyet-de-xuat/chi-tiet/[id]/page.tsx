@@ -13,7 +13,6 @@ import {
   Table,
 } from "antd";
 import {
-  Package,
   Clock,
   CheckCircle,
   XCircle,
@@ -21,7 +20,6 @@ import {
 } from "lucide-react";
 import { mockReplacementRequestItem, users } from "@/lib/mockData";
 import { ComponentFromRequest } from "@/types/repair";
-import { User } from "@/types";
 
 export default function ChiTietDuyetDeXuatPage() {
   const params = useParams();
@@ -83,6 +81,10 @@ export default function ChiTietDuyetDeXuatPage() {
     | "CHỜ_XÁC_MINH"
     | "ĐÃ_DUYỆT"
     | "ĐÃ_TỪ_CHỐI"
+    | "ĐÃ_XÁC_MINH"
+    | "ĐÃ_LẬP_TỜ_TRÌNH"
+    | "ĐÃ_DUYỆT_TỜ_TRÌNH"
+    | "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH"
     | "ĐÃ_HOÀN_TẤT_MUA_SẮM";
 
   // Status configuration
@@ -114,6 +116,26 @@ export default function ChiTietDuyetDeXuatPage() {
       text: "Đã từ chối",
       icon: XCircle,
     },
+    ĐÃ_XÁC_MINH: {
+      color: "purple",
+      text: "Đã xác minh",
+      icon: CheckCircle,
+    },
+    ĐÃ_LẬP_TỜ_TRÌNH: {
+      color: "geekblue",
+      text: "Đã lập tờ trình",
+      icon: CheckCircle,
+    },
+    ĐÃ_DUYỆT_TỜ_TRÌNH: {
+      color: "lime",
+      text: "Đã duyệt tờ trình",
+      icon: CheckCircle,
+    },
+    ĐÃ_TỪ_CHỐI_TỜ_TRÌNH: {
+      color: "volcano",
+      text: "Đã từ chối tờ trình",
+      icon: XCircle,
+    },
     ĐÃ_HOÀN_TẤT_MUA_SẮM: {
       color: "green",
       text: "Đã hoàn tất mua sắm",
@@ -121,7 +143,11 @@ export default function ChiTietDuyetDeXuatPage() {
     },
   };
 
-  const currentStatus = statusConfig[request.status as ReplacementStatusType];
+  const currentStatus = statusConfig[request.status as ReplacementStatusType] || {
+    color: "default",
+    text: request.status,
+    icon: Clock,
+  };
 
   // Component columns configuration
   const componentColumns = [
