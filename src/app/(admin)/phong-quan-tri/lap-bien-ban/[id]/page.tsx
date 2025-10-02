@@ -20,9 +20,7 @@ import {
 } from "lucide-react";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import {
-  ReplacementRequestItem,
   ReplacementStatus,
-  ComponentFromRequest,
   ComponentType,
 } from "@/types/repair";
 
@@ -83,30 +81,6 @@ export default function RequestDetailPage() {
     window.print();
   };
 
-  // Tính toán thống kê
-  const getRequestStatistics = (request: ReplacementRequestItem) => {
-    const totalComponents = request.components.length;
-    const totalQuantity = request.components.reduce(
-      (sum: number, comp: ComponentFromRequest) => sum + comp.quantity,
-      0
-    );
-    const rooms = [
-      ...new Set(
-        request.components.map(
-          (comp: ComponentFromRequest) =>
-            `${comp.buildingName} - ${comp.roomName}`
-        )
-      ),
-    ];
-
-    return {
-      totalComponents,
-      totalQuantity,
-      totalRooms: rooms.length,
-      roomsList: rooms,
-    };
-  };
-
   if (!request) {
     return (
       <div className="flex flex-col items-center justify-center min-h-64 space-y-4">
@@ -125,9 +99,6 @@ export default function RequestDetailPage() {
       </div>
     );
   }
-
-  const statistics = getRequestStatistics(request);
-
   return (
     <div className="space-y-6">
       {/* Header */}
