@@ -7,7 +7,6 @@ import {
   Building,
   Package,
   Search,
-  Filter,
   Eye,
   User,
   CheckCircle,
@@ -29,9 +28,7 @@ export default function LapBienBanPage() {
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("search") || ""
   );
-  const [statusFilter, setStatusFilter] = useState<string>(
-    searchParams.get("status") || "ALL"
-  );
+  // Không còn sử dụng bộ lọc trạng thái, chỉ giữ tìm kiếm
   const [sortField, setSortField] = useState<
     keyof ReplacementRequestItem | null
   >(null);
@@ -97,10 +94,7 @@ export default function LapBienBanPage() {
       );
     }
 
-    // Apply status filter
-    if (statusFilter !== "ALL") {
-      filtered = filtered.filter((request) => request.status === statusFilter);
-    }
+    // Không còn sử dụng bộ lọc trạng thái
 
     // Apply sorting
     if (sortField && sortDirection) {
@@ -133,7 +127,7 @@ export default function LapBienBanPage() {
     }
 
     return filtered;
-  }, [approvedRequests, searchTerm, statusFilter, sortField, sortDirection]);
+  }, [approvedRequests, searchTerm, sortField, sortDirection]);
 
   // Thống kê tổng quan
   const statistics = useMemo(() => {
@@ -307,72 +301,30 @@ export default function LapBienBanPage() {
         </div>
       </div>
 
-      {/* Filters and Search */}
+      {/* Search */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-            <div className="flex-1 max-w-lg">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  placeholder="Tìm kiếm biên bản..."
-                />
+          <div className="flex flex-col space-y-2">
+            <h3 className="text-sm font-medium text-gray-700">
+              Tìm kiếm biên bản
+            </h3>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400" />
               </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                placeholder="Nhập mã biên bản, tên người tạo, hoặc thông tin khác..."
+              />
             </div>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Filter className="h-4 w-4 text-gray-400" />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="ALL">Tất cả trạng thái</option>
-                  <option value="ĐANG_SOẠN_THẢO">Đang soạn thảo</option>
-                  <option value="ĐÃ_HOÀN_THÀNH">Đã hoàn thành</option>
-                  <option value="ĐÃ_DUYỆT">Đã duyệt</option>
-                </select>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-500">Sắp xếp:</span>
-                <select
-                  value={
-                    sortField && sortDirection
-                      ? `${sortField}-${sortDirection}`
-                      : ""
-                  }
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      const [field, direction] = e.target.value.split("-");
-                      setSortField(field as keyof ReplacementRequestItem);
-                      setSortDirection(direction as "asc" | "desc");
-                    } else {
-                      setSortField(null);
-                      setSortDirection(null);
-                    }
-                  }}
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="">Không sắp xếp</option>
-                  <option value="updatedAt-desc">
-                    Ngày cập nhật (Mới nhất)
-                  </option>
-                  <option value="updatedAt-asc">Ngày cập nhật (Cũ nhất)</option>
-                  <option value="proposalCode-asc">Mã tờ trình (A-Z)</option>
-                  <option value="proposalCode-desc">Mã tờ trình (Z-A)</option>
-                  <option value="status-asc">Trạng thái (A-Z)</option>
-                  <option value="status-desc">Trạng thái (Z-A)</option>
-                  <option value="createdBy-asc">Người tạo (A-Z)</option>
-                  <option value="createdBy-desc">Người tạo (Z-A)</option>
-                </select>
-              </div>
-            </div>
+            <p className="text-xs text-gray-500">
+              Tìm kiếm theo mã biên bản, mã tờ trình, tên người tạo hoặc các
+              thông tin liên quan khác. Hệ thống sẽ hiển thị{" "}
+              {filteredReports.length} kết quả phù hợp.
+            </p>
           </div>
         </div>
       </div>
@@ -537,8 +489,8 @@ export default function LapBienBanPage() {
               Không có biên bản nào
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchTerm || statusFilter !== "ALL"
-                ? "Không tìm thấy biên bản nào phù hợp với tiêu chí tìm kiếm."
+              {searchTerm
+                ? "Không tìm thấy biên bản nào phù hợp với từ khóa tìm kiếm."
                 : "Chưa có biên bản nào được tạo."}
             </p>
           </div>

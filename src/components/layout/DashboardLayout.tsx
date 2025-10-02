@@ -18,7 +18,6 @@ import {
   Users,
   BarChart3,
   FileText,
-  UserCheck,
   Shield,
   ChevronRight,
   ChevronLeft,
