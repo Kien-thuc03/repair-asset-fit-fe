@@ -91,15 +91,37 @@ export default function XuLyToTrinhDetailPage() {
   };
 
   // Lập biên bản cho các components đã check
-  const handleCreateReport = () => {
+  const handleCreateReport = async () => {
     const checkedComponentsList =
       proposal?.components.filter((comp) => checkedComponents.has(comp.id)) ||
       [];
 
-    console.log("Lập biên bản cho các linh kiện:", checkedComponentsList);
-    // TODO: Implement logic tạo biên bản
-    setShowCreateReportModal(false);
-    setCheckedComponents(new Set());
+    try {
+      // Simulate API call để tạo biên bản
+      const reportData = {
+        proposalId: proposal?.id,
+        proposalCode: proposal?.proposalCode,
+        title: proposal?.title,
+        selectedComponents: checkedComponentsList,
+        createdAt: new Date().toISOString(),
+      };
+
+      console.log("Tạo biên bản cho các linh kiện:", reportData);
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // TODO: Implement API call to create inspection report
+      alert(
+        `Đã tạo biên bản thành công cho ${checkedComponentsList.length} loại linh kiện!`
+      );
+
+      setShowCreateReportModal(false);
+      setCheckedComponents(new Set());
+    } catch (error) {
+      console.error("Error creating report:", error);
+      alert("Có lỗi xảy ra khi tạo biên bản");
+    }
   };
 
   // Xử lý thao tác riêng cho từng component (chỉ từ chối)
