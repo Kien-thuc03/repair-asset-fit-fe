@@ -10,8 +10,6 @@ import {
   Eye,
   User,
   CheckCircle,
-  Clock,
-  FileCheck,
 } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
@@ -129,19 +127,6 @@ export default function LapBienBanPage() {
 
     return filtered;
   }, [approvedRequests, searchTerm, sortField, sortDirection]);
-
-  // Thống kê tổng quan
-  const statistics = useMemo(() => {
-    const total = approvedRequests.length;
-    const needInspection = approvedRequests.length; // Tất cả đều cần kiểm tra
-
-    return {
-      total,
-      needInspection,
-      completed: 0, // Sẽ cập nhật khi có workflow hoàn chỉnh
-      approved: 0, // Sẽ cập nhật khi có workflow hoàn chỉnh
-    };
-  }, [approvedRequests]);
 
   const handleViewReport = (requestId: string) => {
     router.push(`/phong-quan-tri/lap-bien-ban/${requestId}`);
