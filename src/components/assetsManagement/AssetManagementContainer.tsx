@@ -1,16 +1,23 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Asset, ComprehensiveAsset } from "@/types";
 import { mockDetailedAssets, mockRooms, mockCategories } from "@/lib/mockData";
 import { Breadcrumb } from "antd";
 import Pagination from "@/components/common/Pagination";
-import { DeviceManagementHeader, DeviceStatsCards, DeviceFilters, DeviceGrid } from "@/components/assetsManagement";
+import {
+  DeviceManagementHeader,
+  DeviceStatsCards,
+  DeviceFilters,
+  DeviceGrid,
+} from "@/components/assetsManagement";
 
 // Helper function to convert ComprehensiveAsset to Asset
 const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
   const room = mockRooms.find((r) => r.id === comprehensive.currentRoomId);
-  const category = mockCategories.find((c) => c.id === comprehensive.categoryId);
+  const category = mockCategories.find(
+    (c) => c.id === comprehensive.categoryId
+  );
 
   return {
     id: comprehensive.id,
@@ -30,11 +37,22 @@ const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
 
 export default function TechnicianDeviceManagementContainer() {
   const router = useRouter();
-  
+  const pathname = usePathname();
+
+  // Extract role from pathname to create dynamic links
+  const getRoleFromPath = () => {
+    if (pathname.includes("/ky-thuat-vien/")) return "/ky-thuat-vien";
+    if (pathname.includes("/to-truong-ky-thuat/")) return "/to-truong-ky-thuat";
+    return "/ky-thuat-vien"; // default fallback
+  };
+
+  const rolePath = getRoleFromPath();
+
   // Convert comprehensive assets to Asset format
   const convertedAssets = mockDetailedAssets.map(convertToAsset);
   const [assets] = useState<Asset[]>(convertedAssets);
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>(convertedAssets);
+  const [filteredAssets, setFilteredAssets] =
+    useState<Asset[]>(convertedAssets);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [floorFilter, setFloorFilter] = useState<string>("all");
@@ -82,14 +100,12 @@ export default function TechnicianDeviceManagementContainer() {
   // Simulate QR scan for demo
   const simulateQRScan = () => {
     const randomAsset = assets[Math.floor(Math.random() * assets.length)];
-    router.push(
-      `/ky-thuat-vien/quan-ly-thiet-bi/chi-tiet/${randomAsset.id}`
-    );
+    router.push(`${rolePath}/quan-ly-thiet-bi/chi-tiet/${randomAsset.id}`);
   };
 
   // Handle view detail
   const handleViewDetail = (assetId: string) => {
-    router.push(`/ky-thuat-vien/quan-ly-thiet-bi/chi-tiet/${assetId}`);
+    router.push(`${rolePath}/quan-ly-thiet-bi/chi-tiet/${assetId}`);
   };
 
   // Function to extract floor from room name
@@ -168,7 +184,7 @@ export default function TechnicianDeviceManagementContainer() {
         <Breadcrumb
           items={[
             {
-              href: "/ky-thuat-vien",
+              href: rolePath,
               title: (
                 <div className="flex items-center">
                   <span>Trang chủ</span>
@@ -185,30 +201,27 @@ export default function TechnicianDeviceManagementContainer() {
           ]}
         />
       </div>
-      
+
       {/* Header */}
       <DeviceManagementHeader isMobile={isMobile} onQRScan={simulateQRScan} />
-      
+
       {/* Quick Stats */}
       <DeviceStatsCards assets={assets} />
-      
+
       {/* Filters */}
       <DeviceFilters
         searchTerm={searchTerm}
-        statusFilter={statusFilter}  
+        statusFilter={statusFilter}
         floorFilter={floorFilter}
         onSearchChange={setSearchTerm}
         onStatusChange={setStatusFilter}
         onFloorChange={setFloorFilter}
         floors={floors}
       />
-      
+
       {/* Device Grid */}
-      <DeviceGrid
-        assets={paginatedAssets}
-        onViewDetail={handleViewDetail}
-      />
-      
+      <DeviceGrid assets={paginatedAssets} onViewDetail={handleViewDetail} />
+
       {/* Pagination */}
       {filteredAssets.length > 0 && (
         <div className="bg-white shadow rounded-lg">

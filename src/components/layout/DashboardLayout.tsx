@@ -156,8 +156,8 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       },
 
       {
-        name: "Quản lý tài sản",
-        href: "/to-truong-ky-thuat/tra-cuu-tai-san",
+        name: "Quản lý thiết bị",
+        href: "/to-truong-ky-thuat/quan-ly-thiet-bi",
         icon: Search,
       },
       {
