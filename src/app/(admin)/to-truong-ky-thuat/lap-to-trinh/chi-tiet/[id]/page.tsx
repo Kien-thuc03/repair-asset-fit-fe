@@ -14,8 +14,8 @@ import {
   Clock,
   Info,
 } from "lucide-react";
-import { getReportListsByStatus } from "@/lib/mockData";
-import { ReplacementStatus } from "@/types";
+import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
+import { ReplacementStatus } from "@/types/repair";
 
 export default function ChiTietLapToTrinhPage() {
   const params = useParams();
@@ -23,10 +23,10 @@ export default function ChiTietLapToTrinhPage() {
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
   const request = useMemo(() => {
-    // Lấy tất cả các items từ các danh sách đã tạo có trạng thái "CHỜ_LẬP_TỜ_TRÌNH"
-    const reportLists = getReportListsByStatus("CHỜ_LẬP_TỜ_TRÌNH");
-    const allItems = reportLists.flatMap((list) => list.items);
-    return allItems.find((r) => r.id === id);
+    // Lấy đề xuất từ mockReplacementRequestItem với trạng thái ĐÃ_DUYỆT
+    return mockReplacementRequestItem.find(
+      (r) => r.id === id && r.status === ReplacementStatus.ĐÃ_DUYỆT
+    );
   }, [id]);
 
   const getStatusBadge = (status: string) => {
@@ -124,11 +124,29 @@ export default function ChiTietLapToTrinhPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Chi tiết đề xuất #{request.id}
+              Chi tiết đề xuất {request.proposalCode}
             </h1>
-            <p className="text-gray-600 mt-1">
-              Thông tin chi tiết về đề xuất thay thế thiết bị
-            </p>
+            <p className="text-gray-600 mt-1">{request.title}</p>
+          </div>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="hidden md:flex items-center space-x-6 text-sm">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">
+              {request.components?.length || 0}
+            </div>
+            <div className="text-gray-500">Linh kiện</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {new Set(
+                request.components?.map(
+                  (c) => `${c.buildingName}-${c.roomName}`
+                )
+              ).size || 0}
+            </div>
+            <div className="text-gray-500">Phòng</div>
           </div>
         </div>
       </div>
@@ -136,6 +154,57 @@ export default function ChiTietLapToTrinhPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Asset Overview */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <Package className="h-5 w-5 text-blue-600" />
+              <h2 className="text-lg font-semibold text-gray-900">
+                Tổng quan tài sản
+              </h2>
+            </div>
+
+            {request.components && request.components.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Unique assets */}
+                {Array.from(
+                  new Map(
+                    request.components.map((c) => [c.assetId, c])
+                  ).values()
+                ).map((component) => (
+                  <div
+                    key={component.assetId}
+                    className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <Package className="h-5 w-5 text-gray-400 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900">
+                          {component.assetName}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          Mã: {component.assetCode}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Vị trí: {component.buildingName} -{" "}
+                          {component.roomName}
+                          {component.machineLabel &&
+                            ` (Máy ${component.machineLabel})`}
+                        </div>
+                        <div className="text-xs text-blue-600 mt-2">
+                          {
+                            request.components?.filter(
+                              (c) => c.assetId === component.assetId
+                            ).length
+                          }{" "}
+                          linh kiện cần thay
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Basic Information */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center space-x-2 mb-4">
@@ -152,7 +221,9 @@ export default function ChiTietLapToTrinhPage() {
                   <div className="text-sm font-medium text-gray-500">
                     Mã đề xuất
                   </div>
-                  <div className="text-sm text-gray-900">{request.id}</div>
+                  <div className="text-sm text-gray-900">
+                    {request.proposalCode}
+                  </div>
                 </div>
               </div>
 
@@ -162,21 +233,7 @@ export default function ChiTietLapToTrinhPage() {
                   <div className="text-sm font-medium text-gray-500">
                     Tiêu đề
                   </div>
-                  <div className="text-sm text-gray-900">
-                    {request.title}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3">
-                <Hash className="h-5 w-5 text-gray-400 mt-0.5" />
-                <div>
-                  <div className="text-sm font-medium text-gray-500">
-                    Mã tài sản
-                  </div>
-                  <div className="text-sm text-gray-900">
-                    {request.assetCode}
-                  </div>
+                  <div className="text-sm text-gray-900">{request.title}</div>
                 </div>
               </div>
 
@@ -187,7 +244,7 @@ export default function ChiTietLapToTrinhPage() {
                     Người đề xuất
                   </div>
                   <div className="text-sm text-gray-900">
-                    {request.requestedBy}
+                    {request.createdBy || "Không xác định"}
                   </div>
                 </div>
               </div>
@@ -199,7 +256,10 @@ export default function ChiTietLapToTrinhPage() {
                     Vị trí
                   </div>
                   <div className="text-sm text-gray-900">
-                    {request.location}
+                    {request.components?.[0]?.buildingName &&
+                    request.components?.[0]?.roomName
+                      ? `${request.components[0].buildingName} - ${request.components[0].roomName}`
+                      : "Không có vị trí cụ thể"}
                   </div>
                 </div>
               </div>
@@ -208,9 +268,11 @@ export default function ChiTietLapToTrinhPage() {
                 <Package className="h-5 w-5 text-gray-400 mt-0.5" />
                 <div>
                   <div className="text-sm font-medium text-gray-500">
-                    Đơn vị
+                    Số lượng linh kiện
                   </div>
-                  <div className="text-sm text-gray-900">{request.unit}</div>
+                  <div className="text-sm text-gray-900">
+                    {request.components?.length || 0} linh kiện
+                  </div>
                 </div>
               </div>
 
@@ -218,10 +280,10 @@ export default function ChiTietLapToTrinhPage() {
                 <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
                 <div>
                   <div className="text-sm font-medium text-gray-500">
-                    Ngày đề xuất
+                    Ngày tạo đề xuất
                   </div>
                   <div className="text-sm text-gray-900">
-                    {new Date(request.requestDate).toLocaleDateString("vi-VN")}
+                    {new Date(request.createdAt).toLocaleDateString("vi-VN")}
                   </div>
                 </div>
               </div>
@@ -241,19 +303,81 @@ export default function ChiTietLapToTrinhPage() {
             </div>
           </div>
 
-          {/* Reason */}
+          {/* Components Details */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center space-x-2 mb-4">
-              <Info className="h-5 w-5 text-blue-600" />
+              <Package className="h-5 w-5 text-blue-600" />
               <h2 className="text-lg font-semibold text-gray-900">
-                Lý do thay thế
+                Chi tiết linh kiện cần thay thế
               </h2>
             </div>
-            <div className="prose max-w-none">
-              <p className="text-gray-700 leading-relaxed">
-                {request.reason || "Không có lý do cụ thể"}
+
+            {request.components && request.components.length > 0 ? (
+              <div className="space-y-4">
+                {request.components.map((component) => (
+                  <div
+                    key={component.id}
+                    className="border border-gray-200 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-sm font-medium text-gray-500">
+                          Linh kiện hiện tại:
+                        </span>
+                        <p className="text-sm text-gray-900">
+                          {component.componentName}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-500">
+                          Linh kiện thay thế:
+                        </span>
+                        <p className="text-sm text-gray-900">
+                          {component.newItemName}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-500">
+                          Vị trí:
+                        </span>
+                        <p className="text-sm text-gray-900">
+                          {component.buildingName} - {component.roomName}
+                          {component.machineLabel &&
+                            ` (Máy ${component.machineLabel})`}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-500">
+                          Số lượng:
+                        </span>
+                        <p className="text-sm text-gray-900">
+                          {component.quantity}
+                        </p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <span className="text-sm font-medium text-gray-500">
+                          Lý do thay thế:
+                        </span>
+                        <p className="text-sm text-gray-900">
+                          {component.reason}
+                        </p>
+                      </div>
+                      <div className="md:col-span-2">
+                        <span className="text-sm font-medium text-gray-500">
+                          Thông số kỹ thuật mới:
+                        </span>
+                        <p className="text-sm text-gray-900">
+                          {component.newItemSpecs}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-700">
+                Không có thông tin chi tiết về linh kiện
               </p>
-            </div>
+            )}
           </div>
         </div>
 
@@ -280,33 +404,56 @@ export default function ChiTietLapToTrinhPage() {
             <div className="mt-4 text-center">
               <p className="text-xs text-gray-500">
                 Cập nhật lần cuối:{" "}
-                {new Date(request.requestDate).toLocaleString("vi-VN")}
+                {new Date(request.updatedAt).toLocaleString("vi-VN")}
               </p>
             </div>
           </div>
 
-          {/* Actions */}
-          {request.status === ReplacementStatus.ĐÃ_DUYỆT && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Thao tác
-              </h2>
 
-              <div className="space-y-3">
-                <button
-                  onClick={() => {
-                    router.push(
-                      `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
-                    );
-                  }}
-                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center justify-center space-x-2"
-                  title="Lập tờ trình">
-                  <FileText className="h-4 w-4" />
-                  <span>Lập tờ trình</span>
-                </button>
+          {/* Additional Info */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Thông tin bổ sung
+            </h2>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Tổng số linh kiện:</span>
+                <span className="font-medium">
+                  {request.components?.length || 0}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-gray-500">Số phòng liên quan:</span>
+                <span className="font-medium">
+                  {new Set(
+                    request.components?.map(
+                      (c) => `${c.buildingName}-${c.roomName}`
+                    )
+                  ).size || 0}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-gray-500">Loại linh kiện:</span>
+                <span className="font-medium">
+                  {new Set(request.components?.map((c) => c.componentType))
+                    .size || 0}{" "}
+                  loại
+                </span>
+              </div>
+
+              <div className="pt-3 border-t border-gray-200">
+                <div className="text-gray-500 mb-2">Trạng thái chi tiết:</div>
+                <div className="text-xs space-y-1">
+                  <div>✓ Đã được kỹ thuật viên đề xuất</div>
+                  <div>✓ Đã được tổ trưởng phê duyệt</div>
+                  <div className="text-blue-600">⏳ Chờ lập tờ trình</div>
+                </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
