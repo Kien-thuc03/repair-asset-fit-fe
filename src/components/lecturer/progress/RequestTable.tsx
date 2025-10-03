@@ -188,7 +188,6 @@ export default function RequestTable({
                     onClick={() => onViewDetails(request.id)}
                     className="text-blue-600 hover:text-blue-900 inline-flex items-center text-xs">
                     <Eye className="w-3 h-3 mr-1" />
-                    Chi tiết
                   </button>
                 </td>
               </tr>
