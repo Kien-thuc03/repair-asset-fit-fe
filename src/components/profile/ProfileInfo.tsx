@@ -38,10 +38,10 @@ export function ProfileInfoComponent() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center justify-center space-x-2">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-          <p className="text-gray-600">Đang tải thông tin...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải...</p>
         </div>
       </div>
     );
