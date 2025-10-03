@@ -17,7 +17,6 @@ import { Breadcrumb } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import {
   mockSoftwareProposals,
-  getSoftwareProposalsByStatus,
 } from "@/lib/mockData/softwareProposals";
 import { Pagination } from "@/components/common";
 
@@ -122,17 +121,6 @@ export default function SoftwareProposalsPage() {
     );
   };
 
-  // Stats
-  const stats = {
-    total: mockSoftwareProposals.length,
-    pending: getSoftwareProposalsByStatus(SoftwareProposalStatus.CHỜ_DUYỆT)
-      .length,
-    approved: getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_DUYỆT)
-      .length,
-    equipped: getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_TRANG_BỊ)
-      .length,
-  };
-
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -167,88 +155,6 @@ export default function SoftwareProposalsPage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Monitor className="h-6 w-6 text-gray-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Tổng đề xuất
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.total}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Clock className="h-6 w-6 text-yellow-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Chờ duyệt
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.pending}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CheckCircle className="h-6 w-6 text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Đã duyệt
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.approved}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Monitor className="h-6 w-6 text-blue-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Đã trang bị
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.equipped}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
