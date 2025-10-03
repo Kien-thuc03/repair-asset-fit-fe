@@ -4,5 +4,10 @@
       "main": false,
       "dev": true
     }
-  }
+  },
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "nodejs": "20.x"
 }
