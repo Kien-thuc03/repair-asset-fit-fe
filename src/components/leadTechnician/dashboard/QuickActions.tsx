@@ -17,7 +17,7 @@ const QuickActions: React.FC = () => {
         <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
           Chức năng chính
         </h3>
-        
+
         {/* Main Actions - 4 columns */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
@@ -59,9 +59,7 @@ const QuickActions: React.FC = () => {
               <Calendar className="h-6 w-6" />
             </span>
             <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Biên bản
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900">Biên bản</h3>
               <p className="mt-2 text-sm text-gray-500">
                 Quản lý biên bản xác nhận
               </p>
@@ -98,7 +96,9 @@ const QuickActions: React.FC = () => {
                 <h4 className="text-sm font-medium text-gray-900">
                   Danh sách báo lỗi
                 </h4>
-                <p className="text-xs text-gray-500">Theo dõi các báo cáo lỗi</p>
+                <p className="text-xs text-gray-500">
+                  Theo dõi các báo cáo lỗi
+                </p>
               </div>
             </div>
           </Link>
@@ -114,7 +114,9 @@ const QuickActions: React.FC = () => {
                 <h4 className="text-sm font-medium text-gray-900">
                   Quản lý thiết bị
                 </h4>
-                <p className="text-xs text-gray-500">Tra cứu và quản lý thiết bị</p>
+                <p className="text-xs text-gray-500">
+                  Tra cứu và quản lý thiết bị
+                </p>
               </div>
             </div>
           </Link>
