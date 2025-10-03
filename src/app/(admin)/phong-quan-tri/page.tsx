@@ -1,49 +1,85 @@
-'use client'
+"use client";
 
-import { useAuth } from '@/contexts/AuthContext'
-import { Building, Users, FileText, TrendingUp, DollarSign, Calendar } from 'lucide-react'
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Building,
+  Users,
+  FileText,
+  TrendingUp,
+  DollarSign,
+  Calendar,
+} from "lucide-react";
+import { Breadcrumb } from "antd";
 
 const stats = [
   {
-    name: 'Tổng đơn vị',
-    value: '12',
-    change: '2 khoa chính',
-    changeType: 'neutral',
+    name: "Tổng đơn vị",
+    value: "12",
+    change: "2 khoa chính",
+    changeType: "neutral",
     icon: Building,
   },
   {
-    name: 'Nhân sự kỹ thuật',
-    value: '45',
-    change: '5 tổ trưởng',
-    changeType: 'neutral',
+    name: "Nhân sự kỹ thuật",
+    value: "45",
+    change: "5 tổ trưởng",
+    changeType: "neutral",
     icon: Users,
   },
   {
-    name: 'Báo cáo tháng này',
-    value: '156',
-    change: '+12%',
-    changeType: 'positive',
+    name: "Báo cáo tháng này",
+    value: "156",
+    change: "+12%",
+    changeType: "positive",
     icon: FileText,
   },
   {
-    name: 'Ngân sách',
-    value: '2.5M',
-    change: '80% đã sử dụng',
-    changeType: 'neutral',
+    name: "Ngân sách",
+    value: "2.5M",
+    change: "80% đã sử dụng",
+    changeType: "neutral",
     icon: DollarSign,
   },
-]
+];
 
 export default function PhongQuanTriDashboard() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   return (
     <div className="space-y-8">
+      {/* Breadcrumb */}
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/",
+              title: (
+                <div className="flex items-center">
+                  <div className="w-4 h-4 mr-1" />
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <div className="w-4 h-4 mr-1" />
+                  <span>Phòng quản trị</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Phòng quản trị</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Dashboard Phòng quản trị
+        </h1>
         <p className="mt-2 text-gray-600">
-          Chào mừng {user?.fullName}! Quản lý toàn bộ hệ thống sửa chữa trường học.
+          Chào mừng {user?.fullName}! Quản lý toàn bộ hệ thống sửa chữa trường
+          học.
         </p>
       </div>
 
@@ -52,8 +88,7 @@ export default function PhongQuanTriDashboard() {
         {stats.map((item) => (
           <div
             key={item.name}
-            className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6"
-          >
+            className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6">
             <div>
               <div className="absolute rounded-md bg-purple-500 p-3">
                 <item.icon className="h-6 w-6 text-white" aria-hidden="true" />
@@ -63,16 +98,17 @@ export default function PhongQuanTriDashboard() {
               </p>
             </div>
             <div className="ml-16 flex items-baseline">
-              <p className="text-2xl font-semibold text-gray-900">{item.value}</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {item.value}
+              </p>
               <p
                 className={`ml-2 flex items-baseline text-sm font-semibold ${
-                  item.changeType === 'positive'
-                    ? 'text-green-600'
-                    : item.changeType === 'negative'
-                    ? 'text-red-600'
-                    : 'text-gray-600'
-                }`}
-              >
+                  item.changeType === "positive"
+                    ? "text-green-600"
+                    : item.changeType === "negative"
+                    ? "text-red-600"
+                    : "text-gray-600"
+                }`}>
                 {item.change}
               </p>
             </div>
@@ -226,5 +262,5 @@ export default function PhongQuanTriDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }

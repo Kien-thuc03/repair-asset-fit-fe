@@ -11,8 +11,11 @@ import {
   AlertCircle,
   CheckCircle,
   Eye,
+  Home,
+  Building,
 } from "lucide-react";
 import Link from "next/link";
+import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus } from "@/types/repair";
 import { Pagination } from "@/components/common";
@@ -168,6 +171,40 @@ export default function XuLyToTrinhPage() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/",
+              title: (
+                <div className="flex items-center">
+                  
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              href: "/phong-quan-tri",
+              title: (
+                <div className="flex items-center">
+                  
+                  <span>Phòng quản trị</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+               
+                  <span>Xử lý tờ trình</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">

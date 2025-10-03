@@ -12,7 +12,9 @@ import {
   CheckCircle,
   Clock,
   FileCheck,
+  Home,
 } from "lucide-react";
+import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import {
   ReplacementRequestItem,
@@ -204,6 +206,39 @@ export default function LapBienBanPage() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              href: "/phong-quan-tri",
+              title: (
+                <div className="flex items-center">
+                 
+                  <span>Phòng quản trị</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                 
+                  <span>Lập biên bản</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>

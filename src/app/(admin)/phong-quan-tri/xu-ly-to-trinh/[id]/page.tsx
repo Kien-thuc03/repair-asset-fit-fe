@@ -21,7 +21,9 @@ import {
   Check,
   X,
   Eye,
+  Home,
 } from "lucide-react";
+import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus, ComponentType } from "@/types/repair";
 
@@ -284,6 +286,49 @@ export default function XuLyToTrinhDetailPage() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/",
+              title: (
+                <div className="flex items-center">
+                  <Home className="w-4 h-4 mr-1" />
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              href: "/phong-quan-tri",
+              title: (
+                <div className="flex items-center">
+                  <Building className="w-4 h-4 mr-1" />
+                  <span>Phòng quản trị</span>
+                </div>
+              ),
+            },
+            {
+              href: "/phong-quan-tri/xu-ly-to-trinh",
+              title: (
+                <div className="flex items-center">
+                  <FileText className="w-4 h-4 mr-1" />
+                  <span>Xử lý tờ trình</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <Eye className="w-4 h-4 mr-1" />
+                  <span>Chi tiết tờ trình {proposal.proposalCode}</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
