@@ -48,6 +48,8 @@ export default function UsersManagementPage() {
     router.push('/qtv-khoa/quan-ly-nguoi-dung/tao-moi');
   };
 
+
+
   const handleEditUser = (user: IUserWithRoles) => {
     router.push(`/qtv-khoa/quan-ly-nguoi-dung/chinh-sua/${user.id}`);
   };
@@ -399,6 +401,7 @@ export default function UsersManagementPage() {
           action={confirmModal.action}
         />
       )}
+
     </div>
   );
 }

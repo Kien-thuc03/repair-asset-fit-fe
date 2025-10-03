@@ -228,6 +228,31 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
   };
 
   /**
+   * Import bulk users từ Excel
+   */
+  const handleBulkImport = async (usersData: ICreateUserRequest[]): Promise<void> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create users one by one (in real app, should be a batch API call)
+      for (const userData of usersData) {
+        createUser(userData);
+      }
+      
+      await fetchUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi import users');
+      throw err; // Re-throw to handle in component
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
    * Cập nhật filters
    */
   const updateFilters = (newFilters: Partial<UsersFilters>) => {
@@ -297,6 +322,7 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
     updateUser: handleUpdateUser,
     toggleUserStatus: handleToggleUserStatus,
     deleteUser: handleDeleteUser,
+    bulkImport: handleBulkImport,
     
     // Filters & Pagination
     updateFilters,
