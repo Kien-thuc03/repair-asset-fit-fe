@@ -65,7 +65,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
           {
             name: "Danh sách đề xuất phần mềm",
             href: "/giang-vien/danh-sach-de-xuat-phan-mem",
-            icon: FolderCode,
+            icon: FileText,
           },
         ],
       },

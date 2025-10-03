@@ -186,7 +186,7 @@ export default function RequestTable({
                 <td className="px-2 py-4 text-center text-sm font-medium align-middle">
                   <button
                     onClick={() => onViewDetails(request.id)}
-                    className="text-blue-600 hover:text-blue-900 inline-flex items-center text-xs">
+                    className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <Eye className="w-3 h-3 mr-1" />
                   </button>
                 </td>

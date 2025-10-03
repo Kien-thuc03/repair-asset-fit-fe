@@ -13,8 +13,7 @@ import {
   User,
   Building,
 } from "lucide-react";
-import { Breadcrumb, Select, DatePicker } from "antd";
-import type { Dayjs } from "dayjs";
+import { Breadcrumb } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import {
   mockSoftwareProposals,
@@ -22,8 +21,6 @@ import {
 } from "@/lib/mockData/softwareProposals";
 import { Pagination } from "@/components/common";
 
-const { RangePicker } = DatePicker;
-const { Option } = Select;
 
 // Mock users và rooms data để hiển thị tên
 const mockUsers = {
@@ -78,12 +75,7 @@ export default function SoftwareProposalsPage() {
 
   // State
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState<SoftwareProposalStatus | "">(
-    ""
-  );
-  const [dateRange, setDateRange] = useState<
-    [Dayjs | null, Dayjs | null] | null
-  >(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -107,23 +99,14 @@ export default function SoftwareProposalsPage() {
               .includes(searchText.toLowerCase())
           : true;
 
-        const matchesStatus = statusFilter
-          ? proposal.status === statusFilter
-          : true;
+      
 
-        const createdAt = new Date(proposal.createdAt);
-        const matchesDateRange =
-          dateRange && dateRange[0] && dateRange[1]
-            ? createdAt >= dateRange[0].toDate() &&
-              createdAt <= dateRange[1].toDate()
-            : true;
-
-        return matchesSearch && matchesStatus && matchesDateRange;
+        return matchesSearch ;
       }
     );
 
     return filtered;
-  }, [searchText, statusFilter, dateRange]);
+  }, [searchText]);
 
   // Dữ liệu phân trang
   const paginatedData = useMemo(() => {
@@ -360,7 +343,7 @@ export default function SoftwareProposalsPage() {
                       <button
                         title="Xem chi tiết"
                         onClick={() => handleViewProposal(proposal)}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 focus:outline-none">
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <Eye className="h-4 w-4 items-center" />
                       </button>
                     </td>
