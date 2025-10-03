@@ -13,4 +13,4 @@ export { default as InfoCard } from './requestDetail/InfoCard'
 export { default as ReplacementPartsInput } from './requestDetail/ReplacementPartsInput'
 
 // Other components
-export * from './TechnicianReportHelpers'
+export { TechnicianReportSteps } from './TechnicianReportHelpers'

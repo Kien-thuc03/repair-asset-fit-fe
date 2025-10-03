@@ -307,6 +307,3 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 		</div>
 	)
 }
-
-
-
