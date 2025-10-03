@@ -18,7 +18,6 @@ import {
   Users,
   BarChart3,
   FileText,
-  UserCheck,
   Shield,
   ChevronRight,
   ChevronLeft,
@@ -174,14 +173,14 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: FileText,
       },
       {
-        name: "Kiểm tra thực tế",
-        href: "/phong-quan-tri/kiem-tra-thuc-te",
-        icon: UserCheck,
-      },
-      {
         name: "Lập biên bản",
         href: "/phong-quan-tri/lap-bien-ban",
         icon: ClipboardList,
+      },
+      {
+        name: "Gửi đề xuất thay thế",
+        href: "/phong-quan-tri/gui-de-xuat-thay-the",
+        icon: FileCheck,
       },
     ],
     [UserRole.QTV_KHOA]: [

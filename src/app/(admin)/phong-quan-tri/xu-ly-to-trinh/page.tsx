@@ -8,7 +8,6 @@ import {
   Filter,
   FileText,
   Calendar,
-  Building,
   AlertCircle,
   CheckCircle,
   Eye,
@@ -23,7 +22,12 @@ type FilterStatus =
   | "ĐÃ_LẬP_TỜ_TRÌNH"
   | "ĐÃ_DUYỆT_TỜ_TRÌNH"
   | "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH";
-type SortField = "proposalCode" | "createdAt" | "title" | "status";
+type SortField =
+  | "proposalCode"
+  | "createdAt"
+  | "title"
+  | "status"
+  | "createdBy";
 type SortDirection = "asc" | "desc";
 
 export default function XuLyToTrinhPage() {
@@ -35,11 +39,11 @@ export default function XuLyToTrinhPage() {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    // Lọc dữ liệu: chỉ lấy các đề xuất có status là ĐÃ_LẬP_TỜ_TRÌNH, ĐÃ_DUYỆT_TỜ_TRÌNH, ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
+    // Lọc dữ liệu: chỉ lấy các đề xuất đã được lập tờ trình gửi lên Phòng Quản trị
     const relevantStatuses: ReplacementStatus[] = [
-      ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
-      ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
-      ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+      ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH, // Tổ trưởng đã lập tờ trình, chờ Phòng Quản trị xử lý
+      ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH, // Phòng Quản trị đã duyệt tờ trình
+      ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH, // Phòng Quản trị đã từ chối tờ trình
     ];
 
     let filtered = mockReplacementRequestItem.filter((item) =>
@@ -82,6 +86,10 @@ export default function XuLyToTrinhPage() {
         case "status":
           aValue = a.status;
           bValue = b.status;
+          break;
+        case "createdBy":
+          aValue = a.createdBy || "";
+          bValue = b.createdBy || "";
           break;
         default:
           return 0;
@@ -126,19 +134,6 @@ export default function XuLyToTrinhPage() {
     }
   };
 
-  const getStatusIcon = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return <FileText className="w-4 h-4" />;
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return <CheckCircle className="w-4 h-4" />;
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return <AlertCircle className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
-
   const getStatusText = (status: ReplacementStatus) => {
     switch (status) {
       case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
@@ -163,7 +158,12 @@ export default function XuLyToTrinhPage() {
       (item) => item.status === ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
     ).length;
 
-    return { choXuLy, daDuyet, daTuChoi, total: filteredData.length };
+    return {
+      choXuLy,
+      daDuyet,
+      daTuChoi,
+      total: filteredData.length,
+    };
   }, [filteredData]);
 
   return (
@@ -266,69 +266,79 @@ export default function XuLyToTrinhPage() {
 
       {/* Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="w-full">
+          <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[15%]"
                   onClick={() => handleSort("proposalCode")}>
                   <div className="flex items-center space-x-1">
-                    <span>Mã đề xuất</span>
+                    <span>Mã ĐX</span>
                     {sortField === "proposalCode" &&
                       (sortDirection === "asc" ? (
-                        <ChevronUp className="w-4 h-4" />
+                        <ChevronUp className="w-3 h-3" />
                       ) : (
-                        <ChevronDown className="w-4 h-4" />
+                        <ChevronDown className="w-3 h-3" />
                       ))}
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[25%]"
                   onClick={() => handleSort("title")}>
                   <div className="flex items-center space-x-1">
                     <span>Tiêu đề</span>
                     {sortField === "title" &&
                       (sortDirection === "asc" ? (
-                        <ChevronUp className="w-4 h-4" />
+                        <ChevronUp className="w-3 h-3" />
                       ) : (
-                        <ChevronDown className="w-4 h-4" />
+                        <ChevronDown className="w-3 h-3" />
                       ))}
                   </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Thông tin tài sản
+                <th
+                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[20%]"
+                  onClick={() => handleSort("createdBy")}>
+                  <div className="flex items-center space-x-1">
+                    <span>Người tạo</span>
+                    {sortField === "createdBy" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="w-3 h-3" />
+                      ) : (
+                        <ChevronDown className="w-3 h-3" />
+                      ))}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Số linh kiện
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                  Số lượng
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[12%]"
                   onClick={() => handleSort("status")}>
                   <div className="flex items-center space-x-1">
                     <span>Trạng thái</span>
                     {sortField === "status" &&
                       (sortDirection === "asc" ? (
-                        <ChevronUp className="w-4 h-4" />
+                        <ChevronUp className="w-3 h-3" />
                       ) : (
-                        <ChevronDown className="w-4 h-4" />
+                        <ChevronDown className="w-3 h-3" />
                       ))}
                   </div>
                 </th>
                 <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[10%]"
                   onClick={() => handleSort("createdAt")}>
                   <div className="flex items-center space-x-1">
-                    <span>Ngày tạo</span>
+                    <span>Ngày</span>
                     {sortField === "createdAt" &&
                       (sortDirection === "asc" ? (
-                        <ChevronUp className="w-4 h-4" />
+                        <ChevronUp className="w-3 h-3" />
                       ) : (
-                        <ChevronDown className="w-4 h-4" />
+                        <ChevronDown className="w-3 h-3" />
                       ))}
                   </div>
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
                   Thao tác
                 </th>
               </tr>
@@ -336,61 +346,65 @@ export default function XuLyToTrinhPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedData.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                  <td className="px-2 py-3">
+                    <div className="text-xs font-medium text-gray-900 truncate">
                       {item.proposalCode}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 font-medium">
+                  <td className="px-2 py-3">
+                    <div
+                      className="text-xs text-gray-900 font-medium truncate"
+                      title={item.title}>
                       {item.title}
                     </div>
-                    <div className="text-sm text-gray-500 max-w-xs truncate">
+                    <div
+                      className="text-xs text-gray-500 truncate"
+                      title={item.description}>
                       {item.description}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                  <td className="px-2 py-3">
+                    <div className="text-xs text-gray-900">
                       <div className="flex items-center space-x-1">
-                        <Building className="w-4 h-4 text-gray-400" />
-                        <span>
-                          {item.components[0]?.buildingName} -{" "}
-                          {item.components[0]?.roomName}
+                        <span className="truncate text-xs font-medium">
+                          {item.createdBy || "Chưa xác định"}
                         </span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {item.components[0]?.assetCode}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      {item.components.length} linh kiện
+                  <td className="px-2 py-3 text-center">
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {item.components.length}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-2 py-3">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                      className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
                         item.status
                       )}`}>
-                      <span className="mr-1">{getStatusIcon(item.status)}</span>
-                      {getStatusText(item.status)}
+                      <span className="hidden lg:inline text-xs">
+                        {getStatusText(item.status)}
+                      </span>
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-2 py-3">
                     <div className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>
-                        {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                      <Calendar className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                      <span className="text-xs text-gray-500">
+                        {new Date(item.createdAt).toLocaleDateString("vi-VN", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-2 py-3 text-center">
                     <Link
                       href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                      <Eye className="w-4 h-4 mr-1" />
-                      Xem chi tiết
+                      className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      title="Xem chi tiết">
+                      <Eye className="w-3 h-3" />
                     </Link>
                   </td>
                 </tr>
