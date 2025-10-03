@@ -506,20 +506,20 @@ export default function LapToTrinhPage() {
                         )}
                       </button>
                     </th>
-                    <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
-                        onClick={() => handleSort("title")}>
-                        <span>Tiêu đề đề xuất</span>
-                        {getSortIcon("title")}
-                      </button>
-                    </th>
                     <th className="w-[13%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
                         onClick={() => handleSort("proposalCode")}>
                         <span>Mã đề xuất</span>
                         {getSortIcon("proposalCode")}
+                      </button>
+                    </th>
+                    <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <button
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
+                        onClick={() => handleSort("title")}>
+                        <span>Tiêu đề đề xuất</span>
+                        {getSortIcon("title")}
                       </button>
                     </th>
                     <th className="w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -571,6 +571,13 @@ export default function LapToTrinhPage() {
                             )}
                           </button>
                         </td>
+                        <td className="px-2 py-4 whitespace-nowrap w-[13%]">
+                          <div
+                            className="text-sm text-gray-900 truncate font-mono"
+                            title={request.proposalCode}>
+                            {request.proposalCode}
+                          </div>
+                        </td>
                         <td className="px-3 py-4 whitespace-nowrap w-[25%]">
                           <div className="flex items-center min-w-0">
                             <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
@@ -586,13 +593,6 @@ export default function LapToTrinhPage() {
                                 {request.description}
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-2 py-4 whitespace-nowrap w-[13%]">
-                          <div
-                            className="text-sm text-gray-900 truncate font-mono"
-                            title={request.proposalCode}>
-                            {request.proposalCode}
                           </div>
                         </td>
                         <td className="px-2 py-4 whitespace-nowrap text-center w-[8%]">
