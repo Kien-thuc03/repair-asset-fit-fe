@@ -1,11 +1,15 @@
 // Dashboard components
-export { StatsCards, RecentRequests, QuickLinks, Announcements, RepairHistoryStats, FrequentIssuesCard } from './dashboard'
+export * from './dashboardKTV/Announcements';
+export * from './dashboardKTV/FrequentIssuesCard';
+export * from './dashboardKTV/QuickLinks';
+export * from './dashboardKTV/RecentRequests';
+export * from './dashboardKTV/StatsCards';
 
 // Request detail components
-export { default as ActionPanel } from './requestDetail/ActionPanel'
-export { default as HistoryCard } from './requestDetail/HistoryCard'
-export { default as InfoCard } from './requestDetail/InfoCard'
-export { default as ReplacementPartsInput } from './requestDetail/ReplacementPartsInput'
+export * from './requestDetail/ActionPanel';
+export * from './requestDetail/HistoryCard';
+export * from './requestDetail/InfoCard';
+export * from './requestDetail/ReplacementPartsInput';
 
-// Other components
-export { TechnicianReportSteps } from './TechnicianReportHelpers'
+// Technician report helpers
+export * from './TechnicianReportHelpers';
