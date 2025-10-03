@@ -6,7 +6,6 @@ import {
   ClipboardList, 
   Users, 
   BarChart3,
-  AlertTriangle,
   CheckCircle,
   Clock,
   TrendingUp 
@@ -79,7 +78,7 @@ export default function AdminDashboard() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-2 text-gray-600">
-          Tổng quan hệ thống quản lý sửa chữa tài sản - Chào mừng, {user?.name}!
+          Tổng quan hệ thống quản lý sửa chữa tài sản - Chào mừng, {user?.fullName}!
         </p>
       </div>
 
