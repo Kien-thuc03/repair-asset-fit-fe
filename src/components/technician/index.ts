@@ -1,10 +1,5 @@
 // Dashboard components
-export { default as StatsCards } from './dashboard/StatsCards'
-export { default as RecentRequests } from './dashboard/RecentRequests'
-export { default as QuickLinks } from './dashboard/QuickLinks'
-export { default as Announcements } from './dashboard/Announcements'
-export { default as RepairHistoryStats } from './dashboard/RepairHistoryStats'
-export { default as FrequentIssuesCard } from './dashboard/FrequentIssuesCard'
+export { StatsCards, RecentRequests, QuickLinks, Announcements, RepairHistoryStats, FrequentIssuesCard } from './dashboard'
 
 // Request detail components
 export { default as ActionPanel } from './requestDetail/ActionPanel'
