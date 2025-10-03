@@ -16,12 +16,15 @@ import {
 } from "@/components/leadTechnician/proposalApproval";
 
 export default function DuyetDeXuatPage() {
+  // Lấy các đề xuất CHỜ TỔ TRƯỞNG DUYỆT - Kỹ thuật viên đã lập, chờ tổ trưởng duyệt
   const [requests, setRequests] = useState<ReplacementRequestItem[]>(
-    mockReplacementRequestItem.map((proposal) => ({
-      //get id
-    
-      ...proposal,
-    }))
+    mockReplacementRequestItem
+      .filter(
+        (proposal) => proposal.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT
+      )
+      .map((proposal) => ({
+        ...proposal,
+      }))
   );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");

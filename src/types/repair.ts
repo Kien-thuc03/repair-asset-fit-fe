@@ -214,7 +214,7 @@ export interface ErrorReport {
 }
 
 export enum ReplacementStatus {
-  CHỜ_TỔ_TRƯỞNG_DUYỆT = "CHỜ_TỔ_TRƯỞNG_DUYỆT",
+  CHỜ_TỔ_TRƯỞNG_DUYỆT = "CHỜ_TỔ_TRƯỞNG_DUYỆT",// kỹ thuật viên lập đề xuất, chờ tổ trưởng duyệt
   CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH", // Chờ Phòng Quản trị cử người xuống xác minh thực tế
   ĐÃ_DUYỆT = "ĐÃ_DUYỆT", // Đã được tổ trưởng duyệt
   ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI",
