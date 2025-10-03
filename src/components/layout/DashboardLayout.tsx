@@ -122,11 +122,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         href: "/ky-thuat-vien/quan-ly-thiet-bi",
         icon: Settings,
       },
-      {
-        name: "Thống kê cá nhân",
-        href: "/ky-thuat-vien/thong-ke-ca-nhan",
-        icon: BarChart3,
-      },
+      // {
+      //   name: "Thống kê cá nhân",
+      //   href: "/ky-thuat-vien/thong-ke-ca-nhan",
+      //   icon: BarChart3,
+      // },
     ],
     [UserRole.TO_TRUONG_KY_THUAT]: [
       {
@@ -211,15 +211,26 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: Users,
       },
       {
-        name: "Phê duyệt cuối cùng",
-        href: "/qtv-khoa/phe-duyet-cuoi-cung",
+        name: "Quản lý đề xuất",
         icon: Shield,
+        children: [
+          {
+            name: "Danh sách đề xuất linh kiện",
+            href: "/qtv-khoa/quan-ly-thay-the-linh-kien",
+            icon: ClipboardList,
+          },
+          {
+            name: "Danh sách đề xuất phần mềm",
+            href: "/qtv-khoa/quan-ly-de-xuat-phan-mem",
+            icon: FolderCode,
+          }
+        ]
       },
-      {
-        name: "Thống kê báo cáo",
-        href: "/qtv-khoa/thong-ke-bao-cao",
-        icon: BarChart3,
-      },
+      // {
+      //   name: "Thống kê báo cáo",
+      //   href: "/qtv-khoa/thong-ke-bao-cao",
+      //   icon: BarChart3,
+      // },
       {
         name: "Giám sát hệ thống",
         href: "/qtv-khoa/giam-sat-he-thong",

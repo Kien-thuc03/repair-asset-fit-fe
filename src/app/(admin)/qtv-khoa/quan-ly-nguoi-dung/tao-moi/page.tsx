@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
-import { Breadcrumb } from 'antd';
+import { Eye, EyeOff, FileUp } from "lucide-react";
+import { Breadcrumb, Button, message } from 'antd';
 import { ICreateUserRequest } from "@/types";
 import { useUsersManagement } from "@/hooks/useUsersManagement";
 import { mockRoles, mockUnits } from "@/lib/mockData/usersManagement";
+import { UserExcelImportModal } from "@/components/qtvKhoa";
 
 export default function CreateUserPage() {
   const router = useRouter();
-  const { createUser } = useUsersManagement();
+  const { createUser, bulkImport } = useUsersManagement();
 
   const [formData, setFormData] = useState<ICreateUserRequest>({
     username: "",
@@ -26,6 +27,7 @@ export default function CreateUserPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -71,6 +73,19 @@ export default function CreateUserPage() {
     }));
   };
 
+  const handleBulkImport = async (usersData: ICreateUserRequest[]) => {
+    try {
+      await bulkImport(usersData);
+      message.success(`Đã import thành công ${usersData.length} người dùng!`);
+      setShowImportModal(false);
+      router.push('/qtv-khoa/quan-ly-nguoi-dung');
+    } catch (error) {
+      console.error('Error importing users:', error);
+      message.error('Có lỗi xảy ra khi import người dùng');
+      throw error;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -103,13 +118,21 @@ export default function CreateUserPage() {
       />
 
       {/* Header */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Thêm người dùng mới</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Tạo tài khoản mới cho người dùng trong hệ thống
+            Tạo tài khoản mới cho người dùng trong hệ thống hoặc import từ file Excel
           </p>
         </div>
+        <Button
+          onClick={() => setShowImportModal(true)}
+          icon={<FileUp className="h-4 w-4" />}
+          type="default"
+          size="large"
+        >
+          Import Excel
+        </Button>
       </div>
 
       {/* Form */}
@@ -296,6 +319,13 @@ export default function CreateUserPage() {
           </div>
         </form>
       </div>
+
+      {/* Excel Import Modal */}
+      <UserExcelImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleBulkImport}
+      />
     </div>
   );
 }

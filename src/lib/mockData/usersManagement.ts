@@ -61,21 +61,33 @@ export const mockPermissions: IPermission[] = [
 // Mock units data - Synchronized with database  
 export const mockUnits = [
   {
-    id: "unit-1",
+    id: "CNTT001",
     name: "Khoa Công nghệ Thông tin",
     type: "đơn_vị_sử_dụng",
     status: "ACTIVE",
   },
   {
-    id: "unit-2",
+    id: "QTRI001",
     name: "Phòng Quản trị", 
     type: "phòng_quản_trị",
     status: "ACTIVE",
   },
   {
-    id: "unit-3",
+    id: "KHDT001",
     name: "Phòng Kế hoạch Đầu tư",
     type: "phòng_kế_hoạch_đầu_tư", 
+    status: "ACTIVE",
+  },
+  {
+    id: "KTOAN001",
+    name: "Khoa Kinh tế",
+    type: "đơn_vị_sử_dụng",
+    status: "ACTIVE",
+  },
+  {
+    id: "COKHI001",
+    name: "Khoa Cơ khí",
+    type: "đơn_vị_sử_dụng",
     status: "ACTIVE",
   },
 ];
