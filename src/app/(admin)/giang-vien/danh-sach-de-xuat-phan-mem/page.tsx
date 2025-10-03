@@ -269,13 +269,16 @@ export default function SoftwareProposalsPage() {
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className=" gap-4">
           <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tìm kiếm đề xuất phần mềm
+            </label>
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Tìm kiếm theo mã đề xuất, lý do, người đề xuất..."
+                placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -283,29 +286,6 @@ export default function SoftwareProposalsPage() {
             </div>
           </div>
 
-          <Select
-            placeholder="Chọn trạng thái"
-            className="!h-full"
-            value={statusFilter}
-            onChange={setStatusFilter}
-            allowClear>
-            <Option value="">Tất cả trạng thái</Option>
-            <Option value={SoftwareProposalStatus.CHỜ_DUYỆT}>Chờ duyệt</Option>
-            <Option value={SoftwareProposalStatus.ĐÃ_DUYỆT}>Đã duyệt</Option>
-            <Option value={SoftwareProposalStatus.ĐÃ_TỪ_CHỐI}>
-              Đã từ chối
-            </Option>
-            <Option value={SoftwareProposalStatus.ĐÃ_TRANG_BỊ}>
-              Đã trang bị
-            </Option>
-          </Select>
-
-          <RangePicker
-            placeholder={["Từ ngày", "Đến ngày"]}
-            format="DD/MM/YYYY"
-            value={dateRange}
-            onChange={setDateRange}
-          />
         </div>
       </div>
 
@@ -337,8 +317,6 @@ export default function SoftwareProposalsPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedData.map((proposal) => {
-                const StatusIcon =
-                  softwareProposalStatusConfig[proposal.status].icon;
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -366,8 +344,7 @@ export default function SoftwareProposalsPage() {
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                           softwareProposalStatusConfig[proposal.status].color
-                        }`}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
+                        }`}>                     
                         {softwareProposalStatusConfig[proposal.status].label}
                       </span>
                     </td>

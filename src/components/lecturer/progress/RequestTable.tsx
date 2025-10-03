@@ -115,7 +115,7 @@ export default function RequestTable({
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {requests.map((request) => {
-            const StatusIcon = repairRequestStatusConfig[request.status].icon;
+           
             return (
               <tr key={request.id} className="hover:bg-gray-50 h-16">
                 <td className="px-2 py-4 align-middle">
@@ -165,7 +165,7 @@ export default function RequestTable({
                     className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
                       repairRequestStatusConfig[request.status].color
                     }`}>
-                    <StatusIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                  
                     {repairRequestStatusConfig[request.status].label}
                   </div>
                 </td>
