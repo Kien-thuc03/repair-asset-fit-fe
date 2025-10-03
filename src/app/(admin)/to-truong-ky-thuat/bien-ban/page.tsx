@@ -1,11 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  CheckCircle,
-  Clock,
-  Send,
-} from "lucide-react";
+import { CheckCircle, Clock, Send } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
 import {
   InspectionHeader,
@@ -14,7 +10,10 @@ import {
   InspectionMobileView,
   InspectionExportModals,
 } from "@/components/leadTechnician/inspection";
+import { getReplacementRequestsByStatus } from "@/lib/mockData/replacementRequests";
+import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
 
+// Interface cho InspectionReport
 interface InspectionReport {
   id: string;
   reportNumber: string;
@@ -27,30 +26,49 @@ interface InspectionReport {
   leaderSignedAt?: string;
 }
 
-// Mock data
-const mockInspectionReports: InspectionReport[] = [
-  {
-    id: "1",
-    reportNumber: "BB-2024-001",
-    title: "Biên bản kiểm tra thiết bị máy tính",
-    relatedReportTitle: "Tờ trình về việc kiểm tra thiết bị máy tính phòng 101",
-    createdBy: "Nguyễn Văn A",
-    inspectionDate: "2024-03-15",
-    status: "pending",
-  },
-  {
-    id: "2",
-    reportNumber: "BB-2024-002",
-    title: "Biên bản kiểm tra thiết bị máy chiếu",
-    relatedReportTitle: "Tờ trình về việc kiểm tra thiết bị máy chiếu phòng 201",
-    createdBy: "Trần Thị B",
-    inspectionDate: "2024-03-14",
-    status: "signed",
-  },
-];
+// Chuyển đổi ReplacementRequestItem thành InspectionReport
+const convertToInspectionReport = (
+  request: ReplacementRequestItem
+): InspectionReport => {
+  // Lấy tên file từ submissionFormUrl để hiển thị tờ trình liên quan
+  const getRelatedReportTitle = (
+    submissionFormUrl?: string,
+    fallbackTitle?: string
+  ) => {
+    if (submissionFormUrl) {
+      const fileName = submissionFormUrl.split("/").pop() || submissionFormUrl;
+      return `Tờ trình: ${fileName}`;
+    }
+    return fallbackTitle || "Không có tờ trình liên quan";
+  };
+
+  return {
+    id: request.id,
+    reportNumber: request.proposalCode,
+    title: `Biên bản kiểm tra - ${request.title}`,
+    relatedReportTitle: getRelatedReportTitle(
+      request.submissionFormUrl,
+      request.title
+    ),
+    createdBy: request.createdBy || "Unknown",
+    inspectionDate: new Date(request.createdAt).toISOString().split("T")[0],
+    status: "pending", // Mặc định là pending vì đã gửi biên bản
+  };
+};
 
 export default function BienBanPage() {
   const router = useRouter();
+
+  // Lấy các đề xuất có trạng thái ĐÃ_GỬI_BIÊN_BẢN
+  const replacementRequests = getReplacementRequestsByStatus(
+    ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN
+  );
+
+  // Chuyển đổi sang InspectionReport format
+  const mockInspectionReports: InspectionReport[] = replacementRequests.map(
+    convertToInspectionReport
+  );
+
   const [inspectionReports, setInspectionReports] = useState<
     InspectionReport[]
   >(mockInspectionReports);

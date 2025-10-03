@@ -217,11 +217,13 @@ export enum ReplacementStatus {
   CHỜ_TỔ_TRƯỞNG_DUYỆT = "CHỜ_TỔ_TRƯỞNG_DUYỆT",// kỹ thuật viên lập đề xuất, chờ tổ trưởng duyệt
   CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH", // Chờ Phòng Quản trị cử người xuống xác minh thực tế
   ĐÃ_DUYỆT = "ĐÃ_DUYỆT", // Đã được tổ trưởng duyệt
-  ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI",
+  ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI",// Tổ trưởng từ chối đề xuất, cần lập lại
   ĐÃ_XÁC_MINH = "ĐÃ_XÁC_MINH", // Phòng Quản trị đã xác minh xong, chờ lập tờ trình
   ĐÃ_LẬP_TỜ_TRÌNH = "ĐÃ_LẬP_TỜ_TRÌNH", // Tổ trưởng kỹ thuật đã lập tờ trình gửi Phòng Quản trị
   ĐÃ_DUYỆT_TỜ_TRÌNH = "ĐÃ_DUYỆT_TỜ_TRÌNH", // Phòng Quản trị đã duyệt tờ trình, chờ mua sắm
   ĐÃ_TỪ_CHỐI_TỜ_TRÌNH = "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH", // Phòng Quản trị từ chối tờ trình, cần lập lại
+  ĐÃ_GỬI_BIÊN_BẢN = "ĐÃ_GỬI_BIÊN_BẢN", // Đã gửi biên bản cho tổ trưởng kỹ thuật
+  ĐÃ_KÝ_BIÊN_BẢN = "ĐÃ_KÝ_BIÊN_BẢN", // Tổ trưởng kỹ thuật đã ký biên bản
   ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM", // Đã có thiết bị mới
 }
 

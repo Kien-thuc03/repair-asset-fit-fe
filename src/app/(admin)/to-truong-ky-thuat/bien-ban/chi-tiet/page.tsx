@@ -13,16 +13,10 @@ import {
   NotFoundState,
 } from "@/components/leadTechnician/inspectionDetail";
 import { InspectionSignConfirmModal } from "@/components/modal";
+import { getReplacementRequestsByStatus } from "@/lib/mockData/replacementRequests";
+import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
 
-interface InspectionItem {
-  id: string;
-  assetCode: string;
-  assetName: string;
-  location: string;
-  condition: string;
-  proposedSolution: string;
-}
-
+// Interface cho InspectionReport (sử dụng interface hiện có)
 interface InspectionReport {
   id: string;
   reportNumber: string;
@@ -36,34 +30,62 @@ interface InspectionReport {
   leaderSignature?: string;
   leaderSignedAt?: string;
   items: InspectionItem[];
-  notes?: string;
+  notes: string;
 }
 
-// Mock data
-const mockInspectionReports: InspectionReport[] = [
-  {
-    id: "1",
-    reportNumber: "BB-2024-001",
-    title: "Biên bản kiểm tra thiết bị máy tính",
-    relatedReportTitle: "Tờ trình về việc kiểm tra thiết bị máy tính phòng 101",
-    inspectionDate: "2024-03-15",
-    department: "Phòng Kỹ thuật",
-    createdBy: "Nguyễn Văn A",
-    createdAt: "2024-03-15T08:00:00",
-    status: "pending",
-    items: [
-      {
-        id: "1",
-        assetCode: "MT001",
-        assetName: "Máy tính Dell Optiplex",
-        location: "Phòng 101",
-        condition: "Hỏng bàn phím",
-        proposedSolution: "Thay thế bàn phím mới",
-      },
-    ],
-    notes: "Cần kiểm tra thêm các thiết bị khác trong phòng",
-  },
-];
+interface InspectionItem {
+  id: string;
+  assetCode: string;
+  assetName: string;
+  location: string;
+  condition: string;
+  proposedSolution: string;
+}
+
+// Chuyển đổi ReplacementRequestItem thành InspectionReport
+const convertToInspectionReport = (
+  request: ReplacementRequestItem
+): InspectionReport => {
+  // Lấy tên file từ submissionFormUrl để hiển thị tờ trình liên quan
+  const getRelatedReportTitle = (
+    submissionFormUrl?: string,
+    fallbackTitle?: string
+  ) => {
+    if (submissionFormUrl) {
+      const fileName = submissionFormUrl.split("/").pop() || submissionFormUrl;
+      return `Tờ trình: ${fileName}`;
+    }
+    return fallbackTitle || "Không có tờ trình liên quan";
+  };
+
+  const items: InspectionItem[] = request.components.map((component) => ({
+    id: component.id,
+    assetCode: component.assetCode,
+    assetName: component.assetName,
+    location: `${component.buildingName} - ${component.roomName}${
+      component.machineLabel ? ` - Máy ${component.machineLabel}` : ""
+    }`,
+    condition: "Hư hỏng - " + component.reason,
+    proposedSolution: `Thay thế bằng ${component.newItemName} (${component.newItemSpecs})`,
+  }));
+
+  return {
+    id: request.id,
+    reportNumber: request.proposalCode,
+    title: `Biên bản kiểm tra - ${request.title}`,
+    relatedReportTitle: getRelatedReportTitle(
+      request.submissionFormUrl,
+      request.title
+    ),
+    inspectionDate: new Date(request.createdAt).toISOString().split("T")[0],
+    department: "Phòng Quản trị Tài sản",
+    createdBy: request.createdBy || "Unknown",
+    createdAt: request.createdAt,
+    status: "pending" as const,
+    items,
+    notes: request.description,
+  };
+};
 
 export default function ChiTietBienBanPage() {
   const searchParams = useSearchParams();
@@ -76,11 +98,22 @@ export default function ChiTietBienBanPage() {
 
   useEffect(() => {
     if (reportId) {
-      // Tìm report từ mock data
-      const foundReport = mockInspectionReports.find(
-        (rep) => rep.id === reportId
+      // Lấy các đề xuất có trạng thái ĐÃ_GỬI_BIÊN_BẢN
+      const replacementRequests = getReplacementRequestsByStatus(
+        ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN
       );
-      setReport(foundReport || null);
+
+      // Tìm replacement request theo ID
+      const foundRequest = replacementRequests.find(
+        (req) => req.id === reportId
+      );
+
+      if (foundRequest) {
+        const inspectionReport = convertToInspectionReport(foundRequest);
+        setReport(inspectionReport);
+      } else {
+        setReport(null);
+      }
     }
     setLoading(false);
   }, [reportId]);
@@ -99,13 +132,8 @@ export default function ChiTietBienBanPage() {
       };
       setReport(updatedReport);
 
-      // Cập nhật vào mock data (trong thực tế sẽ gọi API)
-      const reportIndex = mockInspectionReports.findIndex(
-        (rep) => rep.id === report.id
-      );
-      if (reportIndex !== -1) {
-        mockInspectionReports[reportIndex] = updatedReport;
-      }
+      // TODO: Trong thực tế sẽ gọi API để cập nhật trạng thái thành ĐÃ_KÝ_BIÊN_BẢN
+      console.log("Signed report:", updatedReport);
 
       setShowSignModal(false);
     }
@@ -119,13 +147,8 @@ export default function ChiTietBienBanPage() {
       };
       setReport(updatedReport);
 
-      // Cập nhật vào mock data (trong thực tế sẽ gọi API)
-      const reportIndex = mockInspectionReports.findIndex(
-        (rep) => rep.id === report.id
-      );
-      if (reportIndex !== -1) {
-        mockInspectionReports[reportIndex] = updatedReport;
-      }
+      // TODO: Trong thực tế sẽ gọi API để gửi biên bản lại cho Phòng Quản trị
+      console.log("Sent back report:", updatedReport);
     }
   };
 
