@@ -1,6 +1,7 @@
 "use client";
-import { ArrowLeft, Monitor, Wrench } from "lucide-react";
+import { Monitor, Wrench } from "lucide-react";
 import { Breadcrumb } from "antd";
+import { usePathname } from "next/navigation";
 import { Asset } from "@/types";
 import { assetStatusConfig } from "@/lib/mockData";
 
@@ -10,23 +11,32 @@ interface TechnicianDeviceDetailHeaderProps {
     label: string;
     color: string;
   };
-  onGoBack: () => void;
+  onGoBack?: () => void; // Make optional since we're not using it in this version
 }
 
 export default function TechnicianDeviceDetailHeader({
   asset,
   warrantyStatus,
-  onGoBack,
 }: TechnicianDeviceDetailHeaderProps) {
+  const pathname = usePathname();
+
+  // Extract role from pathname to create dynamic links
+  const getRoleFromPath = () => {
+    if (pathname.includes("/ky-thuat-vien/")) return "/ky-thuat-vien";
+    if (pathname.includes("/to-truong-ky-thuat/")) return "/to-truong-ky-thuat";
+    return "/ky-thuat-vien"; // default fallback
+  };
+
+  const rolePath = getRoleFromPath();
   const getStatusConfig = (status: string) => {
     const config = assetStatusConfig[status as keyof typeof assetStatusConfig];
     if (!config) {
       return {
         label: status,
-        color: "bg-gray-100 text-gray-800 border-gray-200"
+        color: "bg-gray-100 text-gray-800 border-gray-200",
       };
     }
-    
+
     const colorMap: { [key: string]: string } = {
       green: "bg-green-100 text-green-800 border-green-200",
       blue: "bg-blue-100 text-blue-800 border-blue-200",
@@ -34,12 +44,13 @@ export default function TechnicianDeviceDetailHeader({
       red: "bg-red-100 text-red-800 border-red-200",
       gray: "bg-gray-100 text-gray-800 border-gray-200",
       purple: "bg-purple-100 text-purple-800 border-purple-200",
-      black: "bg-gray-100 text-gray-800 border-gray-200"
+      black: "bg-gray-100 text-gray-800 border-gray-200",
     };
 
     return {
       label: config.label,
-      color: colorMap[config.color] || "bg-gray-100 text-gray-800 border-gray-200"
+      color:
+        colorMap[config.color] || "bg-gray-100 text-gray-800 border-gray-200",
     };
   };
 
@@ -51,7 +62,7 @@ export default function TechnicianDeviceDetailHeader({
       <Breadcrumb
         items={[
           {
-            href: "/ky-thuat-vien",
+            href: rolePath,
             title: (
               <div className="flex items-center">
                 <span>Trang chủ</span>
@@ -59,7 +70,7 @@ export default function TechnicianDeviceDetailHeader({
             ),
           },
           {
-            href: "/ky-thuat-vien/quan-ly-thiet-bi",
+            href: `${rolePath}/quan-ly-thiet-bi`,
             title: (
               <div className="flex items-center">
                 <span>Quản lý thiết bị</span>
@@ -104,7 +115,8 @@ export default function TechnicianDeviceDetailHeader({
               {statusConfig.label}
             </div>
             {/* Warranty status */}
-            <div className={`text-sm font-medium ${warrantyStatus.color} flex items-center`}>
+            <div
+              className={`text-sm font-medium ${warrantyStatus.color} flex items-center`}>
               Bảo hành: {warrantyStatus.label}
             </div>
           </div>

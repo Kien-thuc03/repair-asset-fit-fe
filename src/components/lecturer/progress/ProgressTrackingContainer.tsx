@@ -72,9 +72,16 @@ export default function ProgressTrackingContainer() {
           request.requestCode
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          request.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          request.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          request.roomName.toLowerCase().includes(searchTerm.toLowerCase())
+          (request.assetName
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ??
+            false) ||
+          (request.assetCode
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ??
+            false) ||
+          (request.roomName?.toLowerCase().includes(searchTerm.toLowerCase()) ??
+            false)
       );
     }
 
@@ -195,7 +202,6 @@ export default function ProgressTrackingContainer() {
       return;
     }
 
-    console.log("Xuất Excel:", itemsToExport);
     // TODO: Implement actual Excel export logic
     setExportCount(itemsToExport.length);
     setShowExportSuccessModal(true);

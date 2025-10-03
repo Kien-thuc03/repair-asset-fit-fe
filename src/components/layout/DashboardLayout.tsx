@@ -53,9 +53,20 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: TriangleAlert,
       },
       {
-        name: "Theo dõi tiến độ",
-        href: "/giang-vien/theo-doi-tien-do",
+        name: "Quản lý tiến độ",
         icon: Clock,
+        children: [
+          {
+            name: "Theo dõi tiến độ",
+            href: "/giang-vien/theo-doi-tien-do",
+            icon: Clock,
+          },
+          {
+            name: "Danh sách đề xuất phần mềm",
+            href: "/giang-vien/danh-sach-de-xuat-phan-mem",
+            icon: FolderCode,
+          },
+        ],
       },
       {
         name: "Đề xuất phần mềm",
@@ -156,8 +167,8 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       },
 
       {
-        name: "Quản lý tài sản",
-        href: "/to-truong-ky-thuat/tra-cuu-tai-san",
+        name: "Quản lý thiết bị",
+        href: "/to-truong-ky-thuat/quan-ly-thiet-bi",
         icon: Search,
       },
       {
@@ -539,7 +550,12 @@ function Topbar({
                 </p>
                 <p className="text-xs text-green-600 truncate">
                   {user && user.roles.length >= 1
-                    ? `${user.activeRole?.name || (user.activeRole?.code && RoleInfo[user.activeRole.code as UserRole]?.name) || 'Chưa có vai trò'}`
+                    ? `${
+                        user.activeRole?.name ||
+                        (user.activeRole?.code &&
+                          RoleInfo[user.activeRole.code as UserRole]?.name) ||
+                        "Chưa có vai trò"
+                      }`
                     : "Sinh viên"}
                 </p>
               </div>
@@ -561,7 +577,12 @@ function Topbar({
                   </p>
                   <p className="text-xs text-green-600 truncate">
                     {user && user.roles.length > 1
-                      ? `${user.activeRole?.name || (user.activeRole?.code && RoleInfo[user.activeRole.code as UserRole]?.name) || 'Chưa có vai trò'}`
+                      ? `${
+                          user.activeRole?.name ||
+                          (user.activeRole?.code &&
+                            RoleInfo[user.activeRole.code as UserRole]?.name) ||
+                          "Chưa có vai trò"
+                        }`
                       : "Sinh viên"}
                   </p>
                 </div>

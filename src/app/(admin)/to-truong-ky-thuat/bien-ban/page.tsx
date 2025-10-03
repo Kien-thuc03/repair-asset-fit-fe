@@ -269,7 +269,7 @@ export default function BienBanPage() {
   }, [searchTerm]);
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 main-content">
+    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-2 main-content">
       <InspectionHeader onExportExcel={handleExportExcel} />
 
       <InspectionFilters

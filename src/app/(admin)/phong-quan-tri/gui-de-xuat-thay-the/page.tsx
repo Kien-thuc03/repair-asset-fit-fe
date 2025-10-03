@@ -8,21 +8,18 @@ import {
   Filter,
   FileText,
   Calendar,
-  AlertCircle,
-  CheckCircle,
   Eye,
+  Edit,
+  PaperclipIcon,
+  Paperclip,
 } from "lucide-react";
 import Link from "next/link";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, message } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
-import { ReplacementStatus } from "@/types/repair";
+import { ReplacementRequestItem, ReplacementStatus } from "@/types/repair";
 import { Pagination } from "@/components/common";
 
-type FilterStatus =
-  | "ALL"
-  | "ĐÃ_LẬP_TỜ_TRÌNH"
-  | "ĐÃ_DUYỆT_TỜ_TRÌNH"
-  | "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH";
+type FilterStatus = "ALL" | "ĐÃ_XÁC_MINH";
 type SortField =
   | "proposalCode"
   | "createdAt"
@@ -31,7 +28,7 @@ type SortField =
   | "createdBy";
 type SortDirection = "asc" | "desc";
 
-export default function XuLyToTrinhPage() {
+export default function GuiDeXuatThayThePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("ALL");
   const [sortField, setSortField] = useState<SortField>("createdAt");
@@ -40,15 +37,9 @@ export default function XuLyToTrinhPage() {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    // Lọc dữ liệu: chỉ lấy các đề xuất đã được lập tờ trình gửi lên Phòng Quản trị
-    const relevantStatuses: ReplacementStatus[] = [
-      ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH, // Tổ trưởng đã lập tờ trình, chờ Phòng Quản trị xử lý
-      ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH, // Phòng Quản trị đã duyệt tờ trình
-      ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH, // Phòng Quản trị đã từ chối tờ trình
-    ];
-
-    let filtered = mockReplacementRequestItem.filter((item) =>
-      relevantStatuses.includes(item.status)
+    // Lọc dữ liệu: chỉ lấy các đề xuất có trạng thái ĐÃ_XÁC_MINH (Tổ trưởng đã ký biên bản xác nhận)
+    let filtered = mockReplacementRequestItem.filter(
+      (item) => item.status === ReplacementStatus.ĐÃ_XÁC_MINH
     );
 
     // Apply status filter
@@ -124,12 +115,8 @@ export default function XuLyToTrinhPage() {
 
   const getStatusColor = (status: ReplacementStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "bg-green-100 text-green-800 border-green-200";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return "bg-red-100 text-red-800 border-red-200";
+      case ReplacementStatus.ĐÃ_XÁC_MINH:
+        return "bg-cyan-100 text-cyan-800 border-cyan-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -137,35 +124,47 @@ export default function XuLyToTrinhPage() {
 
   const getStatusText = (status: ReplacementStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return "Chờ xử lý";
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "Đã duyệt";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return "Đã từ chối";
+      case ReplacementStatus.ĐÃ_XÁC_MINH:
+        return "Đã xác minh";
       default:
         return status;
     }
   };
 
   const statsData = useMemo(() => {
-    const choXuLy = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
-    ).length;
-    const daDuyet = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-    ).length;
-    const daTuChoi = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
+    const daXacMinh = filteredData.filter(
+      (item) => item.status === ReplacementStatus.ĐÃ_XÁC_MINH
     ).length;
 
     return {
-      choXuLy,
-      daDuyet,
-      daTuChoi,
+      daXacMinh,
       total: filteredData.length,
     };
   }, [filteredData]);
+
+  // Xử lý cập nhật trạng thái
+  const handleStatusUpdate = async (
+    record: ReplacementRequestItem,
+    newStatus: ReplacementStatus
+  ) => {
+    try {
+      // Trong thực tế sẽ gọi API để cập nhật với newStatus
+      const actionText =
+        newStatus === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
+          ? "gửi đề xuất"
+          : "cập nhật trạng thái";
+
+      message.success(
+        `Đã ${actionText} cho đề xuất ${record.proposalCode} thành công!`
+      );
+
+      // Reload trang để cập nhật dữ liệu
+      window.location.reload();
+    } catch (error) {
+      message.error("Có lỗi xảy ra khi xử lý đề xuất!");
+      console.error(error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -192,7 +191,7 @@ export default function XuLyToTrinhPage() {
             {
               title: (
                 <div className="flex items-center">
-                  <span>Xử lý tờ trình</span>
+                  <span>Gửi đề xuất thay thế</span>
                 </div>
               ),
             },
@@ -203,53 +202,30 @@ export default function XuLyToTrinhPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Xử lý tờ trình thay thế
+          Gửi đề xuất thay thế
         </h1>
         <p className="mt-2 text-gray-600">
-          Xem xét và phê duyệt các tờ trình đề xuất thay thế linh kiện từ tổ
-          trưởng kỹ thuật
+          Quản lý các đề xuất thay thế đã được tổ trưởng xác minh
         </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-cyan-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Chờ xử lý</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {statsData.choXuLy}
+              <p className="text-sm font-medium text-gray-600">Đã xác minh</p>
+              <p className="text-2xl font-bold text-cyan-600">
+                {statsData.daXacMinh}
               </p>
             </div>
-            <FileText className="h-8 w-8 text-blue-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Đã duyệt</p>
-              <p className="text-2xl font-bold text-green-600">
-                {statsData.daDuyet}
-              </p>
-            </div>
-            <CheckCircle className="h-8 w-8 text-green-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Đã từ chối</p>
-              <p className="text-2xl font-bold text-red-600">
-                {statsData.daTuChoi}
-              </p>
-            </div>
-            <AlertCircle className="h-8 w-8 text-red-500" />
+            <FileText className="h-8 w-8 text-cyan-500" />
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Tổng tờ trình</p>
+              <p className="text-sm font-medium text-gray-600">Tổng đề xuất</p>
               <p className="text-2xl font-bold text-gray-600">
                 {statsData.total}
               </p>
@@ -287,9 +263,7 @@ export default function XuLyToTrinhPage() {
                 }
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 <option value="ALL">Tất cả trạng thái</option>
-                <option value="ĐÃ_LẬP_TỜ_TRÌNH">Chờ xử lý</option>
-                <option value="ĐÃ_DUYỆT_TỜ_TRÌNH">Đã duyệt</option>
-                <option value="ĐÃ_TỪ_CHỐI_TỜ_TRÌNH">Đã từ chối</option>
+                <option value="ĐÃ_XÁC_MINH">Đã xác minh</option>
               </select>
             </div>
           </div>
@@ -432,12 +406,29 @@ export default function XuLyToTrinhPage() {
                     </div>
                   </td>
                   <td className="px-2 py-3 text-center">
-                    <Link
-                      href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
-                      className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      title="Xem chi tiết">
-                      <Eye className="w-3 h-3" />
-                    </Link>
+                    <div className="flex items-center justify-center space-x-1">
+                      <Link
+                        href={`/phong-quan-tri/gui-de-xuat-thay-the/${item.id}`}
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        title="Xem chi tiết">
+                        <Eye className="w-3 h-3" />
+                      </Link>
+
+                      {/* Chỉ hiển thị nút xử lý cho những trạng thái ĐÃ_XÁC_MINH */}
+                      {item.status === ReplacementStatus.ĐÃ_XÁC_MINH && (
+                        <button
+                          onClick={() => {
+                            // Xử lý gửi đề xuất thay thế
+                            const nextStatus =
+                              ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH;
+                            handleStatusUpdate(item, nextStatus);
+                          }}
+                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          title="Gửi đề xuất">
+                          <Paperclip className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -450,10 +441,10 @@ export default function XuLyToTrinhPage() {
           <div className="text-center py-12">
             <FileText className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
-              Không có tờ trình nào
+              Không có đề xuất nào
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              Không tìm thấy tờ trình nào phù hợp với tiêu chí tìm kiếm.
+              Không tìm thấy đề xuất nào phù hợp với tiêu chí tìm kiếm.
             </p>
           </div>
         )}

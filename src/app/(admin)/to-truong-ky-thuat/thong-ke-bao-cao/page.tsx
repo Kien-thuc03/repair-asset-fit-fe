@@ -45,15 +45,19 @@ import {
 } from "lucide-react";
 import type { DepartmentStats } from "@/types/stats";
 import {
-  statsData,
   monthlyData,
   errorTypeStatsData,
   weeklyTrendData,
   detailedTableData,
   activityTimelineData,
   detailedErrorStats,
-  mockTechnicians,
-} from "@/lib/mockData";
+  equipmentStatsData,
+} from "@/lib/mockData/statisticsData";
+import { useStatistics } from "@/hooks/useStatistics";
+import {
+  UnitStatistics,
+  RepairRequestDetails,
+} from "@/components/assetsManagement";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -88,7 +92,18 @@ const getIcon = (iconType: string) => {
 };
 
 const StatsReportsPage = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState("month");
+  // Sử dụng hook để quản lý state và tính toán dữ liệu
+  const {
+    selectedPeriod,
+    setSelectedPeriod,
+    dateRange,
+    setDateRange,
+    updatedStatsData,
+    errorTypeStatsFromReal,
+    technicianStatsFromReal,
+    realTimeStats,
+  } = useStatistics();
+
   const [activeTab, setActiveTab] = useState("overview");
   const [sortField, setSortField] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
@@ -334,44 +349,15 @@ const StatsReportsPage = () => {
     });
   };
 
-  // Tính toán thống kê kỹ thuật viên từ dữ liệu thực
-  const getTechnicianStats = () => {
-    return mockTechnicians.map((tech) => {
-      // Tính toán số liệu giả lập từ thông tin kỹ thuật viên
-      const completed = Math.floor(Math.random() * 50) + 10;
-      const pending = Math.floor(Math.random() * 10) + 1;
-      const avgTime = Math.floor(Math.random() * 5) + 2;
-      const efficiency = Math.floor(Math.random() * 20) + 80;
-
-      return {
-        id: tech.id,
-        name: tech.name,
-        completed,
-        pending,
-        avgTime,
-        efficiency,
-        status: tech.status,
-        currentTask: tech.currentTask,
-        assignedAreas: tech.assignedAreas.length,
-      };
-    });
-  };
-
   // Tính toán thống kê linh kiện máy tính
   const getComputerComponentStats = () => {
-    const components = [
-      { category: "CPU", total: 120, faulty: 5, percentage: 4.2 },
-      { category: "RAM", total: 240, faulty: 12, percentage: 5.0 },
-      { category: "Ổ cứng", total: 180, faulty: 18, percentage: 10.0 },
-      { category: "Mainboard", total: 120, faulty: 8, percentage: 6.7 },
-      { category: "Nguồn", total: 130, faulty: 15, percentage: 11.5 },
-      { category: "VGA", total: 80, faulty: 3, percentage: 3.8 },
-      { category: "Màn hình", total: 150, faulty: 9, percentage: 6.0 },
-      { category: "Bàn phím", total: 200, faulty: 25, percentage: 12.5 },
-      { category: "Chuột", total: 220, faulty: 30, percentage: 13.6 },
-    ];
-
-    return components;
+    return equipmentStatsData.map((component, index) => ({
+      key: `comp-${index + 1}`,
+      category: component.category,
+      total: component.total,
+      faulty: component.faulty,
+      percentage: component.percentage,
+    }));
   };
 
   const handleExport = (type: string) => {
@@ -425,7 +411,7 @@ const StatsReportsPage = () => {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={errorTypeStatsData}
+                      data={errorTypeStatsFromReal}
                       cx="50%"
                       cy="50%"
                       labelLine={false}
@@ -435,13 +421,18 @@ const StatsReportsPage = () => {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value">
-                      {errorTypeStatsData.map((entry, index) => (
+                      {errorTypeStatsFromReal.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
+                <div className="mt-4 text-center">
+                  <Text type="secondary" className="text-xs">
+                    Tổng số lỗi từ dữ liệu thực: {realTimeStats.totalReports}
+                  </Text>
+                </div>
               </Card>
             </Col>
           </Row>
@@ -549,45 +540,47 @@ const StatsReportsPage = () => {
             <Col xs={24} lg={12}>
               <Card title="Thống kê kỹ thuật viên">
                 <div className="space-y-4">
-                  {getTechnicianStats().map((tech, index) => {
+                  {technicianStatsFromReal.map((tech) => {
                     const statusColor =
-                      tech.status === "active"
+                      tech.efficiency >= 95
                         ? "green"
-                        : tech.status === "busy"
+                        : tech.efficiency >= 90
                         ? "orange"
-                        : tech.status === "offline"
-                        ? "red"
-                        : "default";
+                        : "red";
+
+                    const statusText =
+                      tech.efficiency >= 95
+                        ? "Xuất sắc"
+                        : tech.efficiency >= 90
+                        ? "Tốt"
+                        : "Cần cải thiện";
 
                     return (
                       <div
-                        key={index}
+                        key={tech.id}
                         className="border-b pb-4 last:border-b-0">
                         <div className="flex justify-between items-center mb-2">
                           <div className="flex items-center gap-2">
                             <Text strong>{tech.name}</Text>
-                            <Tag color={statusColor}>
-                              {tech.status === "active"
-                                ? "Hoạt động"
-                                : tech.status === "busy"
-                                ? "Bận"
-                                : tech.status === "offline"
-                                ? "Nghỉ"
-                                : tech.status}
-                            </Tag>
+                            <Tag color={statusColor}>{statusText}</Tag>
                           </div>
                           <Tag color="blue">{tech.efficiency.toFixed(1)}%</Tag>
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm text-gray-600 mb-2">
                           <div>Hoàn thành: {tech.completed}</div>
                           <div>Đang xử lý: {tech.pending}</div>
-                          <div>TB: {tech.avgTime} ngày</div>
+                          <div>TB: {tech.avgTime.toFixed(1)} ngày</div>
                         </div>
                         <div className="text-sm text-gray-600 mb-2">
-                          <div>Phụ trách: {tech.assignedAreas} khu vực</div>
-                          {tech.currentTask && (
-                            <div>Nhiệm vụ hiện tại: {tech.currentTask}</div>
-                          )}
+                          <div>
+                            Tổng yêu cầu: {tech.completed + tech.pending}
+                          </div>
+                          <div>
+                            Tình trạng:{" "}
+                            {tech.pending > 0
+                              ? `Đang xử lý ${tech.pending} yêu cầu`
+                              : "Không có yêu cầu đang xử lý"}
+                          </div>
                         </div>
                         <Progress
                           percent={tech.efficiency}
@@ -835,6 +828,16 @@ const StatsReportsPage = () => {
         </Card>
       ),
     },
+    {
+      key: "units",
+      label: "Thống kê đơn vị",
+      children: <UnitStatistics />,
+    },
+    {
+      key: "repair-details",
+      label: "Chi tiết sửa chữa",
+      children: <RepairRequestDetails />,
+    },
   ];
 
   return (
@@ -868,6 +871,13 @@ const StatsReportsPage = () => {
           Thống kê các báo lỗi thiết bị trong các tầng tòa H - Khoa Công nghệ
           Thông tin
         </Text>
+        {dateRange && (
+          <div className="mt-2">
+            <Text type="secondary" className="text-sm">
+              📅 Dữ liệu được lọc từ {dateRange[0]} đến {dateRange[1]}
+            </Text>
+          </div>
+        )}
       </div>
 
       {/* Bộ lọc và điều khiển */}
@@ -876,7 +886,16 @@ const StatsReportsPage = () => {
           <Col xs={24} sm={12} md={8}>
             <Space>
               <Text>Thời gian:</Text>
-              <RangePicker placeholder={["Từ ngày", "Đến ngày"]} />
+              <RangePicker
+                placeholder={["Từ ngày", "Đến ngày"]}
+                onChange={(dates, dateStrings) => {
+                  if (dates && dates[0] && dates[1]) {
+                    setDateRange([dateStrings[0], dateStrings[1]]);
+                  } else {
+                    setDateRange(null);
+                  }
+                }}
+              />
             </Space>
           </Col>
           <Col xs={24} sm={12} md={8}>
@@ -905,7 +924,7 @@ const StatsReportsPage = () => {
 
       {/* Thống kê tổng quan */}
       <Row gutter={[16, 16]} className="mb-6">
-        {statsData.map((stat, index) => (
+        {updatedStatsData.map((stat, index) => (
           <Col xs={24} sm={12} lg={6} key={index}>
             <Card>
               <Statistic
