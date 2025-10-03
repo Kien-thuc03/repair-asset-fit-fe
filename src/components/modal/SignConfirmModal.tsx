@@ -40,7 +40,8 @@ export default function SignConfirmModal({
           title: "Xác nhận duyệt tờ trình",
           confirmText: "Xác nhận duyệt",
           description: "Bạn có chắc chắn muốn duyệt tờ trình sau?",
-          warning: "Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành \"Đã duyệt\" và không thể hoàn tác.",
+          warning:
+            'Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành "Đã duyệt" và không thể hoàn tác.',
           icon: CheckCircle,
           numberLabel: "Mã tờ trình:",
           titleLabel: "Tiêu đề:",
@@ -52,7 +53,8 @@ export default function SignConfirmModal({
           title: "Xác nhận ký biên bản",
           confirmText: "Xác nhận ký",
           description: "Bạn có chắc chắn muốn ký xác nhận biên bản sau?",
-          warning: "Sau khi ký xác nhận, trạng thái biên bản sẽ được chuyển thành \"Đã ký\" và không thể hoàn tác.",
+          warning:
+            'Sau khi ký xác nhận, trạng thái biên bản sẽ được chuyển thành "Đã ký" và không thể hoàn tác.',
           icon: CheckCircle,
           numberLabel: "Số biên bản:",
           titleLabel: "Tiêu đề:",

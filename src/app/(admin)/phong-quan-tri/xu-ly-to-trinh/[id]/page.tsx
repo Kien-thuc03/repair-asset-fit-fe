@@ -319,7 +319,6 @@ export default function XuLyToTrinhDetailPage() {
               href: "/",
               title: (
                 <div className="flex items-center">
-                
                   <span>Trang chủ</span>
                 </div>
               ),
@@ -328,7 +327,6 @@ export default function XuLyToTrinhDetailPage() {
               href: "/phong-quan-tri",
               title: (
                 <div className="flex items-center">
-                 
                   <span>Phòng quản trị</span>
                 </div>
               ),
@@ -337,7 +335,6 @@ export default function XuLyToTrinhDetailPage() {
               href: "/phong-quan-tri/xu-ly-to-trinh",
               title: (
                 <div className="flex items-center">
-                  
                   <span>Xử lý tờ trình</span>
                 </div>
               ),
@@ -345,7 +342,6 @@ export default function XuLyToTrinhDetailPage() {
             {
               title: (
                 <div className="flex items-center">
-                  
                   <span>Chi tiết tờ trình {proposal.proposalCode}</span>
                 </div>
               ),
