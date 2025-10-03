@@ -196,7 +196,8 @@ export default function ProposalTable({
                     href={`/to-truong-ky-thuat/duyet-de-xuat/chi-tiet/${record.id}`}>
                     <button
                       title="Xem chi tiết"
-                      className="text-blue-600 hover:text-blue-900 inline-flex items-center">
+                      className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+>
                       <Eye className="w-4 h-4" />
                     </button>
                   </Link>

@@ -141,7 +141,7 @@ export default function InspectionTable({
                     <button
                       className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase"
                       onClick={() => onSort("inspectionDate")}>
-                      <span>Ngày KT</span>
+                      <span>Ngày lập</span>
                       {getSortIcon("inspectionDate")}
                     </button>
                   </th>
@@ -203,7 +203,7 @@ export default function InspectionTable({
                         <div className="text-sm text-gray-900">
                           {new Date(report.inspectionDate).toLocaleDateString(
                             "vi-VN",
-                            { day: "2-digit", month: "2-digit" }
+                            { day: "2-digit", month: "2-digit", year: "numeric" }
                           )}
                         </div>
                       </td>
@@ -211,7 +211,7 @@ export default function InspectionTable({
                         <div className="flex items-center justify-center space-x-1">
                           <button
                             onClick={() => onViewDetail(report)}
-                            className="text-indigo-600 hover:text-indigo-900 p-1"
+                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             title="Xem chi tiết">
                             <Eye className="h-4 w-4" />
                           </button>

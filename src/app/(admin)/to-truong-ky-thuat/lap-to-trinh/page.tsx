@@ -614,13 +614,9 @@ export default function LapToTrinhPage() {
                         <td className="hidden lg:table-cell px-2 py-4 whitespace-nowrap text-center w-[10%]">
                           <div className="text-xs text-gray-900">
                             {new Date(request.createdAt).toLocaleDateString(
-                              "vi-VN",
-                              {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "2-digit",
-                              }
-                            )}
+                            "vi-VN",
+                            { day: "2-digit", month: "2-digit", year: "numeric" }
+                          )}
                           </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap w-[18%]">
@@ -631,7 +627,7 @@ export default function LapToTrinhPage() {
                                   `/to-truong-ky-thuat/lap-to-trinh/chi-tiet/${request.id}`
                                 );
                               }}
-                              className="text-indigo-600 hover:text-indigo-900 p-1"
+                              className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                               title="Xem chi tiết">
                               <Eye className="h-4 w-4" />
                             </button>
