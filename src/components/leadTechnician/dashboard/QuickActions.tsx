@@ -5,9 +5,9 @@ import {
   FileText,
   ClipboardList,
   BarChart3,
-  FileCheck,
   Search,
   Calendar,
+  ClipboardEdit,
 } from "lucide-react";
 
 const QuickActions: React.FC = () => {
@@ -24,7 +24,7 @@ const QuickActions: React.FC = () => {
             href="/to-truong-ky-thuat/duyet-de-xuat"
             className="relative group bg-green-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg hover:bg-green-100 transition-colors block">
             <span className="rounded-lg inline-flex p-3 bg-green-600 text-white">
-              <FileCheck className="h-6 w-6" />
+              <ClipboardEdit className="h-6 w-6" />
             </span>
             <div className="mt-4">
               <h3 className="text-lg font-medium text-gray-900">

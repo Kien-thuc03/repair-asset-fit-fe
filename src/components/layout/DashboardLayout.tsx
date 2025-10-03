@@ -29,6 +29,7 @@ import {
   FolderCode,
   TriangleAlert,
   TimerReset,
+  ClipboardEdit,
 } from "lucide-react";
 
 // Navigation items
@@ -142,7 +143,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
           {
             name: "Danh sách đề xuất",
             href: "/to-truong-ky-thuat/duyet-de-xuat",
-            icon: FileCheck,
+            icon: ClipboardEdit,
           },
           {
             name: "Quản lý tờ trình",
