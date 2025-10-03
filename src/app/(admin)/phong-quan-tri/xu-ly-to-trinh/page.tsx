@@ -8,8 +8,6 @@ import {
   Filter,
   FileText,
   Calendar,
-  AlertCircle,
-  CheckCircle,
   Eye,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,11 +16,7 @@ import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus } from "@/types/repair";
 import { Pagination } from "@/components/common";
 
-type FilterStatus =
-  | "ALL"
-  | "ĐÃ_LẬP_TỜ_TRÌNH"
-  | "ĐÃ_DUYỆT_TỜ_TRÌNH"
-  | "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH";
+type FilterStatus = "ALL" | "ĐÃ_LẬP_TỜ_TRÌNH";
 type SortField =
   | "proposalCode"
   | "createdAt"
@@ -40,18 +34,13 @@ export default function XuLyToTrinhPage() {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    // Lọc dữ liệu: chỉ lấy các đề xuất đã được lập tờ trình gửi lên Phòng Quản trị
-    const relevantStatuses: ReplacementStatus[] = [
-      ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH, // Tổ trưởng đã lập tờ trình, chờ Phòng Quản trị xử lý
-      ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH, // Phòng Quản trị đã duyệt tờ trình
-      ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH, // Phòng Quản trị đã từ chối tờ trình
-    ];
-
-    let filtered = mockReplacementRequestItem.filter((item) =>
-      relevantStatuses.includes(item.status)
+    // Lọc dữ liệu: chỉ lấy các tờ trình đang chờ xử lý (trạng thái ĐÃ_LẬP_TỜ_TRÌNH)
+    // Đây là những tờ trình mà Tổ trưởng kỹ thuật đã lập và gửi lên Phòng Quản trị để xem xét phê duyệt
+    let filtered = mockReplacementRequestItem.filter(
+      (item) => item.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
     );
 
-    // Apply status filter
+    // Apply status filter - chỉ có thể filter tất cả hoặc theo trạng thái ĐÃ_LẬP_TỜ_TRÌNH
     if (statusFilter !== "ALL") {
       filtered = filtered.filter((item) => item.status === statusFilter);
     }
@@ -122,47 +111,22 @@ export default function XuLyToTrinhPage() {
     }
   };
 
-  const getStatusColor = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "bg-green-100 text-green-800 border-green-200";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
+  const getStatusColor = () => {
+    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị màu xanh dương (chờ xử lý)
+    return "bg-blue-100 text-blue-800 border-blue-200";
   };
 
-  const getStatusText = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return "Chờ xử lý";
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "Đã duyệt";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return "Đã từ chối";
-      default:
-        return status;
-    }
+  const getStatusText = () => {
+    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị "Chờ xử lý"
+    return "Chờ xử lý";
   };
 
   const statsData = useMemo(() => {
-    const choXuLy = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
-    ).length;
-    const daDuyet = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-    ).length;
-    const daTuChoi = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
-    ).length;
+    // Chỉ có một trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên stats đơn giản hơn
+    const choXuLy = filteredData.length; // Tất cả đều là "chờ xử lý"
 
     return {
       choXuLy,
-      daDuyet,
-      daTuChoi,
       total: filteredData.length,
     };
   }, [filteredData]);
@@ -206,17 +170,20 @@ export default function XuLyToTrinhPage() {
           Xử lý tờ trình thay thế
         </h1>
         <p className="mt-2 text-gray-600">
-          Xem xét và phê duyệt các tờ trình đề xuất thay thế linh kiện từ tổ
-          trưởng kỹ thuật
+          Danh sách các tờ trình đang chờ xử lý từ tổ trưởng kỹ thuật. Tất cả tờ
+          trình ở đây đều có trạng thái &ldquo;Đã lập tờ trình&rdquo; và cần
+          được xem xét phê duyệt.
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Stats Cards - Chỉ hiển thị 2 cards cho trạng thái chờ xử lý */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Chờ xử lý</p>
+              <p className="text-sm font-medium text-gray-600">
+                Tờ trình chờ xử lý
+              </p>
               <p className="text-2xl font-bold text-blue-600">
                 {statsData.choXuLy}
               </p>
@@ -224,32 +191,12 @@ export default function XuLyToTrinhPage() {
             <FileText className="h-8 w-8 text-blue-500" />
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Đã duyệt</p>
-              <p className="text-2xl font-bold text-green-600">
-                {statsData.daDuyet}
-              </p>
-            </div>
-            <CheckCircle className="h-8 w-8 text-green-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Đã từ chối</p>
-              <p className="text-2xl font-bold text-red-600">
-                {statsData.daTuChoi}
-              </p>
-            </div>
-            <AlertCircle className="h-8 w-8 text-red-500" />
-          </div>
-        </div>
         <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-500">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Tổng tờ trình</p>
+              <p className="text-sm font-medium text-gray-600">
+                Tổng số tờ trình
+              </p>
               <p className="text-2xl font-bold text-gray-600">
                 {statsData.total}
               </p>
@@ -286,10 +233,8 @@ export default function XuLyToTrinhPage() {
                   setStatusFilter(e.target.value as FilterStatus)
                 }
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="ALL">Tất cả trạng thái</option>
+                <option value="ALL">Tất cả tờ trình</option>
                 <option value="ĐÃ_LẬP_TỜ_TRÌNH">Chờ xử lý</option>
-                <option value="ĐÃ_DUYỆT_TỜ_TRÌNH">Đã duyệt</option>
-                <option value="ĐÃ_TỪ_CHỐI_TỜ_TRÌNH">Đã từ chối</option>
               </select>
             </div>
           </div>
@@ -411,11 +356,9 @@ export default function XuLyToTrinhPage() {
                   </td>
                   <td className="px-2 py-3">
                     <span
-                      className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                        item.status
-                      )}`}>
+                      className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor()}`}>
                       <span className="hidden lg:inline text-xs">
-                        {getStatusText(item.status)}
+                        {getStatusText()}
                       </span>
                     </span>
                   </td>
