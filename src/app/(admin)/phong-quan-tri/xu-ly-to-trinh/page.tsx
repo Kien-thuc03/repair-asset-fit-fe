@@ -1,20 +1,18 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, Filter, FileText, Calendar, Eye } from "lucide-react";
+import { Search, FileText, Calendar, Eye } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
 import { Pagination, SortableHeader } from "@/components/common";
 
-type FilterStatus = "ALL" | "ĐÃ_LẬP_TỜ_TRÌNH";
 type SortField = keyof ReplacementRequestItem;
 type SortDirection = "asc" | "desc" | null;
 
 export default function XuLyToTrinhPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>("ALL");
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -27,10 +25,7 @@ export default function XuLyToTrinhPage() {
       (item) => item.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
     );
 
-    // Apply status filter - chỉ có thể filter tất cả hoặc theo trạng thái ĐÃ_LẬP_TỜ_TRÌNH
-    if (statusFilter !== "ALL") {
-      filtered = filtered.filter((item) => item.status === statusFilter);
-    }
+  
 
     // Apply search filter
     if (searchTerm) {
@@ -80,7 +75,7 @@ export default function XuLyToTrinhPage() {
     }
 
     return filtered;
-  }, [searchTerm, statusFilter, sortField, sortDirection]);
+  }, [searchTerm, sortField, sortDirection]);
 
   // Pagination
   const totalItems = filteredData.length;
@@ -119,15 +114,6 @@ export default function XuLyToTrinhPage() {
     return "Chờ xử lý";
   };
 
-  const statsData = useMemo(() => {
-    // Chỉ có một trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên stats đơn giản hơn
-    const choXuLy = filteredData.length; // Tất cả đều là "chờ xử lý"
-
-    return {
-      choXuLy,
-      total: filteredData.length,
-    };
-  }, [filteredData]);
 
   return (
     <div className="space-y-6">

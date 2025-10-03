@@ -2,8 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  ChevronDown,
-  ChevronUp,
   Search,
   FileText,
   Calendar,
@@ -15,7 +13,7 @@ import Link from "next/link";
 import { Breadcrumb, message } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types/repair";
-import { Pagination } from "@/components/common";
+import { Pagination, SortableHeader } from "@/components/common";
 import { SignConfirmModal } from "@/components/modal";
 
 type SortField =
@@ -24,12 +22,12 @@ type SortField =
   | "title"
   | "status"
   | "createdBy";
-type SortDirection = "asc" | "desc";
+type SortDirection = "asc" | "desc" | null;
 
 export default function GuiDeXuatThayThePage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -55,40 +53,42 @@ export default function GuiDeXuatThayThePage() {
       );
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue: string | Date;
-      let bValue: string | Date;
+    // Apply sorting (only if sortField and sortDirection are set)
+    if (sortField && sortDirection) {
+      filtered.sort((a, b) => {
+        let aValue: string | Date;
+        let bValue: string | Date;
 
-      switch (sortField) {
-        case "createdAt":
-          aValue = new Date(a.createdAt);
-          bValue = new Date(b.createdAt);
-          break;
-        case "proposalCode":
-          aValue = a.proposalCode;
-          bValue = b.proposalCode;
-          break;
-        case "title":
-          aValue = a.title;
-          bValue = b.title;
-          break;
-        case "status":
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        case "createdBy":
-          aValue = a.createdBy || "";
-          bValue = b.createdBy || "";
-          break;
-        default:
-          return 0;
-      }
+        switch (sortField) {
+          case "createdAt":
+            aValue = new Date(a.createdAt);
+            bValue = new Date(b.createdAt);
+            break;
+          case "proposalCode":
+            aValue = a.proposalCode;
+            bValue = b.proposalCode;
+            break;
+          case "title":
+            aValue = a.title;
+            bValue = b.title;
+            break;
+          case "status":
+            aValue = a.status;
+            bValue = b.status;
+            break;
+          case "createdBy":
+            aValue = a.createdBy || "";
+            bValue = b.createdBy || "";
+            break;
+          default:
+            return 0;
+        }
 
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
+        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
 
     return filtered;
   }, [searchTerm, sortField, sortDirection]);
@@ -103,9 +103,16 @@ export default function GuiDeXuatThayThePage() {
   );
 
   const handleSort = (field: SortField) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    if (sortField === field) {
+      // Cycle through: asc -> desc -> null
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortField(null);
+      }
     } else {
+      // New field, start with asc
       setSortField(field);
       setSortDirection("asc");
     }
@@ -245,74 +252,49 @@ export default function GuiDeXuatThayThePage() {
           <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[15%]"
-                  onClick={() => handleSort("proposalCode")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Mã ĐX</span>
-                    {sortField === "proposalCode" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[25%]"
-                  onClick={() => handleSort("title")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Tiêu đề</span>
-                    {sortField === "title" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[20%]"
-                  onClick={() => handleSort("createdBy")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Người tạo</span>
-                    {sortField === "createdBy" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
+                <SortableHeader
+                  field="proposalCode"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[15%]">
+                  Mã ĐX
+                </SortableHeader>
+                <SortableHeader
+                  field="title"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[25%]">
+                  Tiêu đề
+                </SortableHeader>
+                <SortableHeader
+                  field="createdBy"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[20%]">
+                  Người tạo
+                </SortableHeader>
                 <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
                   Số lượng
                 </th>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[12%]"
-                  onClick={() => handleSort("status")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Trạng thái</span>
-                    {sortField === "status" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[10%]"
-                  onClick={() => handleSort("createdAt")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Ngày</span>
-                    {sortField === "createdAt" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
+                <SortableHeader
+                  field="status"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[12%]">
+                  Trạng thái
+                </SortableHeader>
+                <SortableHeader
+                  field="createdAt"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[10%]">
+                  Ngày
+                </SortableHeader>
                 <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
                   Thao tác
                 </th>
