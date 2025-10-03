@@ -36,6 +36,49 @@ export const mockSoftware: Software[] = [
     version: "120.0", 
     publisher: "Google LLC",
     createdAt: "2023-01-15T01:20:00.000Z"
+  },
+  // Phần mềm được thêm từ software proposals
+  {
+    id: "SW006",
+    name: "Adobe Illustrator",
+    version: "2024",
+    publisher: "Adobe Inc.",
+    createdAt: "2024-12-16T10:00:00.000Z"
+  },
+  {
+    id: "SW007",
+    name: "Adobe InDesign",
+    version: "2024",
+    publisher: "Adobe Inc.",
+    createdAt: "2024-12-16T10:05:00.000Z"
+  },
+  {
+    id: "SW008",
+    name: "Visual Studio",
+    version: "2022",
+    publisher: "Microsoft Corporation",
+    createdAt: "2024-12-21T16:00:00.000Z"
+  },
+  {
+    id: "SW009",
+    name: "IntelliJ IDEA",
+    version: "2023.3",
+    publisher: "JetBrains",
+    createdAt: "2024-12-21T16:10:00.000Z"
+  },
+  {
+    id: "SW010",
+    name: "Mozilla Firefox",
+    version: "121.0",
+    publisher: "Mozilla Foundation",
+    createdAt: "2024-12-14T15:00:00.000Z"
+  },
+  {
+    id: "SW011",
+    name: "WinRAR",
+    version: "6.24",
+    publisher: "win.rar GmbH",
+    createdAt: "2024-12-14T15:10:00.000Z"
   }
 ];
 

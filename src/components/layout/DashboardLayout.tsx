@@ -90,7 +90,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: FileText,
         children: [
           {
-            name: "Lập phiếu đề xuất",
+            name: "Lập phiếu đề xuất linh kiện",
             href: "/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat",
             icon: ClipboardList,
           },
@@ -100,6 +100,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
             icon: FileText,
           },
         ],
+      },
+      {
+        name: "Quản lý đề xuất phần mềm",
+        href: "/ky-thuat-vien/quan-ly-de-xuat-phan-mem",
+        icon: FileText,
       },
       {
         name: "Quản lý thiết bị",
