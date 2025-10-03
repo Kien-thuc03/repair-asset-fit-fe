@@ -12,7 +12,6 @@ import {
   CheckCircle,
   Clock,
   FileCheck,
-  Home,
 } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
@@ -222,7 +221,6 @@ export default function LapBienBanPage() {
               href: "/phong-quan-tri",
               title: (
                 <div className="flex items-center">
-                 
                   <span>Phòng quản trị</span>
                 </div>
               ),
@@ -230,7 +228,6 @@ export default function LapBienBanPage() {
             {
               title: (
                 <div className="flex items-center">
-                 
                   <span>Lập biên bản</span>
                 </div>
               ),
