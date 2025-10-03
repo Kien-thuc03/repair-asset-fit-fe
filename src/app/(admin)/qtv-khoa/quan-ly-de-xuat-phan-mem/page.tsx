@@ -11,7 +11,9 @@ import {
   Monitor,
   Calendar,
   User,
-  Building
+  Building,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { Breadcrumb, Select, DatePicker } from 'antd';
 import type { Dayjs } from 'dayjs';
@@ -24,6 +26,9 @@ import { Pagination } from '@/components/common';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
+
+type SortField = "proposalCode" | "proposerId" | "roomId" | "status" | "createdAt"
+type SortDirection = "asc" | "desc" | "none"
 
 // Mock users và rooms data để hiển thị tên
 const mockUsers = {
@@ -80,8 +85,50 @@ export default function QtvKhoaSoftwareProposalsPage() {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<SoftwareProposalStatus | ''>('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
+  const [sortField, setSortField] = useState<SortField | "">("");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("none");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // Hàm xử lý sắp xếp 3 trạng thái
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc")
+      } else if (sortDirection === "desc") {
+        setSortDirection("none")
+        setSortField("")
+      } else {
+        setSortDirection("asc")
+      }
+    } else {
+      setSortField(field)
+      setSortDirection("asc")
+    }
+  }
+
+  // Hàm lấy icon sắp xếp
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field || sortDirection === "none") {
+      return (
+        <div className="flex flex-col opacity-50 group-hover:opacity-75 transition-opacity">
+          <ChevronUp className="h-3 w-3 text-gray-400" />
+          <ChevronDown className="h-3 w-3 -mt-1 text-gray-400" />
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex flex-col">
+        <ChevronUp
+          className={`h-3 w-3 ${sortDirection === "asc" ? "text-blue-600" : "text-gray-300"}`}
+        />
+        <ChevronDown
+          className={`h-3 w-3 -mt-1 ${sortDirection === "desc" ? "text-blue-600" : "text-gray-300"}`}
+        />
+      </div>
+    )
+  }
 
   // Lọc và sắp xếp dữ liệu
   const filteredAndSortedData = useMemo(() => {
@@ -105,8 +152,43 @@ export default function QtvKhoaSoftwareProposalsPage() {
       return matchesSearch && matchesStatus && matchesDateRange;
     });
 
-    return filtered;
-  }, [searchText, statusFilter, dateRange]);
+    // Sắp xếp dữ liệu
+    if (!sortField || sortDirection === "none") return filtered;
+
+    return [...filtered].sort((a, b) => {
+      let aValue: string | Date = "";
+      let bValue: string | Date = "";
+
+      switch (sortField) {
+        case "proposalCode":
+          aValue = a.proposalCode;
+          bValue = b.proposalCode;
+          break;
+        case "proposerId":
+          aValue = getUserName(a.proposerId);
+          bValue = getUserName(b.proposerId);
+          break;
+        case "roomId":
+          aValue = getRoomName(a.roomId);
+          bValue = getRoomName(b.roomId);
+          break;
+        case "status":
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        case "createdAt":
+          aValue = new Date(a.createdAt);
+          bValue = new Date(b.createdAt);
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [searchText, statusFilter, dateRange, sortField, sortDirection]);
 
   // Dữ liệu phân trang
   const paginatedData = useMemo(() => {
@@ -298,20 +380,50 @@ export default function QtvKhoaSoftwareProposalsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Mã đề xuất
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                  onClick={() => handleSort("proposalCode")}
+                >
+                  <div className="flex items-center uppercase space-x-1">
+                    <span>Mã đề xuất</span>
+                    {getSortIcon("proposalCode")}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Người đề xuất
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                  onClick={() => handleSort("proposerId")}
+                >
+                  <div className="flex items-center uppercase space-x-1">
+                    <span>Người đề xuất</span>
+                    {getSortIcon("proposerId")}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Phòng
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                  onClick={() => handleSort("roomId")}
+                >
+                  <div className="flex items-center uppercase space-x-1">
+                    <span>Phòng</span>
+                    {getSortIcon("roomId")}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng thái
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                  onClick={() => handleSort("status")}
+                >
+                  <div className="flex items-center uppercase space-x-1">
+                    <span>Trạng thái</span>
+                    {getSortIcon("status")}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ngày tạo
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                  onClick={() => handleSort("createdAt")}
+                >
+                  <div className="flex items-center uppercase space-x-1">
+                    <span>Ngày tạo</span>
+                    {getSortIcon("createdAt")}
+                  </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
