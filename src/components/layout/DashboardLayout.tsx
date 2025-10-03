@@ -28,6 +28,7 @@ import {
   MapPin,
   FolderCode,
   TriangleAlert,
+  TimerReset,
 } from "lucide-react";
 
 // Navigation items
@@ -54,7 +55,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       },
       {
         name: "Quản lý tiến độ",
-        icon: Clock,
+        icon: TimerReset,
         children: [
           {
             name: "Theo dõi tiến độ",
