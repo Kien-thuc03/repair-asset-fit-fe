@@ -113,10 +113,10 @@ export default function SoftwareProposalDetailPage() {
             ),
           },
           {
-            href: "/giang-vien/theo-doi-tien-do-phan-mem",
+            href: "/giang-vien/danh-sach-de-xuat-phan-mem",
             title: (
               <div className="flex items-center">
-                <span>Theo dõi tiến độ phần mềm</span>
+                <span>Danh sách đề xuất phần mềm</span>
               </div>
             ),
           },
