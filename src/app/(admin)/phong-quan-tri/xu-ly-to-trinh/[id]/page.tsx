@@ -26,6 +26,7 @@ import {
 import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus, ComponentType } from "@/types/repair";
+import SignConfirmModal from "@/components/modal/SignConfirmModal";
 
 export default function XuLyToTrinhDetailPage() {
   const params = useParams();
@@ -38,6 +39,7 @@ export default function XuLyToTrinhDetailPage() {
   const [adminNotes, setAdminNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
 
   // State cho việc check components
   const [checkedComponents, setCheckedComponents] = useState<Set<string>>(
@@ -248,8 +250,12 @@ export default function XuLyToTrinhDetailPage() {
   const canProcess = proposal.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH;
 
   const handleAction = (action: "approve" | "reject") => {
-    setActionType(action);
-    setShowConfirmModal(true);
+    if (action === "approve") {
+      setShowSignConfirmModal(true);
+    } else {
+      setActionType(action);
+      setShowConfirmModal(true);
+    }
   };
 
   const handleConfirmAction = async () => {
@@ -282,6 +288,25 @@ export default function XuLyToTrinhDetailPage() {
       "/phong-quan-tri/xu-ly-to-trinh?success=" +
         (actionType === "approve" ? "approved" : "rejected")
     );
+  };
+
+  const handleSignConfirm = async () => {
+    setIsProcessing(true);
+    setShowSignConfirmModal(false);
+
+    // Simulate API call để duyệt tờ trình
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // In thực tế, sẽ gọi API để cập nhật status thành ĐÃ_DUYỆT_TỜ_TRÌNH
+    console.log(`Duyệt tờ trình ${proposal.id}`, {
+      newStatus: ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+      signedAt: new Date().toISOString(),
+    });
+
+    setIsProcessing(false);
+
+    // Redirect về danh sách sau khi xử lý xong
+    router.push("/phong-quan-tri/xu-ly-to-trinh?success=approved");
   };
 
   return (
@@ -350,7 +375,7 @@ export default function XuLyToTrinhDetailPage() {
                 Từ chối
               </button>
               <button
-                onClick={() => handleAction("approve")}
+                onClick={() => setShowSignConfirmModal(true)}
                 disabled={isProcessing}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50">
                 <Check className="w-4 h-4 mr-2" />
@@ -804,22 +829,6 @@ export default function XuLyToTrinhDetailPage() {
                   placeholder="Nhập ghi chú về quyết định xử lý tờ trình..."
                 />
               </div>
-              <div className="flex items-center space-x-4 pt-4">
-                <button
-                  onClick={() => handleAction("approve")}
-                  disabled={isProcessing}
-                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50">
-                  <Check className="w-5 h-5 mr-2" />
-                  Duyệt tờ trình
-                </button>
-                <button
-                  onClick={() => handleAction("reject")}
-                  disabled={isProcessing}
-                  className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50">
-                  <X className="w-5 h-5 mr-2" />
-                  Từ chối tờ trình
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -938,8 +947,8 @@ export default function XuLyToTrinhDetailPage() {
         </div>
       )}
 
-      {/* Confirmation Modal */}
-      {showConfirmModal && (
+      {/* Confirmation Modal - Chỉ cho từ chối */}
+      {showConfirmModal && actionType === "reject" && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
@@ -948,13 +957,11 @@ export default function XuLyToTrinhDetailPage() {
               </div>
               <div className="mt-2 px-4 py-3 text-center">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Xác nhận {actionType === "approve" ? "duyệt" : "từ chối"} tờ
-                  trình
+                  Xác nhận từ chối tờ trình
                 </h3>
                 <div className="mt-2 px-2 py-2">
                   <p className="text-sm text-gray-500">
-                    Bạn có chắc chắn muốn{" "}
-                    {actionType === "approve" ? "duyệt" : "từ chối"} tờ trình
+                    Bạn có chắc chắn muốn từ chối tờ trình
                     <strong> {proposal.proposalCode}</strong>?
                   </p>
                   {adminNotes && (
@@ -972,12 +979,8 @@ export default function XuLyToTrinhDetailPage() {
                   </button>
                   <button
                     onClick={handleConfirmAction}
-                    className={`px-4 py-2 text-white text-base font-medium rounded-md shadow-sm ${
-                      actionType === "approve"
-                        ? "bg-green-600 hover:bg-green-700"
-                        : "bg-red-600 hover:bg-red-700"
-                    }`}>
-                    {actionType === "approve" ? "Duyệt" : "Từ chối"}
+                    className="px-4 py-2 text-white text-base font-medium rounded-md shadow-sm bg-red-600 hover:bg-red-700">
+                    Từ chối
                   </button>
                 </div>
               </div>
@@ -985,6 +988,16 @@ export default function XuLyToTrinhDetailPage() {
           </div>
         </div>
       )}
+
+      {/* SignConfirmModal cho duyệt tờ trình */}
+      <SignConfirmModal
+        isOpen={showSignConfirmModal}
+        onClose={() => setShowSignConfirmModal(false)}
+        onConfirm={handleSignConfirm}
+        reportTitle={proposal.title}
+        reportNumber={proposal.proposalCode}
+        isLoading={isProcessing}
+      />
     </div>
   );
 }
