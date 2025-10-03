@@ -12,7 +12,7 @@ import {
   LoadingState,
   NotFoundState,
 } from "@/components/leadTechnician/inspectionDetail";
-import { InspectionSignConfirmModal } from "@/components/modal";
+import { SignConfirmModal } from "@/components/modal";
 import { getReplacementRequestsByStatus } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
 
@@ -95,6 +95,7 @@ export default function ChiTietBienBanPage() {
   const [report, setReport] = useState<InspectionReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSignModal, setShowSignModal] = useState(false);
+  const [showSignSuccessModal, setShowSignSuccessModal] = useState(false);
 
   useEffect(() => {
     if (reportId) {
@@ -136,6 +137,7 @@ export default function ChiTietBienBanPage() {
       console.log("Signed report:", updatedReport);
 
       setShowSignModal(false);
+      setShowSignSuccessModal(true);
     }
   };
 
@@ -207,11 +209,20 @@ export default function ChiTietBienBanPage() {
         </div>
       </div>
 
-      <InspectionSignConfirmModal
-        show={showSignModal}
-        selectedReport={report}
+      <SignConfirmModal
+        isOpen={showSignModal}
         onClose={() => setShowSignModal(false)}
-        onConfirmSign={confirmSign}
+        onConfirm={confirmSign}
+        reportTitle={report?.title || ""}
+        reportNumber={report?.reportNumber || ""}
+      />
+
+      <SignConfirmModal
+        isOpen={showSignSuccessModal}
+        onClose={() => setShowSignSuccessModal(false)}
+        onConfirm={() => setShowSignSuccessModal(false)}
+        reportTitle={report?.title || ""}
+        reportNumber={report?.reportNumber || ""}
       />
     </div>
   );

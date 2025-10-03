@@ -1264,6 +1264,42 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
       },
     ],
   },
+
+  // Đề xuất có trạng thái ĐÃ_KÝ_BIÊN_BẢN - Tổ trưởng kỹ thuật đã ký biên bản
+  {
+    id: "RP033",
+    proposalCode: "DXTT-2025-0033",
+    proposerId: "user-3",
+    teamLeadApproverId: "user-2",
+    adminVerifierId: "user-6",
+    title: "Đề xuất thay thế ổ cứng SSD cho máy tính phòng H2.05",
+    description:
+      "Ổ cứng SSD Kingston 240GB của máy tính số 02 trong phòng H2.05 bị bad sector và không thể khởi động được. Đề xuất thay thế ổ cứng SSD mới.",
+    status: ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
+    submissionFormUrl: "/documents/proposals/DXTT-2025-0033-submission.pdf",
+    verificationReportUrl: "/documents/reports/DXTT-2025-0033-verification.pdf",
+    createdAt: "2024-03-15T10:30:00.000Z",
+    updatedAt: "2024-03-22T16:45:00.000Z",
+    createdBy: "Trần Văn Minh",
+    components: [
+      {
+        id: "RI033",
+        componentName: "Kingston NV2 240GB",
+        componentType: ComponentType.STORAGE,
+        assetId: "ASSET033",
+        assetName: "PC Dell OptiPlex 3070",
+        assetCode: "19-0205/33",
+        buildingName: "Tòa H",
+        roomName: "H2.05",
+        newItemName: "Samsung 980 NVMe 500GB",
+        newItemSpecs:
+          "500GB M.2 NVMe PCIe 3.0, Read: 3100MB/s, Write: 2600MB/s",
+        quantity: 1,
+        reason: "Ổ cứng hiện tại bị bad sector, không thể khởi động",
+        machineLabel: "02",
+      },
+    ],
+  },
 ];
 
 // Helper functions

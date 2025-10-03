@@ -51,7 +51,7 @@ export default function SuccessModal({
 
   return (
     <div
-      className={`fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center transition-opacity duration-200 ${
+      className={`fixed inset-0 bg-transparent overflow-y-auto h-full w-full z-50 flex items-center justify-center transition-opacity duration-200 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
       onClick={handleBackdropClick}>
