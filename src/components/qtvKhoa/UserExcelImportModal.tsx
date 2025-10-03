@@ -529,7 +529,7 @@ export default function UserExcelImportModal({
       onCancel={handleClose}
       footer={getModalFooter()}
       width={800}
-      destroyOnClose
+      destroyOnHidden
       maskClosable={false}
     >
       {renderStepContent()}

@@ -200,9 +200,20 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: Users,
       },
       {
-        name: "Phê duyệt cuối cùng",
-        href: "/qtv-khoa/phe-duyet-cuoi-cung",
+        name: "Quản lý đề xuất",
         icon: Shield,
+        children: [
+          {
+            name: "Danh sách đề xuất linh kiện",
+            href: "/qtv-khoa/quan-ly-thay-the-linh-kien",
+            icon: ClipboardList,
+          },
+          {
+            name: "Danh sách đề xuất phần mềm",
+            href: "/qtv-khoa/quan-ly-de-xuat-phan-mem",
+            icon: FolderCode,
+          }
+        ]
       },
       {
         name: "Thống kê báo cáo",
