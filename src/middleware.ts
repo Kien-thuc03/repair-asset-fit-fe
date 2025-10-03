@@ -67,7 +67,9 @@ const commonProtectedRoutes = [
   '/dashboard',
   '/thong-tin-ca-nhan',
   '/doi-mat-khau',
-  '/tra-cuu-thiet-bi'
+  '/tra-cuu-thiet-bi',
+  '/profile',              // Trang xem thông tin cá nhân
+  '/profile/edit'          // Trang cập nhật thông tin cá nhân
 ]
 
 // Routes công khai
@@ -151,7 +153,7 @@ export function middleware(request: NextRequest) {
   if (authUser) {
     try {
       user = JSON.parse(authUser)
-    } catch (error) {
+    } catch {
       // Cookie không hợp lệ, xóa cookie
       const response = NextResponse.redirect(new URL('/login', request.url))
       response.cookies.delete('repair_user')
