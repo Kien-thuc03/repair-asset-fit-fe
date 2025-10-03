@@ -6,10 +6,10 @@ export * from './dashboardKTV/RecentRequests';
 export * from './dashboardKTV/StatsCards';
 
 // Request detail components
-export * from './requestDetail/ActionPanel';
-export * from './requestDetail/HistoryCard';
-export * from './requestDetail/InfoCard';
-export * from './requestDetail/ReplacementPartsInput';
+export * from './requestDetailKTV/ActionPanel';
+export * from './requestDetailKTV/HistoryCard';
+export * from './requestDetailKTV/InfoCard';
+export * from './requestDetailKTV/ReplacementPartsInput';
 
 // Technician report helpers
 export * from './TechnicianReportHelpers';
