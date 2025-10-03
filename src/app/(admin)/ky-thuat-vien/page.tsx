@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from '@/contexts/AuthContext'
-import {StatsCards, RecentRequests, Announcements, QuickLinks } from '@/components/technician'
+import {StatsCards, RecentRequests, Announcements, QuickLinks } from '@/components/technician/dashboard'
 
 export default function KyThuatVienDashboard() {
 	const { user } = useAuth()
