@@ -169,7 +169,7 @@ export default function ProposalTable({
                     <span>{(currentPage - 1) * pageSize + index + 1}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
+                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                   {record.proposalCode}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700">
