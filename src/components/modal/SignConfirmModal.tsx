@@ -1,5 +1,7 @@
 import { Modal, Button } from "antd";
-import { CheckCircle, User, Calendar } from "lucide-react";
+import { CheckCircle, User, Calendar, LucideIcon } from "lucide-react";
+
+type ActionType = "sign" | "approve";
 
 interface SignConfirmModalProps {
   isOpen: boolean;
@@ -8,6 +10,12 @@ interface SignConfirmModalProps {
   reportTitle: string;
   reportNumber: string;
   isLoading?: boolean;
+  actionType?: ActionType; // Thêm prop để xác định loại hành động
+  customTitle?: string; // Tùy chỉnh tiêu đề modal
+  customConfirmText?: string; // Tùy chỉnh text nút xác nhận
+  customDescription?: string; // Tùy chỉnh mô tả
+  customWarning?: string; // Tùy chỉnh cảnh báo
+  icon?: LucideIcon; // Tùy chỉnh icon
 }
 
 export default function SignConfirmModal({
@@ -17,13 +25,50 @@ export default function SignConfirmModal({
   reportTitle,
   reportNumber,
   isLoading = false,
+  actionType = "sign",
+  customTitle,
+  customConfirmText,
+  customDescription,
+  customWarning,
+  icon: IconComponent,
 }: SignConfirmModalProps) {
+  // Cấu hình mặc định theo actionType
+  const getActionConfig = () => {
+    switch (actionType) {
+      case "approve":
+        return {
+          title: "Xác nhận duyệt tờ trình",
+          confirmText: "Xác nhận duyệt",
+          description: "Bạn có chắc chắn muốn duyệt tờ trình sau?",
+          warning: "Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành \"Đã duyệt\" và không thể hoàn tác.",
+          icon: CheckCircle,
+          numberLabel: "Mã tờ trình:",
+          titleLabel: "Tiêu đề:",
+          timeLabel: "Thời gian duyệt:",
+        };
+      case "sign":
+      default:
+        return {
+          title: "Xác nhận ký biên bản",
+          confirmText: "Xác nhận ký",
+          description: "Bạn có chắc chắn muốn ký xác nhận biên bản sau?",
+          warning: "Sau khi ký xác nhận, trạng thái biên bản sẽ được chuyển thành \"Đã ký\" và không thể hoàn tác.",
+          icon: CheckCircle,
+          numberLabel: "Số biên bản:",
+          titleLabel: "Tiêu đề:",
+          timeLabel: "Thời gian ký:",
+        };
+    }
+  };
+
+  const config = getActionConfig();
+  const FinalIcon = IconComponent || config.icon;
   return (
     <Modal
       title={
         <div className="flex items-center space-x-2">
-          <CheckCircle className="h-5 w-5 text-green-600" />
-          <span>Xác nhận ký biên bản</span>
+          <FinalIcon className="h-5 w-5 text-green-600" />
+          <span>{customTitle || config.title}</span>
         </div>
       }
       open={isOpen}
@@ -38,7 +83,7 @@ export default function SignConfirmModal({
           onClick={onConfirm}
           loading={isLoading}
           className="bg-green-600 hover:bg-green-700">
-          Xác nhận ký
+          {customConfirmText || config.confirmText}
         </Button>,
       ]}
       width={500}
@@ -46,7 +91,7 @@ export default function SignConfirmModal({
       <div className="py-4">
         <div className="mb-6">
           <p className="text-gray-600 mb-4">
-            Bạn có chắc chắn muốn ký xác nhận biên bản sau?
+            {customDescription || config.description}
           </p>
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-3">
@@ -54,7 +99,7 @@ export default function SignConfirmModal({
               <User className="h-4 w-4 text-gray-400 mt-0.5" />
               <div>
                 <div className="text-sm font-medium text-gray-700">
-                  Số biên bản:
+                  {config.numberLabel}
                 </div>
                 <div className="text-sm text-gray-900">{reportNumber}</div>
               </div>
@@ -64,7 +109,7 @@ export default function SignConfirmModal({
               <CheckCircle className="h-4 w-4 text-gray-400 mt-0.5" />
               <div>
                 <div className="text-sm font-medium text-gray-700">
-                  Tiêu đề:
+                  {config.titleLabel}
                 </div>
                 <div className="text-sm text-gray-900">{reportTitle}</div>
               </div>
@@ -74,7 +119,7 @@ export default function SignConfirmModal({
               <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
               <div>
                 <div className="text-sm font-medium text-gray-700">
-                  Thời gian ký:
+                  {config.timeLabel}
                 </div>
                 <div className="text-sm text-gray-900">
                   {new Date().toLocaleString("vi-VN")}
@@ -88,8 +133,7 @@ export default function SignConfirmModal({
           <div className="flex items-start space-x-2">
             <div className="text-yellow-600 text-sm">⚠️</div>
             <div className="text-yellow-800 text-sm">
-              <strong>Lưu ý:</strong> Sau khi ký xác nhận, trạng thái biên bản
-              sẽ được chuyển thành &ldquo;Đã ký&rdquo; và không thể hoàn tác.
+              <strong>Lưu ý:</strong> {customWarning || config.warning}
             </div>
           </div>
         </div>

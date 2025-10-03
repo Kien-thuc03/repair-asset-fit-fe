@@ -319,7 +319,7 @@ export default function XuLyToTrinhDetailPage() {
               href: "/",
               title: (
                 <div className="flex items-center">
-                  <Home className="w-4 h-4 mr-1" />
+                
                   <span>Trang chủ</span>
                 </div>
               ),
@@ -328,7 +328,7 @@ export default function XuLyToTrinhDetailPage() {
               href: "/phong-quan-tri",
               title: (
                 <div className="flex items-center">
-                  <Building className="w-4 h-4 mr-1" />
+                 
                   <span>Phòng quản trị</span>
                 </div>
               ),
@@ -337,7 +337,7 @@ export default function XuLyToTrinhDetailPage() {
               href: "/phong-quan-tri/xu-ly-to-trinh",
               title: (
                 <div className="flex items-center">
-                  <FileText className="w-4 h-4 mr-1" />
+                  
                   <span>Xử lý tờ trình</span>
                 </div>
               ),
@@ -345,7 +345,7 @@ export default function XuLyToTrinhDetailPage() {
             {
               title: (
                 <div className="flex items-center">
-                  <Eye className="w-4 h-4 mr-1" />
+                  
                   <span>Chi tiết tờ trình {proposal.proposalCode}</span>
                 </div>
               ),
@@ -997,6 +997,7 @@ export default function XuLyToTrinhDetailPage() {
         reportTitle={proposal.title}
         reportNumber={proposal.proposalCode}
         isLoading={isProcessing}
+        actionType="approve"
       />
     </div>
   );
