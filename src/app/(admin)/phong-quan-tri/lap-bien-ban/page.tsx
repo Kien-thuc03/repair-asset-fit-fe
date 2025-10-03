@@ -258,81 +258,6 @@ export default function LapBienBanPage() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <FileText className="h-8 w-8 text-gray-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Tổng biên bản
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {statistics.total}
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <CheckCircle className="h-8 w-8 text-green-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Đã hoàn thành
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {statistics.completed}
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <FileCheck className="h-8 w-8 text-blue-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Đã duyệt
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {statistics.approved}
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Clock className="h-8 w-8 text-yellow-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Cần lập biên bản
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {statistics.needInspection}
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Search */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
@@ -500,10 +425,10 @@ export default function LapBienBanPage() {
                     </td>
                     <td className="px-2 py-4">
                       <button
-                        onClick={() => handleViewReport(request.id)}
-                        className="inline-flex items-center justify-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 w-full">
+                        onClick={() => handleViewReport(request.id)}>
+
                         <Eye className="w-3 h-3 mr-1" />
-                        Xem
+
                       </button>
                     </td>
                   </tr>

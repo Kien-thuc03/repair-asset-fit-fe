@@ -1,7 +1,7 @@
 import { Modal, Button } from "antd";
 import { CheckCircle, User, Calendar, LucideIcon } from "lucide-react";
 
-type ActionType = "sign" | "approve";
+type ActionType = "sign" | "approve" | "send";
 
 interface SignConfirmModalProps {
   isOpen: boolean;
@@ -46,6 +46,18 @@ export default function SignConfirmModal({
           numberLabel: "Mã tờ trình:",
           titleLabel: "Tiêu đề:",
           timeLabel: "Thời gian duyệt:",
+        };
+      case "send":
+        return {
+          title: "Xác nhận gửi đề xuất",
+          confirmText: "Gửi đề xuất",
+          description: "Bạn có chắc chắn muốn gửi đề xuất thay thế này?",
+          warning:
+            "Sau khi gửi, đề xuất sẽ được chuyển lên cấp trên để xem xét và không thể chỉnh sửa.",
+          icon: CheckCircle,
+          numberLabel: "Mã đề xuất:",
+          titleLabel: "Tiêu đề:",
+          timeLabel: "Thời gian gửi:",
         };
       case "sign":
       default:

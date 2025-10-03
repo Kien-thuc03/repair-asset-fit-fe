@@ -5,21 +5,19 @@ import {
   ChevronDown,
   ChevronUp,
   Search,
-  Filter,
   FileText,
   Calendar,
   Eye,
-  Edit,
-  PaperclipIcon,
-  Paperclip,
+  Plane,
+  PlaneLanding,
 } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb, message } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types/repair";
 import { Pagination } from "@/components/common";
+import { SignConfirmModal } from "@/components/modal";
 
-type FilterStatus = "ALL" | "ĐÃ_XÁC_MINH";
 type SortField =
   | "proposalCode"
   | "createdAt"
@@ -30,22 +28,22 @@ type SortDirection = "asc" | "desc";
 
 export default function GuiDeXuatThayThePage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>("ALL");
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Modal states
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedItem, setSelectedItem] =
+    useState<ReplacementRequestItem | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const filteredData = useMemo(() => {
     // Lọc dữ liệu: chỉ lấy các đề xuất có trạng thái ĐÃ_XÁC_MINH (Tổ trưởng đã ký biên bản xác nhận)
     let filtered = mockReplacementRequestItem.filter(
       (item) => item.status === ReplacementStatus.ĐÃ_XÁC_MINH
     );
-
-    // Apply status filter
-    if (statusFilter !== "ALL") {
-      filtered = filtered.filter((item) => item.status === statusFilter);
-    }
 
     // Apply search filter
     if (searchTerm) {
@@ -93,7 +91,7 @@ export default function GuiDeXuatThayThePage() {
     });
 
     return filtered;
-  }, [searchTerm, statusFilter, sortField, sortDirection]);
+  }, [searchTerm, sortField, sortDirection]);
 
   // Pagination
   const totalItems = filteredData.length;
@@ -131,38 +129,42 @@ export default function GuiDeXuatThayThePage() {
     }
   };
 
-  const statsData = useMemo(() => {
-    const daXacMinh = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_XÁC_MINH
-    ).length;
+  // Xử lý mở modal xác nhận
+  const handleOpenConfirmModal = (item: ReplacementRequestItem) => {
+    setSelectedItem(item);
+    setShowConfirmModal(true);
+  };
 
-    return {
-      daXacMinh,
-      total: filteredData.length,
-    };
-  }, [filteredData]);
+  // Xử lý đóng modal
+  const handleCloseModal = () => {
+    setShowConfirmModal(false);
+    setSelectedItem(null);
+  };
 
-  // Xử lý cập nhật trạng thái
-  const handleStatusUpdate = async (
-    record: ReplacementRequestItem,
-    newStatus: ReplacementStatus
-  ) => {
+  // Xử lý xác nhận gửi đề xuất
+  const handleConfirmSend = async () => {
+    if (!selectedItem) return;
+
     try {
-      // Trong thực tế sẽ gọi API để cập nhật với newStatus
-      const actionText =
-        newStatus === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
-          ? "gửi đề xuất"
-          : "cập nhật trạng thái";
+      setIsProcessing(true);
+
+      // Trong thực tế sẽ gọi API để cập nhật trạng thái
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
 
       message.success(
-        `Đã ${actionText} cho đề xuất ${record.proposalCode} thành công!`
+        `Đã gửi đề xuất ${selectedItem.proposalCode} thành công!`
       );
+
+      // Đóng modal và reset state
+      handleCloseModal();
 
       // Reload trang để cập nhật dữ liệu
       window.location.reload();
     } catch (error) {
-      message.error("Có lỗi xảy ra khi xử lý đề xuất!");
+      message.error("Có lỗi xảy ra khi gửi đề xuất!");
       console.error(error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -209,34 +211,17 @@ export default function GuiDeXuatThayThePage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-cyan-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Đã xác minh</p>
-              <p className="text-2xl font-bold text-cyan-600">
-                {statsData.daXacMinh}
-              </p>
-            </div>
-            <FileText className="h-8 w-8 text-cyan-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Tổng đề xuất</p>
-              <p className="text-2xl font-bold text-gray-600">
-                {statsData.total}
-              </p>
-            </div>
-            <FileText className="h-8 w-8 text-gray-500" />
-          </div>
-        </div>
-      </div>
-
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow p-6">
+        <div className="mb-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Tìm kiếm đề xuất
+          </h3>
+          <p className="text-sm text-gray-600">
+            Tìm kiếm các đề xuất thay thế đã được tổ trưởng kỹ thuật xác minh và
+            sẵn sàng để gửi lên cấp trên phê duyệt.
+          </p>
+        </div>
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
@@ -249,22 +234,6 @@ export default function GuiDeXuatThayThePage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-            </div>
-          </div>
-
-          {/* Status Filter */}
-          <div className="min-w-[200px]">
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <select
-                value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value as FilterStatus)
-                }
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="ĐÃ_XÁC_MINH">Đã xác minh</option>
-              </select>
             </div>
           </div>
         </div>
@@ -417,15 +386,10 @@ export default function GuiDeXuatThayThePage() {
                       {/* Chỉ hiển thị nút xử lý cho những trạng thái ĐÃ_XÁC_MINH */}
                       {item.status === ReplacementStatus.ĐÃ_XÁC_MINH && (
                         <button
-                          onClick={() => {
-                            // Xử lý gửi đề xuất thay thế
-                            const nextStatus =
-                              ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH;
-                            handleStatusUpdate(item, nextStatus);
-                          }}
+                          onClick={() => handleOpenConfirmModal(item)}
                           className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                           title="Gửi đề xuất">
-                          <Paperclip className="w-3 h-3" />
+                          <Plane className="w-3 h-3" />
                         </button>
                       )}
                     </div>
@@ -463,6 +427,22 @@ export default function GuiDeXuatThayThePage() {
           </div>
         )}
       </div>
+
+      {/* Modal xác nhận gửi đề xuất */}
+      <SignConfirmModal
+        isOpen={showConfirmModal}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmSend}
+        reportTitle={selectedItem?.title || ""}
+        reportNumber={selectedItem?.proposalCode || ""}
+        isLoading={isProcessing}
+        actionType="send"
+        customTitle="Xác nhận gửi đề xuất thay thế"
+        customConfirmText="Gửi đề xuất"
+        customDescription="Bạn có chắc chắn muốn gửi đề xuất thay thế này lên cấp trên để phê duyệt?"
+        customWarning="Sau khi gửi, đề xuất sẽ được chuyển lên Phòng Quản trị để xem xét và phê duyệt. Bạn không thể chỉnh sửa đề xuất sau khi đã gửi."
+        icon={PlaneLanding}
+      />
     </div>
   );
 }
