@@ -3,7 +3,7 @@
 import { useState, useRef, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Breadcrumb } from "antd";
-import { ArrowLeft, FileText, Printer, Save } from "lucide-react";
+import { ArrowLeft, FileText, Save } from "lucide-react";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus, SubmissionFormData } from "@/types/repair";
 import { users } from "@/lib/mockData/users";
@@ -140,48 +140,6 @@ Khoa rất mong Ban Giám hiệu xem xét và đồng ý cho thực hiện.
 Trân trọng kính trình.`;
   };
 
-  const handlePrint = () => {
-    if (printRef.current) {
-      const printContent = printRef.current.innerHTML;
-      const printWindow = window.open("", "_blank");
-      if (printWindow) {
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>Tờ trình ${selectedRequest?.id}</title>
-              <style>
-                body { font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.5; margin: 20px; }
-                .header { text-align: center; margin-bottom: 30px; }
-                .title { font-weight: bold; margin: 10px 0; }
-                .content { text-align: justify; margin: 20px 0; }
-                .signature { margin-top: 50px; }
-                .signature-section { float: right; text-align: center; width: 200px; margin-left: 20px; }
-                .signature-left { float: left; text-align: center; width: 200px; margin-right: 20px; }
-                .clearfix { clear: both; }
-                table { border-collapse: collapse; width: 100%; margin: 10px 0; }
-                th, td { border: 1px solid #000; padding: 4px 6px; font-size: 12px; }
-                th { background-color: #f5f5f5; font-weight: bold; text-align: center; }
-                .text-center { text-align: center; }
-                .font-mono { font-family: monospace; }
-                .signature-left { float: left; text-align: center; width: 200px; margin-right: 20px; }
-                .clearfix { clear: both; }
-                @media print {
-                  body { margin: 0; }
-                  .no-print { display: none; }
-                }
-              </style>
-            </head>
-            <body>
-              ${printContent}
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-      }
-    }
-  };
 
   const handleSave = () => {
     console.log("Saving report:", {
@@ -327,12 +285,6 @@ Trân trọng kính trình.`;
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <button
-            onClick={handlePrint}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-            <Printer className="h-4 w-4 mr-2" />
-            In
-          </button>
         </div>
       </div>
 
