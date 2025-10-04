@@ -22,10 +22,10 @@ import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 export default function LapToTrinhPage() {
   const router = useRouter();
 
-  // Lấy các đề xuất thay thế đã được TỔ TRƯỞNG DUYỆT - sẵn sàng lập tờ trình
+  // Lấy các đề xuất thay thế đã lập tờ trình - trạng thái ĐÃ_LẬP_TỜ_TRÌNH
   const [replacementRequests] = useState<ReplacementRequestItem[]>(() => {
     return mockReplacementRequestItem.filter(
-      (request) => request.status === ReplacementStatus.ĐÃ_DUYỆT
+      (request) => request.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
     );
   });
   const [selectedStatus] = useState<string>("all");
@@ -332,7 +332,7 @@ export default function LapToTrinhPage() {
             {
               title: (
                 <div className="flex items-center">
-                  <span>Lập tờ trình</span>
+                  <span>Danh sách tờ trình</span>
                 </div>
               ),
             },
@@ -343,11 +343,10 @@ export default function LapToTrinhPage() {
       <div className="mb-4 sm:mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Lập tờ trình
+            Danh sách tờ trình
           </h1>
           <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            Lập tờ trình cho các đề xuất thay thế linh kiện đã được tổ trưởng
-            duyệt
+            Quản lý các tờ trình đã được lập cho đề xuất thay thế linh kiện
           </p>
         </div>
       </div>
@@ -409,7 +408,7 @@ export default function LapToTrinhPage() {
       <div className="bg-white shadow rounded-lg">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách đề xuất chờ lập tờ trình ({sortedRequests.length})
+            Danh sách tờ trình ({sortedRequests.length})
           </h2>
         </div>
 
@@ -493,16 +492,6 @@ export default function LapToTrinhPage() {
                           }}
                           className="text-indigo-600 hover:text-indigo-900 p-1">
                           <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            router.push(
-                              `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
-                            );
-                          }}
-                          className="px-3 py-1 text-xs font-medium border rounded-md transition-colors text-blue-700 bg-blue-100 border-blue-300 hover:bg-blue-200 cursor-pointer"
-                          title="Lập tờ trình">
-                          Lập tờ trình
                         </button>
                       </div>
                     </div>
@@ -667,17 +656,6 @@ export default function LapToTrinhPage() {
                               className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                               title="Xem chi tiết">
                               <Eye className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                router.push(
-                                  `/to-truong-ky-thuat/lap-to-trinh/lap-to-trinh/${request.id}`
-                                );
-                              }}
-                              className="inline-flex items-center px-3 py-1.5 border rounded text-xs font-medium whitespace-nowrap transition-colors text-blue-700 bg-blue-50 border-blue-300 hover:bg-blue-100 cursor-pointer"
-                              title="Lập tờ trình">
-                              <FileText className="h-3 w-3 mr-1" />
-                              <span>Lập tờ trình</span>
                             </button>
                           </div>
                         </td>

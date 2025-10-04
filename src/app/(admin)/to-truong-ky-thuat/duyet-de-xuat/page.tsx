@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ReplacementRequestItem,
   ReplacementStatus,
@@ -19,6 +20,8 @@ import {
 } from "@/components/leadTechnician/proposalApproval";
 
 export default function DuyetDeXuatPage() {
+  const router = useRouter();
+
   // State cho Modal xuất Excel
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
@@ -172,11 +175,17 @@ Trân trọng kính trình.`;
     setShowSubmissionModal(false);
     setSelectedRequestForSubmission(null);
 
-    // Show success message
+    // Redirect immediately
+    console.log("Redirecting to /to-truong-ky-thuat/lap-to-trinh");
+    router.push("/to-truong-ky-thuat/lap-to-trinh");
+
+    // Show success message without blocking redirect
     Modal.success({
       title: "Lập tờ trình thành công!",
       content: `Tờ trình cho đề xuất ${selectedRequestForSubmission.proposalCode} đã được tạo và gửi tới Phòng Quản trị.`,
       centered: true,
+      mask: false,
+      keyboard: false,
     });
   };
 
@@ -474,7 +483,7 @@ Trân trọng kính trình.`;
             type="primary"
             onClick={handleSubmitSubmission}
             className="bg-purple-600 hover:bg-purple-700">
-            Lập tờ trình
+            Gửi tờ trình
           </Button>,
         ]}>
         <div className="space-y-4">

@@ -32,6 +32,8 @@ export default function ChiTietDuyetDeXuatPage() {
   // State for actions
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showApprovalConfirmModal, setShowApprovalConfirmModal] =
+    useState(false);
 
   // State for request status updates
   const [currentRequestStatus, setCurrentRequestStatus] = useState<string>("");
@@ -50,6 +52,9 @@ export default function ChiTietDuyetDeXuatPage() {
       director: "TS. Lê Nhất Duy",
       rector: "TS. Phan Hồng Hải",
     });
+
+  // Debug log
+  console.log("showSubmissionModal state:", showSubmissionModal);
 
   const request = useMemo(
     () => mockReplacementRequestItem.find((r) => r.id === id),
@@ -256,25 +261,16 @@ export default function ChiTietDuyetDeXuatPage() {
     setCurrentRequestStatus("ĐÃ_DUYỆT");
     console.log("Request approved, status updated to ĐÃ_DUYỆT");
 
-    // Show success message and ask about creating submission form
-    Modal.confirm({
-      title: "Phê duyệt thành công!",
-      content:
-        "Đề xuất đã được phê duyệt. Bạn có muốn lập tờ trình ngay bây giờ không?",
-      okText: "Có",
-      cancelText: "Không",
-      centered: true,
-      onOk: () => {
-        handleCreateSubmissionForm();
-      },
-      onCancel: () => {
-        router.push("/to-truong-ky-thuat/duyet-de-xuat");
-      },
-    });
+    // Show confirmation modal for submission form
+    setShowApprovalConfirmModal(true);
   };
 
   const handleCreateSubmissionForm = () => {
-    if (!request) return;
+    console.log("handleCreateSubmissionForm called, request:", request);
+    if (!request) {
+      console.log("No request found, returning");
+      return;
+    }
 
     // Auto-generate content based on the request
     const proposer = users.find((u) => u.id === request.proposerId);
@@ -319,7 +315,9 @@ Trân trọng kính trình.`;
       submittedBy: proposer?.fullName || "Giảng Thanh Trọn",
     }));
 
+    console.log("Setting showSubmissionModal to true");
     setShowSubmissionModal(true);
+    console.log("showSubmissionModal should now be:", true);
   };
 
   const handleSubmitSubmission = () => {
@@ -337,17 +335,20 @@ Trân trọng kính trình.`;
     setCurrentRequestStatus("ĐÃ_LẬP_TỜ_TRÌNH");
     console.log("Status updated to ĐÃ_LẬP_TỜ_TRÌNH");
 
-    // Close modal and reset state
+    // Close modal first
     setShowSubmissionModal(false);
 
-    // Show success message
+    // Redirect immediately
+    console.log("Redirecting to /to-truong-ky-thuat/lap-to-trinh");
+    router.push("/to-truong-ky-thuat/lap-to-trinh");
+
+    // Show success message without blocking redirect
     Modal.success({
       title: "Lập tờ trình thành công!",
       content: `Tờ trình cho đề xuất ${request.proposalCode} đã được tạo và gửi tới Phòng Quản trị.`,
       centered: true,
-      onOk: () => {
-        router.push("/to-truong-ky-thuat/duyet-de-xuat");
-      },
+      mask: false,
+      keyboard: false,
     });
   };
 
@@ -612,6 +613,40 @@ Trân trọng kính trình.`;
         </p>
       </Modal>
 
+      {/* Approval Confirmation Modal */}
+      <Modal
+        title="Phê duyệt thành công!"
+        open={showApprovalConfirmModal}
+        onCancel={() => {
+          setShowApprovalConfirmModal(false);
+          router.push("/to-truong-ky-thuat/duyet-de-xuat");
+        }}
+        footer={[
+          <Button
+            key="no"
+            onClick={() => {
+              setShowApprovalConfirmModal(false);
+              router.push("/to-truong-ky-thuat/duyet-de-xuat");
+            }}>
+            Không
+          </Button>,
+          <Button
+            key="yes"
+            type="primary"
+            onClick={() => {
+              setShowApprovalConfirmModal(false);
+              handleCreateSubmissionForm();
+            }}>
+            Có - Lập tờ trình
+          </Button>,
+        ]}
+        centered>
+        <p className="text-gray-600">
+          Đề xuất đã được phê duyệt. Bạn có muốn lập tờ trình ngay bây giờ
+          không?
+        </p>
+      </Modal>
+
       {/* Reject Modal */}
       <Modal
         title="Từ chối đề xuất"
@@ -631,72 +666,167 @@ Trân trọng kính trình.`;
         </p>
       </Modal>
 
-      {/* Submission Modal */}
+      {/* Modal lập tờ trình */}
       <Modal
         title={
           <div className="flex items-center space-x-2">
-            <FileText className="h-5 w-5 text-blue-600" />
-            <span>Lập tờ trình</span>
+            <FileText className="w-5 h-5 text-purple-600" />
+            <span>Lập tờ trình đề xuất</span>
           </div>
         }
         open={showSubmissionModal}
         onCancel={() => setShowSubmissionModal(false)}
+        width={800}
+        destroyOnClose={false}
+        maskClosable={false}
         footer={[
           <Button key="cancel" onClick={() => setShowSubmissionModal(false)}>
             Hủy
           </Button>,
-          <Button key="submit" type="primary" onClick={handleSubmitSubmission}>
-            Lập tờ trình
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleSubmitSubmission}
+            className="bg-purple-600 hover:bg-purple-700">
+            Gửi tờ trình
           </Button>,
-        ]}
-        width={600}>
+        ]}>
         <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Người đề nghị
+              </label>
+              <Input
+                value={submissionFormData.submittedBy}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    submittedBy: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Chức vụ
+              </label>
+              <Input
+                value={submissionFormData.position}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    position: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Đơn vị đề nghị
+              </label>
+              <Input
+                value={submissionFormData.department}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    department: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Đơn vị tiếp nhận
+              </label>
+              <Input
+                value={submissionFormData.recipientDepartment}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    recipientDepartment: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tiêu đề
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Đề nghị
             </label>
             <Input
               value={submissionFormData.subject}
               onChange={(e) =>
-                setSubmissionFormData({
-                  ...submissionFormData,
+                setSubmissionFormData((prev) => ({
+                  ...prev,
                   subject: e.target.value,
-                })
+                }))
               }
-              placeholder="Nhập tiêu đề tờ trình"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nội dung
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nội dung tờ trình
             </label>
             <Input.TextArea
+              rows={8}
               value={submissionFormData.content}
               onChange={(e) =>
-                setSubmissionFormData({
-                  ...submissionFormData,
+                setSubmissionFormData((prev) => ({
+                  ...prev,
                   content: e.target.value,
-                })
+                }))
               }
-              placeholder="Nhập nội dung tờ trình"
-              rows={4}
+              placeholder="Nội dung chi tiết của tờ trình..."
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tài liệu đính kèm
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Văn bản kèm theo
             </label>
-            <Input.TextArea
+            <Input
               value={submissionFormData.attachments}
               onChange={(e) =>
-                setSubmissionFormData({
-                  ...submissionFormData,
+                setSubmissionFormData((prev) => ({
+                  ...prev,
                   attachments: e.target.value,
-                })
+                }))
               }
-              placeholder="Mô tả tài liệu đính kèm (nếu có)"
-              rows={3}
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Giám đốc
+              </label>
+              <Input
+                value={submissionFormData.director}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    director: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Hiệu trưởng
+              </label>
+              <Input
+                value={submissionFormData.rector}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    rector: e.target.value,
+                  }))
+                }
+              />
+            </div>
           </div>
         </div>
       </Modal>
