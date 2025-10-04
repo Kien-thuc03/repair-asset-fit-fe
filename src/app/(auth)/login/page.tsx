@@ -40,7 +40,7 @@ export default function LoginPage() {
         'KY_THUAT_VIEN': '/ky-thuat-vien',
         'GIANG_VIEN': '/giang-vien'
       }
-      const route = roleRoutes[user.activeRole?.code as keyof typeof roleRoutes] || '/admin'
+      const route = roleRoutes[user.activeRole?.code as keyof typeof roleRoutes] || '/login'
       router.push(route)
     }
   }, [user, router])
@@ -68,7 +68,7 @@ export default function LoginPage() {
 
   const handleCloseRoleModal = () => {
     setShowRoleModal(false)
-    router.push('/admin')
+    router.push('/login') // Redirect to login if modal is closed without selection
   }
   
   return (
