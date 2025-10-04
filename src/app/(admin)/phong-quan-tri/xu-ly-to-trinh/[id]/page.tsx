@@ -17,7 +17,7 @@ import {
   MemoryStick,
   Eye,
 } from "lucide-react";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, Modal } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus, ComponentType } from "@/types/repair";
 import SignConfirmModal from "@/components/modal/SignConfirmModal";
@@ -110,32 +110,56 @@ export default function XuLyToTrinhDetailPage() {
     setIsProcessing(true);
     setShowConfirmModal(false);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // In thực tế, sẽ gọi API để cập nhật status
-    console.log(
-      `${actionType === "approve" ? "Duyệt" : "Từ chối"} tờ trình ${
-        proposal.id
-      }`,
-      {
-        adminNotes,
-        newStatus:
-          actionType === "approve"
-            ? ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-            : ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+      // In thực tế, sẽ gọi API để cập nhật status
+      console.log(
+        `${actionType === "approve" ? "Duyệt" : "Từ chối"} tờ trình ${
+          proposal.id
+        }`,
+        {
+          adminNotes,
+          newStatus:
+            actionType === "approve"
+              ? ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
+              : ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+        }
+      );
+
+      setIsProcessing(false);
+      setActionType(null);
+      setAdminNotes("");
+
+      // Hiển thị thông báo thành công
+      if (actionType === "reject") {
+        Modal.success({
+          title: "Từ chối tờ trình thành công",
+          content: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công.`,
+          okText: "Đóng",
+          onOk: () => {
+            // Redirect về danh sách sau khi xử lý xong
+            router.push("/phong-quan-tri/xu-ly-to-trinh?success=rejected");
+          },
+        });
+      } else {
+        // Redirect về danh sách sau khi xử lý xong
+        router.push(
+          "/phong-quan-tri/xu-ly-to-trinh?success=" +
+            (actionType === "approve" ? "approved" : "rejected")
+        );
       }
-    );
+    } catch (error) {
+      console.error("Error processing proposal:", error);
+      setIsProcessing(false);
 
-    setIsProcessing(false);
-    setActionType(null);
-    setAdminNotes("");
-
-    // Redirect về danh sách sau khi xử lý xong
-    router.push(
-      "/phong-quan-tri/xu-ly-to-trinh?success=" +
-        (actionType === "approve" ? "approved" : "rejected")
-    );
+      Modal.error({
+        title: "Lỗi",
+        content: "Có lỗi xảy ra khi xử lý tờ trình. Vui lòng thử lại.",
+        okText: "Đóng",
+      });
+    }
   };
 
   const handleSignConfirm = async () => {
@@ -154,16 +178,32 @@ export default function XuLyToTrinhDetailPage() {
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      // Thêm delay nhỏ để đảm bảo modal đã đóng hoàn toàn
-      setTimeout(() => {
-        // Redirect về trang lập biên bản sau khi duyệt xong
-        console.log("Redirecting to lap-bien-ban page...");
-        router.replace("/phong-quan-tri/lap-bien-ban");
-      }, 100);
+      // Hiển thị thông báo thành công trước khi redirect
+      Modal.success({
+        title: "Duyệt tờ trình thành công",
+        content: (
+          <div>
+            <p>Tờ trình {proposal.proposalCode} đã được duyệt thành công!</p>
+            <p>Hệ thống sẽ chuyển bạn đến trang lập biên bản.</p>
+          </div>
+        ),
+        okText: "Tiếp tục",
+        onOk: () => {
+          // Redirect về trang lập biên bản chi tiết sau khi duyệt xong
+          console.log("Redirecting to lap-bien-ban page...");
+          router.replace(`/phong-quan-tri/lap-bien-ban/${proposal.id}`);
+        },
+      });
     } catch (error) {
       console.error("Error approving proposal:", error);
       setIsProcessing(false);
       setShowSignConfirmModal(false);
+
+      Modal.error({
+        title: "Lỗi",
+        content: "Có lỗi xảy ra khi duyệt tờ trình. Vui lòng thử lại.",
+        okText: "Đóng",
+      });
     }
   };
 
