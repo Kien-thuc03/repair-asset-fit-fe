@@ -382,6 +382,8 @@ export default function RepairDetailPage() {
 						initStatus={currentRequest.status}
 						assetId={currentRequest.computerAssetId} // Truyền computerAssetId
 						errorTypeName={currentRequest.errorTypeName} // Truyền errorTypeName để xác định loại lỗi
+						requestCode={currentRequest.requestCode} // Truyền requestCode
+						assetName={currentRequest.assetName} // Truyền assetName
 						onCreateReplacement={(parts) => {
 							// Xử lý tạo yêu cầu thay thế ở đây
 							router.push('/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat')
