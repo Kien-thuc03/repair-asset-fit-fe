@@ -126,9 +126,11 @@ export default function SoftwareProposalsPage() {
 
     if (selectedData.length === 0) {
       Modal.warning({
-        title: "Không thể xuất Excel",
-        content: "Vui lòng chọn ít nhất một đề xuất để xuất Excel",
+        title: "Thông báo",
+        content: "Vui lòng chọn ít nhất một đề xuất để xuất Excel.",
         centered: true,
+        okText: "Đồng ý",
+        icon: <Download className="text-orange-500" />,
       });
       return;
     }
@@ -153,29 +155,94 @@ export default function SoftwareProposalsPage() {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(excelData);
 
+      // Đặt độ rộng cột tự động
+      const colWidths = [
+        { wch: 5 }, // STT
+        { wch: 20 }, // Mã đề xuất
+        { wch: 25 }, // Người đề xuất
+        { wch: 15 }, // Phòng
+        { wch: 40 }, // Lý do đề xuất
+        { wch: 15 }, // Trạng thái
+        { wch: 15 }, // Ngày tạo
+        { wch: 15 }, // Ngày cập nhật
+      ];
+      ws["!cols"] = colWidths;
+
       // Thêm worksheet vào workbook
       XLSX.utils.book_append_sheet(wb, ws, "Danh sách đề xuất phần mềm");
 
       // Xuất file
-      const fileName = `danh-sach-de-xuat-phan-mem-${
+      const fileName = `Danh_sach_de_xuat_phan_mem_${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
       XLSX.writeFile(wb, fileName);
 
+      // Modal thông báo thành công với thông tin chi tiết
       Modal.success({
-        title: "Xuất Excel thành công!",
-        content: `Đã xuất ${selectedData.length} đề xuất ra file ${fileName}`,
+        title: (
+          <div className="flex items-center gap-2">
+            <CheckCircle className="text-green-500" />
+            <span>Xuất Excel thành công!</span>
+          </div>
+        ),
+        content: (
+          <div className="space-y-2">
+            <p>
+              ✅ <strong>Số lượng đề xuất:</strong> {selectedData.length}
+            </p>
+            <p>
+              📁 <strong>Tên file:</strong> {fileName}
+            </p>
+            <p>
+              📍 <strong>Vị trí:</strong> Thư mục Downloads
+            </p>
+            <p className="text-sm text-gray-500 mt-3">
+              File Excel đã được tải xuống thành công. Bạn có thể tìm thấy file
+              trong thư mục Downloads của máy tính.
+            </p>
+          </div>
+        ),
         centered: true,
+        okText: "Đồng ý",
+        width: 500,
+        onOk: () => {
+          // Reset selection sau khi người dùng đóng modal
+          setSelectedRowKeys([]);
+        },
       });
-
-      // Reset selection sau khi xuất
-      setSelectedRowKeys([]);
     } catch (error) {
       console.error("Lỗi xuất Excel:", error);
+
+      // Modal thông báo lỗi chi tiết
       Modal.error({
-        title: "Lỗi xuất Excel",
-        content: "Có lỗi xảy ra khi xuất file Excel",
+        title: (
+          <div className="flex items-center gap-2">
+            <XCircle className="text-red-500" />
+            <span>Lỗi xuất Excel</span>
+          </div>
+        ),
+        content: (
+          <div className="space-y-2">
+            <p>❌ Có lỗi xảy ra khi xuất file Excel</p>
+            <p className="text-sm text-gray-600">
+              <strong>Chi tiết lỗi:</strong>{" "}
+              {error instanceof Error ? error.message : "Lỗi không xác định"}
+            </p>
+            <div className="bg-gray-50 p-3 rounded mt-3">
+              <p className="text-sm font-medium text-gray-700">
+                Hướng dẫn khắc phục:
+              </p>
+              <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                <li>• Kiểm tra kết nối internet</li>
+                <li>• Đảm bảo trình duyệt cho phép tải xuống file</li>
+                <li>• Thử lại sau vài giây</li>
+              </ul>
+            </div>
+          </div>
+        ),
         centered: true,
+        okText: "Đồng ý",
+        width: 500,
       });
     }
   };

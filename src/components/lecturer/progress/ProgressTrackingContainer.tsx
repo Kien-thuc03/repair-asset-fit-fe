@@ -161,7 +161,7 @@ export default function ProgressTrackingContainer() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN");
+    return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
   // Handle checkbox selection

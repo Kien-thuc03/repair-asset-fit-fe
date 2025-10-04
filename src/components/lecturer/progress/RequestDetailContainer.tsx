@@ -32,7 +32,7 @@ export default function RequestDetailContainer({
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN");
+    return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
   // Check if current user has permission to edit/cancel requests
@@ -120,7 +120,7 @@ export default function RequestDetailContainer({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          <RequestInfo request={request} formatDate={formatDate} />
+          <RequestInfo request={request} />
 
           {/* Display components from RepairRequestComponents table */}
           <FaultyComponentsList repairRequestId={request.id} />

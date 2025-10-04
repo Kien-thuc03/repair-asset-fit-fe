@@ -12,10 +12,9 @@ import { RepairRequest } from "@/types";
 
 interface RequestInfoProps {
   request: RepairRequest;
-  formatDate: (dateString: string) => string;
 }
 
-export default function RequestInfo({ request, formatDate }: RequestInfoProps) {
+export default function RequestInfo({ request }: RequestInfoProps) {
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-6 py-4 border-b border-gray-200">
@@ -96,9 +95,13 @@ export default function RequestInfo({ request, formatDate }: RequestInfoProps) {
                 <label className="block text-sm font-medium text-gray-700">
                   Ngày tạo
                 </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {formatDate(request.createdAt)}
-                </p>
+                <div
+                  className="truncate"
+                  title={new Date(request.createdAt).toLocaleDateString(
+                    "vi-VN"
+                  )}>
+                  {new Date(request.createdAt).toLocaleDateString("vi-VN")}
+                </div>
               </div>
             </div>
           </div>
