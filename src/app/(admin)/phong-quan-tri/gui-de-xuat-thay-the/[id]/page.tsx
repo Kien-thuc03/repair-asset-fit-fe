@@ -25,11 +25,21 @@ import { SignConfirmModal } from "@/components/modal";
 
 const { Title } = Typography;
 
-// Status mapping cho hiển thị - chỉ cho trạng thái ĐÃ_XÁC_MINH
+// Status mapping cho hiển thị các trạng thái
 const statusConfig = {
   [ReplacementStatus.ĐÃ_XÁC_MINH]: {
     color: "cyan",
     text: "Đã xác minh",
+    icon: <CheckCircle className="h-4 w-4" />,
+  },
+  [ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN]: {
+    color: "blue",
+    text: "Đã ký biên bản",
+    icon: <CheckCircle className="h-4 w-4" />,
+  },
+  [ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: {
+    color: "green",
+    text: "Đã hoàn tất mua sắm",
     icon: <CheckCircle className="h-4 w-4" />,
   },
 };
@@ -77,29 +87,36 @@ export default function ChiTietDeXuatThayThePage() {
     setShowConfirmModal(false);
   };
 
-  // Xử lý xác nhận gửi đề xuất
+  // Xử lý xác nhận hoàn tất mua sắm
   const handleConfirmSend = async () => {
     if (!proposal) return;
 
     try {
       setIsProcessing(true);
 
-      // Trong thực tế sẽ gọi API để cập nhật trạng thái lên ĐÃ_LẬP_TỜ_TRÌNH
+      // Trong thực tế sẽ gọi API để cập nhật trạng thái lên ĐÃ_HOÀN_TẤT_MUA_SẮM
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
 
       const updatedProposal = {
         ...proposal,
-        status: ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+        status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
         updatedAt: new Date().toISOString(),
       };
 
       setProposal(updatedProposal);
-      message.success(`Đã gửi đề xuất ${proposal.proposalCode} thành công!`);
+      message.success(
+        `Đã cập nhật trạng thái ${proposal.proposalCode} thành công!`
+      );
 
-      // Đóng modal và reset state
+      // Đóng modal và chuyển hướng về trang danh sách
       handleCloseModal();
+
+      // Delay chuyển hướng một chút để người dùng thấy thông báo thành công
+      setTimeout(() => {
+        router.push("/phong-quan-tri/gui-de-xuat-thay-the");
+      }, 1500);
     } catch (error) {
-      message.error("Có lỗi xảy ra khi gửi đề xuất!");
+      message.error("Có lỗi xảy ra khi cập nhật trạng thái!");
       console.error(error);
     } finally {
       setIsProcessing(false);
@@ -130,6 +147,8 @@ export default function ChiTietDeXuatThayThePage() {
       ReplacementStatus.ĐÃ_DUYỆT,
       ReplacementStatus.CHỜ_XÁC_MINH,
       ReplacementStatus.ĐÃ_XÁC_MINH,
+      ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN,
+      ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
       ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
       ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
       ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
@@ -183,23 +202,23 @@ export default function ChiTietDeXuatThayThePage() {
       <Breadcrumb
         items={[
           {
-                href: "/",
-                title: (
-                  <div className="flex items-center">
-                    <span>Trang chủ</span>
-                  </div>
-                ),
-              },
-              {
-                href: "/phong-quan-tri",
-                title: (
-                  <div className="flex items-center">
-                    <span>Phòng quản trị</span>
-                  </div>
-                ),
-              },
+            href: "/",
+            title: (
+              <div className="flex items-center">
+                <span>Trang chủ</span>
+              </div>
+            ),
+          },
           {
-            title: "Gửi đề xuất thay thế",
+            href: "/phong-quan-tri",
+            title: (
+              <div className="flex items-center">
+                <span>Phòng quản trị</span>
+              </div>
+            ),
+          },
+          {
+            title: "Danh sách mua sắm thiết bị",
             href: "/phong-quan-tri/gui-de-xuat-thay-the",
           },
           {
@@ -226,13 +245,13 @@ export default function ChiTietDeXuatThayThePage() {
             {getStatusConfig(proposal.status).text}
           </Tag>
 
-          {/* Hiển thị nút xử lý chỉ cho trạng thái ĐÃ_XÁC_MINH */}
-          {proposal.status === ReplacementStatus.ĐÃ_XÁC_MINH && (
+          {/* Hiển thị nút xử lý chỉ cho trạng thái ĐÃ_KÝ_BIÊN_BẢN */}
+          {proposal.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN && (
             <Button
               type="primary"
               onClick={handleOpenConfirmModal}
               loading={isProcessing}>
-              Gửi đề xuất
+              Đã mua sắm
             </Button>
           )}
         </div>
@@ -340,9 +359,7 @@ export default function ChiTietDeXuatThayThePage() {
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-blue-500" />
                     <div>
-                      <p className="font-medium">
-                        Phiếu đề nghị giải quyết công việc
-                      </p>
+                      <p className="font-medium">Tờ trình</p>
                       <p className="text-sm text-gray-500">
                         {proposal.submissionFormUrl.split("/").pop()}
                       </p>
@@ -354,17 +371,13 @@ export default function ChiTietDeXuatThayThePage() {
                       icon={<Eye className="h-4 w-4" />}
                       href={proposal.submissionFormUrl}
                       target="_blank"
-                      className="text-blue-600 hover:text-blue-800">
-                      
-                    </Button>
+                      className="text-blue-600 hover:text-blue-800"></Button>
                     <Button
                       type="link"
                       icon={<Download className="h-4 w-4" />}
                       href={proposal.submissionFormUrl}
                       target="_blank"
-                      download>
-                      
-                    </Button>
+                      download></Button>
                   </div>
                 </div>
               )}
@@ -374,9 +387,7 @@ export default function ChiTietDeXuatThayThePage() {
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-green-500" />
                     <div>
-                      <p className="font-medium">
-                        Biên bản kiểm tra tình trạng kỹ thuật
-                      </p>
+                      <p className="font-medium">Biên bản</p>
                       <p className="text-sm text-gray-500">
                         {proposal.verificationReportUrl.split("/").pop()}
                       </p>
@@ -388,17 +399,13 @@ export default function ChiTietDeXuatThayThePage() {
                       icon={<Eye className="h-4 w-4" />}
                       href={proposal.verificationReportUrl}
                       target="_blank"
-                      className="text-blue-600 hover:text-blue-800">
-                      
-                    </Button>
+                      className="text-blue-600 hover:text-blue-800"></Button>
                     <Button
                       type="link"
                       icon={<Download className="h-4 w-4" />}
                       href={proposal.verificationReportUrl}
                       target="_blank"
-                      download>
-                     
-                    </Button>
+                      download></Button>
                   </div>
                 </div>
               )}
@@ -422,7 +429,7 @@ export default function ChiTietDeXuatThayThePage() {
         </div>
       </div>
 
-      {/* Modal xác nhận gửi đề xuất */}
+      {/* Modal xác nhận hoàn tất mua sắm */}
       <SignConfirmModal
         isOpen={showConfirmModal}
         onClose={handleCloseModal}
@@ -431,10 +438,10 @@ export default function ChiTietDeXuatThayThePage() {
         reportNumber={proposal?.proposalCode || ""}
         isLoading={isProcessing}
         actionType="send"
-        customTitle="Xác nhận gửi đề xuất thay thế"
-        customConfirmText="Gửi đề xuất"
-        customDescription="Bạn có chắc chắn muốn gửi đề xuất thay thế này lên cấp trên để phê duyệt?"
-        customWarning="Sau khi gửi, đề xuất sẽ được chuyển lên Phòng Quản trị để xem xét và phê duyệt. Bạn không thể chỉnh sửa đề xuất sau khi đã gửi."
+        customTitle="Xác nhận hoàn tất mua sắm"
+        customConfirmText="Xác nhận đã mua sắm"
+        customDescription="Bạn có chắc chắn muốn xác nhận đã hoàn tất mua sắm cho đề xuất thay thế này?"
+        customWarning="Sau khi xác nhận, trạng thái đề xuất sẽ được cập nhật thành ĐÃ HOÀN TẤT MUA SẮM và bạn sẽ được chuyển về trang danh sách."
         icon={PlaneLanding}
       />
     </div>

@@ -402,9 +402,9 @@ export default function ChiTietLapToTrinhPage() {
                     <FileText className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        Tờ trình đề xuất
+                        Tờ trình 
                       </p>
-                      <p className="text-xs text-gray-500">PDF Document</p>
+                      <p className="text-xs text-gray-500">DOC Document</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">

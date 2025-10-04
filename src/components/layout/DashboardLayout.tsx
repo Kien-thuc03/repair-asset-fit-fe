@@ -197,7 +197,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: ClipboardList,
       },
       {
-        name: "Gửi đề xuất thay thế",
+        name: "Danh sách mua sắm thiết bị",
         href: "/phong-quan-tri/gui-de-xuat-thay-the",
         icon: FileCheck,
       },

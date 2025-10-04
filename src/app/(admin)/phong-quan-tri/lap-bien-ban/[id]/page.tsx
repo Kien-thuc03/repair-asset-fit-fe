@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   FileText,
   Building,
@@ -17,12 +17,12 @@ import { ReplacementStatus } from "@/types/repair";
 
 export default function RequestDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const [showInspectionForm, setShowInspectionForm] = useState(false);
 
   // Tìm replacement request theo ID
   const request = mockReplacementRequestItem.find((r) => r.id === id);
-
 
   const getStatusColor = (status: ReplacementStatus) => {
     switch (status) {
@@ -60,9 +60,13 @@ export default function RequestDetailPage() {
   };
 
   const handleSubmitInspectionReport = () => {
-    // TODO: Implement inspection report submission
-    alert("Biên bản kiểm tra đã được gửi thành công!");
+    // Đóng modal biên bản trước
     setShowInspectionForm(false);
+
+    // Tăng thời gian chờ để đảm bảo modal đã được đóng hoàn toàn trước khi chuyển trang
+    setTimeout(() => {
+      router.push("/phong-quan-tri/lap-bien-ban");
+    }, 300);
   };
 
   if (!request) {
@@ -256,7 +260,6 @@ export default function RequestDetailPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-start space-x-3">
-                            
                             <div>
                               <div className="text-sm font-medium text-gray-900">
                                 {component.componentName}
@@ -336,7 +339,11 @@ export default function RequestDetailPage() {
             </button>,
             <button
               key="submit"
-              onClick={handleSubmitInspectionReport}
+              type="button"
+              onClick={() => {
+                console.log("Clicked: Gửi biên bản");
+                handleSubmitInspectionReport();
+              }}
               className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
               Gửi biên bản
             </button>,
