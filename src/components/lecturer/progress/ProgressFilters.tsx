@@ -1,25 +1,27 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { Search, Download } from "lucide-react";
 
 interface ProgressFiltersProps {
   searchTerm: string;
-  statusFilter: string;
+  totalCount: number;
+  selectedCount: number;
   onSearchChange: (term: string) => void;
-  onStatusFilterChange: (status: string) => void;
+  onExport: () => void;
 }
 
 export default function ProgressFilters({
   searchTerm,
-  statusFilter,
+  totalCount,
+  selectedCount,
   onSearchChange,
-  onStatusFilterChange,
+  onExport,
 }: ProgressFiltersProps) {
   return (
     <div className="bg-white shadow rounded-lg p-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* Search */}
-        <div className="relative">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        {/* Search - chiếm 3 cột */}
+        <div className="relative sm:col-span-3">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Tìm kiếm yêu cầu sửa chữa
           </label>
@@ -37,23 +39,21 @@ export default function ProgressFilters({
           />
         </div>
 
-        {/* Status Filter */}
-        <div>
+        {/* Xuất file Excel - chiếm 1 cột */}
+        <div className="flex flex-col justify-end sm:col-span-1">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Lọc theo trạng thái
+            Xuất dữ liệu
           </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => onStatusFilterChange(e.target.value)}
-            className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-            <option value="all">Tất cả trạng thái</option>
-            <option value="CHỜ_TIẾP_NHẬN">Chờ tiếp nhận</option>
-            <option value="ĐÃ_TIẾP_NHẬN">Đã tiếp nhận</option>
-            <option value="ĐANG_XỬ_LÝ">Đang xử lý</option>
-            <option value="CHỜ_THAY_THẾ">Chờ thay thế</option>
-            <option value="ĐÃ_HOÀN_THÀNH">Đã hoàn thành</option>
-            <option value="ĐÃ_HỦY">Đã hủy</option>
-          </select>
+          <button
+            onClick={onExport}
+            className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <Download className="w-3 h-3 mr-1" />
+            <span className="hidden lg:inline">Xuất Excel</span>
+            <span className="lg:hidden">Excel</span>
+            <span className="ml-1 text-xs">
+              {selectedCount > 0 ? `(${selectedCount})` : `(${totalCount})`}
+            </span>
+          </button>
         </div>
       </div>
     </div>

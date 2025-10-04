@@ -9,7 +9,6 @@ import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
 import Pagination from "@/components/common/Pagination";
 import ProgressHeader from "./ProgressHeader";
 import ProgressFilters from "./ProgressFilters";
-import ExportSection from "./ExportSection";
 import RequestTable from "./RequestTable";
 import RequestCards from "./RequestCards";
 import NoRequestsFound from "./NoRequestsFound";
@@ -278,19 +277,14 @@ export default function ProgressTrackingContainer() {
 
       <ProgressFilters
         searchTerm={searchTerm}
-        statusFilter={statusFilter}
+        totalCount={filteredRequests.length}
+        selectedCount={selectedItems.length}
         onSearchChange={setSearchTerm}
-        onStatusFilterChange={setStatusFilter}
+        onExport={handleExportExcel}
       />
 
       {/* Requests List */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
-        <ExportSection
-          totalCount={filteredRequests.length}
-          selectedCount={selectedItems.length}
-          onExport={handleExportExcel}
-        />
-
         <RequestTable
           requests={paginatedRequests}
           selectedItems={selectedItems}

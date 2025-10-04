@@ -300,26 +300,13 @@ export default function SoftwareProposalsPage() {
             Theo dõi tiến độ xử lý các đề xuất cài đặt phần mềm.
           </p>
         </div>
-
-        {/* Export Button */}
-        <button
-          onClick={handleExportExcel}
-          disabled={selectedRowKeys.length === 0}
-          className={`flex items-center px-4 py-2 rounded-md text-sm font-medium ${
-            selectedRowKeys.length > 0
-              ? "bg-green-600 text-white hover:bg-green-700"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          } transition-colors`}>
-          <Download className="h-4 w-4 mr-2" />
-          Xuất Excel{" "}
-          {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
-        </button>
       </div>
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <div className=" gap-4">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+          {/* Search - chiếm 3 cột */}
+          <div className="sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tìm kiếm đề xuất phần mềm
             </label>
@@ -333,6 +320,28 @@ export default function SoftwareProposalsPage() {
                 className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+          </div>
+
+          {/* Export Button - chiếm 1 cột */}
+          <div className="flex flex-col justify-end sm:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Xuất dữ liệu
+            </label>
+            <button
+              onClick={handleExportExcel}
+              disabled={selectedRowKeys.length === 0}
+              className={`inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-xs font-medium transition-colors ${
+                selectedRowKeys.length > 0
+                  ? "text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  : "text-gray-500 bg-gray-100 cursor-not-allowed"
+              }`}>
+              <Download className="w-3 h-3 mr-1" />
+              <span className="hidden lg:inline">Xuất Excel</span>
+              <span className="lg:hidden">Excel</span>
+              <span className="ml-1 text-xs">
+                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+              </span>
+            </button>
           </div>
         </div>
       </div>
