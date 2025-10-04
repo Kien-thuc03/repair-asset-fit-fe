@@ -1,60 +1,31 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  Search,
-  Filter,
-  FileText,
-  Calendar,
-  AlertCircle,
-  CheckCircle,
-  Eye,
-} from "lucide-react";
+import { Search, FileText, Calendar, Eye } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
-import { ReplacementStatus } from "@/types/repair";
-import { Pagination } from "@/components/common";
+import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
+import { Pagination, SortableHeader } from "@/components/common";
 
-type FilterStatus =
-  | "ALL"
-  | "ĐÃ_LẬP_TỜ_TRÌNH"
-  | "ĐÃ_DUYỆT_TỜ_TRÌNH"
-  | "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH";
-type SortField =
-  | "proposalCode"
-  | "createdAt"
-  | "title"
-  | "status"
-  | "createdBy";
-type SortDirection = "asc" | "desc";
+type SortField = keyof ReplacementRequestItem;
+type SortDirection = "asc" | "desc" | null;
 
 export default function XuLyToTrinhPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>("ALL");
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    // Lọc dữ liệu: chỉ lấy các đề xuất đã được lập tờ trình gửi lên Phòng Quản trị
-    const relevantStatuses: ReplacementStatus[] = [
-      ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH, // Tổ trưởng đã lập tờ trình, chờ Phòng Quản trị xử lý
-      ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH, // Phòng Quản trị đã duyệt tờ trình
-      ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH, // Phòng Quản trị đã từ chối tờ trình
-    ];
-
-    let filtered = mockReplacementRequestItem.filter((item) =>
-      relevantStatuses.includes(item.status)
+    // Lọc dữ liệu: chỉ lấy các tờ trình đang chờ xử lý (trạng thái ĐÃ_LẬP_TỜ_TRÌNH)
+    // Đây là những tờ trình mà Tổ trưởng kỹ thuật đã lập và gửi lên Phòng Quản trị để xem xét phê duyệt
+    let filtered = mockReplacementRequestItem.filter(
+      (item) => item.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
     );
 
-    // Apply status filter
-    if (statusFilter !== "ALL") {
-      filtered = filtered.filter((item) => item.status === statusFilter);
-    }
+  
 
     // Apply search filter
     if (searchTerm) {
@@ -66,43 +37,45 @@ export default function XuLyToTrinhPage() {
       );
     }
 
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue: string | Date;
-      let bValue: string | Date;
+    // Apply sorting - chỉ sort khi có sortField và sortDirection
+    if (sortField && sortDirection) {
+      filtered.sort((a, b) => {
+        let aValue: string | Date;
+        let bValue: string | Date;
 
-      switch (sortField) {
-        case "createdAt":
-          aValue = new Date(a.createdAt);
-          bValue = new Date(b.createdAt);
-          break;
-        case "proposalCode":
-          aValue = a.proposalCode;
-          bValue = b.proposalCode;
-          break;
-        case "title":
-          aValue = a.title;
-          bValue = b.title;
-          break;
-        case "status":
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        case "createdBy":
-          aValue = a.createdBy || "";
-          bValue = b.createdBy || "";
-          break;
-        default:
-          return 0;
-      }
+        switch (sortField) {
+          case "createdAt":
+            aValue = new Date(a.createdAt);
+            bValue = new Date(b.createdAt);
+            break;
+          case "proposalCode":
+            aValue = a.proposalCode;
+            bValue = b.proposalCode;
+            break;
+          case "title":
+            aValue = a.title;
+            bValue = b.title;
+            break;
+          case "status":
+            aValue = a.status;
+            bValue = b.status;
+            break;
+          case "createdBy":
+            aValue = a.createdBy || "";
+            bValue = b.createdBy || "";
+            break;
+          default:
+            return 0;
+        }
 
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
+        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+        return 0;
+      });
+    }
 
     return filtered;
-  }, [searchTerm, statusFilter, sortField, sortDirection]);
+  }, [searchTerm, sortField, sortDirection]);
 
   // Pagination
   const totalItems = filteredData.length;
@@ -115,57 +88,32 @@ export default function XuLyToTrinhPage() {
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      // Cycle through: asc -> desc -> null (default)
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortField(null);
+      } else {
+        setSortDirection("asc");
+      }
     } else {
+      // New field selected, start with asc
       setSortField(field);
       setSortDirection("asc");
     }
   };
 
-  const getStatusColor = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "bg-green-100 text-green-800 border-green-200";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
+  const getStatusColor = () => {
+    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị màu xanh dương (chờ xử lý)
+    return "bg-blue-100 text-blue-800 border-blue-200";
   };
 
-  const getStatusText = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return "Chờ xử lý";
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "Đã duyệt";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return "Đã từ chối";
-      default:
-        return status;
-    }
+  const getStatusText = () => {
+    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị "Chờ xử lý"
+    return "Chờ xử lý";
   };
 
-  const statsData = useMemo(() => {
-    const choXuLy = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
-    ).length;
-    const daDuyet = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-    ).length;
-    const daTuChoi = filteredData.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
-    ).length;
-
-    return {
-      choXuLy,
-      daDuyet,
-      daTuChoi,
-      total: filteredData.length,
-    };
-  }, [filteredData]);
 
   return (
     <div className="space-y-6">
@@ -206,66 +154,30 @@ export default function XuLyToTrinhPage() {
           Xử lý tờ trình thay thế
         </h1>
         <p className="mt-2 text-gray-600">
-          Xem xét và phê duyệt các tờ trình đề xuất thay thế linh kiện từ tổ
-          trưởng kỹ thuật
+          Danh sách các tờ trình đang chờ xử lý từ tổ trưởng kỹ thuật. Tất cả tờ
+          trình ở đây đều có trạng thái &ldquo;Đã lập tờ trình&rdquo; và cần
+          được xem xét phê duyệt.
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Chờ xử lý</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {statsData.choXuLy}
-              </p>
-            </div>
-            <FileText className="h-8 w-8 text-blue-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Đã duyệt</p>
-              <p className="text-2xl font-bold text-green-600">
-                {statsData.daDuyet}
-              </p>
-            </div>
-            <CheckCircle className="h-8 w-8 text-green-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Đã từ chối</p>
-              <p className="text-2xl font-bold text-red-600">
-                {statsData.daTuChoi}
-              </p>
-            </div>
-            <AlertCircle className="h-8 w-8 text-red-500" />
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Tổng tờ trình</p>
-              <p className="text-2xl font-bold text-gray-600">
-                {statsData.total}
-              </p>
-            </div>
-            <FileText className="h-8 w-8 text-gray-500" />
-          </div>
-        </div>
-      </div>
 
       {/* Filters and Search */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
           <div className="flex-1">
+            <div className="mb-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Tìm kiếm tờ trình
+          </h3>
+          <p className="text-sm text-gray-600">
+            Tìm kiếm các tờ trình đã được tổ trưởng kỹ thuật xác minh và
+            sẵn sàng để gửi lên cấp trên phê duyệt.
+          </p>
+        </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              
               <input
                 type="text"
                 placeholder="Tìm kiếm theo mã đề xuất, tiêu đề..."
@@ -273,24 +185,6 @@ export default function XuLyToTrinhPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-            </div>
-          </div>
-
-          {/* Status Filter */}
-          <div className="min-w-[200px]">
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <select
-                value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value as FilterStatus)
-                }
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="ĐÃ_LẬP_TỜ_TRÌNH">Chờ xử lý</option>
-                <option value="ĐÃ_DUYỆT_TỜ_TRÌNH">Đã duyệt</option>
-                <option value="ĐÃ_TỪ_CHỐI_TỜ_TRÌNH">Đã từ chối</option>
-              </select>
             </div>
           </div>
         </div>
@@ -302,74 +196,49 @@ export default function XuLyToTrinhPage() {
           <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[15%]"
-                  onClick={() => handleSort("proposalCode")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Mã ĐX</span>
-                    {sortField === "proposalCode" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[25%]"
-                  onClick={() => handleSort("title")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Tiêu đề</span>
-                    {sortField === "title" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[20%]"
-                  onClick={() => handleSort("createdBy")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Người tạo</span>
-                    {sortField === "createdBy" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
+                <SortableHeader<ReplacementRequestItem>
+                  field="proposalCode"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[15%]">
+                  Mã ĐX
+                </SortableHeader>
+                <SortableHeader<ReplacementRequestItem>
+                  field="title"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[25%]">
+                  Tiêu đề
+                </SortableHeader>
+                <SortableHeader<ReplacementRequestItem>
+                  field="createdBy"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[20%]">
+                  Người tạo
+                </SortableHeader>
                 <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
                   Số lượng
                 </th>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[12%]"
-                  onClick={() => handleSort("status")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Trạng thái</span>
-                    {sortField === "status" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
-                <th
-                  className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 w-[10%]"
-                  onClick={() => handleSort("createdAt")}>
-                  <div className="flex items-center space-x-1">
-                    <span>Ngày</span>
-                    {sortField === "createdAt" &&
-                      (sortDirection === "asc" ? (
-                        <ChevronUp className="w-3 h-3" />
-                      ) : (
-                        <ChevronDown className="w-3 h-3" />
-                      ))}
-                  </div>
-                </th>
+                <SortableHeader<ReplacementRequestItem>
+                  field="status"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[12%]">
+                  Trạng thái
+                </SortableHeader>
+                <SortableHeader<ReplacementRequestItem>
+                  field="createdAt"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                  className="w-[10%]">
+                  Ngày
+                </SortableHeader>
                 <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
                   Thao tác
                 </th>
@@ -411,11 +280,9 @@ export default function XuLyToTrinhPage() {
                   </td>
                   <td className="px-2 py-3">
                     <span
-                      className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                        item.status
-                      )}`}>
+                      className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor()}`}>
                       <span className="hidden lg:inline text-xs">
-                        {getStatusText(item.status)}
+                        {getStatusText()}
                       </span>
                     </span>
                   </td>

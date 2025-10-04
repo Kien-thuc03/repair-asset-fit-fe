@@ -5,10 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import { Breadcrumb } from "antd";
 import { ArrowLeft, FileText, Printer, Save } from "lucide-react";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
-import { ReplacementStatus } from "@/types/repair";
+import { ReplacementStatus, SubmissionFormData } from "@/types/repair";
 import { users } from "@/lib/mockData/users";
-import SaveDraftSuccessModal from "../modal/SaveDraftSuccessModal";
-import SubmitReportSuccessModal from "../modal/SubmitReportSuccessModal";
+import { SuccessModal } from "@/components/modal";
+import {
+  saveSubmissionForm,
+  updateReplacementRequestStatus,
+  generateSubmissionFormUrl,
+  validateSubmissionFormData,
+} from "@/lib/api/submissionForm";
 
 export default function LapToTrinhPage() {
   const params = useParams();
@@ -61,7 +66,7 @@ export default function LapToTrinhPage() {
     };
   }, [selectedRequest]);
 
-  const [reportData, setReportData] = useState({
+  const [reportData, setReportData] = useState<SubmissionFormData>({
     submittedBy: "Giảng Thanh Trọn", // Sẽ được cập nhật khi proposalInfo có sẵn
     position: "Tổ trưởng kỹ thuật",
     department: "Khoa Công Nghệ Thông Tin",
@@ -90,10 +95,14 @@ export default function LapToTrinhPage() {
 
   const [showSaveDraftModal, setShowSaveDraftModal] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (
+    field: keyof SubmissionFormData,
+    value: string
+  ) => {
     setReportData((prev) => ({
       ...prev,
       [field]: value,
@@ -183,13 +192,72 @@ Trân trọng kính trình.`;
     setShowSaveDraftModal(true);
   };
 
-  const handleSubmit = () => {
-    console.log("Submitting report:", {
-      requestId: selectedRequest?.id,
-      reportData,
-      submittedAt: new Date().toISOString(),
-    });
-    setShowSubmitModal(true);
+  const handleSubmit = async () => {
+    if (!selectedRequest || isSubmitting) return;
+
+    // Validate form data trước khi submit
+    const validationErrors = validateSubmissionFormData(reportData);
+    if (validationErrors.length > 0) {
+      console.error("❌ Validation errors:", validationErrors);
+      // TODO: Show validation errors to user
+      alert("Vui lòng điền đầy đủ thông tin:\n" + validationErrors.join("\n"));
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Generate đường dẫn tờ trình
+      const submissionFormUrl = generateSubmissionFormUrl(
+        selectedRequest.proposalCode
+      );
+
+      console.log("📝 Submitting report with status update:", {
+        requestId: selectedRequest.id,
+        oldStatus: selectedRequest.status,
+        newStatus: ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+        submissionFormUrl: submissionFormUrl,
+        reportData,
+        submittedAt: new Date().toISOString(),
+      });
+
+      // TODO: Get current user ID (tổ trưởng kỹ thuật)
+      const currentUserId = "user-leadtech-01"; // Mock user ID
+
+      // 1. Lưu thông tin tờ trình vào database
+      const submissionForm = await saveSubmissionForm({
+        proposalId: selectedRequest.id,
+        proposalCode: selectedRequest.proposalCode,
+        submissionFormUrl: submissionFormUrl,
+        formData: reportData,
+        submittedBy: currentUserId,
+      });
+
+      console.log("✅ Submission form saved:", submissionForm);
+
+      // 2. Cập nhật trạng thái đề xuất từ ĐÃ_DUYỆT thành ĐÃ_LẬP_TỜ_TRÌNH
+      const updateSuccess = await updateReplacementRequestStatus(
+        selectedRequest.id,
+        {
+          status: ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+          submissionFormUrl: submissionFormUrl,
+          updatedAt: new Date().toISOString(),
+        }
+      );
+
+      if (updateSuccess) {
+        console.log("✅ Replacement request status updated successfully");
+        setShowSubmitModal(true);
+      } else {
+        console.error("❌ Failed to update replacement request status");
+        alert("Có lỗi xảy ra khi cập nhật trạng thái đề xuất");
+      }
+    } catch (error) {
+      console.error("❌ Error submitting report:", error);
+      alert("Có lỗi xảy ra khi nộp tờ trình. Vui lòng thử lại.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!selectedRequest) {
@@ -446,7 +514,7 @@ Trân trọng kính trình.`;
 
               <div className="mb-6">
                 <div className="text-sm">
-                  <strong>Thông tin đề xuất:</strong>{" "}{selectedRequest.title}
+                  <strong>Thông tin đề xuất:</strong> {selectedRequest.title}
                 </div>
                 <div className="mt-3">
                   <table className="w-full border-collapse border border-gray-400 text-xs">
@@ -566,23 +634,41 @@ Trân trọng kính trình.`;
         </button>
         <button
           onClick={handleSubmit}
-          className="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
-          <FileText className="h-4 w-4 mr-2" />
-          Nộp tờ trình
+          disabled={isSubmitting}
+          className={`inline-flex items-center px-6 py-2 text-sm font-medium text-white border border-transparent rounded-md ${
+            isSubmitting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}>
+          {isSubmitting ? (
+            <>
+              <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+              Đang nộp...
+            </>
+          ) : (
+            <>
+              <FileText className="h-4 w-4 mr-2" />
+              Nộp tờ trình
+            </>
+          )}
         </button>
       </div>
 
       {/* Modal notifications */}
-      <SaveDraftSuccessModal
+      <SuccessModal
         isOpen={showSaveDraftModal}
         onClose={() => setShowSaveDraftModal(false)}
+        title="Lưu nháp thành công!"
+        message="Tờ trình đã được lưu vào nháp. Bạn có thể tiếp tục chỉnh sửa sau."
       />
-      <SubmitReportSuccessModal
+      <SuccessModal
         isOpen={showSubmitModal}
         onClose={() => {
           setShowSubmitModal(false);
           router.push("/to-truong-ky-thuat/lap-to-trinh");
         }}
+        title="Nộp tờ trình thành công!"
+        message="Tờ trình đã được nộp thành công và đang chờ xét duyệt."
       />
     </div>
   );

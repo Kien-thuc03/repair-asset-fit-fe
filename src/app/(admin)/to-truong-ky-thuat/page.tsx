@@ -7,7 +7,6 @@ import {
   StatsCards,
   QuickActions,
   RecentActivity,
-  TeamStatus,
 } from "@/components/leadTechnician/dashboard";
 
 export default function ToTruongKyThuatDashboard() {
@@ -27,8 +26,6 @@ export default function ToTruongKyThuatDashboard() {
       {/* Recent Activity */}
       <RecentActivity />
 
-      {/* Team Status */}
-      <TeamStatus />
     </div>
   );
 }

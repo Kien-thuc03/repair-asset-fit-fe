@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { AlertTriangle, Clock, FolderCode } from "lucide-react";
+import { AlertTriangle, Clock, FileText, FolderCode } from "lucide-react";
 
 const QuickActions: React.FC = () => {
   const quickActions = [
@@ -25,6 +25,16 @@ const QuickActions: React.FC = () => {
       description: "Xem tiến độ xử lý các báo cáo đã gửi",
     },
     {
+      href: "/giang-vien/danh-sach-de-xuat-phan-mem",
+      bgColor: "bg-orange-50",
+      hoverColor: "hover:bg-orange-100",
+      focusColor: "focus-within:ring-orange-500",
+      iconBg: "bg-orange-600",
+      icon: FileText,
+      title: "Danh sách đề xuất",
+      description: "Xem và quản lý các đề xuất phần mềm đã gửi",
+    },
+    {
       href: "/giang-vien/de-xuat-phan-mem",
       bgColor: "bg-green-50",
       hoverColor: "hover:bg-green-100",
@@ -34,6 +44,7 @@ const QuickActions: React.FC = () => {
       title: "Đề xuất phần mềm",
       description: "Đề xuất phần mềm mới cho phòng máy",
     },
+
   ];
 
   return (
@@ -42,7 +53,7 @@ const QuickActions: React.FC = () => {
         <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
           Thao tác nhanh
         </h3>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
           {quickActions.map((action) => (
             <Link
               key={action.href}

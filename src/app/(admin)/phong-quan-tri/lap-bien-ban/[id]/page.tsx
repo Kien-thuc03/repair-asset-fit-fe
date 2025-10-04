@@ -10,7 +10,6 @@ import {
   Package,
   User,
   Calendar,
-  Printer,
   AlertTriangle,
   CheckCircle,
   MemoryStick,
@@ -80,9 +79,6 @@ export default function RequestDetailPage() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
 
   const handleCreateInspectionReport = () => {
     setShowInspectionForm(true);
@@ -174,12 +170,6 @@ export default function RequestDetailPage() {
             </Link>
           </div>
           <div className="flex items-center space-x-3">
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-              <Printer className="w-4 h-4 mr-2" />
-              In tờ trình
-            </button>
             <button
               onClick={handleCreateInspectionReport}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">

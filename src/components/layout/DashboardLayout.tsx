@@ -28,6 +28,8 @@ import {
   MapPin,
   FolderCode,
   TriangleAlert,
+  TimerReset,
+  ClipboardEdit,
 } from "lucide-react";
 
 // Navigation items
@@ -54,7 +56,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       },
       {
         name: "Quản lý tiến độ",
-        icon: Clock,
+        icon: TimerReset,
         children: [
           {
             name: "Theo dõi tiến độ",
@@ -64,7 +66,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
           {
             name: "Danh sách đề xuất phần mềm",
             href: "/giang-vien/danh-sach-de-xuat-phan-mem",
-            icon: FolderCode,
+            icon: FileText,
           },
         ],
       },
@@ -141,7 +143,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
           {
             name: "Danh sách đề xuất",
             href: "/to-truong-ky-thuat/duyet-de-xuat",
-            icon: FileCheck,
+            icon: ClipboardEdit,
           },
           {
             name: "Quản lý tờ trình",

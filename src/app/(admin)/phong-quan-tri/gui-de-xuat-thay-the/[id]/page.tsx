@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   Card,
   Button,
@@ -10,14 +9,19 @@ import {
   Typography,
   Descriptions,
   Timeline,
-  Modal,
   message,
-  Space,
   Breadcrumb,
 } from "antd";
-import { ArrowLeft, CheckCircle, FileText, Download } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle,
+  FileText,
+  Download,
+  PlaneLanding,
+} from "lucide-react";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types/repair";
+import { SignConfirmModal } from "@/components/modal";
 
 const { Title } = Typography;
 
@@ -44,10 +48,9 @@ const getStatusConfig = (status: ReplacementStatus) => {
 export default function ChiTietDeXuatThayThePage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
   const [proposal, setProposal] = useState<ReplacementRequestItem | null>(null);
-  const [statusUpdateModal, setStatusUpdateModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Lấy dữ liệu đề xuất theo ID
   useEffect(() => {
@@ -64,32 +67,42 @@ export default function ChiTietDeXuatThayThePage() {
     }
   }, [params.id, router]);
 
-  // Xử lý cập nhật trạng thái
-  const handleStatusUpdate = async (newStatus: ReplacementStatus) => {
+  // Xử lý mở modal xác nhận gửi đề xuất
+  const handleOpenConfirmModal = () => {
+    setShowConfirmModal(true);
+  };
+
+  // Xử lý đóng modal
+  const handleCloseModal = () => {
+    setShowConfirmModal(false);
+  };
+
+  // Xử lý xác nhận gửi đề xuất
+  const handleConfirmSend = async () => {
     if (!proposal) return;
 
     try {
-      setLoading(true);
+      setIsProcessing(true);
 
-      // Cập nhật trạng thái trong mock data
+      // Trong thực tế sẽ gọi API để cập nhật trạng thái lên ĐÃ_LẬP_TỜ_TRÌNH
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+
       const updatedProposal = {
         ...proposal,
-        status: newStatus,
+        status: ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
         updatedAt: new Date().toISOString(),
-        // Cập nhật adminVerifierId nếu đang xác minh
-        ...(newStatus === ReplacementStatus.ĐÃ_XÁC_MINH && {
-          adminVerifierId: user?.id || "current-admin-id",
-        }),
       };
 
       setProposal(updatedProposal);
-      message.success("Cập nhật trạng thái thành công!");
-      setStatusUpdateModal(false);
+      message.success(`Đã gửi đề xuất ${proposal.proposalCode} thành công!`);
+
+      // Đóng modal và reset state
+      handleCloseModal();
     } catch (error) {
-      message.error("Có lỗi xảy ra khi cập nhật trạng thái!");
+      message.error("Có lỗi xảy ra khi gửi đề xuất!");
       console.error(error);
     } finally {
-      setLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -209,8 +222,8 @@ export default function ChiTietDeXuatThayThePage() {
           {proposal.status === ReplacementStatus.ĐÃ_XÁC_MINH && (
             <Button
               type="primary"
-              onClick={() => setStatusUpdateModal(true)}
-              loading={loading}>
+              onClick={handleOpenConfirmModal}
+              loading={isProcessing}>
               Gửi đề xuất
             </Button>
           )}
@@ -323,7 +336,7 @@ export default function ChiTietDeXuatThayThePage() {
                         Phiếu đề nghị giải quyết công việc
                       </p>
                       <p className="text-sm text-gray-500">
-                        File tờ trình chính thức
+                        {proposal.submissionFormUrl.split("/").pop()}
                       </p>
                     </div>
                   </div>
@@ -346,7 +359,7 @@ export default function ChiTietDeXuatThayThePage() {
                         Biên bản kiểm tra tình trạng kỹ thuật
                       </p>
                       <p className="text-sm text-gray-500">
-                        Kết quả xác minh thực tế
+                        {proposal.verificationReportUrl.split("/").pop()}
                       </p>
                     </div>
                   </div>
@@ -379,80 +392,21 @@ export default function ChiTietDeXuatThayThePage() {
         </div>
       </div>
 
-      {/* Modal xử lý trạng thái */}
-      <Modal
-        title="Xử lý đề xuất thay thế"
-        open={statusUpdateModal}
-        onCancel={() => setStatusUpdateModal(false)}
-        footer={null}
-        width={500}>
-        <div className="space-y-4">
-          <div>
-            <p>
-              <strong>Mã đề xuất:</strong> {proposal.proposalCode}
-            </p>
-            <p>
-              <strong>Trạng thái hiện tại:</strong>
-              <Tag
-                color={getStatusConfig(proposal.status).color}
-                className="ml-2">
-                {getStatusConfig(proposal.status).text}
-              </Tag>
-            </p>
-          </div>
-
-          <div className="border-t pt-4">
-            <h4 className="font-semibold mb-3">Chọn hành động:</h4>
-            <Space direction="vertical" className="w-full">
-              {proposal.status === ReplacementStatus.CHỜ_XÁC_MINH && (
-                <>
-                  <Button
-                    type="primary"
-                    block
-                    loading={loading}
-                    onClick={() => {
-                      handleStatusUpdate(ReplacementStatus.ĐÃ_XÁC_MINH);
-                    }}>
-                    Xác minh hoàn tất
-                  </Button>
-                  <Button
-                    danger
-                    block
-                    loading={loading}
-                    onClick={() => {
-                      handleStatusUpdate(ReplacementStatus.ĐÃ_TỪ_CHỐI);
-                    }}>
-                    Từ chối đề xuất
-                  </Button>
-                </>
-              )}
-
-              {proposal.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH && (
-                <>
-                  <Button
-                    type="primary"
-                    block
-                    loading={loading}
-                    onClick={() => {
-                      handleStatusUpdate(ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH);
-                    }}>
-                    Duyệt tờ trình
-                  </Button>
-                  <Button
-                    danger
-                    block
-                    loading={loading}
-                    onClick={() => {
-                      handleStatusUpdate(ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH);
-                    }}>
-                    Từ chối tờ trình
-                  </Button>
-                </>
-              )}
-            </Space>
-          </div>
-        </div>
-      </Modal>
+      {/* Modal xác nhận gửi đề xuất */}
+      <SignConfirmModal
+        isOpen={showConfirmModal}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmSend}
+        reportTitle={proposal?.title || ""}
+        reportNumber={proposal?.proposalCode || ""}
+        isLoading={isProcessing}
+        actionType="send"
+        customTitle="Xác nhận gửi đề xuất thay thế"
+        customConfirmText="Gửi đề xuất"
+        customDescription="Bạn có chắc chắn muốn gửi đề xuất thay thế này lên cấp trên để phê duyệt?"
+        customWarning="Sau khi gửi, đề xuất sẽ được chuyển lên Phòng Quản trị để xem xét và phê duyệt. Bạn không thể chỉnh sửa đề xuất sau khi đã gửi."
+        icon={PlaneLanding}
+      />
     </div>
   );
 }

@@ -98,7 +98,6 @@ export interface RepairRequestWithDetails extends RepairRequest {
   }>;
 }
 
-
 // Interface cho 1 linh kiện trong đề xuất thay thế
 export interface ReplacementComponent {
   id: string;
@@ -214,14 +213,16 @@ export interface ErrorReport {
 }
 
 export enum ReplacementStatus {
-  CHỜ_TỔ_TRƯỞNG_DUYỆT = "CHỜ_TỔ_TRƯỞNG_DUYỆT",
+  CHỜ_TỔ_TRƯỞNG_DUYỆT = "CHỜ_TỔ_TRƯỞNG_DUYỆT", // kỹ thuật viên lập đề xuất, chờ tổ trưởng duyệt
   CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH", // Chờ Phòng Quản trị cử người xuống xác minh thực tế
-  ĐÃ_DUYỆT = "ĐÃ_DUYỆT", // Đã được duyệt, chờ mua sắm
-  ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI",
+  ĐÃ_DUYỆT = "ĐÃ_DUYỆT", // Đã được tổ trưởng duyệt
+  ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI", // Tổ trưởng từ chối đề xuất, cần lập lại
   ĐÃ_XÁC_MINH = "ĐÃ_XÁC_MINH", // Phòng Quản trị đã xác minh xong, chờ lập tờ trình
   ĐÃ_LẬP_TỜ_TRÌNH = "ĐÃ_LẬP_TỜ_TRÌNH", // Tổ trưởng kỹ thuật đã lập tờ trình gửi Phòng Quản trị
   ĐÃ_DUYỆT_TỜ_TRÌNH = "ĐÃ_DUYỆT_TỜ_TRÌNH", // Phòng Quản trị đã duyệt tờ trình, chờ mua sắm
   ĐÃ_TỪ_CHỐI_TỜ_TRÌNH = "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH", // Phòng Quản trị từ chối tờ trình, cần lập lại
+  ĐÃ_GỬI_BIÊN_BẢN = "ĐÃ_GỬI_BIÊN_BẢN", // Đã gửi biên bản cho tổ trưởng kỹ thuật
+  ĐÃ_KÝ_BIÊN_BẢN = "ĐÃ_KÝ_BIÊN_BẢN", // Tổ trưởng kỹ thuật đã ký biên bản
   ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM", // Đã có thiết bị mới
 }
 
@@ -501,4 +502,44 @@ export interface Category {
   name: string;
   code: string;
   parentId: string | null;
+}
+
+// Interface cho SubmissionForm - Tờ trình đệ trình lên Phòng Quản trị
+export interface SubmissionForm {
+  id: string; // UUID primary key
+  proposalId: string; // FK to ReplacementProposals.id
+  proposalCode: string; // Mã đề xuất (copied từ proposal)
+  submissionFormUrl: string; // Đường dẫn file tờ trình (PDF)
+  submittedBy: string; // FK to users.id (Tổ trưởng kỹ thuật)
+  submittedAt: string; // Thời điểm nộp tờ trình (ISO timestamp)
+
+  // Nội dung tờ trình
+  formData: {
+    submittedBy: string; // Tên người đề nghị
+    position: string; // Chức vụ
+    department: string; // Đơn vị đề nghị
+    recipientDepartment: string; // Đơn vị tiếp nhận
+    subject: string; // Đề nghị (vấn đề)
+    content: string; // Nội dung tờ trình
+    attachments: string; // Các văn bản kèm theo
+    director: string; // Tên giám đốc
+    rector: string; // Tên hiệu trưởng
+  };
+
+  // Metadata
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
+}
+
+// Interface cho dữ liệu form tờ trình (sử dụng trong component)
+export interface SubmissionFormData {
+  submittedBy: string;
+  position: string;
+  department: string;
+  recipientDepartment: string;
+  subject: string;
+  content: string;
+  attachments: string;
+  director: string;
+  rector: string;
 }

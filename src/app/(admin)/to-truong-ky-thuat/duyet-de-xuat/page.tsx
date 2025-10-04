@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types";
 import { mockReplacementRequestItem } from "@/lib/mockData";
-import ExportExcelSuccessModal from "./modal/ExportExcelSuccessModal";
-import ExportExcelErrorModal from "./modal/ExportExcelErrorModal";
+import { SuccessModal, ErrorModal } from "@/components/modal";
 import { Breadcrumb } from "antd";
 import { Pagination } from "@/components/common";
 import {
@@ -16,12 +15,15 @@ import {
 } from "@/components/leadTechnician/proposalApproval";
 
 export default function DuyetDeXuatPage() {
+  // Lấy các đề xuất CHỜ TỔ TRƯỞNG DUYỆT - Kỹ thuật viên đã lập, chờ tổ trưởng duyệt
   const [requests, setRequests] = useState<ReplacementRequestItem[]>(
-    mockReplacementRequestItem.map((proposal) => ({
-      //get id
-    
-      ...proposal,
-    }))
+    mockReplacementRequestItem
+      .filter(
+        (proposal) => proposal.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT
+      )
+      .map((proposal) => ({
+        ...proposal,
+      }))
   );
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -192,15 +194,18 @@ export default function DuyetDeXuatPage() {
       </div>
 
       {/* Success Modals */}
-      <ExportExcelSuccessModal
+      <SuccessModal
         isOpen={showExportSuccessModal}
         onClose={() => setShowExportSuccessModal(false)}
-        exportCount={exportCount}
+        title="Xuất Excel thành công!"
+        message={`Đã xuất ${exportCount} đề xuất thành công.`}
       />
 
-      <ExportExcelErrorModal
+      <ErrorModal
         isOpen={showExportErrorModal}
         onClose={() => setShowExportErrorModal(false)}
+        title="Không thể xuất Excel"
+        message="Không có dữ liệu để xuất. Vui lòng kiểm tra lại."
       />
     </div>
   );

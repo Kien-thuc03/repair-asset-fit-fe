@@ -1,11 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  CheckCircle,
-  Clock,
-  Send,
-} from "lucide-react";
+import { CheckCircle, Clock, Send } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
 import {
   InspectionHeader,
@@ -14,7 +10,14 @@ import {
   InspectionMobileView,
   InspectionExportModals,
 } from "@/components/leadTechnician/inspection";
+import { SignConfirmModal, SuccessModal } from "@/components/modal";
+import {
+  getReplacementRequestsByStatus,
+  mockReplacementRequestItem,
+} from "@/lib/mockData/replacementRequests";
+import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
 
+// Interface cho InspectionReport
 interface InspectionReport {
   id: string;
   reportNumber: string;
@@ -27,30 +30,60 @@ interface InspectionReport {
   leaderSignedAt?: string;
 }
 
-// Mock data
-const mockInspectionReports: InspectionReport[] = [
-  {
-    id: "1",
-    reportNumber: "BB-2024-001",
-    title: "Biên bản kiểm tra thiết bị máy tính",
-    relatedReportTitle: "Tờ trình về việc kiểm tra thiết bị máy tính phòng 101",
-    createdBy: "Nguyễn Văn A",
-    inspectionDate: "2024-03-15",
-    status: "pending",
-  },
-  {
-    id: "2",
-    reportNumber: "BB-2024-002",
-    title: "Biên bản kiểm tra thiết bị máy chiếu",
-    relatedReportTitle: "Tờ trình về việc kiểm tra thiết bị máy chiếu phòng 201",
-    createdBy: "Trần Thị B",
-    inspectionDate: "2024-03-14",
-    status: "signed",
-  },
-];
+// Chuyển đổi ReplacementRequestItem thành InspectionReport
+const convertToInspectionReport = (
+  request: ReplacementRequestItem
+): InspectionReport => {
+  // Lấy tên file từ submissionFormUrl để hiển thị tờ trình liên quan
+  const getRelatedReportTitle = (
+    submissionFormUrl?: string,
+    fallbackTitle?: string
+  ) => {
+    if (submissionFormUrl) {
+      const fileName = submissionFormUrl.split("/").pop() || submissionFormUrl;
+      return `Tờ trình: ${fileName}`;
+    }
+    return fallbackTitle || "Không có tờ trình liên quan";
+  };
+
+  return {
+    id: request.id,
+    reportNumber: request.proposalCode,
+    title: `Biên bản kiểm tra - ${request.title}`,
+    relatedReportTitle: getRelatedReportTitle(
+      request.submissionFormUrl,
+      request.title
+    ),
+    createdBy: request.createdBy || "Unknown",
+    inspectionDate: new Date(request.createdAt).toISOString().split("T")[0],
+    status: "pending", // Mặc định là pending vì đã gửi biên bản
+  };
+};
 
 export default function BienBanPage() {
   const router = useRouter();
+
+  // Lấy các đề xuất có trạng thái ĐÃ_GỬI_BIÊN_BẢN và ĐÃ_KÝ_BIÊN_BẢN
+  const sentReports = getReplacementRequestsByStatus(
+    ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN
+  );
+  const signedReports = getReplacementRequestsByStatus(
+    ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN
+  );
+  const allReplacementRequests = [...sentReports, ...signedReports];
+
+  // Chuyển đổi sang InspectionReport format
+  const mockInspectionReports: InspectionReport[] = allReplacementRequests.map(
+    (request) => ({
+      ...convertToInspectionReport(request),
+      // Cập nhật status dựa trên ReplacementStatus
+      status:
+        request.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN
+          ? "signed"
+          : "pending",
+    })
+  );
+
   const [inspectionReports, setInspectionReports] = useState<
     InspectionReport[]
   >(mockInspectionReports);
@@ -72,6 +105,13 @@ export default function BienBanPage() {
   const [exportCount, setExportCount] = useState(0);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+
+  // Sign states
+  const [showSignModal, setShowSignModal] = useState(false);
+  const [selectedReportForSign, setSelectedReportForSign] =
+    useState<InspectionReport | null>(null);
+  const [isSigningInProgress, setIsSigningInProgress] = useState(false);
+  const [showSignSuccessModal, setShowSignSuccessModal] = useState(false);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -207,8 +247,72 @@ export default function BienBanPage() {
   };
 
   const handleSignReport = (report: InspectionReport) => {
-    // TODO: Implement sign modal
-    console.log("Sign report:", report);
+    setSelectedReportForSign(report);
+    setShowSignModal(true);
+  };
+
+  const handleConfirmSign = async () => {
+    if (!selectedReportForSign) return;
+
+    setIsSigningInProgress(true);
+
+    try {
+      // TODO: Get current user info (tổ trưởng kỹ thuật)
+      const currentUserName = "Giảng Thanh Trọn"; // Mock user name
+      const signedAt = new Date().toISOString();
+
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Tìm và cập nhật trạng thái đề xuất trong mock data thành ĐÃ_KÝ_BIÊN_BẢN
+      const requestIndex = mockReplacementRequestItem.findIndex(
+        (request) => request.id === selectedReportForSign.id
+      );
+
+      if (requestIndex !== -1) {
+        mockReplacementRequestItem[requestIndex] = {
+          ...mockReplacementRequestItem[requestIndex],
+          status: ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
+          updatedAt: signedAt,
+        };
+
+        console.log("✅ Updated replacement request status:", {
+          id: selectedReportForSign.id,
+          newStatus: ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
+          updatedAt: signedAt,
+        });
+      }
+
+      // Cập nhật UI - chuyển trạng thái thành "signed"
+      setInspectionReports((reports) =>
+        reports.map((report) =>
+          report.id === selectedReportForSign.id
+            ? {
+                ...report,
+                status: "signed" as const,
+                leaderSignature: currentUserName,
+                leaderSignedAt: signedAt,
+              }
+            : report
+        )
+      );
+
+      console.log("✅ Successfully signed inspection report:", {
+        reportId: selectedReportForSign.id,
+        signerName: currentUserName,
+        signedAt,
+      });
+
+      // Đóng modal xác nhận và hiển thị thông báo thành công
+      setShowSignModal(false);
+      setShowSignSuccessModal(true);
+    } catch (error) {
+      console.error("❌ Error signing report:", error);
+      alert("Có lỗi xảy ra khi ký biên bản. Vui lòng thử lại.");
+    } finally {
+      setIsSigningInProgress(false);
+      setSelectedReportForSign(null);
+    }
   };
 
   const handleSendBack = (reportId: string) => {
@@ -317,7 +421,26 @@ export default function BienBanPage() {
         />
       </div>
 
-      {/* Modals would go here if they exist */}
+      {/* Sign Confirmation Modal */}
+      <SignConfirmModal
+        isOpen={showSignModal}
+        onClose={() => {
+          setShowSignModal(false);
+          setSelectedReportForSign(null);
+        }}
+        onConfirm={handleConfirmSign}
+        reportTitle={selectedReportForSign?.title || ""}
+        reportNumber={selectedReportForSign?.reportNumber || ""}
+        isLoading={isSigningInProgress}
+      />
+
+      {/* Sign Success Modal */}
+      <SuccessModal
+        isOpen={showSignSuccessModal}
+        onClose={() => setShowSignSuccessModal(false)}
+        title="Ký biên bản thành công!"
+        message="Biên bản đã được ký xác nhận thành công. Trạng thái đã được cập nhật."
+      />
 
       <InspectionExportModals
         showExportSuccessModal={showExportSuccessModal}

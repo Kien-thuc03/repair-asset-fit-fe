@@ -21,7 +21,7 @@ import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 export default function LapToTrinhPage() {
   const router = useRouter();
 
-  // Lấy các đề xuất thay thế đã được DUYỆT - sẵn sàng lập tờ trình
+  // Lấy các đề xuất thay thế đã được TỔ TRƯỞNG DUYỆT - sẵn sàng lập tờ trình
   const [replacementRequests] = useState<ReplacementRequestItem[]>(() => {
     return mockReplacementRequestItem.filter(
       (request) => request.status === ReplacementStatus.ĐÃ_DUYỆT
@@ -174,10 +174,18 @@ export default function LapToTrinhPage() {
         return "bg-yellow-100 text-yellow-800";
       case ReplacementStatus.CHỜ_XÁC_MINH:
         return "bg-blue-100 text-blue-800";
+      case ReplacementStatus.ĐÃ_XÁC_MINH:
+        return "bg-cyan-100 text-cyan-800";
+      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
+        return "bg-indigo-100 text-indigo-800";
       case ReplacementStatus.ĐÃ_DUYỆT:
         return "bg-green-100 text-green-800";
       case ReplacementStatus.ĐÃ_TỪ_CHỐI:
         return "bg-red-100 text-red-800";
+      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "bg-lime-100 text-lime-800";
+      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+        return "bg-orange-100 text-orange-800";
       case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
         return "bg-purple-100 text-purple-800";
       default:
@@ -191,10 +199,18 @@ export default function LapToTrinhPage() {
         return "Chờ duyệt";
       case ReplacementStatus.CHỜ_XÁC_MINH:
         return "Chờ xác minh";
+      case ReplacementStatus.ĐÃ_XÁC_MINH:
+        return "Đã xác minh";
+      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
+        return "Đã lập tờ trình";
       case ReplacementStatus.ĐÃ_DUYỆT:
         return "Đã duyệt";
       case ReplacementStatus.ĐÃ_TỪ_CHỐI:
         return "Từ chối";
+      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "Đã duyệt tờ trình";
+      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+        return "Từ chối tờ trình";
       case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
         return "Đã mua sắm";
       default:
@@ -282,7 +298,8 @@ export default function LapToTrinhPage() {
               Lập tờ trình
             </h1>
             <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Lập tờ trình cho các đề xuất thay thế linh kiện đã được duyệt
+              Lập tờ trình cho các đề xuất thay thế linh kiện đã được tổ trưởng
+              duyệt
             </p>
           </div>
           {/* Export Excel Button */}
@@ -334,8 +351,20 @@ export default function LapToTrinhPage() {
                 <option value={ReplacementStatus.CHỜ_XÁC_MINH}>
                   Chờ xác minh
                 </option>
+                <option value={ReplacementStatus.ĐÃ_XÁC_MINH}>
+                  Đã xác minh
+                </option>
+                <option value={ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH}>
+                  Đã lập tờ trình
+                </option>
                 <option value={ReplacementStatus.ĐÃ_DUYỆT}>Đã duyệt</option>
                 <option value={ReplacementStatus.ĐÃ_TỪ_CHỐI}>Từ chối</option>
+                <option value={ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH}>
+                  Đã duyệt tờ trình
+                </option>
+                <option value={ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH}>
+                  Từ chối tờ trình
+                </option>
                 <option value={ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM}>
                   Đã mua sắm
                 </option>
@@ -477,20 +506,20 @@ export default function LapToTrinhPage() {
                         )}
                       </button>
                     </th>
-                    <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <button
-                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
-                        onClick={() => handleSort("title")}>
-                        <span>Tiêu đề đề xuất</span>
-                        {getSortIcon("title")}
-                      </button>
-                    </th>
                     <th className="w-[13%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <button
                         className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
                         onClick={() => handleSort("proposalCode")}>
                         <span>Mã đề xuất</span>
                         {getSortIcon("proposalCode")}
+                      </button>
+                    </th>
+                    <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <button
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
+                        onClick={() => handleSort("title")}>
+                        <span>Tiêu đề đề xuất</span>
+                        {getSortIcon("title")}
                       </button>
                     </th>
                     <th className="w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -542,6 +571,13 @@ export default function LapToTrinhPage() {
                             )}
                           </button>
                         </td>
+                        <td className="px-2 py-4 whitespace-nowrap w-[13%]">
+                          <div
+                            className="text-sm text-gray-900 truncate font-mono"
+                            title={request.proposalCode}>
+                            {request.proposalCode}
+                          </div>
+                        </td>
                         <td className="px-3 py-4 whitespace-nowrap w-[25%]">
                           <div className="flex items-center min-w-0">
                             <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
@@ -557,13 +593,6 @@ export default function LapToTrinhPage() {
                                 {request.description}
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-2 py-4 whitespace-nowrap w-[13%]">
-                          <div
-                            className="text-sm text-gray-900 truncate font-mono"
-                            title={request.proposalCode}>
-                            {request.proposalCode}
                           </div>
                         </td>
                         <td className="px-2 py-4 whitespace-nowrap text-center w-[8%]">
@@ -585,13 +614,9 @@ export default function LapToTrinhPage() {
                         <td className="hidden lg:table-cell px-2 py-4 whitespace-nowrap text-center w-[10%]">
                           <div className="text-xs text-gray-900">
                             {new Date(request.createdAt).toLocaleDateString(
-                              "vi-VN",
-                              {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "2-digit",
-                              }
-                            )}
+                            "vi-VN",
+                            { day: "2-digit", month: "2-digit", year: "numeric" }
+                          )}
                           </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap w-[18%]">
@@ -602,7 +627,7 @@ export default function LapToTrinhPage() {
                                   `/to-truong-ky-thuat/lap-to-trinh/chi-tiet/${request.id}`
                                 );
                               }}
-                              className="text-indigo-600 hover:text-indigo-900 p-1"
+                              className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                               title="Xem chi tiết">
                               <Eye className="h-4 w-4" />
                             </button>

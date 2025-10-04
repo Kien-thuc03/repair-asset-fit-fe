@@ -10,8 +10,6 @@ import {
   Eye,
   User,
   CheckCircle,
-  Clock,
-  FileCheck,
 } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
@@ -130,19 +128,6 @@ export default function LapBienBanPage() {
     return filtered;
   }, [approvedRequests, searchTerm, sortField, sortDirection]);
 
-  // Thống kê tổng quan
-  const statistics = useMemo(() => {
-    const total = approvedRequests.length;
-    const needInspection = approvedRequests.length; // Tất cả đều cần kiểm tra
-
-    return {
-      total,
-      needInspection,
-      completed: 0, // Sẽ cập nhật khi có workflow hoàn chỉnh
-      approved: 0, // Sẽ cập nhật khi có workflow hoàn chỉnh
-    };
-  }, [approvedRequests]);
-
   const handleViewReport = (requestId: string) => {
     router.push(`/phong-quan-tri/lap-bien-ban/${requestId}`);
   };
@@ -255,81 +240,6 @@ export default function LapBienBanPage() {
             variant="primary"
             size="md"
           />
-        </div>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <FileText className="h-8 w-8 text-gray-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Tổng biên bản
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {statistics.total}
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <CheckCircle className="h-8 w-8 text-green-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Đã hoàn thành
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {statistics.completed}
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <FileCheck className="h-8 w-8 text-blue-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Đã duyệt
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {statistics.approved}
-                </dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <Clock className="h-8 w-8 text-yellow-400" />
-            </div>
-            <div className="ml-5 w-0 flex-1">
-              <dl>
-                <dt className="text-sm font-medium text-gray-500 truncate">
-                  Cần lập biên bản
-                </dt>
-                <dd className="text-lg font-medium text-gray-900">
-                  {statistics.needInspection}
-                </dd>
-              </dl>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -501,9 +411,11 @@ export default function LapBienBanPage() {
                     <td className="px-2 py-4">
                       <button
                         onClick={() => handleViewReport(request.id)}
-                        className="inline-flex items-center justify-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 w-full">
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+>
+
                         <Eye className="w-3 h-3 mr-1" />
-                        Xem
+
                       </button>
                     </td>
                   </tr>

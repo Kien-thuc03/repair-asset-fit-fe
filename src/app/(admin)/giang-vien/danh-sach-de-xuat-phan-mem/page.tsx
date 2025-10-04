@@ -13,17 +13,13 @@ import {
   User,
   Building,
 } from "lucide-react";
-import { Breadcrumb, Select, DatePicker } from "antd";
-import type { Dayjs } from "dayjs";
+import { Breadcrumb } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import {
   mockSoftwareProposals,
-  getSoftwareProposalsByStatus,
 } from "@/lib/mockData/softwareProposals";
 import { Pagination } from "@/components/common";
 
-const { RangePicker } = DatePicker;
-const { Option } = Select;
 
 // Mock users và rooms data để hiển thị tên
 const mockUsers = {
@@ -78,12 +74,7 @@ export default function SoftwareProposalsPage() {
 
   // State
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState<SoftwareProposalStatus | "">(
-    ""
-  );
-  const [dateRange, setDateRange] = useState<
-    [Dayjs | null, Dayjs | null] | null
-  >(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -107,23 +98,14 @@ export default function SoftwareProposalsPage() {
               .includes(searchText.toLowerCase())
           : true;
 
-        const matchesStatus = statusFilter
-          ? proposal.status === statusFilter
-          : true;
+      
 
-        const createdAt = new Date(proposal.createdAt);
-        const matchesDateRange =
-          dateRange && dateRange[0] && dateRange[1]
-            ? createdAt >= dateRange[0].toDate() &&
-              createdAt <= dateRange[1].toDate()
-            : true;
-
-        return matchesSearch && matchesStatus && matchesDateRange;
+        return matchesSearch ;
       }
     );
 
     return filtered;
-  }, [searchText, statusFilter, dateRange]);
+  }, [searchText]);
 
   // Dữ liệu phân trang
   const paginatedData = useMemo(() => {
@@ -137,17 +119,6 @@ export default function SoftwareProposalsPage() {
     router.push(
       `/giang-vien/danh-sach-de-xuat-phan-mem/chi-tiet/${proposal.id}`
     );
-  };
-
-  // Stats
-  const stats = {
-    total: mockSoftwareProposals.length,
-    pending: getSoftwareProposalsByStatus(SoftwareProposalStatus.CHỜ_DUYỆT)
-      .length,
-    approved: getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_DUYỆT)
-      .length,
-    equipped: getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_TRANG_BỊ)
-      .length,
   };
 
   return (
@@ -184,98 +155,19 @@ export default function SoftwareProposalsPage() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Monitor className="h-6 w-6 text-gray-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Tổng đề xuất
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.total}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Clock className="h-6 w-6 text-yellow-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Chờ duyệt
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.pending}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <CheckCircle className="h-6 w-6 text-green-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Đã duyệt
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.approved}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Monitor className="h-6 w-6 text-blue-400" />
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">
-                    Đã trang bị
-                  </dt>
-                  <dd className="text-lg font-medium text-gray-900">
-                    {stats.equipped}
-                  </dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className=" gap-4">
           <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tìm kiếm đề xuất phần mềm
+            </label>
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Tìm kiếm theo mã đề xuất, lý do, người đề xuất..."
+                placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -283,29 +175,6 @@ export default function SoftwareProposalsPage() {
             </div>
           </div>
 
-          <Select
-            placeholder="Chọn trạng thái"
-            className="!h-full"
-            value={statusFilter}
-            onChange={setStatusFilter}
-            allowClear>
-            <Option value="">Tất cả trạng thái</Option>
-            <Option value={SoftwareProposalStatus.CHỜ_DUYỆT}>Chờ duyệt</Option>
-            <Option value={SoftwareProposalStatus.ĐÃ_DUYỆT}>Đã duyệt</Option>
-            <Option value={SoftwareProposalStatus.ĐÃ_TỪ_CHỐI}>
-              Đã từ chối
-            </Option>
-            <Option value={SoftwareProposalStatus.ĐÃ_TRANG_BỊ}>
-              Đã trang bị
-            </Option>
-          </Select>
-
-          <RangePicker
-            placeholder={["Từ ngày", "Đến ngày"]}
-            format="DD/MM/YYYY"
-            value={dateRange}
-            onChange={setDateRange}
-          />
         </div>
       </div>
 
@@ -337,8 +206,6 @@ export default function SoftwareProposalsPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedData.map((proposal) => {
-                const StatusIcon =
-                  softwareProposalStatusConfig[proposal.status].icon;
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -366,8 +233,7 @@ export default function SoftwareProposalsPage() {
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                           softwareProposalStatusConfig[proposal.status].color
-                        }`}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
+                        }`}>                     
                         {softwareProposalStatusConfig[proposal.status].label}
                       </span>
                     </td>
@@ -383,7 +249,7 @@ export default function SoftwareProposalsPage() {
                       <button
                         title="Xem chi tiết"
                         onClick={() => handleViewProposal(proposal)}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 focus:outline-none">
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <Eye className="h-4 w-4 items-center" />
                       </button>
                     </td>

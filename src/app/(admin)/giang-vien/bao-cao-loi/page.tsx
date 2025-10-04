@@ -26,7 +26,6 @@ import {
   Button,
   Input,
   Select,
-  Alert,
   Steps,
   Radio,
 } from "antd";
@@ -109,55 +108,6 @@ export default function BaoCaoLoiPage() {
   };
 
   const currentStep = getCurrentStep();
-
-  // Hàm trả về hướng dẫn cho bước hiện tại
-  const getCurrentStepInfo = () => {
-    switch (currentStep) {
-      case 0:
-        return {
-          title: "Bước 1: Chọn vị trí thiết bị",
-          description:
-            "Hãy chọn tòa nhà, tầng và phòng nơi thiết bị gặp sự cố đang đặt.",
-          type: "info" as const,
-        };
-      case 1:
-        return {
-          title: "Bước 2: Chọn thiết bị",
-          description:
-            "Chọn máy tính cụ thể gặp sự cố từ danh sách thiết bị trong phòng.",
-          type: "info" as const,
-        };
-      case 2:
-        return {
-          title: "Bước 3: Chọn loại lỗi",
-          description:
-            "Chọn loại lỗi phù hợp nhất với hiện tượng bạn gặp phải.",
-          type: "info" as const,
-        };
-      case 3:
-        return {
-          title: "Bước 4: Mô tả chi tiết",
-          description:
-            "Mô tả chi tiết về sự cố để kỹ thuật viên có thể hiểu và xử lý nhanh nhất.",
-          type: "info" as const,
-        };
-      case 4:
-        return {
-          title: "Bước 5: Hoàn tất báo cáo",
-          description:
-            "Có thể đính kèm hình ảnh minh họa và gửi báo cáo để được xử lý.",
-          type: "success" as const,
-        };
-      default:
-        return {
-          title: "Bắt đầu báo cáo",
-          description: "Hãy bắt đầu bằng việc chọn vị trí của thiết bị.",
-          type: "info" as const,
-        };
-    }
-  };
-
-  const stepInfo = getCurrentStepInfo();
 
   // Detect mobile device
   useEffect(() => {
@@ -376,16 +326,6 @@ export default function BaoCaoLoiPage() {
         />
       </Card>
 
-      {/* Current Step Guide Card */}
-      <Card>
-        <Alert
-          message={stepInfo.title}
-          description={stepInfo.description}
-          type={stepInfo.type}
-          showIcon
-        />
-      </Card>
-
       {/* QR Scanner for Mobile */}
       {isMobile && (
         <Card>
@@ -549,16 +489,6 @@ export default function BaoCaoLoiPage() {
               Bước 3: Chọn loại lỗi
             </h3>
 
-            {formData.assetId && (
-              <Alert
-                message="Chọn loại lỗi phù hợp"
-                description="Vui lòng chọn loại lỗi phù hợp nhất với hiện tượng bạn gặp phải."
-                type="info"
-                showIcon
-                className="mb-4"
-              />
-            )}
-
             {/* Radio buttons cho phân loại lỗi */}
             <Form.Item label="Phân loại lỗi" required>
               <Radio.Group
@@ -607,17 +537,6 @@ export default function BaoCaoLoiPage() {
                 </Select>
               </Form.Item>
             )}
-
-            {/* Thông báo khi chọn lỗi phần mềm */}
-            {errorCategory === "software" && (
-              <Alert
-                message="Đã chọn lỗi phần mềm"
-                description="Bạn đã chọn loại lỗi phần mềm. Có thể tiếp tục sang bước tiếp theo để mô tả chi tiết."
-                type="success"
-                showIcon
-                className="mt-4"
-              />
-            )}
           </div>
 
           {/* Bước 4: Chọn linh kiện/phần mềm cụ thể */}
@@ -633,17 +552,6 @@ export default function BaoCaoLoiPage() {
               {errorCategory === "software" ? "phần mềm" : "linh kiện"} bị lỗi
               (tùy chọn)
             </h3>
-
-            {(!errorCategory ||
-              (errorCategory === "hardware" && !formData.errorTypeId)) && (
-              <Alert
-                message="Vui lòng chọn loại lỗi trước"
-                description="Bạn cần hoàn thành bước 3 để có thể chọn linh kiện hoặc phần mềm cụ thể."
-                type="warning"
-                showIcon
-                className="mb-4"
-              />
-            )}
 
             {errorCategory === "software" ? (
               <div>
@@ -792,19 +700,6 @@ export default function BaoCaoLoiPage() {
           </div>
 
           {/* Form Actions */}
-          {formData.building &&
-            formData.roomId &&
-            formData.assetId &&
-            formData.errorTypeId &&
-            formData.description && (
-              <Alert
-                message="Sẵn sàng gửi báo cáo"
-                description="Tất cả thông tin bắt buộc đã được điền đầy đủ. Bạn có thể gửi báo cáo lỗi ngay bây giờ."
-                type="success"
-                showIcon
-                className="mb-6"
-              />
-            )}
 
           {/* Submit Buttons */}
           <div className="flex justify-end space-x-4">

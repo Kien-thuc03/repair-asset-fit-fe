@@ -269,7 +269,7 @@ export default function ReportTable({
                     <td className="px-1 py-2 text-center">
                       <button
                         onClick={() => onViewDetails(request.id)}
-                        className="inline-flex items-center p-1 border border-transparent rounded text-indigo-600 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="Xem chi tiết">
                         <Eye className="h-3 w-3" />
                       </button>
