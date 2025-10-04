@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle, Clock, Send } from "lucide-react";
+
 import { Breadcrumb } from "antd";
 import React from "react";
 
@@ -11,7 +11,6 @@ interface InspectionDetailHeaderProps {
 export default function InspectionDetailHeader({
   reportNumber,
   status,
-  onGoBack,
 }: InspectionDetailHeaderProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -39,18 +38,6 @@ export default function InspectionDetailHeader({
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "pending":
-        return <Clock className="h-5 w-5" />;
-      case "signed":
-        return <CheckCircle className="h-5 w-5" />;
-      case "sent_back":
-        return <Send className="h-5 w-5" />;
-      default:
-        return <Clock className="h-5 w-5" />;
-    }
-  };
 
   return (
     <>
@@ -89,12 +76,6 @@ export default function InspectionDetailHeader({
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <button
-              onClick={onGoBack}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Quay lại
-            </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 Chi tiết biên bản {reportNumber}
@@ -105,7 +86,7 @@ export default function InspectionDetailHeader({
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            {getStatusIcon(status)}
+            
             <span
               className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusBadge(
                 status

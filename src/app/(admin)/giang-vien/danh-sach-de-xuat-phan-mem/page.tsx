@@ -66,6 +66,11 @@ export default function SoftwareProposalsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  // Export modal states
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+
   // Lọc và sắp xếp dữ liệu
   const filteredAndSortedData = useMemo(() => {
     setCurrentPage(1);
@@ -124,14 +129,11 @@ export default function SoftwareProposalsPage() {
       selectedRowKeys.includes(item.id)
     );
 
-    if (selectedData.length === 0) {
-      Modal.warning({
-        title: "Thông báo",
-        content: "Vui lòng chọn ít nhất một đề xuất để xuất Excel.",
-        centered: true,
-        okText: "Đồng ý",
-        icon: <Download className="text-orange-500" />,
-      });
+    const itemsToExport =
+      selectedData.length > 0 ? selectedData : filteredAndSortedData;
+
+    if (itemsToExport.length === 0) {
+      setShowExportErrorModal(true);
       return;
     }
 
@@ -140,7 +142,7 @@ export default function SoftwareProposalsPage() {
       const XLSX = await import("xlsx");
 
       // Tạo dữ liệu Excel
-      const excelData = selectedData.map((item, index) => ({
+      const excelData = itemsToExport.map((item, index) => ({
         STT: index + 1,
         "Mã đề xuất": item.proposalCode,
         "Người đề xuất": getUserName(item.proposerId),
@@ -172,78 +174,19 @@ export default function SoftwareProposalsPage() {
       XLSX.utils.book_append_sheet(wb, ws, "Danh sách đề xuất phần mềm");
 
       // Xuất file
-      const fileName = `Danh_sach_de_xuat_phan_mem_${
+      const fileName = `danh-sach-de-xuat-phan-mem-${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
       XLSX.writeFile(wb, fileName);
 
-      // Modal thông báo thành công với thông tin chi tiết
-      Modal.success({
-        title: (
-          <div className="flex items-center gap-2">
-            <CheckCircle className="text-green-500" />
-            <span>Xuất Excel thành công!</span>
-          </div>
-        ),
-        content: (
-          <div className="space-y-2">
-            <p>
-              ✅ <strong>Số lượng đề xuất:</strong> {selectedData.length}
-            </p>
-            <p>
-              📁 <strong>Tên file:</strong> {fileName}
-            </p>
-            <p>
-              📍 <strong>Vị trí:</strong> Thư mục Downloads
-            </p>
-            <p className="text-sm text-gray-500 mt-3">
-              File Excel đã được tải xuống thành công. Bạn có thể tìm thấy file
-              trong thư mục Downloads của máy tính.
-            </p>
-          </div>
-        ),
-        centered: true,
-        okText: "Đồng ý",
-        width: 500,
-        onOk: () => {
-          // Reset selection sau khi người dùng đóng modal
-          setSelectedRowKeys([]);
-        },
-      });
+      setExportCount(itemsToExport.length);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất
+      setSelectedRowKeys([]);
     } catch (error) {
       console.error("Lỗi xuất Excel:", error);
-
-      // Modal thông báo lỗi chi tiết
-      Modal.error({
-        title: (
-          <div className="flex items-center gap-2">
-            <XCircle className="text-red-500" />
-            <span>Lỗi xuất Excel</span>
-          </div>
-        ),
-        content: (
-          <div className="space-y-2">
-            <p>❌ Có lỗi xảy ra khi xuất file Excel</p>
-            <p className="text-sm text-gray-600">
-              <strong>Chi tiết lỗi:</strong>{" "}
-              {error instanceof Error ? error.message : "Lỗi không xác định"}
-            </p>
-            <div className="bg-gray-50 p-3 rounded mt-3">
-              <p className="text-sm font-medium text-gray-700">
-                Hướng dẫn khắc phục:
-              </p>
-              <ul className="text-sm text-gray-600 mt-1 space-y-1">
-                <li>• Kiểm tra kết nối internet</li>
-                <li>• Đảm bảo trình duyệt cho phép tải xuống file</li>
-                <li>• Thử lại sau vài giây</li>
-              </ul>
-            </div>
-          </div>
-        ),
-        centered: true,
-        okText: "Đồng ý",
-        width: 500,
-      });
+      setShowExportErrorModal(true);
     }
   };
 
@@ -307,7 +250,6 @@ export default function SoftwareProposalsPage() {
         <Row gutter={16}>
           {/* Search - chiếm 3 cột */}
           <Col xs={24} sm={18}>
-
             <Input
               placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
               value={searchText}
@@ -322,16 +264,13 @@ export default function SoftwareProposalsPage() {
           <Col xs={24} sm={6}>
             <Button
               onClick={handleExportExcel}
-              disabled={selectedRowKeys.length === 0}
               icon={<Download className="w-3 h-3" />}
               size="middle"
               className="w-full"
-              type={selectedRowKeys.length > 0 ? "default" : "default"}>
+              type="default">
               <span className="hidden lg:inline">Xuất Excel</span>
               <span className="lg:hidden">Excel</span>
-              {selectedRowKeys.length > 0 && (
-                <span className="ml-1 text-xs">({selectedRowKeys.length})</span>
-              )}
+              {selectedRowKeys.length > 0 && ` (${selectedRowKeys.length})`}
             </Button>
           </Col>
         </Row>
@@ -465,6 +404,41 @@ export default function SoftwareProposalsPage() {
           showQuickJumper={true}
           showTotal={true}
         />
+
+        {/* Export Modals */}
+        <Modal
+          open={showExportSuccessModal}
+          onOk={() => setShowExportSuccessModal(false)}
+          onCancel={() => setShowExportSuccessModal(false)}
+          footer={null}
+          closable={true}
+          centered>
+          <div className="text-center">
+            <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
+            <h3 className="text-lg font-semibold mb-2">
+              Xuất Excel thành công!
+            </h3>
+            <p className="text-gray-600">
+              Đã xuất {exportCount} đề xuất phần mềm
+            </p>
+          </div>
+        </Modal>
+
+        <Modal
+          open={showExportErrorModal}
+          onOk={() => setShowExportErrorModal(false)}
+          onCancel={() => setShowExportErrorModal(false)}
+          footer={null}
+          closable={true}
+          centered>
+          <div className="text-center">
+            <XCircle className="mx-auto mb-4 text-red-500" size={48} />
+            <h3 className="text-lg font-semibold mb-2">Lỗi xuất Excel</h3>
+            <p className="text-gray-600">
+              Vui lòng chọn ít nhất một đề xuất để xuất
+            </p>
+          </div>
+        </Modal>
       </div>
     </div>
   );

@@ -1,31 +1,53 @@
-import { Search } from "lucide-react";
+import { Search, Download } from "lucide-react";
+import { Row, Col, Input, Button } from "antd";
 
 interface InspectionFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
+  selectedCount: number;
+  onExportExcel: () => void;
 }
 
 export default function InspectionFilters({
   searchTerm,
   onSearchChange,
+  selectedCount,
+  onExportExcel,
 }: InspectionFiltersProps) {
   return (
     <div className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Tìm kiếm
-        </label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Số biên bản, tiêu đề..."
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={24} md={18} lg={18}>
+          <Input
+            prefix={<Search className="h-4 w-4 text-gray-400" />}
+            placeholder="Số biên bản, tờ trình,..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full"
           />
-        </div>
-      </div>
+        </Col>
+        <Col xs={24} sm={24} md={6} lg={6}>
+          <Button
+            type="primary"
+            icon={<Download className="h-4 w-4" />}
+            onClick={onExportExcel}
+            disabled={selectedCount === 0}
+            className={`w-full ${
+              selectedCount > 0
+                ? "bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700"
+                : ""
+            }`}
+            style={{
+              backgroundColor: selectedCount > 0 ? "#16a34a" : undefined,
+              borderColor: selectedCount > 0 ? "#16a34a" : undefined,
+            }}>
+            <span className="hidden sm:inline">
+              Xuất Excel {selectedCount > 0 && `(${selectedCount})`}
+            </span>
+            <span className="sm:hidden">Xuất</span>
+          </Button>
+        </Col>
+      </Row>
     </div>
   );
 }

@@ -1,14 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Clock, Send } from "lucide-react";
+import { CheckCircle, Clock, Send, XCircle } from "lucide-react";
+import { Modal } from "antd";
 import Pagination from "@/components/common/Pagination";
 import {
   InspectionHeader,
   InspectionFilters,
   InspectionTable,
   InspectionMobileView,
-  InspectionExportModals,
 } from "@/components/leadTechnician/inspection";
 import { SignConfirmModal, SuccessModal } from "@/components/modal";
 import {
@@ -101,10 +101,10 @@ export default function BienBanPage() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // Export states
-  const [exportCount, setExportCount] = useState(0);
+  // Export modals state
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
 
   // Sign states
   const [showSignModal, setShowSignModal] = useState(false);
@@ -348,21 +348,77 @@ export default function BienBanPage() {
   };
 
   // Export handler
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
+    const selectedData = sortedReports.filter((item) =>
+      selectedItems.includes(item.id)
+    );
+
     const itemsToExport =
-      selectedItems.length > 0
-        ? sortedReports.filter((report) => selectedItems.includes(report.id))
-        : sortedReports;
+      selectedData.length > 0 ? selectedData : sortedReports;
 
     if (itemsToExport.length === 0) {
       setShowExportErrorModal(true);
       return;
     }
 
-    console.log("Xuất Excel:", itemsToExport);
-    // TODO: Implement actual Excel export logic
-    setExportCount(itemsToExport.length);
-    setShowExportSuccessModal(true);
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import("xlsx");
+
+      // Tạo dữ liệu Excel
+      const excelData = itemsToExport.map((item, index) => ({
+        STT: index + 1,
+        "Số biên bản": item.reportNumber,
+        "Tiêu đề": item.title,
+        "Tờ trình liên quan": item.relatedReportTitle,
+        "Người tạo": item.createdBy,
+        "Ngày kiểm tra": new Date(item.inspectionDate).toLocaleDateString(
+          "vi-VN"
+        ),
+        "Trạng thái": getStatusText(item.status),
+        "Người ký": item.leaderSignature || "Chưa ký",
+        "Ngày ký": item.leaderSignedAt
+          ? new Date(item.leaderSignedAt).toLocaleDateString("vi-VN")
+          : "Chưa ký",
+      }));
+
+      // Tạo workbook và worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Đặt độ rộng cột tự động
+      const colWidths = [
+        { wch: 5 }, // STT
+        { wch: 20 }, // Số biên bản
+        { wch: 40 }, // Tiêu đề
+        { wch: 35 }, // Tờ trình liên quan
+        { wch: 20 }, // Người tạo
+        { wch: 15 }, // Ngày kiểm tra
+        { wch: 15 }, // Trạng thái
+        { wch: 20 }, // Người ký
+        { wch: 15 }, // Ngày ký
+      ];
+      ws["!cols"] = colWidths;
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách biên bản kiểm tra");
+
+      // Xuất file
+      const fileName = `danh-sach-bien-ban-kiem-tra-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      setExportCount(itemsToExport.length);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất
+      setSelectedItems([]);
+      setSelectAll(false);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setShowExportErrorModal(true);
+    }
   };
 
   // Reset pagination when changing search
@@ -374,11 +430,13 @@ export default function BienBanPage() {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-2 main-content">
-      <InspectionHeader onExportExcel={handleExportExcel} />
+      <InspectionHeader />
 
       <InspectionFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
+        selectedCount={selectedItems.length}
+        onExportExcel={handleExportExcel}
       />
 
       <InspectionTable
@@ -442,13 +500,36 @@ export default function BienBanPage() {
         message="Biên bản đã được ký xác nhận thành công. Trạng thái đã được cập nhật."
       />
 
-      <InspectionExportModals
-        showExportSuccessModal={showExportSuccessModal}
-        showExportErrorModal={showExportErrorModal}
-        exportCount={exportCount}
-        onCloseSuccessModal={() => setShowExportSuccessModal(false)}
-        onCloseErrorModal={() => setShowExportErrorModal(false)}
-      />
+      {/* Export Modals */}
+      <Modal
+        open={showExportSuccessModal}
+        onOk={() => setShowExportSuccessModal(false)}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={null}
+        closable={true}
+        centered>
+        <div className="text-center">
+          <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
+          <h3 className="text-lg font-semibold mb-2">Xuất Excel thành công!</h3>
+          <p className="text-gray-600">Đã xuất {exportCount} biên bản</p>
+        </div>
+      </Modal>
+
+      <Modal
+        open={showExportErrorModal}
+        onOk={() => setShowExportErrorModal(false)}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={null}
+        closable={true}
+        centered>
+        <div className="text-center">
+          <XCircle className="mx-auto mb-4 text-red-500" size={48} />
+          <h3 className="text-lg font-semibold mb-2">Lỗi xuất Excel</h3>
+          <p className="text-gray-600">
+            Vui lòng chọn ít nhất một biên bản để xuất
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }
