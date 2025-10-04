@@ -61,7 +61,7 @@ export default function InspectionItemsTable({
                     {item.location}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
-                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                    <span className="">
                       {item.condition}
                     </span>
                   </td>

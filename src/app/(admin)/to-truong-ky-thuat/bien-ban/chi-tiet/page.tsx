@@ -95,7 +95,6 @@ export default function ChiTietBienBanPage() {
   const [report, setReport] = useState<InspectionReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSignModal, setShowSignModal] = useState(false);
-  const [showSignSuccessModal, setShowSignSuccessModal] = useState(false);
 
   useEffect(() => {
     if (reportId) {
@@ -137,20 +136,6 @@ export default function ChiTietBienBanPage() {
       console.log("Signed report:", updatedReport);
 
       setShowSignModal(false);
-      setShowSignSuccessModal(true);
-    }
-  };
-
-  const handleSendBack = () => {
-    if (report) {
-      const updatedReport = {
-        ...report,
-        status: "sent_back" as const,
-      };
-      setReport(updatedReport);
-
-      // TODO: Trong thực tế sẽ gọi API để gửi biên bản lại cho Phòng Quản trị
-      console.log("Sent back report:", updatedReport);
     }
   };
 
@@ -203,7 +188,6 @@ export default function ChiTietBienBanPage() {
           <ActionPanel
             status={report.status}
             onSignReport={handleSignReport}
-            onSendBack={handleSendBack}
             onGoBack={handleGoBack}
           />
         </div>
@@ -213,14 +197,6 @@ export default function ChiTietBienBanPage() {
         isOpen={showSignModal}
         onClose={() => setShowSignModal(false)}
         onConfirm={confirmSign}
-        reportTitle={report?.title || ""}
-        reportNumber={report?.reportNumber || ""}
-      />
-
-      <SignConfirmModal
-        isOpen={showSignSuccessModal}
-        onClose={() => setShowSignSuccessModal(false)}
-        onConfirm={() => setShowSignSuccessModal(false)}
         reportTitle={report?.title || ""}
         reportNumber={report?.reportNumber || ""}
       />
