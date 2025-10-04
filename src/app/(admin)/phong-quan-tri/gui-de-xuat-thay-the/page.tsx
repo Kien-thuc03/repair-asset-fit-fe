@@ -6,8 +6,6 @@ import {
   FileText,
   Calendar,
   Eye,
-  Plane,
-  PlaneLanding,
   Download,
   CheckCircle,
   XCircle,
@@ -114,9 +112,11 @@ export default function GuiDeXuatThayThePage() {
   };
 
   const filteredData = useMemo(() => {
-    // Lọc dữ liệu: chỉ lấy các đề xuất có trạng thái ĐÃ_XÁC_MINH (Tổ trưởng đã ký biên bản xác nhận)
+    // Lọc dữ liệu: chỉ lấy các đề xuất có trạng thái ĐÃ_KÝ_BIÊN_BẢN và ĐÃ_HOÀN_TẤT_MUA_SẮM
     let filtered = mockReplacementRequestItem.filter(
-      (item) => item.status === ReplacementStatus.ĐÃ_XÁC_MINH
+      (item) =>
+        item.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN ||
+        item.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
     );
 
     // Apply search filter
@@ -196,8 +196,10 @@ export default function GuiDeXuatThayThePage() {
 
   const getStatusColor = (status: ReplacementStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_XÁC_MINH:
-        return "bg-cyan-100 text-cyan-800 border-cyan-200";
+      case ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN:
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+        return "bg-green-100 text-green-800 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -205,8 +207,10 @@ export default function GuiDeXuatThayThePage() {
 
   const getStatusText = (status: ReplacementStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_XÁC_MINH:
-        return "Đã xác minh";
+      case ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN:
+        return "Đã ký biên bản";
+      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+        return "Đã hoàn tất mua sắm";
       default:
         return status;
     }
@@ -224,27 +228,44 @@ export default function GuiDeXuatThayThePage() {
     setSelectedItem(null);
   };
 
-  // Xử lý xác nhận gửi đề xuất
+  // Xử lý xác nhận hoàn tất mua sắm
   const handleConfirmSend = async () => {
     if (!selectedItem) return;
 
     try {
       setIsProcessing(true);
 
-      // Trong thực tế sẽ gọi API để cập nhật trạng thái
+      // Trong thực tế sẽ gọi API để cập nhật trạng thái thành ĐÃ_HOÀN_TẤT_MUA_SẮM
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
 
+      // Cập nhật trạng thái trong mockData
+      const itemIndex = mockReplacementRequestItem.findIndex(
+        (item) => item.id === selectedItem.id
+      );
+
+      if (itemIndex !== -1) {
+        // Cập nhật trạng thái của item trong mockData
+        mockReplacementRequestItem[itemIndex] = {
+          ...mockReplacementRequestItem[itemIndex],
+          status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
+          updatedAt: new Date().toISOString(),
+        };
+      }
+
       message.success(
-        `Đã gửi đề xuất ${selectedItem.proposalCode} thành công!`
+        `Đã cập nhật trạng thái ${selectedItem.proposalCode} thành công!`
       );
 
       // Đóng modal và reset state
       handleCloseModal();
 
-      // Reload trang để cập nhật dữ liệu
-      window.location.reload();
+      // Cập nhật state để render lại UI thay vì reload trang
+      // Force một re-render bằng cách cập nhật searchTerm và reset lại
+      const currentSearch = searchTerm;
+      setSearchTerm(currentSearch + " ");
+      setTimeout(() => setSearchTerm(currentSearch), 10);
     } catch (error) {
-      message.error("Có lỗi xảy ra khi gửi đề xuất!");
+      message.error("Có lỗi xảy ra khi cập nhật trạng thái!");
       console.error(error);
     } finally {
       setIsProcessing(false);
@@ -276,7 +297,7 @@ export default function GuiDeXuatThayThePage() {
             {
               title: (
                 <div className="flex items-center">
-                  <span>Gửi đề xuất thay thế</span>
+                  <span>Danh sách mua sắm thiết bị</span>
                 </div>
               ),
             },
@@ -287,10 +308,11 @@ export default function GuiDeXuatThayThePage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Gửi đề xuất thay thế
+          Danh sách mua sắm thiết bị
         </h1>
         <p className="mt-2 text-gray-600">
-          Quản lý các đề xuất thay thế đã được tổ trưởng xác minh
+          Quản lý và theo dõi các đề xuất thay thế linh kiện, thiết bị đã được
+          tổ trưởng ký biên bản hoặc đã hoàn tất mua sắm.
         </p>
       </div>
 
@@ -481,13 +503,13 @@ export default function GuiDeXuatThayThePage() {
                         <Eye className="w-3 h-3" />
                       </Link>
 
-                      {/* Chỉ hiển thị nút xử lý cho những trạng thái ĐÃ_XÁC_MINH */}
-                      {item.status === ReplacementStatus.ĐÃ_XÁC_MINH && (
+                      {/* Chỉ hiển thị nút xử lý cho những trạng thái ĐÃ_KÝ_BIÊN_BẢN */}
+                      {item.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN && (
                         <button
                           onClick={() => handleOpenConfirmModal(item)}
                           className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                          title="Gửi đề xuất">
-                          <Plane className="w-3 h-3" />
+                          title="Đã hoàn tất mua sắm">
+                          <CheckCircle className="w-3 h-3" />
                         </button>
                       )}
                     </div>
@@ -526,7 +548,7 @@ export default function GuiDeXuatThayThePage() {
         )}
       </div>
 
-      {/* Modal xác nhận gửi đề xuất */}
+      {/* Modal xác nhận hoàn tất mua sắm */}
       <SignConfirmModal
         isOpen={showConfirmModal}
         onClose={handleCloseModal}
@@ -535,11 +557,11 @@ export default function GuiDeXuatThayThePage() {
         reportNumber={selectedItem?.proposalCode || ""}
         isLoading={isProcessing}
         actionType="send"
-        customTitle="Xác nhận gửi đề xuất thay thế"
-        customConfirmText="Gửi đề xuất"
-        customDescription="Bạn có chắc chắn muốn gửi đề xuất thay thế này lên cấp trên để phê duyệt?"
-        customWarning="Sau khi gửi, đề xuất sẽ được chuyển lên Phòng Quản trị để xem xét và phê duyệt. Bạn không thể chỉnh sửa đề xuất sau khi đã gửi."
-        icon={PlaneLanding}
+        customTitle="Xác nhận hoàn tất mua sắm"
+        customConfirmText="Xác nhận đã mua sắm"
+        customDescription="Bạn có chắc chắn muốn xác nhận đã hoàn tất mua sắm cho đề xuất thay thế này?"
+        customWarning="Sau khi xác nhận, trạng thái đề xuất sẽ được cập nhật thành ĐÃ HOÀN TẤT MUA SẮM."
+        icon={CheckCircle}
       />
 
       {/* Export Success Modal */}
