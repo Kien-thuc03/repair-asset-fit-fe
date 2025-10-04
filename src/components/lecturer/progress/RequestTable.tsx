@@ -49,7 +49,7 @@ export default function RequestTable({
               sortField={sortField}
               sortDirection={sortDirection}
               onSort={onSort}
-              className="w-28">
+              className="w-30">
               {/* 112px */}
               Mã yêu cầu
             </SortableHeader>
@@ -126,7 +126,7 @@ export default function RequestTable({
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                 </td>
-                <td className="px-2 py-4 text-sm font-medium text-gray-900 align-middle">
+                <td className="px-2 py-4 text-xs font-medium text-blue-600 align-middle">
                   <div
                     className="max-w-[100px] truncate"
                     title={request.requestCode}>
