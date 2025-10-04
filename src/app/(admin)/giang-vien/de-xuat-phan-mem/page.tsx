@@ -7,12 +7,12 @@ import {
   SoftwareItemForm,
 } from "@/types";
 import { mockAssets, mockRooms, mockComputers } from "@/lib/mockData";
-import { SuccessModal } from "@/components/modal";
 import {
   QRScannerSection,
   ProposalHeader,
 } from "@/components/lecturer/softwareProposal";
-import { Breadcrumb, Select } from "antd";
+import { Breadcrumb, Select, Modal, Button } from "antd";
+import { CheckCircleOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 
@@ -42,6 +42,27 @@ export default function DeXuatPhanMemPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Validation function to check if form is complete
+  const isFormValid = () => {
+    // Check if room is selected
+    if (!formData.roomId) return false;
+
+    // Check if reason is provided
+    if (!formData.reason.trim()) return false;
+
+    // Check if all software items are complete
+    const hasValidSoftwareItems = formData.softwareItems.every(
+      (item) =>
+        item.softwareName.trim() &&
+        item.version.trim() &&
+        item.publisher.trim() &&
+        item.licenseType &&
+        item.quantity >= 1
+    );
+
+    return hasValidSoftwareItems;
+  };
 
   // Lấy danh sách tòa nhà duy nhất từ mockRooms
   const buildings = Array.from(
@@ -98,6 +119,49 @@ export default function DeXuatPhanMemPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate form data
+    if (!formData.roomId) {
+      Modal.warning({
+        title: "Thông tin chưa đầy đủ",
+        content: "Vui lòng chọn phòng máy.",
+        centered: true,
+        okText: "Đồng ý",
+      });
+      return;
+    }
+
+    if (!formData.reason.trim()) {
+      Modal.warning({
+        title: "Thông tin chưa đầy đủ",
+        content: "Vui lòng nhập lý do đề xuất.",
+        centered: true,
+        okText: "Đồng ý",
+      });
+      return;
+    }
+
+    // Validate software items
+    const invalidSoftwareItem = formData.softwareItems.find(
+      (item) =>
+        !item.softwareName.trim() ||
+        !item.version.trim() ||
+        !item.publisher.trim() ||
+        !item.licenseType ||
+        item.quantity < 1
+    );
+
+    if (invalidSoftwareItem) {
+      Modal.warning({
+        title: "Thông tin phần mềm chưa đầy đủ",
+        content:
+          "Vui lòng điền đầy đủ thông tin cho tất cả phần mềm (tên phần mềm, phiên bản, nhà phát hành, số lượng và loại giấy phép).",
+        centered: true,
+        okText: "Đồng ý",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Simulate API call
@@ -129,6 +193,10 @@ export default function DeXuatPhanMemPage() {
           licenseType: "",
         },
       ],
+    });
+    setLocationData({
+      building: "",
+      floor: "",
     });
   };
 
@@ -511,25 +579,42 @@ export default function DeXuatPhanMemPage() {
           <button
             type="submit"
             onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50">
+            disabled={isSubmitting || !isFormValid()}
+            className={`px-6 py-2 rounded-md transition-all duration-200 ${
+              isSubmitting || !isFormValid()
+                ? "bg-gray-400 text-gray-200 cursor-not-allowed opacity-60"
+                : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md"
+            }`}>
             {isSubmitting ? "Đang gửi..." : "Gửi đề xuất"}
           </button>
         </div>
       </div>
 
       {/* Success Modal */}
-      <SuccessModal
-        isOpen={showSuccessModal}
-        onClose={handleSuccessModalClose}
-        title="Đề xuất phần mềm đã được gửi thành công!"
-        message={`Cảm ơn bạn đã gửi đề xuất trang bị ${
-          formData.softwareItems.length
-        } phần mềm cho phòng ${
-          mockRooms.find((r) => r.id === formData.roomId)?.roomNumber ||
-          formData.roomId
-        }. Kỹ thuật viên sẽ xem xét và phản hồi trong thời gian sớm nhất. Bạn có thể theo dõi trạng thái đề xuất trong mục quản lý đề xuất.`}
-      />
+      <Modal
+        open={showSuccessModal}
+        onCancel={handleSuccessModalClose}
+        footer={[
+          <Button key="close" type="primary" onClick={handleSuccessModalClose}>
+            Đóng
+          </Button>,
+        ]}
+        centered>
+        <div className="text-center py-4">
+          <CheckCircleOutlined style={{ fontSize: "48px", color: "#52c41a" }} />
+          <h3 className="mt-4 text-lg font-semibold">
+            Đề xuất phần mềm đã được gửi thành công!
+          </h3>
+          <p className="text-gray-600 mt-2">
+            {`Cảm ơn bạn đã gửi đề xuất trang bị ${
+              formData.softwareItems.length
+            } phần mềm cho phòng ${
+              mockRooms.find((r) => r.id === formData.roomId)?.roomNumber ||
+              formData.roomId
+            }. Kỹ thuật viên sẽ xem xét và phản hồi trong thời gian sớm nhất. Bạn có thể theo dõi trạng thái đề xuất trong mục quản lý đề xuất.`}
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }
