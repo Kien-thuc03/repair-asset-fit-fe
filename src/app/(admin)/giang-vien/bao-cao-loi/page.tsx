@@ -18,7 +18,6 @@ import {
   mockComputers,
   getSoftwareByAssetId,
 } from "@/lib/mockData";
-import { SuccessModal } from "@/components/modal";
 import {
   Breadcrumb,
   Card,
@@ -28,6 +27,7 @@ import {
   Select,
   Steps,
   Radio,
+  Modal,
 } from "antd";
 import {
   DeleteOutlined,
@@ -220,8 +220,7 @@ export default function BaoCaoLoiPage() {
   };
 
   // Handle form submit
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setIsSubmitting(true);
 
     // Simulate API call
@@ -256,7 +255,7 @@ export default function BaoCaoLoiPage() {
   // Handle success modal close
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
-    router.push("/giang-vien/theo-doi-tien-do");
+    router.push("/giang-vien");
   };
 
   // Handle cancel
@@ -539,7 +538,7 @@ export default function BaoCaoLoiPage() {
             )}
           </div>
 
-                    {/* Bước 4: Mô tả chi tiết */}
+          {/* Bước 4: Mô tả chi tiết */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-4 text-blue-900">
               Bước 4: Mô tả chi tiết vấn đề
@@ -645,8 +644,6 @@ export default function BaoCaoLoiPage() {
             )}
           </div>
 
-
-
           {/* Bước 6: Đính kèm hình ảnh */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-4 text-blue-900">
@@ -728,12 +725,33 @@ export default function BaoCaoLoiPage() {
       </Card>
 
       {/* Success Modal */}
-      <SuccessModal
-        isOpen={showSuccessModal}
-        onClose={handleSuccessModalClose}
-        title="Báo cáo lỗi đã được gửi thành công!"
-        message="Cảm ơn bạn đã báo cáo lỗi. Chúng tôi sẽ xem xét và xử lý trong thời gian sớm nhất. Bạn có thể theo dõi tiến độ xử lý trong phần 'Theo dõi tiến độ'."
-      />
+      <Modal
+        title="Thành công!"
+        open={showSuccessModal}
+        onOk={handleSuccessModalClose}
+        onCancel={handleSuccessModalClose}
+        okText="Đồng ý"
+        cancelText="Đóng"
+        centered
+        footer={[
+          <Button key="ok" type="primary" onClick={handleSuccessModalClose}>
+            Đồng ý
+          </Button>,
+        ]}>
+        <div className="flex items-center space-x-3">
+          <CheckCircleOutlined className="text-green-500 text-2xl" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Báo cáo lỗi đã được gửi thành công!
+            </h3>
+            <p className="text-sm text-gray-500 mt-2">
+              Cảm ơn bạn đã báo cáo lỗi. Chúng tôi sẽ xem xét và xử lý trong
+              thời gian sớm nhất. Bạn có thể theo dõi tiến độ xử lý trong phần
+              &apos;Danh sách yêu cầu sửa chữa&apos;.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
