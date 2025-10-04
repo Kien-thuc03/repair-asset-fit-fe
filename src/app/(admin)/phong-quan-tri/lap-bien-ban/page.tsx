@@ -10,8 +10,10 @@ import {
   Eye,
   User,
   CheckCircle,
+  Download,
+  XCircle,
 } from "lucide-react";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, Modal, Button } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import {
   ReplacementRequestItem,
@@ -19,7 +21,6 @@ import {
   ComponentFromRequest,
 } from "@/types/repair";
 import { SortableHeader } from "@/components/common";
-import { ExcelExportButton } from "@/components/common";
 
 export default function LapBienBanPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function LapBienBanPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
     null
   );
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
   // Handle sorting
   const handleSort = (field: keyof ReplacementRequestItem) => {
@@ -133,23 +134,150 @@ export default function LapBienBanPage() {
   };
 
   // Xử lý xuất Excel
-  const handleExportExcel = () => {
-    // TODO: Implement Excel export functionality
-    // Sẽ xuất dữ liệu đã chọn hoặc tất cả nếu không chọn gì
+  const handleExportExcel = async () => {
+    // Kiểm tra xem có dữ liệu được chọn không
     const dataToExport =
-      selectedItems.length > 0
-        ? filteredReports.filter((report) => selectedItems.includes(report.id))
+      selectedRowKeys.length > 0
+        ? filteredReports.filter((report) =>
+            selectedRowKeys.includes(report.id)
+          )
         : filteredReports;
 
-    console.log("Xuất Excel:", dataToExport);
+    if (dataToExport.length === 0) {
+      Modal.warning({
+        title: "Thông báo",
+        content: "Vui lòng chọn ít nhất một biên bản để xuất Excel.",
+        centered: true,
+        okText: "Đồng ý",
+        icon: <Download className="text-orange-500" />,
+      });
+      return;
+    }
 
-    // Tạm thời alert để demo
-    alert(`Đang xuất ${dataToExport.length} biên bản ra file Excel...`);
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import("xlsx");
+
+      // Tạo dữ liệu Excel
+      const excelData = dataToExport.map((report, index) => {
+        const stats = getRequestStatistics(report);
+        return {
+          STT: index + 1,
+          "Mã tờ trình": report.proposalCode,
+          "Tiêu đề": report.title,
+          "Người tạo": report.createdBy || "",
+          "Tổng số phòng": stats.totalRooms,
+          "Tổng loại linh kiện": stats.totalComponents,
+          "Tổng số lượng": stats.totalQuantity,
+          "Trạng thái": "Đã duyệt",
+          "Ngày tạo": new Date(report.createdAt).toLocaleDateString("vi-VN"),
+          "Ngày cập nhật": new Date(report.updatedAt).toLocaleDateString(
+            "vi-VN"
+          ),
+        };
+      });
+
+      // Tạo workbook và worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Đặt độ rộng cột tự động
+      const colWidths = [
+        { wch: 5 }, // STT
+        { wch: 20 }, // Mã tờ trình
+        { wch: 40 }, // Tiêu đề
+        { wch: 25 }, // Người tạo
+        { wch: 12 }, // Tổng số phòng
+        { wch: 15 }, // Tổng loại linh kiện
+        { wch: 12 }, // Tổng số lượng
+        { wch: 15 }, // Trạng thái
+        { wch: 15 }, // Ngày tạo
+        { wch: 15 }, // Ngày cập nhật
+      ];
+      ws["!cols"] = colWidths;
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách biên bản kiểm tra");
+
+      // Xuất file
+      const fileName = `Danh_sach_bien_ban_kiem_tra_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      // Modal thông báo thành công với thông tin chi tiết
+      Modal.success({
+        title: (
+          <div className="flex items-center gap-2">
+            <CheckCircle className="text-green-500" />
+            <span>Xuất Excel thành công!</span>
+          </div>
+        ),
+        content: (
+          <div className="space-y-2">
+            <p>
+              ✅ <strong>Số lượng biên bản:</strong> {dataToExport.length}
+            </p>
+            <p>
+              📁 <strong>Tên file:</strong> {fileName}
+            </p>
+            <p>
+              📍 <strong>Vị trí:</strong> Thư mục Downloads
+            </p>
+            <p className="text-sm text-gray-500 mt-3">
+              File Excel đã được tải xuống thành công. Bạn có thể tìm thấy file
+              trong thư mục Downloads của máy tính.
+            </p>
+          </div>
+        ),
+        centered: true,
+        okText: "Đồng ý",
+        width: 500,
+        onOk: () => {
+          // Reset selection sau khi người dùng đóng modal
+          setSelectedRowKeys([]);
+        },
+      });
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+
+      // Modal thông báo lỗi chi tiết
+      Modal.error({
+        title: (
+          <div className="flex items-center gap-2">
+            <XCircle className="text-red-500" />
+            <span>Lỗi xuất Excel</span>
+          </div>
+        ),
+        content: (
+          <div className="space-y-2">
+            <p>❌ Có lỗi xảy ra khi xuất file Excel</p>
+            <p className="text-sm text-gray-600">
+              <strong>Chi tiết lỗi:</strong>{" "}
+              {error instanceof Error ? error.message : "Lỗi không xác định"}
+            </p>
+            <div className="bg-gray-50 p-3 rounded mt-3">
+              <p className="text-sm font-medium text-gray-700">
+                Hướng dẫn khắc phục:
+              </p>
+              <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                <li>• Kiểm tra kết nối internet</li>
+                <li>• Đảm bảo trình duyệt cho phép tải xuống file</li>
+                <li>• Thử lại sau vài giây</li>
+              </ul>
+            </div>
+          </div>
+        ),
+        centered: true,
+        okText: "Đồng ý",
+        width: 500,
+      });
+    }
   };
 
   // Xử lý checkbox
   const handleSelectItem = (itemId: string) => {
-    setSelectedItems((prev) =>
+    setSelectedRowKeys((prev) =>
       prev.includes(itemId)
         ? prev.filter((id) => id !== itemId)
         : [...prev, itemId]
@@ -157,10 +285,10 @@ export default function LapBienBanPage() {
   };
 
   const handleSelectAll = () => {
-    if (selectedItems.length === filteredReports.length) {
-      setSelectedItems([]);
+    if (selectedRowKeys.length === filteredReports.length) {
+      setSelectedRowKeys([]);
     } else {
-      setSelectedItems(filteredReports.map((report) => report.id));
+      setSelectedRowKeys(filteredReports.map((report) => report.id));
     }
   };
 
@@ -231,42 +359,41 @@ export default function LapBienBanPage() {
             Quản lý các biên bản kiểm tra thực tế đã được tạo
           </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <ExcelExportButton
-            totalCount={filteredReports.length}
-            selectedCount={selectedItems.length}
-            onExport={handleExportExcel}
-            label="Xuất danh sách"
-            variant="primary"
-            size="md"
-          />
-        </div>
       </div>
 
-      {/* Search */}
+      {/* Search and Export */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex flex-col space-y-2">
-            <h3 className="text-sm font-medium text-gray-700">
-              Tìm kiếm biên bản
-            </h3>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-gray-400" />
+          <div className="grid grid-cols-4 gap-4">
+            {/* Search - 3 columns */}
+            <div className="col-span-3">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="Nhập mã biên bản, tên người tạo, hoặc thông tin khác..."
+                />
               </div>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                placeholder="Nhập mã biên bản, tên người tạo, hoặc thông tin khác..."
-              />
             </div>
-            <p className="text-xs text-gray-500">
-              Tìm kiếm theo mã biên bản, mã tờ trình, tên người tạo hoặc các
-              thông tin liên quan khác. Hệ thống sẽ hiển thị{" "}
-              {filteredReports.length} kết quả phù hợp.
-            </p>
+
+            {/* Export Excel - 1 column */}
+            <div className="col-span-1 flex justify-end">
+              <Button
+                onClick={handleExportExcel}
+                icon={<Download className="w-3 h-3" />}
+                size="middle"
+                className="w-full"
+                type="default">
+                <span className="hidden lg:inline">Xuất Excel</span>
+                <span className="lg:hidden">Excel</span>
+                {selectedRowKeys.length > 0 && ` (${selectedRowKeys.length})`}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -281,7 +408,7 @@ export default function LapBienBanPage() {
                   <input
                     type="checkbox"
                     checked={
-                      selectedItems.length === filteredReports.length &&
+                      selectedRowKeys.length === filteredReports.length &&
                       filteredReports.length > 0
                     }
                     onChange={handleSelectAll}
@@ -302,7 +429,7 @@ export default function LapBienBanPage() {
                   sortDirection={sortDirection}
                   onSort={handleSort}
                   className="w-[12%] px-2">
-                  Ngày cập nhật
+                  Ngày lập
                 </SortableHeader>
                 <SortableHeader<ReplacementRequestItem>
                   field="createdBy"
@@ -336,7 +463,7 @@ export default function LapBienBanPage() {
                     <td className="px-2 py-4">
                       <input
                         type="checkbox"
-                        checked={selectedItems.includes(request.id)}
+                        checked={selectedRowKeys.includes(request.id)}
                         onChange={() => handleSelectItem(request.id)}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
@@ -411,11 +538,8 @@ export default function LapBienBanPage() {
                     <td className="px-2 py-4">
                       <button
                         onClick={() => handleViewReport(request.id)}
-                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
->
-
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         <Eye className="w-3 h-3 mr-1" />
-
                       </button>
                     </td>
                   </tr>
