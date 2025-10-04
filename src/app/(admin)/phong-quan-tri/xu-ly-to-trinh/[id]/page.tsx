@@ -140,21 +140,31 @@ export default function XuLyToTrinhDetailPage() {
 
   const handleSignConfirm = async () => {
     setIsProcessing(true);
-    setShowSignConfirmModal(false);
 
-    // Simulate API call để duyệt tờ trình
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      // Simulate API call để duyệt tờ trình
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // In thực tế, sẽ gọi API để cập nhật status thành ĐÃ_DUYỆT_TỜ_TRÌNH
-    console.log(`Duyệt tờ trình ${proposal.id}`, {
-      newStatus: ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
-      signedAt: new Date().toISOString(),
-    });
+      // In thực tế, sẽ gọi API để cập nhật status thành ĐÃ_DUYỆT_TỜ_TRÌNH
+      console.log(`Duyệt tờ trình ${proposal.id}`, {
+        newStatus: ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+        signedAt: new Date().toISOString(),
+      });
 
-    setIsProcessing(false);
+      setIsProcessing(false);
+      setShowSignConfirmModal(false);
 
-    // Redirect về danh sách sau khi xử lý xong
-    router.push("/phong-quan-tri/xu-ly-to-trinh?success=approved");
+      // Thêm delay nhỏ để đảm bảo modal đã đóng hoàn toàn
+      setTimeout(() => {
+        // Redirect về trang lập biên bản sau khi duyệt xong
+        console.log("Redirecting to lap-bien-ban page...");
+        router.replace("/phong-quan-tri/lap-bien-ban");
+      }, 100);
+    } catch (error) {
+      console.error("Error approving proposal:", error);
+      setIsProcessing(false);
+      setShowSignConfirmModal(false);
+    }
   };
 
   return (
@@ -222,9 +232,28 @@ export default function XuLyToTrinhDetailPage() {
         <div className="px-6 py-6 space-y-6">
           {/* Basic Information */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Thông tin cơ bản
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Thông tin cơ bản
+              </h3>
+              {proposal.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      setActionType("reject");
+                      setShowConfirmModal(true);
+                    }}
+                    className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500">
+                    Từ chối
+                  </button>
+                  <button
+                    onClick={() => setShowSignConfirmModal(true)}
+                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500">
+                    Duyệt
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
