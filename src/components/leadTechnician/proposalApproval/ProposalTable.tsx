@@ -1,5 +1,5 @@
 import { Tag } from "antd";
-import { Eye, ChevronUp, ChevronDown, Ticket, TicketCheck, Check, X } from "lucide-react";
+import { Eye, ChevronUp, ChevronDown, Check, X, FileText } from "lucide-react";
 import Link from "next/link";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types";
 
@@ -24,6 +24,7 @@ interface ProposalTableProps {
   onSort: (field: string) => void;
   onApprove: (requestId: string) => void;
   onReject: (requestId: string) => void;
+  onCreateSubmission: (requestId: string) => void;
 }
 
 // Custom Sortable Header Component for Proposals
@@ -84,6 +85,7 @@ export default function ProposalTable({
   onSort,
   onApprove,
   onReject,
+  onCreateSubmission,
 }: ProposalTableProps) {
   return (
     <div className="overflow-x-auto bg-white shadow rounded-lg">
@@ -196,8 +198,7 @@ export default function ProposalTable({
                     href={`/to-truong-ky-thuat/duyet-de-xuat/chi-tiet/${record.id}`}>
                     <button
                       title="Xem chi tiết"
-                      className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
->
+                      className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                       <Eye className="w-4 h-4" />
                     </button>
                   </Link>
@@ -205,17 +206,23 @@ export default function ProposalTable({
                     <>
                       <button
                         onClick={() => onApprove(record.id)}
-                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
->
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                         <Check className="inline w-4 h-4 mr-1" />
                       </button>
                       <button
                         onClick={() => onReject(record.id)}
-                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-red-600 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                      >
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-red-600 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                         <X className="inline w-4 h-4 mr-1" />
                       </button>
                     </>
+                  )}
+                  {record.status === ReplacementStatus.ĐÃ_DUYỆT && (
+                    <button
+                      onClick={() => onCreateSubmission(record.id)}
+                      title="Lập tờ trình"
+                      className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-purple-700 bg-purple-100 hover:bg-purple-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                      <FileText className="w-4 h-4" />
+                    </button>
                   )}
                 </td>
               </tr>

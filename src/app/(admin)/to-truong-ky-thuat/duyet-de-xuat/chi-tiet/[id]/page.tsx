@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   Breadcrumb,
   Card,
@@ -11,19 +11,45 @@ import {
   Timeline,
   Alert,
   Table,
+  Modal,
+  Input,
 } from "antd";
-import { Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  FileText,
+} from "lucide-react";
 import { mockReplacementRequestItem, users } from "@/lib/mockData";
-import { ComponentFromRequest } from "@/types/repair";
+import { ComponentFromRequest, SubmissionFormData } from "@/types/repair";
 
 export default function ChiTietDuyetDeXuatPage() {
   const params = useParams();
+  const router = useRouter();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
   // State for actions
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
+
+  // State for request status updates
+  const [currentRequestStatus, setCurrentRequestStatus] = useState<string>("");
+
+  // State for submission flow
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+  const [submissionFormData, setSubmissionFormData] =
+    useState<SubmissionFormData>({
+      submittedBy: "Giảng Thanh Trọn",
+      position: "Tổ trưởng kỹ thuật",
+      department: "Khoa Công Nghệ Thông Tin",
+      recipientDepartment: "Phòng Quản trị",
+      subject: "Đề xuất thay thế linh kiện thiết bị",
+      content: "",
+      attachments: "",
+      director: "TS. Lê Nhất Duy",
+      rector: "TS. Phan Hồng Hải",
+    });
 
   const request = useMemo(
     () => mockReplacementRequestItem.find((r) => r.id === id),
@@ -138,11 +164,13 @@ export default function ChiTietDuyetDeXuatPage() {
     },
   };
 
+  // Get current status - use updated status if available, otherwise use original request status
+  const displayStatus = currentRequestStatus || request.status;
   const currentStatus = statusConfig[
-    request.status as ReplacementStatusType
+    displayStatus as ReplacementStatusType
   ] || {
     color: "default",
-    text: request.status,
+    text: displayStatus,
     icon: Clock,
   };
 
@@ -222,26 +250,128 @@ export default function ChiTietDuyetDeXuatPage() {
     },
   ];
 
-  const handleApprove = () => {
-    console.log("Approving request:", id);
+  const handleApprovalConfirm = () => {
     setShowApproveModal(false);
-    // Implement approval logic here
+    // Update status to ĐÃ_DUYỆT
+    setCurrentRequestStatus("ĐÃ_DUYỆT");
+    console.log("Request approved, status updated to ĐÃ_DUYỆT");
+
+    // Show success message and ask about creating submission form
+    Modal.confirm({
+      title: "Phê duyệt thành công!",
+      content:
+        "Đề xuất đã được phê duyệt. Bạn có muốn lập tờ trình ngay bây giờ không?",
+      okText: "Có",
+      cancelText: "Không",
+      centered: true,
+      onOk: () => {
+        handleCreateSubmissionForm();
+      },
+      onCancel: () => {
+        router.push("/to-truong-ky-thuat/duyet-de-xuat");
+      },
+    });
+  };
+
+  const handleCreateSubmissionForm = () => {
+    if (!request) return;
+
+    // Auto-generate content based on the request
+    const proposer = users.find((u) => u.id === request.proposerId);
+    const componentsList = request.components
+      .map(
+        (comp) =>
+          `- ${comp.componentName} (${comp.assetCode}) tại ${comp.roomName}: ${comp.reason} → Thay thế bằng ${comp.newItemName} (${comp.newItemSpecs})`
+      )
+      .join("\n");
+
+    const locations = [
+      ...new Set(
+        request.components.map((c) => `${c.buildingName} - ${c.roomName}`)
+      ),
+    ].join(", ");
+
+    const autoContent = `Phòng Lab ${locations} của Khoa CNTT đang cần thay thế thiết bị. Một số linh kiện máy tính đã hư hỏng và cần được thay thế để đảm bảo hoạt động ổn định của hệ thống.
+
+Thông tin chi tiết về đề xuất thay thế:
+
+${componentsList}
+
+Khoa CNTT kính trình Ban Giám hiệu phê duyệt chi ngân sách cho Phòng Quản trị tiến hành thay thế các linh kiện để phục vụ công tác giảng dạy cho sinh viên được tốt hơn.
+
+Thông tin tổng hợp:
+- Mã đề xuất: ${request.proposalCode}
+- Tiêu đề: ${request.title}
+- Người đề xuất: ${proposer?.fullName || "Không xác định"}
+- Tổng số linh kiện cần thay: ${request.components.length}
+- Lý do chung: ${[...new Set(request.components.map((c) => c.reason))].join(
+      "; "
+    )}
+
+Khoa rất mong Ban Giám hiệu xem xét và đồng ý cho thực hiện.
+
+Trân trọng kính trình.`;
+
+    setSubmissionFormData((prev) => ({
+      ...prev,
+      content: autoContent,
+      attachments: `Đề xuất ${request.proposalCode}`,
+      submittedBy: proposer?.fullName || "Giảng Thanh Trọn",
+    }));
+
+    setShowSubmissionModal(true);
+  };
+
+  const handleSubmitSubmission = () => {
+    if (!request) return;
+
+    // Simulate submission form creation
+    console.log("Creating submission form:", {
+      requestId: request.id,
+      proposalCode: request.proposalCode,
+      submissionFormData,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Update request status to ĐÃ_LẬP_TỜ_TRÌNH
+    setCurrentRequestStatus("ĐÃ_LẬP_TỜ_TRÌNH");
+    console.log("Status updated to ĐÃ_LẬP_TỜ_TRÌNH");
+
+    // Close modal and reset state
+    setShowSubmissionModal(false);
+
+    // Show success message
+    Modal.success({
+      title: "Lập tờ trình thành công!",
+      content: `Tờ trình cho đề xuất ${request.proposalCode} đã được tạo và gửi tới Phòng Quản trị.`,
+      centered: true,
+      onOk: () => {
+        router.push("/to-truong-ky-thuat/duyet-de-xuat");
+      },
+    });
   };
 
   const handleReject = () => {
-    if (!rejectReason.trim()) {
-      alert("Vui lòng nhập lý do từ chối");
-      return;
-    }
-    console.log("Rejecting request:", id, "Reason:", rejectReason);
+    console.log("Rejecting request:", id);
     setShowRejectModal(false);
-    setRejectReason("");
-    // Implement rejection logic here
+
+    // Update status to ĐÃ_TỪ_CHỐI
+    setCurrentRequestStatus("ĐÃ_TỪ_CHỐI");
+    console.log("Status updated to ĐÃ_TỪ_CHỐI");
+
+    // Show success message and redirect
+    Modal.success({
+      title: "Từ chối thành công!",
+      content: "Đề xuất đã được từ chối.",
+      centered: true,
+      onOk: () => {
+        router.push("/to-truong-ky-thuat/duyet-de-xuat");
+      },
+    });
   };
 
   const canApproveOrReject =
-    request.status === "CHỜ_TỔ_TRƯỞNG_DUYỆT" ||
-    request.status === "CHỜ_XÁC_MINH";
+    displayStatus === "CHỜ_TỔ_TRƯỞNG_DUYỆT" || displayStatus === "CHỜ_XÁC_MINH";
 
   // Timeline items
   const timelineItems = [
@@ -256,14 +386,14 @@ export default function ChiTietDuyetDeXuatPage() {
         </div>
       ),
     },
-    ...(request.status !== "CHỜ_TỔ_TRƯỞNG_DUYỆT"
+    ...(displayStatus !== "CHỜ_TỔ_TRƯỞNG_DUYỆT"
       ? [
           {
-            color: request.status === "ĐÃ_TỪ_CHỐI" ? "red" : "green",
+            color: displayStatus === "ĐÃ_TỪ_CHỐI" ? "red" : "green",
             children: (
               <div>
                 <p className="font-medium">
-                  {request.status === "ĐÃ_TỪ_CHỐI"
+                  {displayStatus === "ĐÃ_TỪ_CHỐI"
                     ? "Từ chối đề xuất"
                     : "Chấp thuận đề xuất"}
                 </p>
@@ -272,14 +402,14 @@ export default function ChiTietDuyetDeXuatPage() {
                     `Người duyệt: ${teamLeadApproverName}`}
                 </p>
                 <p className="text-sm text-gray-500">
-                  {new Date(request.updatedAt).toLocaleString("vi-VN")}
+                  {new Date().toLocaleString("vi-VN")}
                 </p>
               </div>
             ),
           },
         ]
       : []),
-    ...(request.status === "ĐÃ_DUYỆT"
+    ...(displayStatus === "ĐÃ_DUYỆT"
       ? [
           {
             color: "green",
@@ -288,6 +418,24 @@ export default function ChiTietDuyetDeXuatPage() {
                 <p className="font-medium">Hoàn tất duyệt đề xuất</p>
                 <p className="text-sm text-gray-500">
                   Đề xuất đã được phê duyệt và chuyển đi xử lý
+                </p>
+              </div>
+            ),
+          },
+        ]
+      : []),
+    ...(displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
+      ? [
+          {
+            color: "blue",
+            children: (
+              <div>
+                <p className="font-medium">Đã lập tờ trình</p>
+                <p className="text-sm text-gray-500">
+                  Tờ trình đã được tạo và gửi tới Phòng Quản trị
+                </p>
+                <p className="text-sm text-gray-500">
+                  {new Date().toLocaleString("vi-VN")}
                 </p>
               </div>
             ),
@@ -350,7 +498,7 @@ export default function ChiTietDuyetDeXuatPage() {
         />
       )}
 
-      {/* Action Buttons */} 
+      {/* Action Buttons */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -446,59 +594,112 @@ export default function ChiTietDuyetDeXuatPage() {
       </div>
 
       {/* Approve Modal */}
-      {showApproveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Xác nhận phê duyệt
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Bạn có chắc chắn muốn phê duyệt đề xuất này không?
-            </p>
-            <div className="flex space-x-3">
-              <Button type="primary" onClick={handleApprove} className="flex-1">
-                Phê duyệt
-              </Button>
-              <Button
-                onClick={() => setShowApproveModal(false)}
-                className="flex-1">
-                Hủy
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        title="Xác nhận phê duyệt"
+        open={showApproveModal}
+        onCancel={() => setShowApproveModal(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShowApproveModal(false)}>
+            Hủy
+          </Button>,
+          <Button key="approve" type="primary" onClick={handleApprovalConfirm}>
+            Phê duyệt
+          </Button>,
+        ]}
+        centered>
+        <p className="text-gray-600">
+          Bạn có chắc chắn muốn phê duyệt đề xuất này không?
+        </p>
+      </Modal>
 
       {/* Reject Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Từ chối đề xuất
-            </h3>
-            <p className="text-gray-600 mb-4">Vui lòng nhập lý do từ chối:</p>
-            <textarea
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Nhập lý do từ chối..."
-              className="w-full p-3 border border-gray-300 rounded-md mb-6 h-24 resize-none"
+      <Modal
+        title="Từ chối đề xuất"
+        open={showRejectModal}
+        onCancel={() => setShowRejectModal(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShowRejectModal(false)}>
+            Hủy
+          </Button>,
+          <Button key="reject" danger onClick={handleReject}>
+            Từ chối
+          </Button>,
+        ]}
+        centered>
+        <p className="text-gray-600">
+          Bạn có chắc chắn muốn từ chối đề xuất này không?
+        </p>
+      </Modal>
+
+      {/* Submission Modal */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2">
+            <FileText className="h-5 w-5 text-blue-600" />
+            <span>Lập tờ trình</span>
+          </div>
+        }
+        open={showSubmissionModal}
+        onCancel={() => setShowSubmissionModal(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShowSubmissionModal(false)}>
+            Hủy
+          </Button>,
+          <Button key="submit" type="primary" onClick={handleSubmitSubmission}>
+            Lập tờ trình
+          </Button>,
+        ]}
+        width={600}>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tiêu đề
+            </label>
+            <Input
+              value={submissionFormData.subject}
+              onChange={(e) =>
+                setSubmissionFormData({
+                  ...submissionFormData,
+                  subject: e.target.value,
+                })
+              }
+              placeholder="Nhập tiêu đề tờ trình"
             />
-            <div className="flex space-x-3">
-              <Button danger onClick={handleReject} className="flex-1">
-                Từ chối
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setRejectReason("");
-                }}
-                className="flex-1">
-                Hủy
-              </Button>
-            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nội dung
+            </label>
+            <Input.TextArea
+              value={submissionFormData.content}
+              onChange={(e) =>
+                setSubmissionFormData({
+                  ...submissionFormData,
+                  content: e.target.value,
+                })
+              }
+              placeholder="Nhập nội dung tờ trình"
+              rows={4}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Tài liệu đính kèm
+            </label>
+            <Input.TextArea
+              value={submissionFormData.attachments}
+              onChange={(e) =>
+                setSubmissionFormData({
+                  ...submissionFormData,
+                  attachments: e.target.value,
+                })
+              }
+              placeholder="Mô tả tài liệu đính kèm (nếu có)"
+              rows={3}
+            />
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

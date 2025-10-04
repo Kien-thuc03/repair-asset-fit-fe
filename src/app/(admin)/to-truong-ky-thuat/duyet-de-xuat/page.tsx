@@ -1,10 +1,15 @@
 "use client";
 import { useState } from "react";
-import { ReplacementRequestItem, ReplacementStatus } from "@/types";
+import {
+  ReplacementRequestItem,
+  ReplacementStatus,
+  SubmissionFormData,
+} from "@/types";
 import { mockReplacementRequestItem } from "@/lib/mockData";
-import { Breadcrumb, Modal } from "antd";
-import { CheckCircle, XCircle } from "lucide-react";
+import { Breadcrumb, Modal, Input, Button } from "antd";
+import { CheckCircle, XCircle, FileText } from "lucide-react";
 import { Pagination } from "@/components/common";
+import { users } from "@/lib/mockData/users";
 import {
   ProposalFilters,
   ProposalTable,
@@ -21,11 +26,14 @@ export default function DuyetDeXuatPage() {
   const [exportFileName, setExportFileName] = useState("");
   const [exportError, setExportError] = useState("");
 
-  // Lấy các đề xuất CHỜ TỔ TRƯỞNG DUYỆT - Kỹ thuật viên đã lập, chờ tổ trưởng duyệt
+  // Lấy các đề xuất có trạng thái: CHỜ_TỔ_TRƯỞNG_DUYỆT, ĐÃ_DUYỆT, ĐÃ_TỪ_CHỐI
   const [requests, setRequests] = useState<ReplacementRequestItem[]>(
     mockReplacementRequestItem
       .filter(
-        (proposal) => proposal.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT
+        (proposal) =>
+          proposal.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT ||
+          proposal.status === ReplacementStatus.ĐÃ_DUYỆT ||
+          proposal.status === ReplacementStatus.ĐÃ_TỪ_CHỐI
       )
       .map((proposal) => ({
         ...proposal,
@@ -38,6 +46,23 @@ export default function DuyetDeXuatPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // Submission modal state
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+  const [selectedRequestForSubmission, setSelectedRequestForSubmission] =
+    useState<ReplacementRequestItem | null>(null);
+  const [submissionFormData, setSubmissionFormData] =
+    useState<SubmissionFormData>({
+      submittedBy: "Giảng Thanh Trọn",
+      position: "Tổ trưởng kỹ thuật",
+      department: "Khoa Công Nghệ Thông Tin",
+      recipientDepartment: "Phòng Quản trị",
+      subject: "Đề xuất thay thế linh kiện thiết bị",
+      content: "",
+      attachments: "",
+      director: "TS. Lê Nhất Duy",
+      rector: "TS. Phan Hồng Hải",
+    });
 
   // Handle actions
   const handleApprove = (requestId: string) => {
@@ -66,6 +91,93 @@ export default function DuyetDeXuatPage() {
       )
     );
     console.log("Rejected request:", requestId);
+  };
+
+  const handleCreateSubmission = (requestId: string) => {
+    const request = requests.find((req) => req.id === requestId);
+    if (request) {
+      setSelectedRequestForSubmission(request);
+
+      // Auto-generate content based on the request
+      const proposer = users.find((u) => u.id === request.proposerId);
+      const componentsList = request.components
+        .map(
+          (comp) =>
+            `- ${comp.componentName} (${comp.assetCode}) tại ${comp.roomName}: ${comp.reason} → Thay thế bằng ${comp.newItemName} (${comp.newItemSpecs})`
+        )
+        .join("\n");
+
+      const locations = [
+        ...new Set(
+          request.components.map((c) => `${c.buildingName} - ${c.roomName}`)
+        ),
+      ].join(", ");
+
+      const autoContent = `Phòng Lab ${locations} của Khoa CNTT đang cần thay thế thiết bị. Một số linh kiện máy tính đã hư hỏng và cần được thay thế để đảm bảo hoạt động ổn định của hệ thống.
+
+Thông tin chi tiết về đề xuất thay thế:
+
+${componentsList}
+
+Khoa CNTT kính trình Ban Giám hiệu phê duyệt chi ngân sách cho Phòng Quản trị tiến hành thay thế các linh kiện để phục vụ công tác giảng dạy cho sinh viên được tốt hơn.
+
+Thông tin tổng hợp:
+- Mã đề xuất: ${request.proposalCode}
+- Tiêu đề: ${request.title}
+- Người đề xuất: ${proposer?.fullName || "Không xác định"}
+- Tổng số linh kiện cần thay: ${request.components.length}
+- Lý do chung: ${[...new Set(request.components.map((c) => c.reason))].join(
+        "; "
+      )}
+
+Khoa rất mong Ban Giám hiệu xem xét và đồng ý cho thực hiện.
+
+Trân trọng kính trình.`;
+
+      setSubmissionFormData((prev) => ({
+        ...prev,
+        content: autoContent,
+        attachments: `Đề xuất ${request.proposalCode}`,
+        submittedBy: proposer?.fullName || "Giảng Thanh Trọn",
+      }));
+
+      setShowSubmissionModal(true);
+    }
+  };
+
+  const handleSubmitSubmission = () => {
+    if (!selectedRequestForSubmission) return;
+
+    // Simulate submission form creation
+    console.log("Creating submission form:", {
+      requestId: selectedRequestForSubmission.id,
+      proposalCode: selectedRequestForSubmission.proposalCode,
+      submissionFormData,
+      createdAt: new Date().toISOString(),
+    });
+
+    // Update request status to ĐÃ_LẬP_TỜ_TRÌNH
+    setRequests((prev) =>
+      prev.map((req) =>
+        req.id === selectedRequestForSubmission.id
+          ? {
+              ...req,
+              status: ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+            }
+          : req
+      )
+    );
+
+    // Close modal and reset state
+    setShowSubmissionModal(false);
+    setSelectedRequestForSubmission(null);
+
+    // Show success message
+    Modal.success({
+      title: "Lập tờ trình thành công!",
+      content: `Tờ trình cho đề xuất ${selectedRequestForSubmission.proposalCode} đã được tạo và gửi tới Phòng Quản trị.`,
+      centered: true,
+    });
   };
 
   // Use helper functions
@@ -219,6 +331,10 @@ export default function DuyetDeXuatPage() {
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 Duyệt đề xuất thay thế linh kiện
               </h1>
+              <p className="text-gray-600">
+                Quản lý và duyệt các đề xuất thay thế linh kiện từ kỹ thuật
+                viên. Hiển thị các đề xuất chờ duyệt, đã duyệt và đã từ chối.
+              </p>
             </div>
           </div>
         </div>
@@ -249,6 +365,7 @@ export default function DuyetDeXuatPage() {
               onSort={handleSort}
               onApprove={handleApprove}
               onReject={handleReject}
+              onCreateSubmission={handleCreateSubmission}
             />
 
             {/* Spacer để đảm bảo chiều cao tối thiểu */}
@@ -334,6 +451,169 @@ export default function DuyetDeXuatPage() {
             Lỗi xuất Excel
           </h3>
           <p className="text-gray-600">{exportError}</p>
+        </div>
+      </Modal>
+
+      {/* Modal lập tờ trình */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2">
+            <FileText className="w-5 h-5 text-purple-600" />
+            <span>Lập tờ trình đề xuất</span>
+          </div>
+        }
+        open={showSubmissionModal}
+        onCancel={() => setShowSubmissionModal(false)}
+        width={800}
+        footer={[
+          <Button key="cancel" onClick={() => setShowSubmissionModal(false)}>
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleSubmitSubmission}
+            className="bg-purple-600 hover:bg-purple-700">
+            Lập tờ trình
+          </Button>,
+        ]}>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Người đề nghị
+              </label>
+              <Input
+                value={submissionFormData.submittedBy}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    submittedBy: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Chức vụ
+              </label>
+              <Input
+                value={submissionFormData.position}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    position: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Đơn vị đề nghị
+              </label>
+              <Input
+                value={submissionFormData.department}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    department: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Đơn vị tiếp nhận
+              </label>
+              <Input
+                value={submissionFormData.recipientDepartment}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    recipientDepartment: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Đề nghị
+            </label>
+            <Input
+              value={submissionFormData.subject}
+              onChange={(e) =>
+                setSubmissionFormData((prev) => ({
+                  ...prev,
+                  subject: e.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nội dung tờ trình
+            </label>
+            <Input.TextArea
+              rows={8}
+              value={submissionFormData.content}
+              onChange={(e) =>
+                setSubmissionFormData((prev) => ({
+                  ...prev,
+                  content: e.target.value,
+                }))
+              }
+              placeholder="Nội dung chi tiết của tờ trình..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Văn bản kèm theo
+            </label>
+            <Input
+              value={submissionFormData.attachments}
+              onChange={(e) =>
+                setSubmissionFormData((prev) => ({
+                  ...prev,
+                  attachments: e.target.value,
+                }))
+              }
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Giám đốc
+              </label>
+              <Input
+                value={submissionFormData.director}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    director: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Hiệu trưởng
+              </label>
+              <Input
+                value={submissionFormData.rector}
+                onChange={(e) =>
+                  setSubmissionFormData((prev) => ({
+                    ...prev,
+                    rector: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
         </div>
       </Modal>
     </>

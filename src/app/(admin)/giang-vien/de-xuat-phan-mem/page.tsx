@@ -495,6 +495,7 @@ export default function DeXuatPhanMemPage() {
                     Nhà phát hành *
                   </label>
                   <input
+                    title="Nhà phát hành"
                     type="text"
                     value={item.publisher}
                     onChange={(e) =>
@@ -535,6 +536,7 @@ export default function DeXuatPhanMemPage() {
                     Loại giấy phép *
                   </label>
                   <select
+                    title="Loại giấy phép"
                     value={item.licenseType}
                     onChange={(e) =>
                       handleSoftwareItemChange(
