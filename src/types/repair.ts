@@ -291,6 +291,7 @@ export enum ComponentStatus {
   INSTALLED = "INSTALLED", // Đang được lắp đặt và hoạt động
   FAULTY = "FAULTY", // Hỏng hóc
   REMOVED = "REMOVED", // Đã gỡ ra
+  IN_STOCK = "IN_STOCK", // linh kiện mới chờ lắp đặt
 }
 
 // Component interface for computer assets (updated to match database schema)
