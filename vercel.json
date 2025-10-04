@@ -2,7 +2,12 @@
   "git": {
     "deploymentEnabled": {
       "main": false,
-      "dev": true
+      "dev": true,
+      "dev_Thuc": true
     }
-  }
+  },
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs"
 }

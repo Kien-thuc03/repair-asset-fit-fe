@@ -38,7 +38,7 @@ export default function EditUserPage() {
           email: foundUser.email || "",
           unitId: foundUser.unitId || "",
           phoneNumber: foundUser.phoneNumber || "",
-          birthDate: foundUser.birthDate ? foundUser.birthDate.toISOString().split("T")[0] : "",
+          birthDate: foundUser.birthDate || "",
           roleIds: foundUser.roles.map(r => r.id),
         });
       }

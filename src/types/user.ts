@@ -31,20 +31,20 @@ export interface IRolePermission {
   permissionId: string;
 }
 
-// Interface cho người dùng đầy đủ từ database
+// Interface cho người dùng đầy đủ từ database - Khớp với PostgreSQL schema
 export interface UserEntity {
-  id: string;
-  username: string; // Tài khoản (mã nhân viên)
-  password: string;
-  fullName: string;
-  email?: string;
-  unitId?: string; // ID đơn vị
-  phoneNumber?: string;
-  birthDate?: Date;
-  status?: UserStatus;
-  createdAt?: Date;
-  updatedAt?: Date;
-  deletedAt?: Date | null;
+  id: string; // text Primary Key
+  username: string; // text Unique, required - Tài khoản (mã nhân viên)
+  password: string; // text required
+  fullName: string; // text required
+  email: string; // text required
+  unitId?: string; // text Foreign Key to units.id
+  phoneNumber?: string; // text optional
+  birthDate?: string; // date optional (ISO date string)
+  status: UserStatus; // UserStatus enum (ACTIVE, INACTIVE)
+  createdAt: string; // timestamp (ISO string)
+  updatedAt: string; // timestamp (ISO string)
+  deletedAt?: string | null; // timestamp optional, soft delete (ISO string)
 }
 
 // Interface quan hệ giữa người dùng và vai trò

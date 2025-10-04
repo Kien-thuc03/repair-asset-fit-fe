@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useMemo } from 'react'
-import { Breadcrumb, Input, Select, DatePicker, Tag, Button, message } from 'antd'
+import { Breadcrumb, Input, Select, DatePicker, Button, message } from 'antd'
+import type { Dayjs } from 'dayjs'
 import { Search, ChevronUp, ChevronDown, Eye, Download } from 'lucide-react'
 import Link from 'next/link'
 import { mockRepairRequests, repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
@@ -13,11 +14,12 @@ const { Option } = Select
 
 type SortField = "requestCode" | "assetName" | "location" | "reporterName" | "errorTypeName" | "status" | "createdAt"
 type SortDirection = "asc" | "desc" | "none"
+type RangeValue = [Dayjs | null, Dayjs | null] | null
 
 export default function DanhSachBaoLoiPage() {
 	const [searchText, setSearchText] = useState('')
 	const [statusFilter, setStatusFilter] = useState<RepairStatus | ''>('')
-	const [dateRange, setDateRange] = useState<[any, any] | null>(null)
+	const [dateRange, setDateRange] = useState<RangeValue>(null)
 	const [sortField, setSortField] = useState<SortField | "">("")
 	const [sortDirection, setSortDirection] = useState<SortDirection>("none")
 	const [currentPage, setCurrentPage] = useState(1)
@@ -101,12 +103,12 @@ export default function DanhSachBaoLoiPage() {
 			const excelData = selectedData.map((item, index) => ({
 				'STT': index + 1,
 				'Mã yêu cầu': item.requestCode,
-				'Tên tài sản': item.assetName,
-				'Mã tài sản': item.assetCode,
+				'Tên tài sản': item.assetName || 'Chưa xác định',
+				'Mã tài sản': item.assetCode || 'Chưa xác định',
 				'Linh kiện': item.componentName || 'Chưa xác định',
-				'Vị trí': `${item.buildingName} - ${item.roomName}`,
-				'Máy': `Máy ${item.machineLabel}`,
-				'Người báo': item.reporterName,
+				'Vị trí': `${item.buildingName || 'Chưa xác định'} - ${item.roomName || 'Chưa xác định'}`,
+				'Máy': `Máy ${item.machineLabel || 'Chưa xác định'}`,
+				'Người báo': item.reporterName || 'Chưa xác định',
 				'Loại lỗi': item.errorTypeName || 'Chưa xác định',
 				'Mô tả lỗi': item.description || '',
 				'Trạng thái': repairRequestStatusConfig[item.status].label,
@@ -151,8 +153,8 @@ export default function DanhSachBaoLoiPage() {
 			const matchesStatus = statusFilter ? item.status === statusFilter : true
 
 			const createdAt = new Date(item.createdAt)
-			const matchesDateRange = dateRange ? 
-				createdAt >= dateRange[0]?.toDate() && createdAt <= dateRange[1]?.toDate() : true
+			const matchesDateRange = dateRange && dateRange[0] && dateRange[1] ? 
+				createdAt >= dateRange[0].toDate() && createdAt <= dateRange[1].toDate() : true
 
 			return matchesSearch && matchesStatus && matchesDateRange
 		})
@@ -170,16 +172,16 @@ export default function DanhSachBaoLoiPage() {
 					bValue = b.requestCode
 					break
 				case "assetName":
-					aValue = a.assetName
-					bValue = b.assetName
+					aValue = a.assetName || ""
+					bValue = b.assetName || ""
 					break
 				case "location":
-					aValue = `${a.buildingName} ${a.roomName}`
-					bValue = `${b.buildingName} ${b.roomName}`
+					aValue = `${a.buildingName || ""} ${a.roomName || ""}`
+					bValue = `${b.buildingName || ""} ${b.roomName || ""}`
 					break
 				case "reporterName":
-					aValue = a.reporterName
-					bValue = b.reporterName
+					aValue = a.reporterName || ""
+					bValue = b.reporterName || ""
 					break
 				case "errorTypeName":
 					aValue = a.errorTypeName || ""
@@ -408,24 +410,24 @@ export default function DanhSachBaoLoiPage() {
 									</td>
 									<td className="px-2 py-3 text-sm text-gray-700 w-40">
 										<div>
-											<div className="font-medium truncate" title={record.assetName}>
-												{record.assetName}
+											<div className="font-medium truncate" title={record.assetName || 'Chưa xác định'}>
+												{record.assetName || 'Chưa xác định'}
 											</div>
 										</div>
 									</td>
 									<td className="px-2 py-3 text-sm text-gray-700 w-32">
 										<div>
-											<div className="font-medium truncate" title={record.buildingName}>
-												{record.buildingName}
+											<div className="font-medium truncate" title={record.buildingName || 'Chưa xác định'}>
+												{record.buildingName || 'Chưa xác định'}
 											</div>
-											<div className="text-xs text-gray-500 truncate" title={`${record.roomName} - Máy ${record.machineLabel}`}>
-												{record.roomName} - M{record.machineLabel}
+											<div className="text-xs text-gray-500 truncate" title={`${record.roomName || 'Chưa xác định'} - Máy ${record.machineLabel || 'N/A'}`}>
+												{record.roomName || 'Chưa xác định'} - M{record.machineLabel || 'N/A'}
 											</div>
 										</div>
 									</td>
 									<td className="px-2 py-3 text-sm text-gray-700 w-28">
-										<div className="truncate" title={record.reporterName}>
-											{record.reporterName}
+										<div className="truncate" title={record.reporterName || 'Chưa xác định'}>
+											{record.reporterName || 'Chưa xác định'}
 										</div>
 									</td>
 									<td className="px-2 py-3 text-sm text-gray-700 w-32">

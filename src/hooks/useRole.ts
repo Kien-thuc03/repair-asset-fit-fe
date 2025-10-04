@@ -16,7 +16,7 @@ export function useRole() {
    */
   const hasRole = (role: UserRole): boolean => {
     if (!user) return false;
-    return user.roles.includes(role);
+    return user.roles.some(r => r.code === role);
   };
 
   /**
@@ -26,7 +26,7 @@ export function useRole() {
    */
   const hasActiveRole = (role: UserRole): boolean => {
     if (!user) return false;
-    return user.activeRole === role;
+    return user.activeRole?.code === role;
   };
 
   /**
@@ -36,7 +36,7 @@ export function useRole() {
    */
   const hasAnyRole = (roles: UserRole[]): boolean => {
     if (!user) return false;
-    return roles.some(role => user.roles.includes(role));
+    return roles.some(role => user.roles.some(r => r.code === role));
   };
 
   /**
@@ -45,8 +45,8 @@ export function useRole() {
    * @returns true nếu vai trò đang hoạt động của người dùng nằm trong danh sách, false nếu không
    */
   const hasActiveRoleIn = (roles: UserRole[]): boolean => {
-    if (!user) return false;
-    return roles.includes(user.activeRole);
+    if (!user?.activeRole?.code) return false;
+    return roles.includes(user.activeRole.code as UserRole);
   };
 
   /**
@@ -54,7 +54,7 @@ export function useRole() {
    * @returns Vai trò đang hoạt động của người dùng, hoặc undefined nếu không đăng nhập
    */
   const getActiveRole = (): UserRole | undefined => {
-    return user?.activeRole;
+    return user?.activeRole?.code as UserRole | undefined;
   };
 
   /**
@@ -62,7 +62,7 @@ export function useRole() {
    * @returns Danh sách các vai trò của người dùng, hoặc mảng rỗng nếu không đăng nhập
    */
   const getRoles = (): UserRole[] => {
-    return user?.roles || [];
+    return user?.roles?.map(r => r.code as UserRole).filter(Boolean) || [];
   };
 
   return { 

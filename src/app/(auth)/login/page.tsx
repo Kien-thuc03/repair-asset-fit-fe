@@ -40,7 +40,7 @@ export default function LoginPage() {
         'KY_THUAT_VIEN': '/ky-thuat-vien',
         'GIANG_VIEN': '/giang-vien'
       }
-      const route = roleRoutes[user.activeRole as keyof typeof roleRoutes] || '/admin'
+      const route = roleRoutes[user.activeRole?.code as keyof typeof roleRoutes] || '/admin'
       router.push(route)
     }
   }, [user, router])

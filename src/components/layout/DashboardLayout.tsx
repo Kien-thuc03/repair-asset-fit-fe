@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
@@ -438,10 +439,12 @@ function Topbar({
   onLogout,
   isDesktopSidebarCollapsed,
   setIsDesktopSidebarCollapsed,
+  router,
 }: {
   onLogout: () => void;
   isDesktopSidebarCollapsed: boolean;
   setIsDesktopSidebarCollapsed: (collapsed: boolean) => void;
+  router: AppRouterInstance;
 }) {
   const { user } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -610,17 +613,17 @@ function Topbar({
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
                   onClick={() => {
                     setIsUserMenuOpen(false);
-                    // Handle password update
+                    router.push("/profile/edit");
                   }}>
                   <Settings className="w-4 h-4 flex-shrink-0" />
-                  <span>Cập nhật mật khẩu</span>
+                  <span>Cập nhật thông tin cá nhân</span>
                 </button>
 
                 <button
                   className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
                   onClick={() => {
                     setIsUserMenuOpen(false);
-                    // Handle profile info
+                    router.push("/profile");
                   }}>
                   <Users className="w-4 h-4 flex-shrink-0" />
                   <span>Thông tin cá nhân</span>
@@ -812,6 +815,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           onLogout={handleLogout}
           isDesktopSidebarCollapsed={isDesktopSidebarCollapsed}
           setIsDesktopSidebarCollapsed={setIsDesktopSidebarCollapsed}
+          router={router}
         />
         {/* Page content */}
         <main className="flex-1 relative overflow-y-auto focus:outline-none">

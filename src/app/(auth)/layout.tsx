@@ -2,12 +2,11 @@
 
 import { ReactNode } from 'react'
 import { users as demoUsersData } from '@/lib/mockData/users'
-import { UserEntity } from '@/types/user'
 
 // Demo accounts component
 function DemoAccountsInfo() {
   // Demo users for testing - should match AuthContext
-  const demoUsers = demoUsersData.map((user: UserEntity) => ({
+  const demoUsers = demoUsersData.map((user) => ({
     id: user.id,
     fullName: user.fullName,
     username: user.username,

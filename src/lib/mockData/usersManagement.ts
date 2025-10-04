@@ -102,7 +102,8 @@ export const mockUsersManagement: IUserWithRoles[] = [
     phoneNumber: "0901234001",
     unitId: "unit-1",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01T00:00:00.000Z"),
+    createdAt: "2023-01-01T00:00:00.000Z",
+    updatedAt: "2023-01-01T00:00:00.000Z",
     unit: {
       id: "unit-1",
       name: "Khoa Công nghệ Thông tin",
@@ -129,7 +130,8 @@ export const mockUsersManagement: IUserWithRoles[] = [
     phoneNumber: "0901234005",
     unitId: "unit-1", 
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01T00:00:00.000Z"),
+    createdAt: "2023-01-01T00:00:00.000Z",
+    updatedAt: "2023-01-01T00:00:00.000Z",
     unit: {
       id: "unit-1",
       name: "Khoa Công nghệ Thông tin",
@@ -155,7 +157,8 @@ export const mockUsersManagement: IUserWithRoles[] = [
     phoneNumber: "0901234006",
     unitId: "unit-1",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01T00:00:00.000Z"),
+    createdAt: "2023-01-01T00:00:00.000Z",
+    updatedAt: "2023-01-01T00:00:00.000Z",
     unit: {
       id: "unit-1", 
       name: "Khoa Công nghệ Thông tin",
@@ -188,7 +191,8 @@ export const mockUsersManagement: IUserWithRoles[] = [
     phoneNumber: "0901234004",
     unitId: "unit-2",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01T00:00:00.000Z"),
+    createdAt: "2023-01-01T00:00:00.000Z",
+    updatedAt: "2023-01-01T00:00:00.000Z",
     unit: {
       id: "unit-2",
       name: "Phòng Quản trị",
@@ -214,7 +218,8 @@ export const mockUsersManagement: IUserWithRoles[] = [
     phoneNumber: "0901234008", 
     unitId: "unit-2",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01T00:00:00.000Z"),
+    createdAt: "2023-01-01T00:00:00.000Z",
+    updatedAt: "2023-01-01T00:00:00.000Z",
     unit: {
       id: "unit-2",
       name: "Phòng Quản trị",
@@ -240,7 +245,8 @@ export const mockUsersManagement: IUserWithRoles[] = [
     phoneNumber: "0901234009",
     unitId: "unit-2",
     status: UserStatus.ACTIVE,
-    createdAt: new Date("2023-01-01T00:00:00.000Z"),
+    createdAt: "2023-01-01T00:00:00.000Z",
+    updatedAt: "2023-01-01T00:00:00.000Z",
     unit: {
       id: "unit-2",
       name: "Phòng Quản trị",
@@ -333,11 +339,11 @@ export const createUser = (userData: ICreateUserRequest): IUserWithRoles => {
     fullName: userData.fullName,
     email: userData.email,
     phoneNumber: userData.phoneNumber,
-    birthDate: userData.birthDate ? new Date(userData.birthDate) : undefined,
+    birthDate: userData.birthDate,
     unitId: userData.unitId,
     status: UserStatus.ACTIVE,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     unit: userData.unitId ? mockUnits.find(u => u.id === userData.unitId) : undefined,
     roles: mockRoles.filter(role => userData.roleIds.includes(role.id)),
     permissions: [], // Sẽ được tính dựa trên roles
@@ -367,8 +373,8 @@ export const updateUser = (userId: string, updateData: IUpdateUserRequest): IUse
   const updatedUser: IUserWithRoles = {
     ...user,
     ...updateData,
-    birthDate: updateData.birthDate ? new Date(updateData.birthDate) : user.birthDate,
-    updatedAt: new Date(),
+    birthDate: updateData.birthDate || user.birthDate,
+    updatedAt: new Date().toISOString(),
     unit: updateData.unitId ? mockUnits.find(u => u.id === updateData.unitId) : user.unit,
     roles: updateData.roleIds ? mockRoles.filter(role => updateData.roleIds!.includes(role.id)) : user.roles,
   };
@@ -397,7 +403,7 @@ export const deleteUser = (userId: string): boolean => {
   const userIndex = mockUsersManagement.findIndex(user => user.id === userId);
   if (userIndex === -1) return false;
 
-  mockUsersManagement[userIndex].deletedAt = new Date();
+  mockUsersManagement[userIndex].deletedAt = new Date().toISOString();
   
   return true;
 };
