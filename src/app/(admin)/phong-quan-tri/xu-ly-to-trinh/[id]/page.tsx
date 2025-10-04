@@ -591,6 +591,7 @@ export default function XuLyToTrinhDetailPage() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       <input
+                        title="Chọn tất cả"
                         type="checkbox"
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         checked={(() => {
@@ -637,6 +638,7 @@ export default function XuLyToTrinhDetailPage() {
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
+                          title={`Chọn linh kiện ${component.componentName} ở ${component.roomName}`}
                           type="checkbox"
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           checked={checkedComponents.has(component.id)}

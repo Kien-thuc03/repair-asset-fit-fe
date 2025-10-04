@@ -92,7 +92,7 @@ const authRoutes = [
 
 // Routes admin chung (có thể truy cập bởi nhiều vai trò)
 const adminRoutes = [
-  '/admin'
+  '/'
 ]
 
 /**

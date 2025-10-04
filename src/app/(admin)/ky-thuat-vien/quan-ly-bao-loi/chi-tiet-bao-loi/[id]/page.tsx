@@ -352,7 +352,7 @@ export default function RepairDetailPage() {
 									<div>
 										<p className="text-sm font-medium text-gray-500 mb-1">Ghi chú xử lý</p>
 										<div className="bg-blue-50 p-3 rounded-md border-l-4 border-blue-400">
-											<p className="text-sm">{currentRequest.resolutionNotes}</p>
+										  <p className="text-sm">{currentRequest.resolutionNotes}</p>
 										</div>
 									</div>
 								)}
@@ -383,9 +383,8 @@ export default function RepairDetailPage() {
 						assetId={currentRequest.computerAssetId} // Truyền computerAssetId
 						errorTypeName={currentRequest.errorTypeName} // Truyền errorTypeName để xác định loại lỗi
 						onCreateReplacement={(parts) => {
-							// In a real app, you'd likely pass this data to the replacement request page
-							console.log('Creating replacement request with parts:', parts)
-							router.push('/ky-thuat-vien/lap-phieu-yeu-cau-thay-the')
+							// Xử lý tạo yêu cầu thay thế ở đây
+							router.push('/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat')
 						}}
 						onStatusUpdate={(newStatus: RepairStatus, notes: string) => {
 							// Cập nhật trạng thái yêu cầu
