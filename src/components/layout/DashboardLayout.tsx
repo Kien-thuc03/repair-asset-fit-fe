@@ -246,38 +246,38 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
 };
 
 // Fallback navigation for admin route
-const navigation: NavigationItem[] = [
-  {
-    name: "Dashboard",
-    href: "/admin",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "Quản lý sửa chữa",
-    href: "/admin/repairs",
-    icon: Wrench,
-  },
-  {
-    name: "Danh sách thiết bị",
-    href: "/admin/assets",
-    icon: ClipboardList,
-  },
-  {
-    name: "Người dùng",
-    href: "/admin/users",
-    icon: Users,
-  },
-  {
-    name: "Báo cáo",
-    href: "/admin/reports",
-    icon: BarChart3,
-  },
-  {
-    name: "Cài đặt",
-    href: "/admin/settings",
-    icon: Settings,
-  },
-];
+// const navigation: NavigationItem[] = [
+//   {
+//     name: "Dashboard",
+//     href: "/admin",
+//     icon: LayoutDashboard,
+//   },
+//   {
+//     name: "Quản lý sửa chữa",
+//     href: "/admin/repairs",
+//     icon: Wrench,
+//   },
+//   {
+//     name: "Danh sách thiết bị",
+//     href: "/admin/assets",
+//     icon: ClipboardList,
+//   },
+//   {
+//     name: "Người dùng",
+//     href: "/admin/users",
+//     icon: Users,
+//   },
+//   {
+//     name: "Báo cáo",
+//     href: "/admin/reports",
+//     icon: BarChart3,
+//   },
+//   {
+//     name: "Cài đặt",
+//     href: "/admin/settings",
+//     icon: Settings,
+//   },
+// ];
 
 // Sidebar User Section
 
@@ -664,7 +664,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Get navigation based on user active role
   const userNavigation = user?.activeRole?.code
     ? getNavigationByRole(user.activeRole.code)
-    : navigation;
+    : [];
 
   // Handle logout
   const handleLogout = () => {

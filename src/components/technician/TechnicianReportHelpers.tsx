@@ -12,7 +12,7 @@ export const TechnicianReportSteps: React.FC<TechnicianReportStepsProps> = ({ cu
   const steps = [
     {
       title: "Chọn vị trí",
-      description: "Tòa - Tầng - Phòng",
+      description: "Tòa nhà - Tầng - Phòng máy",
       icon: <ClockCircleOutlined />,
     },
     {
@@ -22,28 +22,33 @@ export const TechnicianReportSteps: React.FC<TechnicianReportStepsProps> = ({ cu
     },
     {
       title: "Phân loại lỗi",
-      description: "Hardware/Software",
+      description: "Phần mềm/Phần cứng & loại lỗi",
       icon: <ClockCircleOutlined />,
     },
     {
-      title: "Phần bị lỗi",
-      description: "linh kiện/ứng dụng",
+      title: "Chi tiết lỗi",
+      description: "Linh kiện/Phần mềm cụ thể",
       icon: <ClockCircleOutlined />,
     },
     {
-      title: "Xử lý",
-      description: "Phương pháp & kết quả",
+      title: "Mô tả vấn đề",
+      description: "Chi tiết hiện tượng lỗi",
+      icon: <ClockCircleOutlined />,
+    },
+    {
+      title: "Xử lý & kết quả",
+      description: "Phương pháp & ghi chú xử lý",
       icon: <ToolOutlined />,
     },
     {
       title: "Hoàn tất",
-      description: "Xác nhận & ghi nhận",
+      description: "Đính kèm ảnh & xác nhận",
       icon: <CheckCircleOutlined />,
     },
   ];
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-5">
       <Steps current={currentStep} size="small" responsive={false}>
         {steps.map((step, index) => (
           <Step

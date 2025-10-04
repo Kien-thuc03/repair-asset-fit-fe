@@ -1,78 +1,130 @@
 "use client";
 
-import { RepairStatus } from "@/types";
-import { ReplacementPart } from "@/lib/mockData";
-import { useState } from "react";
-import { Button, Form, Input, Radio, Card, Alert } from "antd";
-import { CheckCircle, Settings, Package, FileText } from "lucide-react";
-import ReplacementPartsInput from "./ReplacementPartsInput";
+import { RepairStatus } from '@/types'
+import { ReplacementPart } from '@/lib/mockData'
+import { useState } from 'react'
+import { Button, Form, Input, Radio, Card, Alert } from 'antd'
+import { CheckCircle, Settings, Package, FileText } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import ReplacementPartsInput from './ReplacementPartsInput'
+import { ProposalConfirmModal } from '@/components/modal'
 
 const { TextArea } = Input;
 
 interface Props {
-  initStatus: RepairStatus;
-  assetId?: string; // Thêm prop assetId
-  errorTypeName?: string; // Thêm prop errorTypeName để xác định loại lỗi
-  userRole?: string; // Thêm prop userRole để kiểm tra quyền
-  onCreateReplacement: (parts: ReplacementPart[]) => void;
-  onStatusUpdate?: (newStatus: RepairStatus, notes: string) => void;
+	initStatus: RepairStatus
+	assetId?: string // Thêm prop assetId
+	errorTypeName?: string // Thêm prop errorTypeName để xác định loại lỗi
+	requestCode?: string // Thêm prop requestCode
+	assetName?: string // Thêm prop assetName
+	onCreateReplacement: (parts: ReplacementPart[]) => void
+	onStatusUpdate?: (newStatus: RepairStatus, notes: string) => void
 }
 
-export default function ActionPanel({
-  initStatus,
-  assetId,
-  errorTypeName,
-  userRole,
-  onCreateReplacement,
-  onStatusUpdate,
-}: Props) {
-  const [form] = Form.useForm();
-  const [status, setStatus] = useState<RepairStatus>(initStatus);
-  const [inspectionResult, setInspectionResult] = useState<
-    "software" | "hardware" | "replacement" | ""
-  >("");
-  const [showReplacementParts, setShowReplacementParts] = useState(false);
+export default function ActionPanel({ initStatus, assetId, errorTypeName, requestCode, assetName, onCreateReplacement, onStatusUpdate }: Props) {
+	const router = useRouter()
+	const [form] = Form.useForm()
+	const [status, setStatus] = useState<RepairStatus>(initStatus)
+	const [inspectionResult, setInspectionResult] = useState<'software' | 'hardware' | 'replacement' | ''>('')
+	const [showReplacementParts, setShowReplacementParts] = useState(false)
+	const [showProposalModal, setShowProposalModal] = useState(false)
+	const [formValues, setFormValues] = useState<FormValues | null>(null) // Lưu form values để xử lý sau
 
-  // Chỉ hiển thị component này cho kỹ thuật viên (role-2)
-  if (userRole !== "role-2") {
-    return null;
-  }
+	// Xác định loại lỗi dựa trên errorTypeName - tuân thủ database schema
+	const getErrorCategory = () => {
+		if (!errorTypeName) return 'unknown'
+		
+		// Chỉ có ET002 "Máy hư phần mềm" mới là lỗi phần mềm duy nhất trong database
+		if (errorTypeName === "Máy hư phần mềm") {
+			return 'software'
+		}
+		
+		// Tất cả các loại lỗi khác đều là lỗi phần cứng
+		const hardwareErrors = [
+			"Máy không khởi động",      // ET001
+			"Máy hư bàn phím",         // ET003  
+			"Máy hư chuột",            // ET004
+			"Máy không sử dụng được",   // ET005
+			"Máy hư loa",              // ET006
+			"Máy hư màn hình",         // ET007
+			"Máy hư ổ cứng",           // ET008
+			"Máy chạy chậm",           // ET009
+			"Máy nhiễm virus",         // ET010
+			"Máy không kết nối mạng",   // ET011
+			"Máy hư RAM",              // ET012
+			"Máy hư nguồn",            // ET013
+			"Máy mất bàn phím",        // ET014
+			"Máy mất chuột"            // ET015
+		]
+		
+		if (hardwareErrors.includes(errorTypeName)) {
+			return 'hardware'
+		}
+		
+		// Mặc định là hardware nếu không xác định được
+		return 'hardware'
+	}
 
   // Xác định loại lỗi dựa trên errorTypeName
   const getErrorCategory = () => {
     if (!errorTypeName) return "unknown";
 
-    // Kiểm tra nếu là lỗi phần mềm
-    const softwareKeywords = [
-      "phần mềm",
-      "software",
-      "ứng dụng",
-      "hệ điều hành",
-      "driver",
-      "virus",
-      "bảo mật",
-    ];
-    const hardwareKeywords = [
-      "phần cứng",
-      "hardware",
-      "màn hình",
-      "bàn phím",
-      "chuột",
-      "CPU",
-      "RAM",
-      "ổ cứng",
-      "nguồn",
-      "card",
-    ];
+	// Interface cho form values
+	interface FormValues {
+		inspectionResult: string
+		notes: string
+		replacementParts?: ReplacementPart[]
+	}
 
-    const lowerErrorType = errorTypeName.toLowerCase();
+	const onFinish = (values: FormValues) => {
+		console.log('Form values:', values)
+		
+		// Lưu form values và hiển thị modal xác nhận
+		setFormValues(values)
+		setShowProposalModal(true)
+	}
 
-    if (softwareKeywords.some((keyword) => lowerErrorType.includes(keyword))) {
-      return "software";
-    }
-    if (hardwareKeywords.some((keyword) => lowerErrorType.includes(keyword))) {
-      return "hardware";
-    }
+	// Xử lý khi người dùng xác nhận lập phiếu đề xuất
+	const handleConfirmCreateProposal = () => {
+		if (formValues) {
+			processFormSubmission(formValues)
+			// Chuyển đến trang lập phiếu đề xuất
+			router.push('/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat')
+		}
+		setShowProposalModal(false)
+	}
+
+	// Xử lý khi người dùng chọn trở về danh sách
+	const handleConfirmReturnToList = () => {
+		if (formValues) {
+			processFormSubmission(formValues)
+			// Chuyển về trang danh sách
+			router.push('/ky-thuat-vien/quan-ly-bao-loi')
+		}
+		setShowProposalModal(false)
+	}
+
+	// Hàm xử lý form submission chung
+	const processFormSubmission = (values: FormValues) => {
+		// Xác định trạng thái mới dựa trên kết quả kiểm tra
+		let newStatus = status
+		if (values.inspectionResult === 'software') {
+			newStatus = RepairStatus.ĐÃ_HOÀN_THÀNH
+		} else if (values.inspectionResult === 'hardware') {
+			newStatus = RepairStatus.ĐÃ_HOÀN_THÀNH
+		} else if (values.inspectionResult === 'replacement') {
+			newStatus = RepairStatus.CHỜ_THAY_THẾ
+			// Nếu có linh kiện cần thay thế, tạo đề xuất
+			if (values.replacementParts && values.replacementParts.length > 0) {
+				onCreateReplacement(values.replacementParts)
+			}
+		}
+		
+		// Gọi callback để cập nhật trạng thái
+		if (onStatusUpdate) {
+			onStatusUpdate(newStatus, values.notes || '')
+		}
+	}
 
     // Mặc định là phần mềm nếu không xác định được
     return "software";
@@ -266,125 +318,26 @@ export default function ActionPanel({
             </Radio.Group>
           </Form.Item>
 
-          <Form.Item
-            name="notes"
-            label="Mô tả chi tiết quá trình xử lý"
-            rules={[
-              { required: true, message: "Vui lòng mô tả quá trình xử lý!" },
-            ]}>
-            <TextArea
-              rows={4}
-              placeholder="Mô tả các bước đã thực hiện, nguyên nhân lỗi, cách khắc phục..."
-            />
-          </Form.Item>
+	return (
+		<>
+			<div className="bg-white shadow rounded-lg p-6 space-y-4">
+				<h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+					<Settings className="w-5 h-5" />
+					Xử lý yêu cầu
+				</h3>
+				{renderContent()}
+			</div>
 
-          {showReplacementParts && (
-            <Form.Item name="replacementParts" label="Linh kiện cần thay thế">
-              <ReplacementPartsInput assetId={assetId} />
-            </Form.Item>
-          )}
-
-          {/* Thông báo trạng thái sẽ được cập nhật */}
-          {inspectionResult && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <div className="text-sm text-blue-800">
-                <strong>💡 Trạng thái sẽ được cập nhật:</strong>
-                <div className="mt-1">
-                  {inspectionResult === "software" ? (
-                    <div>
-                      <span className="text-green-600 font-medium">
-                        → Đã hoàn thành
-                      </span>
-                      <div className="text-xs text-gray-600 mt-1">
-                        Lỗi phần mềm đã được khắc phục hoàn toàn
-                      </div>
-                    </div>
-                  ) : inspectionResult === "hardware" ? (
-                    <div>
-                      <span className="text-green-600 font-medium">
-                        → Đã hoàn thành
-                      </span>
-                      <div className="text-xs text-gray-600 mt-1">
-                        Lỗi phần cứng đã được sửa chữa thành công
-                      </div>
-                    </div>
-                  ) : inspectionResult === "replacement" ? (
-                    <div>
-                      <span className="text-orange-600 font-medium">
-                        → Chờ thay thế linh kiện
-                      </span>
-                      <div className="text-xs text-gray-600 mt-1">
-                        Yêu cầu sẽ chuyển sang quy trình thay thế linh kiện
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-blue-900 font-medium">
-                      → Đang xử lý
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <Form.Item>
-            <Button type="primary" htmlType="submit" icon={<FileText />}>
-              Cập nhật kết quả xử lý
-            </Button>
-          </Form.Item>
-        </Form>
-      );
-    }
-
-    if (status === RepairStatus.CHỜ_THAY_THẾ) {
-      return (
-        <Card>
-          <Alert
-            message="Đang chờ thay thế linh kiện"
-            description="Đã tạo đề xuất thay thế linh kiện. Vui lòng theo dõi tiến độ tại trang 'Quản lý thay thế linh kiện'."
-            type="warning"
-            icon={<Package />}
-            showIcon
-            action={
-              <Button
-                size="small"
-                type="link"
-                onClick={() =>
-                  window.open(
-                    "/ky-thuat-vien/quan-ly-thay-the-linh-kien",
-                    "_blank"
-                  )
-                }>
-                Xem danh sách
-              </Button>
-            }
-          />
-        </Card>
-      );
-    }
-
-    if (status === RepairStatus.ĐÃ_HOÀN_THÀNH) {
-      return (
-        <Alert
-          message="Yêu cầu đã hoàn thành"
-          description="Quá trình sửa chữa/thay thế đã hoàn tất."
-          type="success"
-          icon={<CheckCircle />}
-          showIcon
-        />
-      );
-    }
-
-    return null;
-  };
-
-  return (
-    <div className="bg-white shadow rounded-lg p-6 space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-        <Settings className="w-5 h-5" />
-        Xử lý yêu cầu
-      </h3>
-      {renderContent()}
-    </div>
-  );
+			{/* Modal xác nhận lập phiếu đề xuất */}
+			<ProposalConfirmModal
+				isOpen={showProposalModal}
+				onClose={() => setShowProposalModal(false)}
+				onConfirmCreate={handleConfirmCreateProposal}
+				onConfirmReturn={handleConfirmReturnToList}
+				requestCode={requestCode || ''}
+				assetName={assetName}
+				isLoading={false}
+			/>
+		</>
+	)
 }

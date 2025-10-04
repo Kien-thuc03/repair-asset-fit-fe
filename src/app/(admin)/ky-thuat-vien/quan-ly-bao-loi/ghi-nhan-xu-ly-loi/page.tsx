@@ -291,12 +291,13 @@ export default function GhiNhanXuLyLoiPage() {
 
       {/* Progress Steps */}
       <TechnicianReportSteps currentStep={
-        !formData.building ? 0 :
-        !formData.roomId ? 1 :
-        !formData.assetId ? 2 :
+        !formData.building || !formData.floor || !formData.roomId ? 0 :
+        !formData.assetId ? 1 :
+        !formData.errorCategory ? 2 :
+        (formData.errorCategory === "hardware" && selectedComponentIds.length === 0) || 
+        (formData.errorCategory === "software" && selectedSoftwareIds.length === 0) ? 3 :
         !formData.description ? 4 :
-        !formData.repairMethod ? 5 :
-        !formData.repairNotes ? 6 : 7
+        !formData.repairMethod || !formData.repairNotes ? 5 : 6
       } />
 
       {/* QR Scanner for Mobile */}
@@ -408,17 +409,6 @@ export default function GhiNhanXuLyLoiPage() {
             <h3 className="text-lg font-semibold mb-4 text-blue-900">
               Bước 3: Phân loại và chọn loại lỗi
             </h3>
-            
-            {formData.assetId && (
-              <Alert
-                message="Chọn phân loại lỗi"
-                description="Lỗi phần cứng: linh kiện hỏng, kết nối vật lý. Lỗi phần mềm: ứng dụng, hệ điều hành, virus."
-                type="info"
-                showIcon
-                className="mb-4"
-              />
-            )}
-            
             <Form.Item label="Phân loại lỗi" required>
               <Radio.Group
                 value={formData.errorCategory}
@@ -453,11 +443,11 @@ export default function GhiNhanXuLyLoiPage() {
           {/* Bước 4: Chọn linh kiện/phần mềm cụ thể */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-4 text-blue-900">
-              Bước 4: Chọn {formData.errorCategory === "hardware" ? "linh kiện" : "phần mềm"} bị lỗi (tùy chọn)
+              Bước 4: Chọn {formData.errorCategory === "hardware" ? "linh kiện" : "phần mềm"} bị lỗi
             </h3>
             
             {formData.errorCategory === "hardware" && (
-              <Form.Item label="Linh kiện cụ thể">
+              <Form.Item label="Linh kiện cụ thể" required>
                 <Select
                   mode="multiple"
                   placeholder="Chọn linh kiện bị lỗi"
@@ -480,7 +470,7 @@ export default function GhiNhanXuLyLoiPage() {
             )}
 
             {formData.errorCategory === "software" && (
-              <Form.Item label="Phần mềm cụ thể">
+              <Form.Item label="Phần mềm cụ thể" required>
                 <Select
                   mode="multiple"
                   placeholder="Chọn phần mềm bị lỗi"
