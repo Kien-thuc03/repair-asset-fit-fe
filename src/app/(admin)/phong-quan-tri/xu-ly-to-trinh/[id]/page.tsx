@@ -4,7 +4,6 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   FileText,
   Calendar,
   Building,
@@ -18,10 +17,8 @@ import {
   HardDrive,
   Cpu,
   MemoryStick,
-  Check,
   X,
   Eye,
-  Home,
 } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
@@ -249,15 +246,6 @@ export default function XuLyToTrinhDetailPage() {
 
   const canProcess = proposal.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH;
 
-  const handleAction = (action: "approve" | "reject") => {
-    if (action === "approve") {
-      setShowSignConfirmModal(true);
-    } else {
-      setActionType(action);
-      setShowConfirmModal(true);
-    }
-  };
-
   const handleConfirmAction = async () => {
     setIsProcessing(true);
     setShowConfirmModal(false);
@@ -350,37 +338,6 @@ export default function XuLyToTrinhDetailPage() {
         />
       </div>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link
-            href="/phong-quan-tri/xu-ly-to-trinh"
-            className="inline-flex items-center text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Quay lại danh sách
-          </Link>
-        </div>
-        <div className="flex items-center space-x-3">
-          {canProcess && (
-            <>
-              <button
-                onClick={() => handleAction("reject")}
-                disabled={isProcessing}
-                className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">
-                <X className="w-4 h-4 mr-2" />
-                Từ chối
-              </button>
-              <button
-                onClick={() => setShowSignConfirmModal(true)}
-                disabled={isProcessing}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50">
-                <Check className="w-4 h-4 mr-2" />
-                Duyệt tờ trình
-              </button>
-            </>
-          )}
-        </div>
-      </div>
 
       {/* Proposal Info Card */}
       <div className="bg-white rounded-lg shadow">

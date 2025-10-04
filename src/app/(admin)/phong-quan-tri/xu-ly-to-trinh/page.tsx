@@ -1,9 +1,17 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Search, FileText, Calendar, Eye } from "lucide-react";
+import {
+  Search,
+  FileText,
+  Calendar,
+  Eye,
+  Download,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, Button, Modal } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
 import { Pagination, SortableHeader } from "@/components/common";
@@ -16,6 +24,11 @@ export default function XuLyToTrinhPage() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
@@ -24,8 +37,6 @@ export default function XuLyToTrinhPage() {
     let filtered = mockReplacementRequestItem.filter(
       (item) => item.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
     );
-
-  
 
     // Apply search filter
     if (searchTerm) {
@@ -114,6 +125,92 @@ export default function XuLyToTrinhPage() {
     return "Chờ xử lý";
   };
 
+  // Hàm xuất Excel
+  const handleExportExcel = async () => {
+    const selectedData = filteredData.filter((item) =>
+      selectedRowKeys.includes(item.id)
+    );
+
+    if (selectedData.length === 0) {
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import("xlsx");
+
+      // Tạo dữ liệu Excel
+      const excelData = selectedData.map((item, index) => ({
+        STT: index + 1,
+        "Mã đề xuất": item.proposalCode,
+        "Tiêu đề": item.title,
+        "Mô tả": item.description || "",
+        "Người tạo": item.createdBy || "Chưa xác định",
+        "Số lượng linh kiện": item.components.length,
+        "Trạng thái": "Chờ xử lý",
+        "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+      }));
+
+      // Tạo workbook và worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Đặt độ rộng cột tự động
+      const colWidths = [
+        { wch: 5 }, // STT
+        { wch: 20 }, // Mã đề xuất
+        { wch: 30 }, // Tiêu đề
+        { wch: 40 }, // Mô tả
+        { wch: 20 }, // Người tạo
+        { wch: 15 }, // Số lượng linh kiện
+        { wch: 15 }, // Trạng thái
+        { wch: 15 }, // Ngày tạo
+      ];
+      ws["!cols"] = colWidths;
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách tờ trình");
+
+      // Xuất file
+      const fileName = `Danh_sach_to_trinh_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      setExportCount(selectedData.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setShowExportErrorModal(true);
+    }
+  };
+
+  // Hàm xử lý chọn row
+  const handleRowSelect = (id: string, selected: boolean) => {
+    if (selected) {
+      setSelectedRowKeys((prev) => [...prev, id]);
+    } else {
+      setSelectedRowKeys((prev) => prev.filter((key) => key !== id));
+    }
+  };
+
+  // Hàm xử lý chọn tất cả
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      const currentPageKeys = paginatedData.map((row) => row.id);
+      setSelectedRowKeys((prev) => [...prev, ...currentPageKeys]);
+    } else {
+      const currentPageKeys = paginatedData.map((row) => row.id);
+      setSelectedRowKeys((prev) =>
+        prev.filter((key) => !currentPageKeys.includes(key))
+      );
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -160,24 +257,13 @@ export default function XuLyToTrinhPage() {
         </p>
       </div>
 
-
-      {/* Filters and Search */}
+      {/* Search và Xuất Excel */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="mb-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Tìm kiếm tờ trình
-          </h3>
-          <p className="text-sm text-gray-600">
-            Tìm kiếm các tờ trình đã được tổ trưởng kỹ thuật xác minh và
-            sẵn sàng để gửi lên cấp trên phê duyệt.
-          </p>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search - chiếm 3 cột */}
+          <div className="md:col-span-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              
               <input
                 type="text"
                 placeholder="Tìm kiếm theo mã đề xuất, tiêu đề..."
@@ -186,6 +272,18 @@ export default function XuLyToTrinhPage() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+          </div>
+
+          {/* Nút Xuất Excel - chiếm 1 cột */}
+          <div className="md:col-span-1">
+            <Button
+              type="primary"
+              icon={<Download className="w-4 h-4" />}
+              onClick={handleExportExcel}
+              disabled={selectedRowKeys.length === 0}
+              className="w-full h-[40px] flex items-center justify-center">
+              Xuất Excel ({selectedRowKeys.length})
+            </Button>
           </div>
         </div>
       </div>
@@ -196,12 +294,29 @@ export default function XuLyToTrinhPage() {
           <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                      checked={
+                        paginatedData.length > 0 &&
+                        paginatedData.every((row) =>
+                          selectedRowKeys.includes(row.id)
+                        )
+                      }
+                      onChange={(e) => handleSelectAll(e.target.checked)}
+                      aria-label="Chọn tất cả tờ trình"
+                    />
+                    <span>STT</span>
+                  </div>
+                </th>
                 <SortableHeader<ReplacementRequestItem>
                   field="proposalCode"
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-[15%]">
+                  className="w-[12%]">
                   Mã ĐX
                 </SortableHeader>
                 <SortableHeader<ReplacementRequestItem>
@@ -209,7 +324,7 @@ export default function XuLyToTrinhPage() {
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-[25%]">
+                  className="w-[22%]">
                   Tiêu đề
                 </SortableHeader>
                 <SortableHeader<ReplacementRequestItem>
@@ -217,7 +332,7 @@ export default function XuLyToTrinhPage() {
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-[20%]">
+                  className="w-[17%]">
                   Người tạo
                 </SortableHeader>
                 <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
@@ -236,7 +351,7 @@ export default function XuLyToTrinhPage() {
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-[10%]">
+                  className="w-[11%]">
                   Ngày
                 </SortableHeader>
                 <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
@@ -245,8 +360,24 @@ export default function XuLyToTrinhPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedData.map((item) => (
+              {paginatedData.map((item, index) => (
                 <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-2 py-3 text-sm text-gray-700">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300"
+                        checked={selectedRowKeys.includes(item.id)}
+                        onChange={(e) =>
+                          handleRowSelect(item.id, e.target.checked)
+                        }
+                        aria-label={`Chọn tờ trình ${item.proposalCode}`}
+                      />
+                      <span>
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </span>
+                    </div>
+                  </td>
                   <td className="px-2 py-3">
                     <div className="text-xs font-medium text-gray-900 truncate">
                       {item.proposalCode}
@@ -339,6 +470,62 @@ export default function XuLyToTrinhPage() {
           </div>
         )}
       </div>
+
+      {/* Export Success Modal */}
+      <Modal
+        open={showExportSuccessModal}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportSuccessModal(false)}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Xuất Excel thành công!
+            </h3>
+            <p className="text-sm text-gray-500">
+              Đã xuất {exportCount} tờ trình ra file {exportFileName} thành
+              công.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Export Error Modal */}
+      <Modal
+        open={showExportErrorModal}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportErrorModal(false)}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <XCircle className="h-8 w-8 text-red-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Không thể xuất Excel
+            </h3>
+            <p className="text-sm text-gray-500">
+              Không có dữ liệu để xuất hoặc có lỗi xảy ra. Vui lòng chọn ít nhất
+              một tờ trình và thử lại.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
