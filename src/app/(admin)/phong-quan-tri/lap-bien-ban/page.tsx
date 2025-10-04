@@ -37,6 +37,12 @@ export default function LapBienBanPage() {
   );
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
+  // Export modal states
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
+
   // Handle sorting
   const handleSort = (field: keyof ReplacementRequestItem) => {
     if (sortField === field) {
@@ -144,13 +150,7 @@ export default function LapBienBanPage() {
         : filteredReports;
 
     if (dataToExport.length === 0) {
-      Modal.warning({
-        title: "Thông báo",
-        content: "Vui lòng chọn ít nhất một biên bản để xuất Excel.",
-        centered: true,
-        okText: "Đồng ý",
-        icon: <Download className="text-orange-500" />,
-      });
+      setShowExportErrorModal(true);
       return;
     }
 
@@ -205,73 +205,16 @@ export default function LapBienBanPage() {
       }.xlsx`;
       XLSX.writeFile(wb, fileName);
 
-      // Modal thông báo thành công với thông tin chi tiết
-      Modal.success({
-        title: (
-          <div className="flex items-center gap-2">
-            <CheckCircle className="text-green-500" />
-            <span>Xuất Excel thành công!</span>
-          </div>
-        ),
-        content: (
-          <div className="space-y-2">
-            <p>
-              ✅ <strong>Số lượng biên bản:</strong> {dataToExport.length}
-            </p>
-            <p>
-              📁 <strong>Tên file:</strong> {fileName}
-            </p>
-            <p>
-              📍 <strong>Vị trí:</strong> Thư mục Downloads
-            </p>
-            <p className="text-sm text-gray-500 mt-3">
-              File Excel đã được tải xuống thành công. Bạn có thể tìm thấy file
-              trong thư mục Downloads của máy tính.
-            </p>
-          </div>
-        ),
-        centered: true,
-        okText: "Đồng ý",
-        width: 500,
-        onOk: () => {
-          // Reset selection sau khi người dùng đóng modal
-          setSelectedRowKeys([]);
-        },
-      });
+      // Thông báo thành công với modal
+      setExportCount(dataToExport.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất thành công
+      setSelectedRowKeys([]);
     } catch (error) {
       console.error("Lỗi xuất Excel:", error);
-
-      // Modal thông báo lỗi chi tiết
-      Modal.error({
-        title: (
-          <div className="flex items-center gap-2">
-            <XCircle className="text-red-500" />
-            <span>Lỗi xuất Excel</span>
-          </div>
-        ),
-        content: (
-          <div className="space-y-2">
-            <p>❌ Có lỗi xảy ra khi xuất file Excel</p>
-            <p className="text-sm text-gray-600">
-              <strong>Chi tiết lỗi:</strong>{" "}
-              {error instanceof Error ? error.message : "Lỗi không xác định"}
-            </p>
-            <div className="bg-gray-50 p-3 rounded mt-3">
-              <p className="text-sm font-medium text-gray-700">
-                Hướng dẫn khắc phục:
-              </p>
-              <ul className="text-sm text-gray-600 mt-1 space-y-1">
-                <li>• Kiểm tra kết nối internet</li>
-                <li>• Đảm bảo trình duyệt cho phép tải xuống file</li>
-                <li>• Thử lại sau vài giây</li>
-              </ul>
-            </div>
-          </div>
-        ),
-        centered: true,
-        okText: "Đồng ý",
-        width: 500,
-      });
+      setShowExportErrorModal(true);
     }
   };
 
@@ -564,6 +507,61 @@ export default function LapBienBanPage() {
           </div>
         )}
       </div>
+
+      {/* Export Success Modal */}
+      <Modal
+        open={showExportSuccessModal}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportSuccessModal(false)}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Xuất Excel thành công!
+            </h3>
+            <p className="text-sm text-gray-500">
+              Đã xuất {exportCount} biên bản ra file {exportFileName} thành
+              công.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Export Error Modal */}
+      <Modal
+        open={showExportErrorModal}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportErrorModal(false)}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <XCircle className="h-8 w-8 text-red-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Không thể xuất Excel
+            </h3>
+            <p className="text-sm text-gray-500">
+              Vui lòng chọn ít nhất một biên bản để xuất Excel.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
