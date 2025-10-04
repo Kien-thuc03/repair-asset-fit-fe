@@ -92,7 +92,7 @@ const authRoutes = [
 
 // Routes admin chung (có thể truy cập bởi nhiều vai trò)
 const adminRoutes = [
-  '/admin'
+  '/'
 ]
 
 /**
@@ -134,7 +134,7 @@ function getDefaultRouteByRole(userRole: string): string {
     case UserRole.QTV_KHOA:
       return '/qtv-khoa'
     default:
-      return '/admin'
+      return '/login' // Mặc định redirect về login nếu không xác định được vai trò
   }
 }
 

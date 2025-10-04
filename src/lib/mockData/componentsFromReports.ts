@@ -171,49 +171,6 @@ export const mockComponentsFromReportsWithStatus: ComponentFromReport[] = [
     machineLabel: "01",
     location: "Tòa H - H103 - Máy 01"
   },
-  // Thêm một vài component đã được xử lý để test
-  {
-    id: "CFR009",
-    proposalId: "RP001",
-    oldComponentId: "CC033",
-    newItemName: "ASUS ROG Strix B550-F",
-    newItemSpecs: "AMD B550 chipset, ATX motherboard", 
-    quantity: 1,
-    reason: "Motherboard power delivery issues",
-    newlyPurchasedAssetId: null,
-    componentName: "AMD Ryzen Motherboard",
-    componentType: ComponentType.MAINBOARD,
-    assetId: "ASSET006",
-    assetName: "PC HP Pavilion",
-    assetCode: "19-0209/01",
-    buildingName: "Tòa H",
-    roomName: "H102",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT, // Đã được tạo đề xuất
-    reportDate: "2024-01-10T02:00:00.000Z",
-    machineLabel: "03",
-    location: "Tòa H - H102 - Máy 03"
-  },
-  {
-    id: "CFR010",
-    proposalId: "RP002",
-    oldComponentId: "CC044",
-    newItemName: "NVIDIA GeForce GTX 1650",
-    newItemSpecs: "4GB GDDR6 Graphics Card",
-    quantity: 1,
-    reason: "Integrated graphics not sufficient for design work",
-    newlyPurchasedAssetId: "COMP_NEW_001",
-    componentName: "Integrated Graphics",
-    componentType: ComponentType.GPU,
-    assetId: "ASSET009",
-    assetName: "PC ASUS VivoBook", 
-    assetCode: "19-0210/01",
-    buildingName: "Tòa H",
-    roomName: "H103",
-    status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM, // Đã mua sắm xong
-    reportDate: "2024-01-08T04:30:00.000Z",
-    machineLabel: "01",
-    location: "Tòa H - H103 - Máy 01"
-  }
 ];
 
 // Helper functions
