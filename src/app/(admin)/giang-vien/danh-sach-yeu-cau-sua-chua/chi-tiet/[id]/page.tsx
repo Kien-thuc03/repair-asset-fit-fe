@@ -7,7 +7,7 @@ import { getRepairRequestWithDetails } from "@/lib/mockData";
 
 import { RequestDetailContainer } from "@/components/lecturer/progress";
 
-export default function ChiTietTheoDaoTienDoPage() {
+export default function ChiTietDanhSachYeuCauSuaChuaPage() {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
@@ -30,10 +30,10 @@ export default function ChiTietTheoDaoTienDoPage() {
             ),
           },
           {
-            href: "/giang-vien/theo-doi-tien-do",
+            href: "/giang-vien/danh-sach-yeu-cau-sua-chua",
             title: (
               <div className="flex items-center">
-                <span>Theo dõi tiến độ</span>
+                <span>Danh sách yêu cầu sửa chữa</span>
               </div>
             ),
           },

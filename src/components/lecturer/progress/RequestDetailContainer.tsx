@@ -25,7 +25,7 @@ interface RequestDetailContainerProps {
 
 export default function RequestDetailContainer({
   request,
-  backUrl = "/giang-vien/theo-doi-tien-do",
+  backUrl = "/giang-vien/danh-sach-yeu-cau-sua-chua",
 }: RequestDetailContainerProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -137,7 +137,6 @@ export default function RequestDetailContainer({
         {/* Sidebar */}
         <div className="space-y-6">
           <ProgressTimeline request={request} formatDate={formatDate} />
-          
         </div>
       </div>
 

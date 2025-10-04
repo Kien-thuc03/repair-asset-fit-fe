@@ -189,7 +189,7 @@ export default function ProgressTrackingContainer() {
 
   // Handle view details
   const handleViewDetails = (id: string) => {
-    router.push(`/giang-vien/theo-doi-tien-do/chi-tiet/${id}`);
+    router.push(`/giang-vien/danh-sach-yeu-cau-sua-chua/chi-tiet/${id}`);
   };
 
   // Xử lý xuất Excel
@@ -239,10 +239,10 @@ export default function ProgressTrackingContainer() {
       const ws = XLSX.utils.json_to_sheet(excelData);
 
       // Thêm worksheet vào workbook
-      XLSX.utils.book_append_sheet(wb, ws, "Danh sách theo dõi tiến độ");
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách yêu cầu sửa chữa");
 
       // Xuất file
-      const fileName = `danh-sach-theo-doi-tien-do-${
+      const fileName = `danh-sach-yeu-cau-sua-chua-${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
       XLSX.writeFile(wb, fileName);

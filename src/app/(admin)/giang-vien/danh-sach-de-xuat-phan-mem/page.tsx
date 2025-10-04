@@ -137,7 +137,7 @@ export default function SoftwareProposalsPage() {
           {
             title: (
               <div className="flex items-center">
-                <span>Theo dõi tiến độ phần mềm</span>
+                <span>Danh sách đề xuất phần mềm</span>
               </div>
             ),
           },
@@ -148,7 +148,7 @@ export default function SoftwareProposalsPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Monitor className="h-6 w-6 text-blue-600" />
-          Theo dõi tiến độ phần mềm
+          Danh sách đề xuất phần mềm
         </h1>
         <p className="mt-2 text-gray-600">
           Theo dõi tiến độ xử lý các đề xuất cài đặt phần mềm.
