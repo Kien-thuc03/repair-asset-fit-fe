@@ -1,29 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  ArrowLeft,
   FileText,
   Building,
-  Package,
   User,
   Calendar,
   AlertTriangle,
   CheckCircle,
-  MemoryStick,
-  HardDrive,
-  Cpu,
-  Monitor,
-  X,
-  Home,
   FileCheck,
-  Eye,
 } from "lucide-react";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, Modal } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
-import { ReplacementStatus, ComponentType } from "@/types/repair";
+import { ReplacementStatus } from "@/types/repair";
 
 export default function RequestDetailPage() {
   const params = useParams();
@@ -33,24 +23,6 @@ export default function RequestDetailPage() {
   // Tìm replacement request theo ID
   const request = mockReplacementRequestItem.find((r) => r.id === id);
 
-  const getComponentIcon = (type: ComponentType) => {
-    switch (type) {
-      case ComponentType.RAM:
-        return <MemoryStick className="h-4 w-4" />;
-      case ComponentType.STORAGE:
-        return <HardDrive className="h-4 w-4" />;
-      case ComponentType.CPU:
-        return <Cpu className="h-4 w-4" />;
-      case ComponentType.PSU:
-        return <Package className="h-4 w-4" />;
-      case ComponentType.MAINBOARD:
-      case ComponentType.GPU:
-      case ComponentType.MONITOR:
-        return <Monitor className="h-4 w-4" />;
-      default:
-        return <Package className="h-4 w-4" />;
-    }
-  };
 
   const getStatusColor = (status: ReplacementStatus) => {
     switch (status) {
@@ -79,7 +51,6 @@ export default function RequestDetailPage() {
     }
   };
 
-
   const handleCreateInspectionReport = () => {
     setShowInspectionForm(true);
   };
@@ -104,11 +75,6 @@ export default function RequestDetailPage() {
         <p className="text-gray-500">
           Tờ trình bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
         </p>
-        <Link
-          href="/phong-quan-tri/lap-bien-ban"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-          Quay lại danh sách
-        </Link>
       </div>
     );
   }
@@ -124,7 +90,6 @@ export default function RequestDetailPage() {
                 href: "/",
                 title: (
                   <div className="flex items-center">
-                    <Home className="w-4 h-4 mr-1" />
                     <span>Trang chủ</span>
                   </div>
                 ),
@@ -133,7 +98,6 @@ export default function RequestDetailPage() {
                 href: "/phong-quan-tri",
                 title: (
                   <div className="flex items-center">
-                    <Building className="w-4 h-4 mr-1" />
                     <span>Phòng quản trị</span>
                   </div>
                 ),
@@ -142,7 +106,6 @@ export default function RequestDetailPage() {
                 href: "/phong-quan-tri/lap-bien-ban",
                 title: (
                   <div className="flex items-center">
-                    <FileCheck className="w-4 h-4 mr-1" />
                     <span>Lập biên bản</span>
                   </div>
                 ),
@@ -150,33 +113,12 @@ export default function RequestDetailPage() {
               {
                 title: (
                   <div className="flex items-center">
-                    <Eye className="w-4 h-4 mr-1" />
                     <span>Chi tiết biên bản {request.proposalCode}</span>
                   </div>
                 ),
               },
             ]}
           />
-        </div>
-
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/phong-quan-tri/lap-bien-ban"
-              className="inline-flex items-center text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Quay lại danh sách
-            </Link>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={handleCreateInspectionReport}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              <FileText className="w-4 h-4 mr-2" />
-              Lập biên bản kiểm tra
-            </button>
-          </div>
         </div>
 
         {/* Main Content */}
@@ -191,13 +133,21 @@ export default function RequestDetailPage() {
                   Mã tờ trình: {request.proposalCode}
                 </p>
               </div>
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
-                  request.status
-                )}`}>
-                {getStatusIcon(request.status)}
-                <span className="ml-2">{getStatusText(request.status)}</span>
-              </span>
+              <div className="flex items-center space-x-3">
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
+                    request.status
+                  )}`}>
+                  {getStatusIcon(request.status)}
+                  <span className="ml-2">{getStatusText(request.status)}</span>
+                </span>
+                <button
+                  onClick={handleCreateInspectionReport}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  <FileCheck className="w-4 h-4 mr-2" />
+                  Lập biên bản
+                </button>
+              </div>
             </div>
           </div>
 
@@ -306,9 +256,7 @@ export default function RequestDetailPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-start space-x-3">
-                            <div className="flex-shrink-0">
-                              {getComponentIcon(component.componentType)}
-                            </div>
+                            
                             <div>
                               <div className="text-sm font-medium text-gray-900">
                                 {component.componentName}
@@ -375,217 +323,210 @@ export default function RequestDetailPage() {
         </div>
 
         {/* Modal biên bản kiểm tra */}
-        {showInspectionForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <div className="text-center flex-1">
-                  <div className="text-sm text-gray-600 mb-2">
-                    TRƯỜNG ĐẠI HỌC CÔNG
-                    NGHIỆP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CỘNG
-                    HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM
+        <Modal
+          title={null}
+          open={showInspectionForm}
+          onCancel={handleCloseInspectionForm}
+          footer={[
+            <button
+              key="cancel"
+              onClick={handleCloseInspectionForm}
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3">
+              Hủy
+            </button>,
+            <button
+              key="submit"
+              onClick={handleSubmitInspectionReport}
+              className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+              Gửi biên bản
+            </button>,
+          ]}
+          width={1000}
+          centered
+          className="inspection-report-modal">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="text-center">
+              <div className="text-sm text-gray-600 mb-2">
+                TRƯỜNG ĐẠI HỌC CÔNG
+                NGHIỆP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CỘNG
+                HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM
+              </div>
+              <div className="text-sm text-gray-600 mb-2">
+                THÀNH PHỐ HỒ CHÍ
+                MINH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Độc
+                lập - Tự do - Hạnh phúc
+              </div>
+              <div className="text-sm text-gray-600 mb-4">PHÒNG QUẢN TRỊ</div>
+              <div className="text-right text-sm text-gray-600 mb-6">
+                Thành phố Hồ Chí Minh, ngày ___ tháng ___ năm 2025
+              </div>
+              <div className="text-xl font-bold text-center mb-2">BIÊN BẢN</div>
+              <div className="text-base font-semibold text-center mb-4">
+                Kiểm tra tình trạng kỹ thuật cơ sở vật chất hư hỏng hoặc cần cải
+                tạo
+              </div>
+              <div className="text-base font-semibold text-center mb-6">
+                để đề xuất giải pháp khắc phục
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-6">
+              {/* Thông tin chung */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Căn cứ đề nghị của: </span>
+                  <span className="underline">Khoa CNTT Nam Thăng</span>
+                  <span className="ml-4 font-medium">Năm: </span>
+                  <span className="underline">2025</span>
+                </div>
+                <div>
+                  <span className="font-medium">Hôm nay, </span>
+                  <span className="font-medium">Ngày: </span>
+                  <span className="underline">___</span>
+                  <span className="font-medium ml-2">Tháng: </span>
+                  <span className="underline">___</span>
+                  <span className="font-medium ml-2">Năm: </span>
+                  <span className="underline">2025</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="font-medium">Tại vị trí: </span>
+                  <span className="underline">
+                    _________________________________
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <span className="font-medium">Chúng tôi gồm có: </span>
+                </div>
+                <div className="col-span-2 ml-4">
+                  <div className="mb-2">
+                    <span className="font-medium">1. Ông: </span>
+                    <span className="underline">Giang Thanh Trọn</span>
+                    <span className="ml-8 font-medium">đại diện: </span>
+                    <span className="underline">Khoa CNTT</span>
                   </div>
-                  <div className="text-sm text-gray-600 mb-2">
-                    THÀNH PHỐ HỒ CHÍ
-                    MINH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Độc
-                    lập - Tự do - Hạnh phúc
-                  </div>
-                  <div className="text-sm text-gray-600 mb-4">
-                    PHÒNG QUẢN TRỊ
-                  </div>
-                  <div className="text-right text-sm text-gray-600 mb-6">
-                    Thành phố Hồ Chí Minh, ngày ___ tháng ___ năm 2025
-                  </div>
-                  <div className="text-xl font-bold text-center mb-2">
-                    BIÊN BẢN
-                  </div>
-                  <div className="text-base font-semibold text-center mb-4">
-                    Kiểm tra tình trạng kỹ thuật cơ sở vật chất hư hỏng hoặc cần
-                    cải tạo
-                  </div>
-                  <div className="text-base font-semibold text-center mb-6">
-                    để đề xuất giải pháp khắc phục
+                  <div className="mb-2">
+                    <span className="font-medium">2. Ông: </span>
+                    <span className="underline">Nguyễn Văn Ngã</span>
+                    <span className="ml-8 font-medium">đại diện: </span>
+                    <span className="underline">Phòng Quản trị</span>
                   </div>
                 </div>
-                <button
-                  onClick={handleCloseInspectionForm}
-                  className="ml-4 text-gray-400 hover:text-gray-600">
-                  <X className="w-6 h-6" />
-                </button>
+                <div className="col-span-2">
+                  <span className="font-medium">
+                    Cùng lập biên bản kiểm tra tình trạng kỹ thuật của cơ sở vật
+                    chất hư hỏng cần thay thế:{" "}
+                  </span>
+                </div>
               </div>
 
-              {/* Content */}
-              <div className="p-6 space-y-6">
-                {/* Thông tin chung */}
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Căn cứ đề nghị của: </span>
-                    <span className="underline">Khoa CNTT Nam Thăng</span>
-                    <span className="ml-4 font-medium">Năm: </span>
-                    <span className="underline">2025</span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Hôm nay, </span>
-                    <span className="font-medium">Ngày: </span>
-                    <span className="underline">___</span>
-                    <span className="font-medium ml-2">Tháng: </span>
-                    <span className="underline">___</span>
-                    <span className="font-medium ml-2">Năm: </span>
-                    <span className="underline">2025</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="font-medium">Tại vị trí: </span>
-                    <span className="underline">
-                      _________________________________
-                    </span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="font-medium">Chúng tôi gồm có: </span>
-                  </div>
-                  <div className="col-span-2 ml-4">
-                    <div className="mb-2">
-                      <span className="font-medium">1. Ông: </span>
-                      <span className="underline">Giang Thanh Trọn</span>
-                      <span className="ml-8 font-medium">đại diện: </span>
-                      <span className="underline">Khoa CNTT</span>
-                    </div>
-                    <div className="mb-2">
-                      <span className="font-medium">2. Ông: </span>
-                      <span className="underline">Nguyễn Văn Ngã</span>
-                      <span className="ml-8 font-medium">đại diện: </span>
-                      <span className="underline">Phòng Quản trị</span>
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="font-medium">
-                      Cùng lập biên bản kiểm tra tình trạng kỹ thuật của cơ sở
-                      vật chất hư hỏng cần thay thế:{" "}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Bảng linh kiện */}
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-400 text-sm">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="border border-gray-400 px-2 py-2 text-center font-medium">
-                          TT
-                        </th>
-                        <th className="border border-gray-400 px-2 py-2 text-center font-medium">
-                          Nội dung kiểm tra
-                        </th>
-                        <th className="border border-gray-400 px-2 py-2 text-center font-medium">
-                          Số lượng
-                        </th>
-                        <th className="border border-gray-400 px-2 py-2 text-center font-medium">
-                          Vi tri
-                        </th>
-                        <th className="border border-gray-400 px-2 py-2 text-center font-medium">
-                          Tình trạng
-                        </th>
-                        <th className="border border-gray-400 px-2 py-2 text-center font-medium">
-                          Giải pháp khắc phục
-                        </th>
+              {/* Bảng linh kiện */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-400 text-sm">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                        TT
+                      </th>
+                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                        Nội dung kiểm tra
+                      </th>
+                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                        Số lượng
+                      </th>
+                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                        Vị trí
+                      </th>
+                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                        Tình trạng
+                      </th>
+                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                        Giải pháp khắc phục
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {request.components.map((component, index) => (
+                      <tr key={component.id}>
+                        <td className="border border-gray-400 px-2 py-2 text-center">
+                          {index + 1}
+                        </td>
+                        <td className="border border-gray-400 px-2 py-2">
+                          <div className="font-medium">
+                            {component.componentName}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {component.assetName} ({component.assetCode})
+                          </div>
+                        </td>
+                        <td className="border border-gray-400 px-2 py-2 text-center">
+                          {component.quantity}
+                        </td>
+                        <td className="border border-gray-400 px-2 py-2">
+                          <div className="text-xs">
+                            {component.buildingName} - {component.roomName}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            Máy: {component.machineLabel}
+                          </div>
+                        </td>
+                        <td className="border border-gray-400 px-2 py-2">
+                          Hỏng
+                        </td>
+                        <td className="border border-gray-400 px-2 py-2">
+                          <div className="text-xs">- Đề nghị thay thế:</div>
+                          <div className="text-xs font-medium">
+                            1. {component.newItemName}
+                          </div>
+                          <div className="text-xs">
+                            2. {component.newItemSpecs}
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {request.components.map((component, index) => (
-                        <tr key={component.id}>
-                          <td className="border border-gray-400 px-2 py-2 text-center">
-                            {index + 1}
-                          </td>
-                          <td className="border border-gray-400 px-2 py-2">
-                            <div className="font-medium">
-                              {component.componentName}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {component.assetName} ({component.assetCode})
-                            </div>
-                          </td>
-                          <td className="border border-gray-400 px-2 py-2 text-center">
-                            {component.quantity}
-                          </td>
-                          <td className="border border-gray-400 px-2 py-2">
-                            <div className="text-xs">
-                              {component.buildingName} - {component.roomName}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              Máy: {component.machineLabel}
-                            </div>
-                          </td>
-                          <td className="border border-gray-400 px-2 py-2">
-                            Hỏng
-                          </td>
-                          <td className="border border-gray-400 px-2 py-2">
-                            <div className="text-xs">- Đề nghị thay thế:</div>
-                            <div className="text-xs font-medium">
-                              1. {component.newItemName}
-                            </div>
-                            <div className="text-xs">
-                              2. {component.newItemSpecs}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Kết luận */}
-                <div className="space-y-4">
-                  <div className="text-sm">
-                    <span className="font-medium">
-                      Đại diện các đơn vị tham gia công tác kiểm tra tình trạng
-                      kỹ thuật của cơ sở vật chất hư hỏng cùng đồng ý với nội
-                      dung trên;{" "}
-                    </span>
-                    <span className="font-medium">Đồng ý với kỹ sư. </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-8 mt-8">
-                    <div className="text-center">
-                      <div className="font-medium mb-16">Khoa CNTT</div>
-                      <div className="font-medium mb-4">Nhân viên Kỹ thuật</div>
-                      <div className="text-center">
-                        <div className="font-medium">Giang Thanh Trọn</div>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium mb-16">Phòng Quản trị</div>
-                      <div className="font-medium mb-4">Người thực hiện</div>
-                      <div className="text-center">
-                        <div className="font-medium">Nguyễn Ngã</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-center mt-8">
-                    <div className="font-medium mb-4">
-                      Ý kiến của Lãnh đạo Phòng Quản trị:
-                    </div>
-                    <div className="h-16 border-b border-gray-300 mb-4"></div>
-                  </div>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
-              {/* Footer */}
-              <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
-                <button
-                  onClick={handleCloseInspectionForm}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                  Hủy
-                </button>
-                <button
-                  onClick={handleSubmitInspectionReport}
-                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                  Gửi biên bản
-                </button>
+              {/* Kết luận */}
+              <div className="space-y-4">
+                <div className="text-sm">
+                  <span className="font-medium">
+                    Đại diện các đơn vị tham gia công tác kiểm tra tình trạng kỹ
+                    thuật của cơ sở vật chất hư hỏng cùng đồng ý với nội dung
+                    trên;{" "}
+                  </span>
+                  <span className="font-medium">Đồng ý với kỹ sư. </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-8 mt-8">
+                  <div className="text-center">
+                    <div className="font-medium mb-16">Khoa CNTT</div>
+                    <div className="font-medium mb-4">Nhân viên Kỹ thuật</div>
+                    <div className="text-center">
+                      <div className="font-medium">Giang Thanh Trọn</div>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-medium mb-16">Phòng Quản trị</div>
+                    <div className="font-medium mb-4">Người thực hiện</div>
+                    <div className="text-center">
+                      <div className="font-medium">Nguyễn Ngã</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center mt-8">
+                  <div className="font-medium mb-4">
+                    Ý kiến của Lãnh đạo Phòng Quản trị:
+                  </div>
+                  <div className="h-16 border-b border-gray-300 mb-4"></div>
+                </div>
               </div>
             </div>
           </div>
-        )}
+        </Modal>
       </div>
     </div>
   );

@@ -13,11 +13,11 @@ import {
   Breadcrumb,
 } from "antd";
 import {
-  ArrowLeft,
   CheckCircle,
   FileText,
   Download,
   PlaneLanding,
+  Eye,
 } from "lucide-react";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types/repair";
@@ -183,8 +183,21 @@ export default function ChiTietDeXuatThayThePage() {
       <Breadcrumb
         items={[
           {
-            title: "Phòng Quản trị",
-          },
+                href: "/",
+                title: (
+                  <div className="flex items-center">
+                    <span>Trang chủ</span>
+                  </div>
+                ),
+              },
+              {
+                href: "/phong-quan-tri",
+                title: (
+                  <div className="flex items-center">
+                    <span>Phòng quản trị</span>
+                  </div>
+                ),
+              },
           {
             title: "Gửi đề xuất thay thế",
             href: "/phong-quan-tri/gui-de-xuat-thay-the",
@@ -198,11 +211,6 @@ export default function ChiTietDeXuatThayThePage() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
-          <Button
-            icon={<ArrowLeft className="h-4 w-4" />}
-            onClick={() => router.back()}>
-            Quay lại
-          </Button>
           <div>
             <Title level={2} className="m-0">
               {proposal.proposalCode}
@@ -340,13 +348,24 @@ export default function ChiTietDeXuatThayThePage() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    type="link"
-                    icon={<Download className="h-4 w-4" />}
-                    href={proposal.submissionFormUrl}
-                    target="_blank">
-                    Tải xuống
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="link"
+                      icon={<Eye className="h-4 w-4" />}
+                      href={proposal.submissionFormUrl}
+                      target="_blank"
+                      className="text-blue-600 hover:text-blue-800">
+                      
+                    </Button>
+                    <Button
+                      type="link"
+                      icon={<Download className="h-4 w-4" />}
+                      href={proposal.submissionFormUrl}
+                      target="_blank"
+                      download>
+                      
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -363,13 +382,24 @@ export default function ChiTietDeXuatThayThePage() {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    type="link"
-                    icon={<Download className="h-4 w-4" />}
-                    href={proposal.verificationReportUrl}
-                    target="_blank">
-                    Tải xuống
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="link"
+                      icon={<Eye className="h-4 w-4" />}
+                      href={proposal.verificationReportUrl}
+                      target="_blank"
+                      className="text-blue-600 hover:text-blue-800">
+                      
+                    </Button>
+                    <Button
+                      type="link"
+                      icon={<Download className="h-4 w-4" />}
+                      href={proposal.verificationReportUrl}
+                      target="_blank"
+                      download>
+                     
+                    </Button>
+                  </div>
                 </div>
               )}
 

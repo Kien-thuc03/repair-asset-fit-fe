@@ -4,7 +4,6 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   FileText,
   Calendar,
   Building,
@@ -18,10 +17,8 @@ import {
   HardDrive,
   Cpu,
   MemoryStick,
-  Check,
   X,
   Eye,
-  Home,
 } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
@@ -47,9 +44,9 @@ export default function XuLyToTrinhDetailPage() {
   );
   const [showCreateReportModal, setShowCreateReportModal] = useState(false);
 
-  // State cho việc theo dõi trạng thái từng component (chỉ cần rejected)
+  // State cho việc theo dõi trạng thái từng component
   const [componentStatus, setComponentStatus] = useState<
-    Record<string, "pending" | "rejected">
+    Record<string, "pending" | "approved" | "rejected">
   >({});
   const [showComponentActionModal, setShowComponentActionModal] =
     useState(false);
@@ -57,7 +54,7 @@ export default function XuLyToTrinhDetailPage() {
     null
   );
   const [componentActionType, setComponentActionType] = useState<
-    "reject" | null
+    "approve" | "reject" | null
   >(null);
 
   // Tìm proposal theo ID
@@ -65,10 +62,13 @@ export default function XuLyToTrinhDetailPage() {
     return mockReplacementRequestItem.find((item) => item.id === id);
   }, [id]);
 
-  // Xử lý check/uncheck component (không cho check nếu đã từ chối)
+  // Xử lý check/uncheck component (không cho check nếu đã từ chối hoặc duyệt)
   const handleComponentCheck = (componentId: string, checked: boolean) => {
-    // Không cho check nếu component đã bị từ chối
-    if (componentStatus[componentId] === "rejected") {
+    // Không cho check nếu component đã bị từ chối hoặc đã được duyệt
+    if (
+      componentStatus[componentId] === "rejected" ||
+      componentStatus[componentId] === "approved"
+    ) {
       return;
     }
 
@@ -81,12 +81,16 @@ export default function XuLyToTrinhDetailPage() {
     setCheckedComponents(newCheckedComponents);
   };
 
-  // Xử lý check/uncheck tất cả (chỉ check những component chưa bị từ chối)
+  // Xử lý check/uncheck tất cả (chỉ check những component chưa bị từ chối hoặc duyệt)
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       const availableComponentIds =
         proposal?.components
-          .filter((comp) => componentStatus[comp.id] !== "rejected")
+          .filter(
+            (comp) =>
+              componentStatus[comp.id] !== "rejected" &&
+              componentStatus[comp.id] !== "approved"
+          )
           .map((comp) => comp.id) || [];
       setCheckedComponents(new Set(availableComponentIds));
     } else {
@@ -128,29 +132,36 @@ export default function XuLyToTrinhDetailPage() {
     }
   };
 
-  // Xử lý thao tác riêng cho từng component (chỉ từ chối)
-  const handleComponentAction = (componentId: string, action: "reject") => {
+  // Xử lý thao tác riêng cho từng component (duyệt hoặc từ chối)
+  const handleComponentAction = (
+    componentId: string,
+    action: "approve" | "reject"
+  ) => {
     setSelectedComponent(componentId);
     setComponentActionType(action);
     setShowComponentActionModal(true);
   };
 
-  // Xác nhận thao tác cho component (chỉ từ chối)
+  // Xác nhận thao tác cho component (duyệt hoặc từ chối)
   const handleConfirmComponentAction = () => {
-    if (selectedComponent && componentActionType === "reject") {
+    if (selectedComponent && componentActionType) {
       setComponentStatus((prev) => ({
         ...prev,
-        [selectedComponent]: "rejected",
+        [selectedComponent]:
+          componentActionType === "approve" ? "approved" : "rejected",
       }));
 
-      // Nếu component đã từ chối, bỏ khỏi danh sách checked
+      // Nếu component đã được xử lý, bỏ khỏi danh sách checked
       setCheckedComponents((prev) => {
         const newSet = new Set(prev);
         newSet.delete(selectedComponent);
         return newSet;
       });
 
-      console.log("Từ chối linh kiện:", selectedComponent);
+      console.log(
+        `${componentActionType === "approve" ? "Duyệt" : "Từ chối"} linh kiện:`,
+        selectedComponent
+      );
       // TODO: Implement API call
     }
 
@@ -163,6 +174,8 @@ export default function XuLyToTrinhDetailPage() {
   const getComponentStatusColor = (componentId: string) => {
     const status = componentStatus[componentId] || "pending";
     switch (status) {
+      case "approved":
+        return "bg-green-100 text-green-800 border-green-200";
       case "rejected":
         return "bg-red-100 text-red-800 border-red-200";
       default:
@@ -221,19 +234,6 @@ export default function XuLyToTrinhDetailPage() {
     }
   };
 
-  const getStatusIcon = (status: ReplacementStatus) => {
-    switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return <FileText className="w-4 h-4" />;
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return <CheckCircle className="w-4 h-4" />;
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
-
   const getStatusText = (status: ReplacementStatus) => {
     switch (status) {
       case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
@@ -248,15 +248,6 @@ export default function XuLyToTrinhDetailPage() {
   };
 
   const canProcess = proposal.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH;
-
-  const handleAction = (action: "approve" | "reject") => {
-    if (action === "approve") {
-      setShowSignConfirmModal(true);
-    } else {
-      setActionType(action);
-      setShowConfirmModal(true);
-    }
-  };
 
   const handleConfirmAction = async () => {
     setIsProcessing(true);
@@ -350,38 +341,6 @@ export default function XuLyToTrinhDetailPage() {
         />
       </div>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link
-            href="/phong-quan-tri/xu-ly-to-trinh"
-            className="inline-flex items-center text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Quay lại danh sách
-          </Link>
-        </div>
-        <div className="flex items-center space-x-3">
-          {canProcess && (
-            <>
-              <button
-                onClick={() => handleAction("reject")}
-                disabled={isProcessing}
-                className="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50">
-                <X className="w-4 h-4 mr-2" />
-                Từ chối
-              </button>
-              <button
-                onClick={() => setShowSignConfirmModal(true)}
-                disabled={isProcessing}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50">
-                <Check className="w-4 h-4 mr-2" />
-                Duyệt tờ trình
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
       {/* Proposal Info Card */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
@@ -398,7 +357,6 @@ export default function XuLyToTrinhDetailPage() {
               className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
                 proposal.status
               )}`}>
-              <span className="mr-2">{getStatusIcon(proposal.status)}</span>
               {getStatusText(proposal.status)}
             </span>
           </div>
@@ -596,7 +554,9 @@ export default function XuLyToTrinhDetailPage() {
                         checked={(() => {
                           const availableComponents =
                             proposal.components.filter(
-                              (comp) => componentStatus[comp.id] !== "rejected"
+                              (comp) =>
+                                componentStatus[comp.id] !== "rejected" &&
+                                componentStatus[comp.id] !== "approved"
                             );
                           return (
                             checkedComponents.size ===
@@ -641,7 +601,8 @@ export default function XuLyToTrinhDetailPage() {
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           checked={checkedComponents.has(component.id)}
                           disabled={
-                            componentStatus[component.id] === "rejected"
+                            componentStatus[component.id] === "rejected" ||
+                            componentStatus[component.id] === "approved"
                           }
                           onChange={(e) =>
                             handleComponentCheck(component.id, e.target.checked)
@@ -705,7 +666,15 @@ export default function XuLyToTrinhDetailPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <div className="flex items-center justify-center space-x-1">
-                          {componentStatus[component.id] === "rejected" ? (
+                          {componentStatus[component.id] === "approved" ? (
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getComponentStatusColor(
+                                component.id
+                              )}`}>
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Đã duyệt
+                            </span>
+                          ) : componentStatus[component.id] === "rejected" ? (
                             <span
                               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getComponentStatusColor(
                                 component.id
@@ -714,17 +683,24 @@ export default function XuLyToTrinhDetailPage() {
                               Đã từ chối
                             </span>
                           ) : (
-                            <button
-                              onClick={() =>
-                                handleComponentAction(component.id, "reject")
-                              }
-                              className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-500"
-                              title="Từ chối linh kiện này">
-                              <X className="w-3 h-3" />
-                              <span className="ml-1 hidden sm:inline">
-                                Từ chối
-                              </span>
-                            </button>
+                            <div className="flex items-center space-x-1">
+                              <button
+                                onClick={() =>
+                                  handleComponentAction(component.id, "approve")
+                                }
+                                className="inline-flex items-center px-2 py-1 border border-green-300 text-xs font-medium rounded text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                title="Duyệt linh kiện này">
+                                <CheckCircle className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleComponentAction(component.id, "reject")
+                                }
+                                className="inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500"
+                                title="Từ chối linh kiện này">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
                           )}
                         </div>
                       </td>
@@ -740,7 +716,7 @@ export default function XuLyToTrinhDetailPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Tài liệu đính kèm
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
               {proposal.submissionFormUrl && (
                 <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
                   <div className="flex items-center space-x-3">
@@ -761,35 +737,6 @@ export default function XuLyToTrinhDetailPage() {
                     </a>
                     <a
                       href={proposal.submissionFormUrl}
-                      download
-                      className="text-gray-600 hover:text-gray-900"
-                      title="Tải xuống">
-                      <Download className="w-4 h-4" />
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {proposal.verificationReportUrl && (
-                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
-                  <div className="flex items-center space-x-3">
-                    <FileText className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Báo cáo xác minh
-                      </p>
-                      <p className="text-xs text-gray-500">PDF Document</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <a
-                      href={proposal.verificationReportUrl}
-                      className="text-blue-600 hover:text-blue-900"
-                      title="Xem tài liệu">
-                      <Eye className="w-4 h-4" />
-                    </a>
-                    <a
-                      href={proposal.verificationReportUrl}
                       download
                       className="text-gray-600 hover:text-gray-900"
                       title="Tải xuống">
@@ -836,12 +783,22 @@ export default function XuLyToTrinhDetailPage() {
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div
-                className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100`}>
-                <X className="h-6 w-6 text-red-600" />
+                className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full ${
+                  componentActionType === "approve"
+                    ? "bg-green-100"
+                    : "bg-red-100"
+                }`}>
+                {componentActionType === "approve" ? (
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                ) : (
+                  <X className="h-6 w-6 text-red-600" />
+                )}
               </div>
               <div className="mt-2 px-4 py-3 text-center">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Từ chối linh kiện
+                  {componentActionType === "approve"
+                    ? "Duyệt linh kiện"
+                    : "Từ chối linh kiện"}
                 </h3>
                 <div className="mt-2 px-2 py-2">
                   {(() => {
@@ -851,7 +808,9 @@ export default function XuLyToTrinhDetailPage() {
                     return (
                       <div className="text-sm text-gray-500">
                         <p className="mb-2">
-                          Bạn có chắc chắn muốn từ chối linh kiện này?
+                          {componentActionType === "approve"
+                            ? "Bạn có chắc chắn muốn duyệt linh kiện này?"
+                            : "Bạn có chắc chắn muốn từ chối linh kiện này?"}
                         </p>
                         <div className="bg-gray-50 p-3 rounded-md text-left">
                           <p className="text-xs text-gray-600 mb-1">
@@ -878,8 +837,12 @@ export default function XuLyToTrinhDetailPage() {
                   </button>
                   <button
                     onClick={handleConfirmComponentAction}
-                    className="px-4 py-2 text-white text-base font-medium rounded-md shadow-sm bg-red-600 hover:bg-red-700">
-                    Từ chối
+                    className={`px-4 py-2 text-white text-base font-medium rounded-md shadow-sm ${
+                      componentActionType === "approve"
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-red-600 hover:bg-red-700"
+                    }`}>
+                    {componentActionType === "approve" ? "Duyệt" : "Từ chối"}
                   </button>
                 </div>
               </div>

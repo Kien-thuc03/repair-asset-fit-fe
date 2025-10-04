@@ -12,12 +12,7 @@ import {
   Alert,
   Table,
 } from "antd";
-import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-} from "lucide-react";
+import { Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { mockReplacementRequestItem, users } from "@/lib/mockData";
 import { ComponentFromRequest } from "@/types/repair";
 
@@ -49,8 +44,8 @@ export default function ChiTietDuyetDeXuatPage() {
   const teamLeadApproverName = useMemo(
     () =>
       request?.teamLeadApproverId
-        ? users.find((u) => u.id === request.teamLeadApproverId)
-            ?.fullName || "Không xác định"
+        ? users.find((u) => u.id === request.teamLeadApproverId)?.fullName ||
+          "Không xác định"
         : undefined,
     [request?.teamLeadApproverId]
   );
@@ -143,7 +138,9 @@ export default function ChiTietDuyetDeXuatPage() {
     },
   };
 
-  const currentStatus = statusConfig[request.status as ReplacementStatusType] || {
+  const currentStatus = statusConfig[
+    request.status as ReplacementStatusType
+  ] || {
     color: "default",
     text: request.status,
     icon: Clock,
@@ -353,26 +350,7 @@ export default function ChiTietDuyetDeXuatPage() {
         />
       )}
 
-      {/* Action Buttons */}
-      {canApproveOrReject && (
-        <Card className="shadow">
-          <div className="flex space-x-3">
-            <Button
-              type="primary"
-              icon={<CheckCircle className="h-4 w-4" />}
-              onClick={() => setShowApproveModal(true)}>
-              Phê duyệt
-            </Button>
-            <Button
-              danger
-              icon={<XCircle className="h-4 w-4" />}
-              onClick={() => setShowRejectModal(true)}>
-              Từ chối
-            </Button>
-          </div>
-        </Card>
-      )}
-
+      {/* Action Buttons */} 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Info */}
         <div className="lg:col-span-2 space-y-6">
@@ -394,17 +372,49 @@ export default function ChiTietDuyetDeXuatPage() {
               <Descriptions.Item label="Người đề xuất" span={1}>
                 <div className="font-medium">{proposerName}</div>
               </Descriptions.Item>
-              <Descriptions.Item label="Ngày tạo" span={1}>
-                <div>
-                  {new Date(request.createdAt).toLocaleDateString("vi-VN", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-              </Descriptions.Item>
+              {canApproveOrReject ? (
+                <Descriptions.Item label="Hành động">
+                  <div className="flex space-x-3">
+                    <Button
+                      type="primary"
+                      icon={<CheckCircle className="h-4 w-4" />}
+                      onClick={() => setShowApproveModal(true)}>
+                      Phê duyệt
+                    </Button>
+                    <Button
+                      danger
+                      icon={<XCircle className="h-4 w-4" />}
+                      onClick={() => setShowRejectModal(true)}>
+                      Từ chối
+                    </Button>
+                  </div>
+                </Descriptions.Item>
+              ) : (
+                <Descriptions.Item label="Ngày tạo" span={1}>
+                  <div>
+                    {new Date(request.createdAt).toLocaleDateString("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                </Descriptions.Item>
+              )}
+              {canApproveOrReject && (
+                <Descriptions.Item label="Ngày tạo" span={2}>
+                  <div>
+                    {new Date(request.createdAt).toLocaleDateString("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                </Descriptions.Item>
+              )}
               <Descriptions.Item label="Số lượng linh kiện" span={2}>
                 <span className="font-medium text-blue-600">
                   {replacementItems.length} linh kiện
@@ -425,7 +435,6 @@ export default function ChiTietDuyetDeXuatPage() {
               size="middle"
             />
           </Card>
-
         </div>
 
         {/* Timeline */}

@@ -13,8 +13,7 @@ interface TechniciansGridProps {
 const TechniciansGrid: React.FC<TechniciansGridProps> = ({
   technicians,
   rooms,
-  selectedItems,
-  onSelectItem,
+
 }) => {
   const getStatusBadge = (status: string) => {
     switch (status) {

@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Modal } from "antd";
+import { CheckCircle, XCircle } from "lucide-react";
 import { RepairRequest } from "@/types";
-import { mockRepairRequests } from "@/lib/mockData";
-import { SuccessModal, ErrorModal } from "@/components/modal";
+import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
 import Pagination from "@/components/common/Pagination";
 import ProgressHeader from "./ProgressHeader";
 import ProgressFilters from "./ProgressFilters";
-import ExportSection from "./ExportSection";
 import RequestTable from "./RequestTable";
 import RequestCards from "./RequestCards";
 import NoRequestsFound from "./NoRequestsFound";
@@ -29,6 +29,7 @@ export default function ProgressTrackingContainer() {
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
 
   // Sorting state
   const [sortField, setSortField] = useState<keyof RepairRequest | null>(null);
@@ -159,7 +160,7 @@ export default function ProgressTrackingContainer() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN");
+    return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
   // Handle checkbox selection
@@ -187,11 +188,11 @@ export default function ProgressTrackingContainer() {
 
   // Handle view details
   const handleViewDetails = (id: string) => {
-    router.push(`/giang-vien/theo-doi-tien-do/chi-tiet/${id}`);
+    router.push(`/giang-vien/danh-sach-yeu-cau-sua-chua/chi-tiet/${id}`);
   };
 
   // Xử lý xuất Excel
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const itemsToExport =
       selectedItems.length > 0
         ? filteredRequests.filter((req) => selectedItems.includes(req.id))
@@ -202,9 +203,60 @@ export default function ProgressTrackingContainer() {
       return;
     }
 
-    // TODO: Implement actual Excel export logic
-    setExportCount(itemsToExport.length);
-    setShowExportSuccessModal(true);
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import("xlsx");
+
+      // Tạo dữ liệu Excel
+      const excelData = itemsToExport.map((item, index) => ({
+        STT: index + 1,
+        "Mã yêu cầu": item.requestCode,
+        "Tên tài sản": item.assetName || "Chưa xác định",
+        "Mã tài sản": item.assetCode || "Chưa xác định",
+        "Vị trí": `${item.buildingName || "Chưa xác định"} - ${
+          item.roomName || "Chưa xác định"
+        }`,
+        Máy: `Máy ${item.machineLabel || "Chưa xác định"}`,
+        "Người báo": item.reporterName || "Chưa xác định",
+        "KTV phụ trách": item.assignedTechnicianName || "Chưa phân công",
+        "Loại lỗi": item.errorTypeName || "Chưa xác định",
+        "Mô tả lỗi": item.description || "",
+        "Trạng thái":
+          repairRequestStatusConfig[item.status]?.label || item.status,
+        "Ngày báo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+        "Ngày tiếp nhận": item.acceptedAt
+          ? new Date(item.acceptedAt).toLocaleDateString("vi-VN")
+          : "Chưa tiếp nhận",
+        "Ngày hoàn thành": item.completedAt
+          ? new Date(item.completedAt).toLocaleDateString("vi-VN")
+          : "Chưa hoàn thành",
+        "Ghi chú xử lý": item.resolutionNotes || "",
+      }));
+
+      // Tạo workbook và worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách yêu cầu sửa chữa");
+
+      // Xuất file
+      const fileName = `danh-sach-yeu-cau-sua-chua-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      setExportCount(itemsToExport.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất
+      setSelectedItems([]);
+      setSelectAll(false);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setShowExportErrorModal(true);
+    }
   };
 
   // Update selectAll when paginatedRequests changes
@@ -225,19 +277,14 @@ export default function ProgressTrackingContainer() {
 
       <ProgressFilters
         searchTerm={searchTerm}
-        statusFilter={statusFilter}
+        totalCount={filteredRequests.length}
+        selectedCount={selectedItems.length}
         onSearchChange={setSearchTerm}
-        onStatusFilterChange={setStatusFilter}
+        onExport={handleExportExcel}
       />
 
       {/* Requests List */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
-        <ExportSection
-          totalCount={filteredRequests.length}
-          selectedCount={selectedItems.length}
-          onExport={handleExportExcel}
-        />
-
         <RequestTable
           requests={paginatedRequests}
           selectedItems={selectedItems}
@@ -282,21 +329,58 @@ export default function ProgressTrackingContainer() {
       <div className="min-h-[200px]"></div>
 
       {/* Export Success Modal */}
-      <SuccessModal
-        isOpen={showExportSuccessModal}
-        onClose={() => setShowExportSuccessModal(false)}
-        title="Xuất Excel thành công!"
-        message={`Đã xuất ${exportCount} yêu cầu ra file Excel thành công.`}
-      />
+      <Modal
+        open={showExportSuccessModal}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportSuccessModal(false)}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Xuất Excel thành công!
+            </h3>
+            <p className="text-sm text-gray-500">
+              Đã xuất {exportCount} yêu cầu ra file {exportFileName} thành công.
+            </p>
+          </div>
+        </div>
+      </Modal>
 
       {/* Export Error Modal */}
-      <ErrorModal
-        isOpen={showExportErrorModal}
-        onClose={() => setShowExportErrorModal(false)}
-        title="Không thể xuất Excel"
-        message="Không có dữ liệu để xuất. Vui lòng chọn ít nhất một yêu cầu."
-        showRetry={false}
-      />
+      <Modal
+        open={showExportErrorModal}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportErrorModal(false)}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <XCircle className="h-8 w-8 text-red-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Không thể xuất Excel
+            </h3>
+            <p className="text-sm text-gray-500">
+              Không có dữ liệu để xuất hoặc có lỗi xảy ra. Vui lòng thử lại.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -13,7 +13,8 @@ import {
   X,
 } from "lucide-react";
 
-import { Breadcrumb } from "antd";
+import { Breadcrumb, Modal, Row, Col, Input, Button } from "antd";
+import { CheckCircle, XCircle } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
 import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
@@ -27,7 +28,7 @@ export default function LapToTrinhPage() {
       (request) => request.status === ReplacementStatus.ĐÃ_DUYỆT
     );
   });
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
@@ -38,14 +39,14 @@ export default function LapToTrinhPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Selection states
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  // Selection states - Thay đổi để phù hợp với logic mới
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
-  // Export states
-  const [exportCount, setExportCount] = useState(0);
+  // Export modals state
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -225,46 +226,94 @@ export default function LapToTrinhPage() {
     return sortedRequests.slice(startIndex, endIndex);
   };
 
-  // Selection handlers
+  // Selection handlers - Cập nhật để phù hợp với selectedRowKeys
   const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    setSelectedItems(
-      checked ? sortedRequests.map((request) => request.id) : []
-    );
+    if (checked) {
+      setSelectedRowKeys(sortedRequests.map((request) => request.id));
+    } else {
+      setSelectedRowKeys([]);
+    }
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
-      setSelectedItems((prev) => [...prev, itemId]);
+      setSelectedRowKeys((prev) => [...prev, itemId]);
     } else {
-      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
-      setSelectAll(false);
+      setSelectedRowKeys((prev) => prev.filter((id) => id !== itemId));
     }
   };
 
-  // Export handler
-  const handleExportExcel = () => {
-    const itemsToExport =
-      selectedItems.length > 0
-        ? sortedRequests.filter((request) => selectedItems.includes(request.id))
-        : sortedRequests;
+  // Hàm xuất Excel với modal thông báo Ant Design
+  const handleExportExcel = async () => {
+    const selectedData = sortedRequests.filter((item) =>
+      selectedRowKeys.includes(item.id)
+    );
 
-    if (itemsToExport.length === 0) {
+    if (selectedData.length === 0) {
       setShowExportErrorModal(true);
       return;
     }
 
-    console.log("Xuất Excel:", itemsToExport);
-    // TODO: Implement actual Excel export logic
-    setExportCount(itemsToExport.length);
-    setShowExportSuccessModal(true);
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import("xlsx");
+
+      // Tạo dữ liệu Excel
+      const excelData = selectedData.map((item, index) => ({
+        STT: index + 1,
+        "Mã đề xuất": item.proposalCode,
+        "Tiêu đề": item.title || "Chưa xác định",
+        "Mô tả": item.description || "",
+        "Người tạo": item.createdBy || "Chưa xác định",
+        "Số linh kiện": item.components?.length || 0,
+        "Trạng thái": getStatusText(item.status),
+        "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+        "Ngày cập nhật": new Date(item.updatedAt).toLocaleDateString("vi-VN"),
+      }));
+
+      // Tạo workbook và worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Đặt độ rộng cột tự động
+      const colWidths = [
+        { wch: 5 }, // STT
+        { wch: 20 }, // Mã đề xuất
+        { wch: 30 }, // Tiêu đề
+        { wch: 40 }, // Mô tả
+        { wch: 20 }, // Người tạo
+        { wch: 15 }, // Số linh kiện
+        { wch: 15 }, // Trạng thái
+        { wch: 15 }, // Ngày tạo
+        { wch: 15 }, // Ngày cập nhật
+      ];
+      ws["!cols"] = colWidths;
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách đề xuất lập tờ trình");
+
+      // Xuất file
+      const fileName = `danh-sach-de-xuat-lap-to-trinh-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      setExportCount(selectedData.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setShowExportErrorModal(true);
+    }
   };
 
   // Reset pagination when changing filters or search
   useEffect(() => {
     setCurrentPage(1);
-    setSelectedItems([]);
-    setSelectAll(false);
+    setSelectedRowKeys([]);
   }, [selectedStatus, searchTerm]);
 
   return (
@@ -292,86 +341,68 @@ export default function LapToTrinhPage() {
       </div>
       {/* Header */}
       <div className="mb-4 sm:mb-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              Lập tờ trình
-            </h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Lập tờ trình cho các đề xuất thay thế linh kiện đã được tổ trưởng
-              duyệt
-            </p>
-          </div>
-          {/* Export Excel Button */}
-          <button
-            onClick={handleExportExcel}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <Download className="h-4 w-4 mr-2" />
-            <span>
-              {selectedItems.length > 0
-                ? `Xuất Excel (${selectedItems.length} mục)`
-                : `Xuất Excel (${sortedRequests.length} mục)`}
-            </span>
-          </button>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Lập tờ trình
+          </h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            Lập tờ trình cho các đề xuất thay thế linh kiện đã được tổ trưởng
+            duyệt
+          </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-3 sm:p-6 rounded-lg shadow mb-4 sm:mb-6">
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2 items-end">
-          <div className="flex flex-col h-full">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
-              Tìm kiếm
-            </label>
-            <div className="relative flex-1 min-w-0 h-9 sm:h-10">
-              <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400 pointer-events-none flex-shrink-0 z-10" />
-              <input
-                type="text"
-                className="absolute inset-0 w-full h-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                placeholder="Tên linh kiện, mã đề xuất..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow mb-4 sm:mb-6">
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={24} md={18} lg={18}>
+            <Input
+              prefix={<Search className="h-4 w-4 text-gray-400" />}
+              placeholder="Tìm theo tiêu đề, mã đề xuất, người tạo, linh kiện..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
+            />
+          </Col>
+          <Col xs={24} sm={24} md={6} lg={6}>
+            <Button
+              type="primary"
+              icon={<Download className="h-4 w-4" />}
+              onClick={handleExportExcel}
+              disabled={selectedRowKeys.length === 0}
+              className={`w-full ${
+                selectedRowKeys.length > 0
+                  ? "bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700"
+                  : ""
+              }`}
+              style={{
+                backgroundColor:
+                  selectedRowKeys.length > 0 ? "#16a34a" : undefined,
+                borderColor: selectedRowKeys.length > 0 ? "#16a34a" : undefined,
+              }}>
+              <span className="hidden sm:inline">
+                Xuất Excel{" "}
+                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+              </span>
+              <span className="sm:hidden">Xuất</span>
+            </Button>
+          </Col>
+        </Row>
 
-          <div className="flex flex-col h-full">
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 flex-shrink-0 h-5 sm:h-6">
-              Trạng thái
-            </label>
-            <div className="flex-1 h-9 sm:h-10">
-              <select
-                className="w-full h-full px-2 sm:px-3 py-2 border border-gray-300 rounded-md text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}>
-                <option value="all">Tất cả</option>
-                <option value={ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT}>
-                  Chờ duyệt
-                </option>
-                <option value={ReplacementStatus.CHỜ_XÁC_MINH}>
-                  Chờ xác minh
-                </option>
-                <option value={ReplacementStatus.ĐÃ_XÁC_MINH}>
-                  Đã xác minh
-                </option>
-                <option value={ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH}>
-                  Đã lập tờ trình
-                </option>
-                <option value={ReplacementStatus.ĐÃ_DUYỆT}>Đã duyệt</option>
-                <option value={ReplacementStatus.ĐÃ_TỪ_CHỐI}>Từ chối</option>
-                <option value={ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH}>
-                  Đã duyệt tờ trình
-                </option>
-                <option value={ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH}>
-                  Từ chối tờ trình
-                </option>
-                <option value={ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM}>
-                  Đã mua sắm
-                </option>
-              </select>
-            </div>
+        {/* Search Info */}
+        {searchTerm && (
+          <div className="mt-3 text-sm text-gray-600">
+            <span>Đang tìm kiếm: </span>
+            <span className="font-medium text-blue-600">
+              &quot;{searchTerm}&quot;
+            </span>
+            <button
+              onClick={() => setSearchTerm("")}
+              className="ml-2 text-gray-400 hover:text-gray-600">
+              <X className="h-4 w-4 inline" />
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Lists Table */}
@@ -398,11 +429,11 @@ export default function LapToTrinhPage() {
                           onClick={() =>
                             handleSelectItem(
                               request.id,
-                              !selectedItems.includes(request.id)
+                              !selectedRowKeys.includes(request.id)
                             )
                           }
                           className="text-gray-400 hover:text-gray-600">
-                          {selectedItems.includes(request.id) ? (
+                          {selectedRowKeys.includes(request.id) ? (
                             <CheckSquare className="h-4 w-4 text-blue-600" />
                           ) : (
                             <Square className="h-4 w-4" />
@@ -497,9 +528,11 @@ export default function LapToTrinhPage() {
                   <tr>
                     <th className="w-[5%] px-3 py-3 text-left">
                       <button
-                        onClick={() => handleSelectAll(!selectAll)}
+                        onClick={() =>
+                          handleSelectAll(selectedRowKeys.length === 0)
+                        }
                         className="text-gray-400 hover:text-gray-600">
-                        {selectAll ? (
+                        {selectedRowKeys.length > 0 ? (
                           <CheckSquare className="h-4 w-4" />
                         ) : (
                           <Square className="h-4 w-4" />
@@ -560,11 +593,11 @@ export default function LapToTrinhPage() {
                             onClick={() =>
                               handleSelectItem(
                                 request.id,
-                                !selectedItems.includes(request.id)
+                                !selectedRowKeys.includes(request.id)
                               )
                             }
                             className="text-gray-400 hover:text-gray-600">
-                            {selectedItems.includes(request.id) ? (
+                            {selectedRowKeys.includes(request.id) ? (
                               <CheckSquare className="h-4 w-4 text-blue-600" />
                             ) : (
                               <Square className="h-4 w-4" />
@@ -573,7 +606,7 @@ export default function LapToTrinhPage() {
                         </td>
                         <td className="px-2 py-4 whitespace-nowrap w-[13%]">
                           <div
-                            className="text-sm text-gray-900 truncate font-mono"
+                            className="text-sm text-blue-600 truncate font-medium"
                             title={request.proposalCode}>
                             {request.proposalCode}
                           </div>
@@ -614,9 +647,13 @@ export default function LapToTrinhPage() {
                         <td className="hidden lg:table-cell px-2 py-4 whitespace-nowrap text-center w-[10%]">
                           <div className="text-xs text-gray-900">
                             {new Date(request.createdAt).toLocaleDateString(
-                            "vi-VN",
-                            { day: "2-digit", month: "2-digit", year: "numeric" }
-                          )}
+                              "vi-VN",
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              }
+                            )}
                           </div>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap w-[18%]">
@@ -676,60 +713,59 @@ export default function LapToTrinhPage() {
       </div>
 
       {/* Export Success Modal */}
-      {showExportSuccessModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3 text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-                <Download className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mt-4">
-                Xuất Excel thành công!
-              </h3>
-              <div className="mt-2 px-7 py-3">
-                <p className="text-sm text-gray-500">
-                  Đã xuất {exportCount} tờ trình thành công.
-                </p>
-              </div>
-              <div className="items-center px-4 py-3">
-                <button
-                  onClick={() => setShowExportSuccessModal(false)}
-                  className="px-4 py-2 bg-green-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
-                  Đóng
-                </button>
-              </div>
-            </div>
+      <Modal
+        open={showExportSuccessModal}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportSuccessModal(false)}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Xuất Excel thành công!
+            </h3>
+            <p className="text-sm text-gray-500">
+              Đã xuất {exportCount} đề xuất ra file {exportFileName} thành công.
+            </p>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* Export Error Modal */}
-      {showExportErrorModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3 text-center">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <X className="h-6 w-6 text-red-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mt-4">
-                Không thể xuất Excel
-              </h3>
-              <div className="mt-2 px-7 py-3">
-                <p className="text-sm text-gray-500">
-                  Không có dữ liệu để xuất. Vui lòng kiểm tra lại.
-                </p>
-              </div>
-              <div className="items-center px-4 py-3">
-                <button
-                  onClick={() => setShowExportErrorModal(false)}
-                  className="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
-                  Đóng
-                </button>
-              </div>
-            </div>
+      <Modal
+        open={showExportErrorModal}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportErrorModal(false)}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <XCircle className="h-8 w-8 text-red-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Không thể xuất Excel
+            </h3>
+            <p className="text-sm text-gray-500">
+              Vui lòng chọn ít nhất một đề xuất để xuất Excel hoặc có lỗi xảy
+              ra. Vui lòng thử lại.
+            </p>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

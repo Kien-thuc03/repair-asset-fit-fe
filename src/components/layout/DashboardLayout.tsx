@@ -56,12 +56,17 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: TriangleAlert,
       },
       {
+        name: "Đề xuất phần mềm",
+        href: "/giang-vien/de-xuat-phan-mem",
+        icon: FolderCode,
+      },
+      {
         name: "Quản lý tiến độ",
         icon: TimerReset,
         children: [
           {
-            name: "Theo dõi tiến độ",
-            href: "/giang-vien/theo-doi-tien-do",
+            name: "Danh sách yêu cầu sửa chữa",
+            href: "/giang-vien/danh-sach-yeu-cau-sua-chua",
             icon: Clock,
           },
           {
@@ -70,12 +75,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
             icon: FileText,
           },
         ],
-      },
-      {
-        name: "Đề xuất phần mềm",
-        href: "/giang-vien/de-xuat-phan-mem",
-        icon: FolderCode,
-      },
+      }, 
     ],
     [UserRole.KY_THUAT_VIEN]: [
       {

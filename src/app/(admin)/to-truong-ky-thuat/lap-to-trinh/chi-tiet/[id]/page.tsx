@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Breadcrumb } from "antd";
 import {
-  ArrowLeft,
   User,
   Calendar,
   MapPin,
@@ -19,7 +18,6 @@ import { ReplacementStatus } from "@/types/repair";
 
 export default function ChiTietLapToTrinhPage() {
   const params = useParams();
-  const router = useRouter();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
   const request = useMemo(() => {
@@ -70,11 +68,6 @@ export default function ChiTietLapToTrinhPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Không tìm thấy đề xuất
           </h2>
-          <button
-            onClick={() => router.back()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-            Quay lại
-          </button>
         </div>
       </div>
     );
@@ -116,12 +109,6 @@ export default function ChiTietLapToTrinhPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="h-5 w-5" />
-            <span>Quay lại</span>
-          </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               Chi tiết đề xuất {request.proposalCode}
@@ -130,25 +117,6 @@ export default function ChiTietLapToTrinhPage() {
           </div>
         </div>
 
-        {/* Summary Stats */}
-        <div className="hidden md:flex items-center space-x-6 text-sm">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {request.components?.length || 0}
-            </div>
-            <div className="text-gray-500">Linh kiện</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {new Set(
-                request.components?.map(
-                  (c) => `${c.buildingName}-${c.roomName}`
-                )
-              ).size || 0}
-            </div>
-            <div className="text-gray-500">Phòng</div>
-          </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

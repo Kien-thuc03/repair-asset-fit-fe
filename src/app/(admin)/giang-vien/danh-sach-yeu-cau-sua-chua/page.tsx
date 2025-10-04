@@ -3,7 +3,7 @@
 import { Breadcrumb } from "antd";
 import ProgressTrackingContainer from "@/components/lecturer/progress/ProgressTrackingContainer";
 
-export default function TheoDaoTienDoPage() {
+export default function DanhSachYeuCauSuaChuaPage() {
   return (
     <div className="space-y-6 min-h-screen">
       <div className="mb-2">
@@ -20,7 +20,7 @@ export default function TheoDaoTienDoPage() {
             {
               title: (
                 <div className="flex items-center">
-                  <span>Theo dõi tiến độ</span>
+                  <span>Danh sách yêu cầu sửa chữa</span>
                 </div>
               ),
             },

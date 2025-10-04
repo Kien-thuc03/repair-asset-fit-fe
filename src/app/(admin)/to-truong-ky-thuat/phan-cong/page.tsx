@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { Technician } from "@/types";
 import { Room } from "@/types/unit";
 import { mockRooms as originalMockRooms } from "@/lib/mockData/rooms";
@@ -9,7 +10,7 @@ import {
   getAssignmentsForTechnician,
   mockTechnicianAssignments,
 } from "@/lib/mockData/technicianAssignments";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, Modal } from "antd";
 import Pagination from "@/components/common/Pagination";
 import {
   AssignmentHeader,
@@ -17,7 +18,6 @@ import {
   SearchFilters,
   AreasTable,
   TechniciansGrid,
-  ExportModals,
 } from "@/components/leadTechnician/assignment";
 
 export default function PhanCongPage() {
@@ -89,6 +89,10 @@ export default function PhanCongPage() {
     "none"
   );
 
+  // Filter states
+  const [buildingFilter, setBuildingFilter] = useState<string>("");
+  const [floorFilter, setFloorFilter] = useState<string>("");
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -154,15 +158,42 @@ export default function PhanCongPage() {
     return tech?.name || "Chưa phân công";
   };
 
-  const filteredRooms = rooms.filter(
-    (room) =>
+  const filteredRooms = rooms.filter((room) => {
+    // Search filter
+    const matchesSearch =
       searchTerm === "" ||
       room.roomNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (room.building &&
         room.building.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (room.floor &&
-        room.floor.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+        room.floor.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // Building filter
+    const matchesBuilding =
+      buildingFilter === "" || room.building === buildingFilter;
+
+    // Floor filter
+    const matchesFloor = floorFilter === "" || room.floor === floorFilter;
+
+    return matchesSearch && matchesBuilding && matchesFloor;
+  });
+
+  // Get unique buildings and floors for filter options
+  const availableBuildings = Array.from(
+    new Set(
+      rooms
+        .map((room) => room.building)
+        .filter((building): building is string => !!building)
+    )
+  ).sort();
+
+  const availableFloors = Array.from(
+    new Set(
+      rooms
+        .map((room) => room.floor)
+        .filter((floor): floor is string => !!floor)
+    )
+  ).sort();
 
   // Sắp xếp rooms đã lọc
   const sortedRooms = [...filteredRooms].sort((a, b) => {
@@ -197,12 +228,7 @@ export default function PhanCongPage() {
     return 0;
   });
 
-  const filteredTechnicians = technicians.filter(
-    (tech) =>
-      searchTerm === "" ||
-      tech.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tech.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTechnicians = technicians; // No filtering needed for technicians tab
 
   // Pagination logic
   const getCurrentData = () => {
@@ -244,33 +270,76 @@ export default function PhanCongPage() {
   };
 
   // Export handler
-  const handleExportExcel = () => {
+  // Export handler - only for areas tab
+  const handleExportExcel = async () => {
+    // Only export if we're on areas tab
+    if (activeTab !== "areas") {
+      return;
+    }
+
     const itemsToExport =
-      activeTab === "areas"
-        ? selectedItems.length > 0
-          ? sortedRooms.filter((room) => selectedItems.includes(room.id))
-          : sortedRooms
-        : selectedItems.length > 0
-        ? filteredTechnicians.filter((tech) => selectedItems.includes(tech.id))
-        : filteredTechnicians;
+      selectedItems.length > 0
+        ? sortedRooms.filter((room) => selectedItems.includes(room.id))
+        : sortedRooms;
 
     if (itemsToExport.length === 0) {
       setShowExportErrorModal(true);
       return;
     }
 
-    console.log("Xuất Excel:", itemsToExport);
-    // TODO: Implement actual Excel export logic
-    setExportCount(itemsToExport.length);
-    setShowExportSuccessModal(true);
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import("xlsx");
+
+      // Export areas data
+      const excelData = itemsToExport.map((room, index) => ({
+        STT: index + 1,
+        "Số phòng": room.roomNumber,
+        "Tòa nhà": room.building || "",
+        Tầng: room.floor || "",
+        "Kỹ thuật viên phụ trách": getTechnicianName(
+          room.assignedTechnician || ""
+        ),
+        "Trạng thái": room.status,
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Đặt độ rộng cột
+      ws["!cols"] = [
+        { wch: 5 }, // STT
+        { wch: 15 }, // Số phòng
+        { wch: 15 }, // Tòa nhà
+        { wch: 10 }, // Tầng
+        { wch: 25 }, // Kỹ thuật viên
+        { wch: 15 }, // Trạng thái
+      ];
+
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách phòng");
+      const fileName = `danh-sach-phan-cong-phong-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      setExportCount(itemsToExport.length);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất
+      setSelectedItems([]);
+      setSelectAll(false);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setShowExportErrorModal(true);
+    }
   };
 
-  // Reset pagination when changing tabs or search
+  // Reset pagination when changing tabs or search/filters (only apply filters for areas tab)
   useEffect(() => {
     setCurrentPage(1);
     setSelectedItems([]);
     setSelectAll(false);
-  }, [activeTab, searchTerm]);
+  }, [activeTab, searchTerm, buildingFilter, floorFilter]);
 
   const handleEditRoom = (roomId: string, technicianId: string) => {
     setEditingRoom(roomId);
@@ -310,8 +379,8 @@ export default function PhanCongPage() {
       <AssignmentHeader
         selectedItemsCount={selectedItems.length}
         totalItems={getCurrentTotal()}
-        onExportExcel={handleExportExcel}
-        activeTab={activeTab}
+        onExportExcel={() => {}} // Empty function since export is now in filters
+        activeTab="technicians" // Hide export button
       />
 
       {/* Tabs */}
@@ -322,6 +391,14 @@ export default function PhanCongPage() {
         activeTab={activeTab}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
+        buildingFilter={buildingFilter}
+        floorFilter={floorFilter}
+        onBuildingChange={setBuildingFilter}
+        onFloorChange={setFloorFilter}
+        onExportExcel={handleExportExcel}
+        selectedItemsCount={selectedItems.length}
+        buildings={availableBuildings}
+        floors={availableFloors}
       />
 
       {activeTab === "areas" ? (
@@ -369,13 +446,33 @@ export default function PhanCongPage() {
       )}
 
       {/* Export Modals */}
-      <ExportModals
-        showExportSuccessModal={showExportSuccessModal}
-        showExportErrorModal={showExportErrorModal}
-        exportCount={exportCount}
-        onCloseSuccessModal={() => setShowExportSuccessModal(false)}
-        onCloseErrorModal={() => setShowExportErrorModal(false)}
-      />
+      <Modal
+        open={showExportSuccessModal}
+        onOk={() => setShowExportSuccessModal(false)}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={null}
+        closable={true}
+        centered>
+        <div className="text-center">
+          <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
+          <h3 className="text-lg font-semibold mb-2">Xuất Excel thành công!</h3>
+          <p className="text-gray-600">Đã xuất {exportCount} phòng</p>
+        </div>
+      </Modal>
+
+      <Modal
+        open={showExportErrorModal}
+        onOk={() => setShowExportErrorModal(false)}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={null}
+        closable={true}
+        centered>
+        <div className="text-center">
+          <XCircle className="mx-auto mb-4 text-red-500" size={48} />
+          <h3 className="text-lg font-semibold mb-2">Không có dữ liệu</h3>
+          <p className="text-gray-600">Không có dữ liệu để xuất Excel</p>
+        </div>
+      </Modal>
     </div>
   );
 }

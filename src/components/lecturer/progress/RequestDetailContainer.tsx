@@ -14,7 +14,6 @@ import DetailHeader from "./DetailHeader";
 import RequestInfo from "./RequestInfo";
 import ResolutionNotes from "./ResolutionNotes";
 import ProgressTimeline from "./ProgressTimeline";
-import AdditionalInfo from "./AdditionalInfo";
 import CancelRequestModal from "./CancelRequestModal";
 import FaultyComponentsDisplay from "./FaultyComponentsDisplay";
 import FaultyComponentsList from "./FaultyComponentsList";
@@ -26,14 +25,14 @@ interface RequestDetailContainerProps {
 
 export default function RequestDetailContainer({
   request,
-  backUrl = "/giang-vien/theo-doi-tien-do",
+  backUrl = "/giang-vien/danh-sach-yeu-cau-sua-chua",
 }: RequestDetailContainerProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString("vi-VN");
+    return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
   // Check if current user has permission to edit/cancel requests
@@ -121,7 +120,7 @@ export default function RequestDetailContainer({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          <RequestInfo request={request} formatDate={formatDate} />
+          <RequestInfo request={request} />
 
           {/* Display components from RepairRequestComponents table */}
           <FaultyComponentsList repairRequestId={request.id} />
@@ -138,7 +137,6 @@ export default function RequestDetailContainer({
         {/* Sidebar */}
         <div className="space-y-6">
           <ProgressTimeline request={request} formatDate={formatDate} />
-          <AdditionalInfo request={request} />
         </div>
       </div>
 

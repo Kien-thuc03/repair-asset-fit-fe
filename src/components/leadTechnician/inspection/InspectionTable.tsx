@@ -76,23 +76,7 @@ export default function InspectionTable({
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
             Danh sách biên bản ({reports.length})
           </h2>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => onSelectAll(!selectAll)}
-              className="flex items-center text-sm text-gray-600 hover:text-gray-800">
-              {selectAll ? (
-                <CheckSquare className="h-4 w-4 mr-1" />
-              ) : (
-                <Square className="h-4 w-4 mr-1" />
-              )}
-              Chọn tất cả
-            </button>
-            {selectedItems.length > 0 && (
-              <span className="text-sm text-blue-600">
-                ({selectedItems.length} mục đã chọn)
-              </span>
-            )}
-          </div>
+
         </div>
       </div>
 

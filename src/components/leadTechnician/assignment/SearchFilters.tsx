@@ -1,5 +1,8 @@
 import React from "react";
-import { Search } from "lucide-react";
+import { Search, Download } from "lucide-react";
+import { Row, Col, Input, Select, Button } from "antd";
+
+const { Option } = Select;
 
 type TabType = "areas" | "technicians";
 
@@ -7,41 +10,97 @@ interface SearchFiltersProps {
   activeTab: TabType;
   searchTerm: string;
   onSearchChange: (value: string) => void;
+  buildingFilter?: string;
+  floorFilter?: string;
+  onBuildingChange?: (value: string) => void;
+  onFloorChange?: (value: string) => void;
+  onExportExcel?: () => void;
+  selectedItemsCount?: number;
+  buildings?: string[];
+  floors?: string[];
 }
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
   activeTab,
   searchTerm,
   onSearchChange,
+  buildingFilter = "",
+  floorFilter = "",
+  onBuildingChange = () => {},
+  onFloorChange = () => {},
+  onExportExcel = () => {},
+  selectedItemsCount = 0,
+  buildings = [],
+  floors = [],
 }) => {
+  // Hide filters completely for technicians tab
+  if (activeTab === "technicians") {
+    return null;
+  }
+
   return (
     <div className="bg-white p-6 rounded-lg shadow mb-6">
-      <div className="mb-4">
-        <h3 className="text-lg font-medium text-gray-900">Bộ lọc tìm kiếm</h3>
-        <p className="text-sm text-gray-500">
-          Tìm kiếm và lọc dữ liệu theo các tiêu chí
-        </p>
-      </div>
-
-      <div className="flex flex-col">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Tìm kiếm
-        </label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            placeholder={
-              activeTab === "areas"
-                ? "Tìm theo phòng, tòa nhà, tầng..."
-                : "Tìm theo tên, email kỹ thuật viên..."
-            }
+      <Row gutter={[16, 16]}>
+        {/* Search Input - 1 cột */}
+        <Col xs={24} sm={8}>
+          <Input
+            prefix={<Search className="h-4 w-4 text-gray-400" />}
+            placeholder="Tìm theo phòng, tòa nhà, tầng..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
+            allowClear
+            size="middle"
           />
-        </div>
-      </div>
+        </Col>
+
+        {/* Building Filter - 1 cột */}
+        <Col xs={24} sm={5}>
+          <Select
+            placeholder="Chọn tòa"
+            value={buildingFilter || undefined}
+            onChange={onBuildingChange}
+            allowClear
+            size="middle"
+            className="w-full">
+            {buildings.map((building) => (
+              <Option key={building} value={building}>
+                {building}
+              </Option>
+            ))}
+          </Select>
+        </Col>
+
+        {/* Floor Filter - 1 cột */}
+        <Col xs={24} sm={5}>
+          <Select
+            placeholder="Chọn tầng"
+            value={floorFilter || undefined}
+            onChange={onFloorChange}
+            allowClear
+            size="middle"
+            className="w-full">
+            {floors.map((floor) => (
+              <Option key={floor} value={floor}>
+                {floor}
+              </Option>
+            ))}
+          </Select>
+        </Col>
+
+        {/* Export Button - 1 cột */}
+        <Col xs={24} sm={6}>
+          <Button
+            onClick={onExportExcel}
+            icon={<Download className="w-3 h-3" />}
+            size="middle"
+            className="w-full"
+            type="default">
+            <span className="hidden lg:inline">Xuất Excel</span>
+            <span className="lg:hidden">Excel</span>
+            {selectedItemsCount > 0 && ` (${selectedItemsCount})`}
+          </Button>
+        </Col>
+      </Row>
     </div>
   );
 };

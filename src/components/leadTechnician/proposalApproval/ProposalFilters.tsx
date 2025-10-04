@@ -1,49 +1,53 @@
+import { Search, Download } from "lucide-react";
+import { Input, Button, Row, Col } from "antd";
+
 interface ProposalFiltersProps {
   searchTerm: string;
   selectedStatus: string;
+  selectedCount: number;
   onSearchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
+  onExport: () => void;
 }
 
 export default function ProposalFilters({
   searchTerm,
-  selectedStatus,
+  selectedCount,
   onSearchChange,
-  onStatusChange,
+  onExport,
 }: ProposalFiltersProps) {
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-4">
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tìm kiếm đề xuất thay thế
-          </label>
-          <input
-            type="text"
+      <Row gutter={16}>
+        {/* Search - chiếm 3 cột */}
+        <Col xs={24} sm={18}>
+          <Input
             placeholder="Nhập mã đề xuất, tiêu đề, người tạo..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            prefix={<Search className="text-gray-400" />}
+            allowClear
+            size="middle"
           />
-        </div>
-        <div className="sm:w-48">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Lọc theo trạng thái
-          </label>
-          <select
-            value={selectedStatus}
-            onChange={(e) => onStatusChange(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="all">Tất cả trạng thái</option>
-            <option value="pending">Chờ xử lý</option>
-            <option value="verified">Đã xác minh</option>
-            <option value="proposal_created">Đã lập tờ trình</option>
-            <option value="approved">Đã duyệt</option>
-            <option value="rejected">Đã từ chối</option>
-            <option value="completed">Đã hoàn tất</option>
-          </select>
-        </div>
-      </div>
+        </Col>
+
+        {/* Export Button - chiếm 1 cột */}
+        <Col xs={24} sm={6}>
+          <Button
+            onClick={onExport}
+            disabled={selectedCount === 0}
+            icon={<Download className="w-3 h-3" />}
+            size="middle"
+            className="w-full"
+            type={selectedCount > 0 ? "default" : "default"}>
+            <span className="hidden lg:inline">Xuất Excel</span>
+            <span className="lg:hidden">Excel</span>
+            {selectedCount > 0 && (
+              <span className="ml-1 text-xs">({selectedCount})</span>
+            )}
+          </Button>
+        </Col>
+      </Row>
     </div>
   );
 }

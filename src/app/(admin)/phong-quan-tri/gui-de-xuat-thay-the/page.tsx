@@ -8,9 +8,12 @@ import {
   Eye,
   Plane,
   PlaneLanding,
+  Download,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { Breadcrumb, message } from "antd";
+import { Breadcrumb, message, Button, Modal } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types/repair";
 import { Pagination, SortableHeader } from "@/components/common";
@@ -29,6 +32,7 @@ export default function GuiDeXuatThayThePage() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const itemsPerPage = 10;
 
   // Modal states
@@ -36,6 +40,78 @@ export default function GuiDeXuatThayThePage() {
   const [selectedItem, setSelectedItem] =
     useState<ReplacementRequestItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Export modal states
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
+
+  // Hàm xuất Excel
+  const handleExportExcel = async () => {
+    const selectedData = filteredData.filter((item) =>
+      selectedRowKeys.includes(item.id)
+    );
+
+    if (selectedData.length === 0) {
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import("xlsx");
+
+      // Tạo dữ liệu Excel
+      const excelData = selectedData.map((item, index) => ({
+        STT: index + 1,
+        "Mã đề xuất": item.proposalCode,
+        "Tiêu đề": item.title,
+        "Mô tả": item.description,
+        "Người tạo": item.createdBy || "Chưa xác định",
+        "Số lượng linh kiện": item.components.length,
+        "Trạng thái": getStatusText(item.status),
+        "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+      }));
+
+      // Tạo workbook và worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Đặt độ rộng cột tự động
+      const colWidths = [
+        { wch: 5 }, // STT
+        { wch: 15 }, // Mã đề xuất
+        { wch: 30 }, // Tiêu đề
+        { wch: 40 }, // Mô tả
+        { wch: 20 }, // Người tạo
+        { wch: 15 }, // Số lượng linh kiện
+        { wch: 15 }, // Trạng thái
+        { wch: 15 }, // Ngày tạo
+      ];
+      ws["!cols"] = colWidths;
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách đề xuất thay thế");
+
+      // Xuất file
+      const fileName = `Danh_sach_de_xuat_thay_the_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      // Thông báo thành công với modal
+      setExportCount(selectedData.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất thành công
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setShowExportErrorModal(true);
+    }
+  };
 
   const filteredData = useMemo(() => {
     // Lọc dữ liệu: chỉ lấy các đề xuất có trạng thái ĐÃ_XÁC_MINH (Tổ trưởng đã ký biên bản xác nhận)
@@ -218,20 +294,11 @@ export default function GuiDeXuatThayThePage() {
         </p>
       </div>
 
-      {/* Filters and Search */}
+      {/* Search và xuất file Excel  */}
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Tìm kiếm đề xuất
-          </h3>
-          <p className="text-sm text-gray-600">
-            Tìm kiếm các đề xuất thay thế đã được tổ trưởng kỹ thuật xác minh và
-            sẵn sàng để gửi lên cấp trên phê duyệt.
-          </p>
-        </div>
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search */}
-          <div className="flex-1">
+          <div className="flex-1 md:w-3/4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -243,6 +310,20 @@ export default function GuiDeXuatThayThePage() {
               />
             </div>
           </div>
+
+          {/* Export Excel Button */}
+          <div className="md:w-1/4">
+            <Button
+              onClick={handleExportExcel}
+              icon={<Download className="w-3 h-3" />}
+              size="middle"
+              className="w-full"
+              type="default">
+              <span className="hidden lg:inline">Xuất Excel</span>
+              <span className="lg:hidden">Excel</span>
+              {selectedRowKeys.length > 0 && ` (${selectedRowKeys.length})`}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -252,12 +333,31 @@ export default function GuiDeXuatThayThePage() {
           <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[5%]">
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectedRowKeys.length === paginatedData.length &&
+                      paginatedData.length > 0
+                    }
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRowKeys(
+                          paginatedData.map((item) => item.id)
+                        );
+                      } else {
+                        setSelectedRowKeys([]);
+                      }
+                    }}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
                 <SortableHeader
                   field="proposalCode"
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-[15%]">
+                  className="w-[14%]">
                   Mã ĐX
                 </SortableHeader>
                 <SortableHeader
@@ -265,7 +365,7 @@ export default function GuiDeXuatThayThePage() {
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-[25%]">
+                  className="w-[23%]">
                   Tiêu đề
                 </SortableHeader>
                 <SortableHeader
@@ -273,7 +373,7 @@ export default function GuiDeXuatThayThePage() {
                   sortField={sortField}
                   sortDirection={sortDirection}
                   onSort={handleSort}
-                  className="w-[20%]">
+                  className="w-[18%]">
                   Người tạo
                 </SortableHeader>
                 <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
@@ -303,6 +403,22 @@ export default function GuiDeXuatThayThePage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedData.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-2 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedRowKeys.includes(item.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRowKeys([...selectedRowKeys, item.id]);
+                        } else {
+                          setSelectedRowKeys(
+                            selectedRowKeys.filter((key) => key !== item.id)
+                          );
+                        }
+                      }}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </td>
                   <td className="px-2 py-3">
                     <div className="text-xs font-medium text-gray-900 truncate">
                       {item.proposalCode}
@@ -425,6 +541,60 @@ export default function GuiDeXuatThayThePage() {
         customWarning="Sau khi gửi, đề xuất sẽ được chuyển lên Phòng Quản trị để xem xét và phê duyệt. Bạn không thể chỉnh sửa đề xuất sau khi đã gửi."
         icon={PlaneLanding}
       />
+
+      {/* Export Success Modal */}
+      <Modal
+        open={showExportSuccessModal}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportSuccessModal(false)}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Xuất Excel thành công!
+            </h3>
+            <p className="text-sm text-gray-500">
+              Đã xuất {exportCount} đề xuất ra file {exportFileName} thành công.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Export Error Modal */}
+      <Modal
+        open={showExportErrorModal}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportErrorModal(false)}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <XCircle className="h-8 w-8 text-red-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Không thể xuất Excel
+            </h3>
+            <p className="text-sm text-gray-500">
+              Vui lòng chọn ít nhất một đề xuất để xuất Excel.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

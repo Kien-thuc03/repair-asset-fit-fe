@@ -25,22 +25,11 @@ export default function ExcelExportButton({
   totalCount,
   selectedCount = 0,
   onExport,
-  label,
   disabled = false,
   className = "",
   size = "md",
   variant = "default",
 }: ExcelExportButtonProps) {
-  // Determine the text to display
-  const getButtonText = () => {
-    if (label) return label;
-
-    if (selectedCount > 0) {
-      return `Xuất Excel (${selectedCount} mục)`;
-    }
-    return `Xuất Excel (${totalCount} mục)`;
-  };
-
   // Size classes
   const sizeClasses = {
     sm: "px-3 py-1.5 text-xs",
@@ -48,10 +37,12 @@ export default function ExcelExportButton({
     lg: "px-6 py-3 text-base",
   };
 
-  // Variant classes
+  // Variant classes - Dynamic styling based on selection state
   const variantClasses = {
     default:
-      "border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-blue-500",
+      selectedCount > 0
+        ? "bg-green-600 text-white hover:bg-green-700"
+        : "bg-gray-300 text-gray-500 cursor-not-allowed",
     primary:
       "border border-blue-600 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500",
     outline:
@@ -68,17 +59,24 @@ export default function ExcelExportButton({
   return (
     <button
       onClick={onExport}
-      disabled={disabled}
+      disabled={disabled || selectedCount === 0}
       className={`
-        inline-flex items-center rounded-md shadow-sm font-medium
-        focus:outline-none focus:ring-2 focus:ring-offset-2
-        disabled:opacity-50 disabled:cursor-not-allowed
+        flex items-center rounded-md font-medium transition-colors
+        focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500
+        disabled:opacity-75 disabled:cursor-not-allowed
         ${sizeClasses[size]}
         ${variantClasses[variant]}
         ${className}
       `.trim()}>
       <Download className={`${iconSizes[size]} mr-2`} />
-      <span>{getButtonText()}</span>
+      <span>
+        Xuất Excel
+        {selectedCount > 0
+          ? ` (${selectedCount})`
+          : totalCount > 0
+          ? ` (${totalCount})`
+          : ""}
+      </span>
     </button>
   );
 }

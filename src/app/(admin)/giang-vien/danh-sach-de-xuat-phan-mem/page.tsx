@@ -12,37 +12,24 @@ import {
   Calendar,
   User,
   Building,
+  Download,
 } from "lucide-react";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, Modal, Input, Button, Row, Col } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
-import {
-  mockSoftwareProposals,
-} from "@/lib/mockData/softwareProposals";
+import { mockSoftwareProposals } from "@/lib/mockData/softwareProposals";
+import { users } from "@/lib/mockData/users";
+import { mockRooms } from "@/lib/mockData/rooms";
 import { Pagination } from "@/components/common";
-
-
-// Mock users và rooms data để hiển thị tên
-const mockUsers = {
-  "user-5": "Giảng viên",
-  "user-6": "Giảng viên kiêm QTV",
-  "user-1": "QTV Khoa",
-} as const;
-
-const mockRooms = {
-  ROOM001: "H101",
-  ROOM002: "H102",
-  ROOM003: "H103",
-  ROOM004: "H201",
-  ROOM005: "H202",
-} as const;
 
 // Helper functions
 const getUserName = (userId: string): string => {
-  return (mockUsers as Record<string, string>)[userId] || userId;
+  const user = users.find((u) => u.id === userId);
+  return user ? user.fullName : userId;
 };
 
 const getRoomName = (roomId: string): string => {
-  return (mockRooms as Record<string, string>)[roomId] || roomId;
+  const room = mockRooms.find((r) => r.id === roomId);
+  return room ? room.roomNumber : roomId;
 };
 
 // Config cho trạng thái đề xuất
@@ -74,13 +61,20 @@ export default function SoftwareProposalsPage() {
 
   // State
   const [searchText, setSearchText] = useState("");
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  // Export modal states
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+
   // Lọc và sắp xếp dữ liệu
   const filteredAndSortedData = useMemo(() => {
     setCurrentPage(1);
+    setSelectedRowKeys([]); // Reset selection when filter changes
 
     // Lọc dữ liệu
     const filtered = mockSoftwareProposals.filter(
@@ -98,9 +92,7 @@ export default function SoftwareProposalsPage() {
               .includes(searchText.toLowerCase())
           : true;
 
-      
-
-        return matchesSearch ;
+        return matchesSearch;
       }
     );
 
@@ -114,11 +106,107 @@ export default function SoftwareProposalsPage() {
     return filteredAndSortedData.slice(startIndex, endIndex);
   }, [filteredAndSortedData, currentPage, pageSize]);
 
+  // Checkbox handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedRowKeys(paginatedData.map((item) => item.id));
+    } else {
+      setSelectedRowKeys([]);
+    }
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedRowKeys((prev) => [...prev, id]);
+    } else {
+      setSelectedRowKeys((prev) => prev.filter((key) => key !== id));
+    }
+  };
+
+  // Hàm xuất Excel
+  const handleExportExcel = async () => {
+    const selectedData = filteredAndSortedData.filter((item) =>
+      selectedRowKeys.includes(item.id)
+    );
+
+    const itemsToExport =
+      selectedData.length > 0 ? selectedData : filteredAndSortedData;
+
+    if (itemsToExport.length === 0) {
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import("xlsx");
+
+      // Tạo dữ liệu Excel
+      const excelData = itemsToExport.map((item, index) => ({
+        STT: index + 1,
+        "Mã đề xuất": item.proposalCode,
+        "Người đề xuất": getUserName(item.proposerId),
+        Phòng: getRoomName(item.roomId),
+        "Lý do đề xuất": item.reason || "",
+        "Trạng thái": softwareProposalStatusConfig[item.status].label,
+        "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+        "Ngày cập nhật": new Date(item.updatedAt).toLocaleDateString("vi-VN"),
+      }));
+
+      // Tạo workbook và worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Đặt độ rộng cột tự động
+      const colWidths = [
+        { wch: 5 }, // STT
+        { wch: 20 }, // Mã đề xuất
+        { wch: 25 }, // Người đề xuất
+        { wch: 15 }, // Phòng
+        { wch: 40 }, // Lý do đề xuất
+        { wch: 15 }, // Trạng thái
+        { wch: 15 }, // Ngày tạo
+        { wch: 15 }, // Ngày cập nhật
+      ];
+      ws["!cols"] = colWidths;
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách đề xuất phần mềm");
+
+      // Xuất file
+      const fileName = `danh-sach-de-xuat-phan-mem-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      setExportCount(itemsToExport.length);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setShowExportErrorModal(true);
+    }
+  };
+
   // Navigation handlers
   const handleViewProposal = (proposal: SoftwareProposal) => {
     router.push(
       `/giang-vien/danh-sach-de-xuat-phan-mem/chi-tiet/${proposal.id}`
     );
+  };
+
+  // Page change handler với reset selection
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedRowKeys([]); // Reset selection when changing page
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+    setSelectedRowKeys([]); // Reset selection when changing page size
   };
 
   return (
@@ -137,7 +225,7 @@ export default function SoftwareProposalsPage() {
           {
             title: (
               <div className="flex items-center">
-                <span>Theo dõi tiến độ phần mềm</span>
+                <span>Danh sách đề xuất phần mềm</span>
               </div>
             ),
           },
@@ -145,37 +233,47 @@ export default function SoftwareProposalsPage() {
       />
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Monitor className="h-6 w-6 text-blue-600" />
-          Theo dõi tiến độ phần mềm
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Theo dõi tiến độ xử lý các đề xuất cài đặt phần mềm.
-        </p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Monitor className="h-6 w-6 text-blue-600" />
+            Danh sách đề xuất phần mềm
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Theo dõi tiến độ xử lý các đề xuất cài đặt phần mềm.
+          </p>
+        </div>
       </div>
-
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <div className=" gap-4">
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tìm kiếm đề xuất phần mềm
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+        <Row gutter={16}>
+          {/* Search - chiếm 3 cột */}
+          <Col xs={24} sm={18}>
+            <Input
+              placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              prefix={<Search className="text-gray-400" />}
+              allowClear
+              size="middle"
+            />
+          </Col>
 
-        </div>
+          {/* Export Button - chiếm 1 cột */}
+          <Col xs={24} sm={6}>
+            <Button
+              onClick={handleExportExcel}
+              icon={<Download className="w-3 h-3" />}
+              size="middle"
+              className="w-full"
+              type="default">
+              <span className="hidden lg:inline">Xuất Excel</span>
+              <span className="lg:hidden">Excel</span>
+              {selectedRowKeys.length > 0 && ` (${selectedRowKeys.length})`}
+            </Button>
+          </Col>
+        </Row>
       </div>
 
       {/* Table */}
@@ -184,6 +282,19 @@ export default function SoftwareProposalsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <input
+                    type="checkbox"
+                    checked={
+                      paginatedData.length > 0 &&
+                      paginatedData.every((item) =>
+                        selectedRowKeys.includes(item.id)
+                      )
+                    }
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Mã đề xuất
                 </th>
@@ -209,7 +320,17 @@ export default function SoftwareProposalsPage() {
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <input
+                        type="checkbox"
+                        checked={selectedRowKeys.includes(proposal.id)}
+                        onChange={(e) =>
+                          handleSelectRow(proposal.id, e.target.checked)
+                        }
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-blue-600">
                         {proposal.proposalCode}
                       </div>
                     </td>
@@ -233,7 +354,7 @@ export default function SoftwareProposalsPage() {
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                           softwareProposalStatusConfig[proposal.status].color
-                        }`}>                     
+                        }`}>
                         {softwareProposalStatusConfig[proposal.status].label}
                       </span>
                     </td>
@@ -276,13 +397,48 @@ export default function SoftwareProposalsPage() {
           currentPage={currentPage}
           pageSize={pageSize}
           total={filteredAndSortedData.length}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
           showSizeChanger={true}
           pageSizeOptions={[10, 20, 50, 100]}
           showQuickJumper={true}
           showTotal={true}
         />
+
+        {/* Export Modals */}
+        <Modal
+          open={showExportSuccessModal}
+          onOk={() => setShowExportSuccessModal(false)}
+          onCancel={() => setShowExportSuccessModal(false)}
+          footer={null}
+          closable={true}
+          centered>
+          <div className="text-center">
+            <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
+            <h3 className="text-lg font-semibold mb-2">
+              Xuất Excel thành công!
+            </h3>
+            <p className="text-gray-600">
+              Đã xuất {exportCount} đề xuất phần mềm
+            </p>
+          </div>
+        </Modal>
+
+        <Modal
+          open={showExportErrorModal}
+          onOk={() => setShowExportErrorModal(false)}
+          onCancel={() => setShowExportErrorModal(false)}
+          footer={null}
+          closable={true}
+          centered>
+          <div className="text-center">
+            <XCircle className="mx-auto mb-4 text-red-500" size={48} />
+            <h3 className="text-lg font-semibold mb-2">Lỗi xuất Excel</h3>
+            <p className="text-gray-600">
+              Vui lòng chọn ít nhất một đề xuất để xuất
+            </p>
+          </div>
+        </Modal>
       </div>
     </div>
   );
