@@ -8,8 +8,6 @@ import {
   Calendar,
   Building,
   MapPin,
-  CheckCircle,
-  XCircle,
   AlertTriangle,
   Download,
   Package,
@@ -17,7 +15,6 @@ import {
   HardDrive,
   Cpu,
   MemoryStick,
-  X,
   Eye,
 } from "lucide-react";
 import { Breadcrumb } from "antd";
@@ -38,150 +35,12 @@ export default function XuLyToTrinhDetailPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
 
-  // State cho việc check components
-  const [checkedComponents, setCheckedComponents] = useState<Set<string>>(
-    new Set()
-  );
-  const [showCreateReportModal, setShowCreateReportModal] = useState(false);
-
   // State cho việc theo dõi trạng thái từng component
-  const [componentStatus, setComponentStatus] = useState<
-    Record<string, "pending" | "approved" | "rejected">
-  >({});
-  const [showComponentActionModal, setShowComponentActionModal] =
-    useState(false);
-  const [selectedComponent, setSelectedComponent] = useState<string | null>(
-    null
-  );
-  const [componentActionType, setComponentActionType] = useState<
-    "approve" | "reject" | null
-  >(null);
 
   // Tìm proposal theo ID
   const proposal = useMemo(() => {
     return mockReplacementRequestItem.find((item) => item.id === id);
   }, [id]);
-
-  // Xử lý check/uncheck component (không cho check nếu đã từ chối hoặc duyệt)
-  const handleComponentCheck = (componentId: string, checked: boolean) => {
-    // Không cho check nếu component đã bị từ chối hoặc đã được duyệt
-    if (
-      componentStatus[componentId] === "rejected" ||
-      componentStatus[componentId] === "approved"
-    ) {
-      return;
-    }
-
-    const newCheckedComponents = new Set(checkedComponents);
-    if (checked) {
-      newCheckedComponents.add(componentId);
-    } else {
-      newCheckedComponents.delete(componentId);
-    }
-    setCheckedComponents(newCheckedComponents);
-  };
-
-  // Xử lý check/uncheck tất cả (chỉ check những component chưa bị từ chối hoặc duyệt)
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const availableComponentIds =
-        proposal?.components
-          .filter(
-            (comp) =>
-              componentStatus[comp.id] !== "rejected" &&
-              componentStatus[comp.id] !== "approved"
-          )
-          .map((comp) => comp.id) || [];
-      setCheckedComponents(new Set(availableComponentIds));
-    } else {
-      setCheckedComponents(new Set());
-    }
-  };
-
-  // Lập biên bản cho các components đã check
-  const handleCreateReport = async () => {
-    const checkedComponentsList =
-      proposal?.components.filter((comp) => checkedComponents.has(comp.id)) ||
-      [];
-
-    try {
-      // Simulate API call để tạo biên bản
-      const reportData = {
-        proposalId: proposal?.id,
-        proposalCode: proposal?.proposalCode,
-        title: proposal?.title,
-        selectedComponents: checkedComponentsList,
-        createdAt: new Date().toISOString(),
-      };
-
-      console.log("Tạo biên bản cho các linh kiện:", reportData);
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // TODO: Implement API call to create inspection report
-      alert(
-        `Đã tạo biên bản thành công cho ${checkedComponentsList.length} loại linh kiện!`
-      );
-
-      setShowCreateReportModal(false);
-      setCheckedComponents(new Set());
-    } catch (error) {
-      console.error("Error creating report:", error);
-      alert("Có lỗi xảy ra khi tạo biên bản");
-    }
-  };
-
-  // Xử lý thao tác riêng cho từng component (duyệt hoặc từ chối)
-  const handleComponentAction = (
-    componentId: string,
-    action: "approve" | "reject"
-  ) => {
-    setSelectedComponent(componentId);
-    setComponentActionType(action);
-    setShowComponentActionModal(true);
-  };
-
-  // Xác nhận thao tác cho component (duyệt hoặc từ chối)
-  const handleConfirmComponentAction = () => {
-    if (selectedComponent && componentActionType) {
-      setComponentStatus((prev) => ({
-        ...prev,
-        [selectedComponent]:
-          componentActionType === "approve" ? "approved" : "rejected",
-      }));
-
-      // Nếu component đã được xử lý, bỏ khỏi danh sách checked
-      setCheckedComponents((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(selectedComponent);
-        return newSet;
-      });
-
-      console.log(
-        `${componentActionType === "approve" ? "Duyệt" : "Từ chối"} linh kiện:`,
-        selectedComponent
-      );
-      // TODO: Implement API call
-    }
-
-    setShowComponentActionModal(false);
-    setSelectedComponent(null);
-    setComponentActionType(null);
-  };
-
-  // Lấy màu sắc cho status của component
-  const getComponentStatusColor = (componentId: string) => {
-    const status = componentStatus[componentId] || "pending";
-    switch (status) {
-      case "approved":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "rejected":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
 
   if (!proposal) {
     return (
@@ -246,8 +105,6 @@ export default function XuLyToTrinhDetailPage() {
         return status;
     }
   };
-
-  const canProcess = proposal.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH;
 
   const handleConfirmAction = async () => {
     setIsProcessing(true);
@@ -534,40 +391,11 @@ export default function XuLyToTrinhDetailPage() {
                 Danh sách linh kiện cần thay thế ({proposal.components.length}{" "}
                 loại linh kiện)
               </h3>
-              {checkedComponents.size > 0 && (
-                <button
-                  onClick={() => setShowCreateReportModal(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Lập biên bản ({checkedComponents.size} loại)
-                </button>
-              )}
             </div>
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      <input
-                        title="Chọn tất cả"
-                        type="checkbox"
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        checked={(() => {
-                          const availableComponents =
-                            proposal.components.filter(
-                              (comp) =>
-                                componentStatus[comp.id] !== "rejected" &&
-                                componentStatus[comp.id] !== "approved"
-                            );
-                          return (
-                            checkedComponents.size ===
-                              availableComponents.length &&
-                            availableComponents.length > 0
-                          );
-                        })()}
-                        onChange={(e) => handleSelectAll(e.target.checked)}
-                      />
-                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       STT
                     </th>
@@ -586,9 +414,6 @@ export default function XuLyToTrinhDetailPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Lý do thay thế
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Thao tác
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -596,21 +421,6 @@ export default function XuLyToTrinhDetailPage() {
                     <tr
                       key={component.id}
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          title={`Chọn linh kiện ${component.componentName} ở ${component.roomName}`}
-                          type="checkbox"
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          checked={checkedComponents.has(component.id)}
-                          disabled={
-                            componentStatus[component.id] === "rejected" ||
-                            componentStatus[component.id] === "approved"
-                          }
-                          onChange={(e) =>
-                            handleComponentCheck(component.id, e.target.checked)
-                          }
-                        />
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {index + 1}
                       </td>
@@ -666,46 +476,6 @@ export default function XuLyToTrinhDetailPage() {
                           {component.reason}
                         </p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex items-center justify-center space-x-1">
-                          {componentStatus[component.id] === "approved" ? (
-                            <span
-                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getComponentStatusColor(
-                                component.id
-                              )}`}>
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Đã duyệt
-                            </span>
-                          ) : componentStatus[component.id] === "rejected" ? (
-                            <span
-                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getComponentStatusColor(
-                                component.id
-                              )}`}>
-                              <XCircle className="w-3 h-3 mr-1" />
-                              Đã từ chối
-                            </span>
-                          ) : (
-                            <div className="flex items-center space-x-1">
-                              <button
-                                onClick={() =>
-                                  handleComponentAction(component.id, "approve")
-                                }
-                                className="inline-flex items-center px-2 py-1 border border-green-300 text-xs font-medium rounded text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                title="Duyệt linh kiện này">
-                                <CheckCircle className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleComponentAction(component.id, "reject")
-                                }
-                                className="inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500"
-                                title="Từ chối linh kiện này">
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -751,162 +521,6 @@ export default function XuLyToTrinhDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Action Section - Only show if can process */}
-      {canProcess && (
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">
-              Xử lý tờ trình
-            </h3>
-          </div>
-          <div className="px-6 py-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ghi chú của Phòng Quản trị (tuỳ chọn)
-                </label>
-                <textarea
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  rows={4}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Nhập ghi chú về quyết định xử lý tờ trình..."
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Component Action Modal */}
-      {showComponentActionModal && selectedComponent && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div
-                className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full ${
-                  componentActionType === "approve"
-                    ? "bg-green-100"
-                    : "bg-red-100"
-                }`}>
-                {componentActionType === "approve" ? (
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                ) : (
-                  <X className="h-6 w-6 text-red-600" />
-                )}
-              </div>
-              <div className="mt-2 px-4 py-3 text-center">
-                <h3 className="text-lg font-medium text-gray-900">
-                  {componentActionType === "approve"
-                    ? "Duyệt linh kiện"
-                    : "Từ chối linh kiện"}
-                </h3>
-                <div className="mt-2 px-2 py-2">
-                  {(() => {
-                    const component = proposal?.components.find(
-                      (c) => c.id === selectedComponent
-                    );
-                    return (
-                      <div className="text-sm text-gray-500">
-                        <p className="mb-2">
-                          {componentActionType === "approve"
-                            ? "Bạn có chắc chắn muốn duyệt linh kiện này?"
-                            : "Bạn có chắc chắn muốn từ chối linh kiện này?"}
-                        </p>
-                        <div className="bg-gray-50 p-3 rounded-md text-left">
-                          <p className="text-xs text-gray-600 mb-1">
-                            Linh kiện:
-                          </p>
-                          <p className="font-medium text-gray-900">
-                            {component?.componentName} →{" "}
-                            {component?.newItemName}
-                          </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Phòng: {component?.roomName} | Số lượng:{" "}
-                            {component?.quantity}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-                <div className="items-center px-4 py-3 flex justify-center space-x-4">
-                  <button
-                    onClick={() => setShowComponentActionModal(false)}
-                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600">
-                    Hủy
-                  </button>
-                  <button
-                    onClick={handleConfirmComponentAction}
-                    className={`px-4 py-2 text-white text-base font-medium rounded-md shadow-sm ${
-                      componentActionType === "approve"
-                        ? "bg-green-600 hover:bg-green-700"
-                        : "bg-red-600 hover:bg-red-700"
-                    }`}>
-                    {componentActionType === "approve" ? "Duyệt" : "Từ chối"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Report Modal */}
-      {showCreateReportModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
-                <FileText className="h-6 w-6 text-blue-600" />
-              </div>
-              <div className="mt-2 px-4 py-3 text-center">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Lập biên bản kiểm tra
-                </h3>
-                <div className="mt-2 px-2 py-2">
-                  <p className="text-sm text-gray-500">
-                    Bạn đã chọn <strong>{checkedComponents.size}</strong> loại
-                    linh kiện để lập biên bản kiểm tra thực tế.
-                  </p>
-                  <div className="mt-3 max-h-32 overflow-y-auto">
-                    <div className="text-left space-y-1">
-                      {proposal.components
-                        .filter((comp) => checkedComponents.has(comp.id))
-                        .map((component, index) => (
-                          <div
-                            key={component.id}
-                            className="text-xs text-gray-600 flex items-center space-x-2">
-                            <span className="w-4 text-center">
-                              {index + 1}.
-                            </span>
-                            <span className="flex-1">
-                              {component.roomName} - {component.componentType}{" "}
-                              (x{component.quantity})
-                            </span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="items-center px-4 py-3 flex justify-center space-x-4">
-                  <button
-                    onClick={() => setShowCreateReportModal(false)}
-                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600">
-                    Hủy
-                  </button>
-                  <button
-                    onClick={handleCreateReport}
-                    className="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-700">
-                    Lập biên bản
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Confirmation Modal - Chỉ cho từ chối */}
       {showConfirmModal && actionType === "reject" && (
