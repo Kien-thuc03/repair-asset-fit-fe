@@ -14,7 +14,7 @@ import {
   Building,
   Download,
 } from "lucide-react";
-import { Breadcrumb, Modal } from "antd";
+import { Breadcrumb, Modal, Input, Button, Row, Col } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import { mockSoftwareProposals } from "@/lib/mockData/softwareProposals";
 import { users } from "@/lib/mockData/users";
@@ -304,46 +304,42 @@ export default function SoftwareProposalsPage() {
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        <Row gutter={16}>
           {/* Search - chiếm 3 cột */}
-          <div className="sm:col-span-3">
+          <Col xs={24} sm={18}>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Tìm kiếm đề xuất phần mềm
             </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+            <Input
+              placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              prefix={<Search className="text-gray-400" />}
+              allowClear
+              size="middle"
+            />
+          </Col>
 
           {/* Export Button - chiếm 1 cột */}
-          <div className="flex flex-col justify-end sm:col-span-1">
+          <Col xs={24} sm={6}>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Xuất dữ liệu
             </label>
-            <button
+            <Button
               onClick={handleExportExcel}
               disabled={selectedRowKeys.length === 0}
-              className={`inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-xs font-medium transition-colors ${
-                selectedRowKeys.length > 0
-                  ? "text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  : "text-gray-500 bg-gray-100 cursor-not-allowed"
-              }`}>
-              <Download className="w-3 h-3 mr-1" />
+              icon={<Download className="w-3 h-3" />}
+              size="middle"
+              className="w-full"
+              type={selectedRowKeys.length > 0 ? "default" : "default"}>
               <span className="hidden lg:inline">Xuất Excel</span>
               <span className="lg:hidden">Excel</span>
-              <span className="ml-1 text-xs">
-                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
-              </span>
-            </button>
-          </div>
-        </div>
+              {selectedRowKeys.length > 0 && (
+                <span className="ml-1 text-xs">({selectedRowKeys.length})</span>
+              )}
+            </Button>
+          </Col>
+        </Row>
       </div>
 
       {/* Table */}
