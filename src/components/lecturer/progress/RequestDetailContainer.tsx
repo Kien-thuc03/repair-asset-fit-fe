@@ -14,7 +14,6 @@ import DetailHeader from "./DetailHeader";
 import RequestInfo from "./RequestInfo";
 import ResolutionNotes from "./ResolutionNotes";
 import ProgressTimeline from "./ProgressTimeline";
-import AdditionalInfo from "./AdditionalInfo";
 import CancelRequestModal from "./CancelRequestModal";
 import FaultyComponentsDisplay from "./FaultyComponentsDisplay";
 import FaultyComponentsList from "./FaultyComponentsList";
@@ -138,7 +137,7 @@ export default function RequestDetailContainer({
         {/* Sidebar */}
         <div className="space-y-6">
           <ProgressTimeline request={request} formatDate={formatDate} />
-          <AdditionalInfo request={request} />
+          
         </div>
       </div>
 

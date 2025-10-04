@@ -9,7 +9,6 @@ export { default as DetailHeader } from "./DetailHeader";
 export { default as RequestInfo } from "./RequestInfo";
 export { default as ResolutionNotes } from "./ResolutionNotes";
 export { default as ProgressTimeline } from "./ProgressTimeline";
-export { default as AdditionalInfo } from "./AdditionalInfo";
 export { default as CancelRequestModal } from "./CancelRequestModal";
 export { default as RequestDetailContainer } from "./RequestDetailContainer";
 export { default as FaultyComponentsDisplay } from "./FaultyComponentsDisplay";

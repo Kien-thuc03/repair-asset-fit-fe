@@ -539,7 +539,27 @@ export default function BaoCaoLoiPage() {
             )}
           </div>
 
-          {/* Bước 4: Chọn linh kiện/phần mềm cụ thể */}
+                    {/* Bước 4: Mô tả chi tiết */}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+              Bước 4: Mô tả chi tiết vấn đề
+            </h3>
+            <Form.Item label="Mô tả chi tiết lỗi" required>
+              <TextArea
+                rows={4}
+                placeholder="Mô tả chi tiết hiện tượng lỗi, khi nào xảy ra, tần suất lỗi..."
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+              />
+            </Form.Item>
+          </div>
+
+          {/* Bước 5: Chọn linh kiện/phần mềm cụ thể */}
           <div
             className={`mb-6 ${
               !errorCategory ||
@@ -548,7 +568,7 @@ export default function BaoCaoLoiPage() {
                 : ""
             }`}>
             <h3 className="text-lg font-semibold mb-4 text-blue-900">
-              Bước 4: Chọn{" "}
+              Bước 5: Chọn{" "}
               {errorCategory === "software" ? "phần mềm" : "linh kiện"} bị lỗi
               (tùy chọn)
             </h3>
@@ -625,25 +645,7 @@ export default function BaoCaoLoiPage() {
             )}
           </div>
 
-          {/* Bước 5: Mô tả chi tiết */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
-              Bước 5: Mô tả chi tiết vấn đề
-            </h3>
-            <Form.Item label="Mô tả chi tiết lỗi" required>
-              <TextArea
-                rows={4}
-                placeholder="Mô tả chi tiết hiện tượng lỗi, khi nào xảy ra, tần suất lỗi..."
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-              />
-            </Form.Item>
-          </div>
+
 
           {/* Bước 6: Đính kèm hình ảnh */}
           <div className="mb-6">

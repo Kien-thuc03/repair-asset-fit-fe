@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Modal } from "antd";
+import { CheckCircle, XCircle } from "lucide-react";
 import { RepairRequest } from "@/types";
 import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
-import { SuccessModal, ErrorModal } from "@/components/modal";
 import Pagination from "@/components/common/Pagination";
 import ProgressHeader from "./ProgressHeader";
 import ProgressFilters from "./ProgressFilters";
@@ -334,21 +335,58 @@ export default function ProgressTrackingContainer() {
       <div className="min-h-[200px]"></div>
 
       {/* Export Success Modal */}
-      <SuccessModal
-        isOpen={showExportSuccessModal}
-        onClose={() => setShowExportSuccessModal(false)}
-        title="Xuất Excel thành công!"
-        message={`Đã xuất ${exportCount} yêu cầu ra file ${exportFileName} thành công.`}
-      />
+      <Modal
+        open={showExportSuccessModal}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportSuccessModal(false)}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Xuất Excel thành công!
+            </h3>
+            <p className="text-sm text-gray-500">
+              Đã xuất {exportCount} yêu cầu ra file {exportFileName} thành công.
+            </p>
+          </div>
+        </div>
+      </Modal>
 
       {/* Export Error Modal */}
-      <ErrorModal
-        isOpen={showExportErrorModal}
-        onClose={() => setShowExportErrorModal(false)}
-        title="Không thể xuất Excel"
-        message="Không có dữ liệu để xuất hoặc có lỗi xảy ra. Vui lòng thử lại."
-        showRetry={false}
-      />
+      <Modal
+        open={showExportErrorModal}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportErrorModal(false)}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <XCircle className="h-8 w-8 text-red-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Không thể xuất Excel
+            </h3>
+            <p className="text-sm text-gray-500">
+              Không có dữ liệu để xuất hoặc có lỗi xảy ra. Vui lòng thử lại.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
