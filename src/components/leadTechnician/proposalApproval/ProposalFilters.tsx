@@ -1,5 +1,5 @@
-import { Search, Download } from "lucide-react";
-import { Input, Button, Row, Col } from "antd";
+import { Search, Download, Filter } from "lucide-react";
+import { Input, Button, Row, Col, Select } from "antd";
 
 interface ProposalFiltersProps {
   searchTerm: string;
@@ -12,15 +12,17 @@ interface ProposalFiltersProps {
 
 export default function ProposalFilters({
   searchTerm,
+  selectedStatus,
   selectedCount,
   onSearchChange,
+  onStatusChange,
   onExport,
 }: ProposalFiltersProps) {
   return (
     <div className="bg-white p-4 rounded-lg shadow mb-4">
       <Row gutter={16}>
-        {/* Search - chiếm 3 cột */}
-        <Col xs={24} sm={18}>
+        {/* Search - chiếm 2 cột */}
+        <Col xs={24} sm={12} lg={12}>
           <Input
             placeholder="Nhập mã đề xuất, tiêu đề, người tạo..."
             value={searchTerm}
@@ -31,8 +33,27 @@ export default function ProposalFilters({
           />
         </Col>
 
+        {/* Status Filter - chiếm 1 cột */}
+        <Col xs={24} sm={6} lg={6}>
+          <Select
+            placeholder="Lọc theo trạng thái"
+            value={selectedStatus}
+            onChange={onStatusChange}
+            allowClear
+            size="middle"
+            className="w-full"
+            suffixIcon={<Filter className="text-gray-400 w-4 h-4" />}
+            options={[
+              { value: "", label: "Tất cả trạng thái" },
+              { value: "CHỜ_TỔ_TRƯỞNG_DUYỆT", label: "Chờ tổ trưởng duyệt" },
+              { value: "ĐÃ_DUYỆT", label: "Đã duyệt" },
+              { value: "ĐÃ_TỪ_CHỐI", label: "Đã từ chối" },
+            ]}
+          />
+        </Col>
+
         {/* Export Button - chiếm 1 cột */}
-        <Col xs={24} sm={6}>
+        <Col xs={24} sm={6} lg={6}>
           <Button
             onClick={onExport}
             disabled={selectedCount === 0}
