@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types";
 import { mockReplacementRequestItem } from "@/lib/mockData";
-import { Breadcrumb, message } from "antd";
+import { Breadcrumb, Modal } from "antd";
+import { CheckCircle, XCircle } from "lucide-react";
 import { Pagination, ExcelExportButton } from "@/components/common";
 import {
   ProposalFilters,
@@ -13,17 +14,13 @@ import {
 } from "@/components/leadTechnician/proposalApproval";
 
 export default function DuyetDeXuatPage() {
-  // Cấu hình message để đảm bảo hiển thị đúng
-  useEffect(() => {
-    message.config({
-      top: 100,
-      duration: 5,
-      maxCount: 3,
-      rtl: false,
-      prefixCls: "ant-message",
-      getContainer: () => document.body,
-    });
-  }, []);
+  // State cho Modal xuất Excel
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
+  const [exportError, setExportError] = useState("");
+
   // Lấy các đề xuất CHỜ TỔ TRƯỞNG DUYỆT - Kỹ thuật viên đã lập, chờ tổ trưởng duyệt
   const [requests, setRequests] = useState<ReplacementRequestItem[]>(
     mockReplacementRequestItem
@@ -113,33 +110,17 @@ export default function DuyetDeXuatPage() {
     }
   };
 
-  // Hàm xuất Excel với message thông báo
+  // Hàm xuất Excel với Modal thông báo
   const handleExportExcel = async () => {
     const selectedData = sortedData.filter((item) =>
       selectedRowKeys.includes(item.id)
     );
 
     if (selectedData.length === 0) {
-      message.warning({
-        content: "Vui lòng chọn ít nhất một đề xuất để xuất Excel!",
-        duration: 4,
-        style: {
-          marginTop: "100px",
-          zIndex: 10000,
-        },
-      });
+      setExportError("Vui lòng chọn ít nhất một đề xuất để xuất Excel!");
+      setShowExportErrorModal(true);
       return;
     }
-
-    // Hiển thị loading message với z-index cao
-    const hideLoading = message.loading({
-      content: "Đang tạo file Excel...",
-      duration: 0,
-      style: {
-        marginTop: "100px",
-        zIndex: 10000,
-      },
-    });
 
     try {
       // Dynamic import để tránh lỗi SSR
@@ -188,61 +169,24 @@ export default function DuyetDeXuatPage() {
 
       XLSX.writeFile(wb, fileName);
 
-      // Ẩn loading và hiển thị thông báo thành công
-      hideLoading();
-      message.success({
-        content: `Xuất Excel thành công! File "${fileName}" đã được tải xuống (${selectedData.length} bản ghi)`,
-        duration: 6,
-        style: {
-          marginTop: "100px",
-          zIndex: 10000,
-        },
-      });
+      // Hiển thị thông báo thành công
+      setExportCount(selectedData.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
 
       // Reset selection sau khi xuất thành công
       setSelectedRowKeys([]);
     } catch (error) {
       console.error("Lỗi xuất Excel:", error);
-
-      // Ẩn loading và hiển thị thông báo lỗi
-      hideLoading();
-      message.error({
-        content: `Lỗi xuất Excel: ${
-          error instanceof Error ? error.message : "Lỗi không xác định"
-        }`,
-        duration: 6,
-        style: {
-          marginTop: "100px",
-          zIndex: 10000,
-        },
-      });
+      setExportError(
+        error instanceof Error ? error.message : "Lỗi không xác định"
+      );
+      setShowExportErrorModal(true);
     }
   };
 
   return (
     <>
-      {/* CSS để đảm bảo message hiển thị đúng */}
-      <style jsx global>{`
-        .ant-message {
-          z-index: 9999 !important;
-          position: fixed !important;
-          top: 24px !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-        }
-        .ant-message-notice {
-          pointer-events: auto !important;
-        }
-        .ant-message-notice-content {
-          background: rgba(255, 255, 255, 0.95) !important;
-          backdrop-filter: blur(8px) !important;
-          border: 1px solid #d9d9d9 !important;
-          box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08),
-            0 3px 6px -4px rgba(0, 0, 0, 0.12),
-            0 9px 28px 8px rgba(0, 0, 0, 0.05) !important;
-        }
-      `}</style>
-
       <div
         className="container mx-auto px-2 sm:px-4 py-2 sm:py-2 min-h-screen"
         style={{ position: "relative", zIndex: 1 }}>
@@ -332,6 +276,71 @@ export default function DuyetDeXuatPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal thông báo xuất Excel thành công */}
+      <Modal
+        title={null}
+        open={showExportSuccessModal}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={[
+          <button
+            key="close"
+            onClick={() => setShowExportSuccessModal(false)}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            style={{
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: "500",
+            }}>
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={500}>
+        <div className="text-center py-4">
+          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Xuất Excel thành công!
+          </h3>
+          <p className="text-gray-600 mb-1">
+            File{" "}
+            <span className="font-medium">&ldquo;{exportFileName}&rdquo;</span>{" "}
+            đã được tải xuống
+          </p>
+          <p className="text-gray-600">
+            <span className="font-medium">({exportCount} bản ghi)</span>
+          </p>
+        </div>
+      </Modal>
+
+      {/* Modal thông báo lỗi xuất Excel */}
+      <Modal
+        title={null}
+        open={showExportErrorModal}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={[
+          <button
+            key="close"
+            onClick={() => setShowExportErrorModal(false)}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            style={{
+              border: "none",
+              borderRadius: "6px",
+              fontWeight: "500",
+            }}>
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={500}>
+        <div className="text-center py-4">
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Lỗi xuất Excel
+          </h3>
+          <p className="text-gray-600">{exportError}</p>
+        </div>
+      </Modal>
     </>
   );
 }
