@@ -234,11 +234,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       //   href: "/qtv-khoa/thong-ke-bao-cao",
       //   icon: BarChart3,
       // },
-      {
-        name: "Giám sát hệ thống",
-        href: "/qtv-khoa/giam-sat-he-thong",
-        icon: Settings,
-      },
+      // {
+      //   name: "Giám sát hệ thống",
+      //   href: "/qtv-khoa/giam-sat-he-thong",
+      //   icon: Settings,
+      // },
     ],
   };
 
