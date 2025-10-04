@@ -14,14 +14,14 @@ import {
   Building,
   Download,
 } from "lucide-react";
-import { Breadcrumb, Modal, Input, Button, Row, Col } from "antd";
+import { Breadcrumb, Modal, Input, Button, Select } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import { mockSoftwareProposals } from "@/lib/mockData/softwareProposals";
 import { users } from "@/lib/mockData/users";
 import { mockRooms } from "@/lib/mockData/rooms";
 import { Pagination } from "@/components/common";
 
-// Helper functions
+const { Option } = Select;
 const getUserName = (userId: string): string => {
   const user = users.find((u) => u.id === userId);
   return user ? user.fullName : userId;
@@ -61,6 +61,9 @@ export default function SoftwareProposalsPage() {
 
   // State
   const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState<SoftwareProposalStatus | "">(
+    ""
+  );
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,12 +95,16 @@ export default function SoftwareProposalsPage() {
               .includes(searchText.toLowerCase())
           : true;
 
-        return matchesSearch;
+        const matchesStatus = statusFilter
+          ? proposal.status === statusFilter
+          : true;
+
+        return matchesSearch && matchesStatus;
       }
     );
 
     return filtered;
-  }, [searchText]);
+  }, [searchText, statusFilter]);
 
   // Dữ liệu phân trang
   const paginatedData = useMemo(() => {
@@ -247,33 +254,43 @@ export default function SoftwareProposalsPage() {
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <Row gutter={16}>
-          {/* Search - chiếm 3 cột */}
-          <Col xs={24} sm={18}>
-            <Input
-              placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              prefix={<Search className="text-gray-400" />}
-              allowClear
-              size="middle"
-            />
-          </Col>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Input
+            className="col-span-1 md:col-span-2"
+            placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
+            prefix={<Search className="w-4 h-4" />}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            allowClear
+            size="middle"
+          />
 
-          {/* Export Button - chiếm 1 cột */}
-          <Col xs={24} sm={6}>
-            <Button
-              onClick={handleExportExcel}
-              icon={<Download className="w-3 h-3" />}
-              size="middle"
-              className="w-full"
-              type="default">
-              <span className="hidden lg:inline">Xuất Excel</span>
-              <span className="lg:hidden">Excel</span>
-              {selectedRowKeys.length > 0 && ` (${selectedRowKeys.length})`}
-            </Button>
-          </Col>
-        </Row>
+          <Select
+            placeholder="Chọn trạng thái"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            allowClear
+            size="middle">
+            <Option value="">Tất cả trạng thái</Option>
+            <Option value={SoftwareProposalStatus.CHỜ_DUYỆT}>Chờ duyệt</Option>
+            <Option value={SoftwareProposalStatus.ĐÃ_DUYỆT}>Đã duyệt</Option>
+            <Option value={SoftwareProposalStatus.ĐÃ_TỪ_CHỐI}>
+              Đã từ chối
+            </Option>
+            <Option value={SoftwareProposalStatus.ĐÃ_TRANG_BỊ}>
+              Đã trang bị
+            </Option>
+          </Select>
+
+          <Button
+            type="primary"
+            icon={<Download className="w-4 h-4" />}
+            onClick={handleExportExcel}
+            disabled={selectedRowKeys.length === 0}
+            size="middle">
+            Xuất Excel ({selectedRowKeys.length})
+          </Button>
+        </div>
       </div>
 
       {/* Table */}

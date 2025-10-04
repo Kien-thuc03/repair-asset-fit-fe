@@ -1,54 +1,82 @@
 "use client";
 
 import { Search, Download } from "lucide-react";
+import { Input, Select, DatePicker, Button } from "antd";
+import { RepairStatus } from "@/types";
+import type { Dayjs } from "dayjs";
+
+const { RangePicker } = DatePicker;
+const { Option } = Select;
 
 interface ProgressFiltersProps {
   searchTerm: string;
-  totalCount: number;
+  statusFilter: string;
+  dateRange: [Dayjs | null, Dayjs | null] | null;
   selectedCount: number;
   onSearchChange: (term: string) => void;
+  onStatusChange: (status: string) => void;
+  onDateRangeChange: (dates: [Dayjs | null, Dayjs | null] | null) => void;
   onExport: () => void;
 }
 
 export default function ProgressFilters({
   searchTerm,
-  totalCount,
+  statusFilter,
+  dateRange,
   selectedCount,
   onSearchChange,
+  onStatusChange,
+  onDateRangeChange,
   onExport,
 }: ProgressFiltersProps) {
   return (
     <div className="bg-white shadow rounded-lg p-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        {/* Search - chiếm 3 cột */}
-        <div className="relative sm:col-span-3">
-          <div
-            className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-            style={{ top: "0px" }}>
-            <Search className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Nhập mã yêu cầu, tên tài sản, số phòng..."
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {/* Search - chiếm 2 cột */}
+        <Input
+          className="col-span-1 md:col-span-2"
+          placeholder="Tìm kiếm theo mã, tên tài sản, số phòng..."
+          prefix={<Search className="w-4 h-4" />}
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+          allowClear
+          size="middle"
+        />
 
-        {/* Xuất file Excel - chiếm 1 cột */}
-        <div className="flex flex-col justify-end sm:col-span-1">
-          <button
-            onClick={onExport}
-            className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <Download className="w-3 h-3 mr-1" />
-            <span className="hidden lg:inline">Xuất Excel</span>
-            <span className="lg:hidden">Excel</span>
-            <span className="ml-1 text-xs">
-              {selectedCount > 0 ? `(${selectedCount})` : `(${totalCount})`}
-            </span>
-          </button>
-        </div>
+        {/* Status Filter */}
+        <Select
+          placeholder="Chọn trạng thái"
+          value={statusFilter}
+          onChange={onStatusChange}
+          allowClear
+          size="middle">
+          <Option value="all">Tất cả trạng thái</Option>
+          <Option value={RepairStatus.CHỜ_TIẾP_NHẬN}>Chờ tiếp nhận</Option>
+          <Option value={RepairStatus.ĐÃ_TIẾP_NHẬN}>Đã tiếp nhận</Option>
+          <Option value={RepairStatus.ĐANG_XỬ_LÝ}>Đang xử lý</Option>
+          <Option value={RepairStatus.CHỜ_THAY_THẾ}>Chờ thay thế</Option>
+          <Option value={RepairStatus.ĐÃ_HOÀN_THÀNH}>Đã hoàn thành</Option>
+          <Option value={RepairStatus.ĐÃ_HỦY}>Đã hủy</Option>
+        </Select>
+
+        {/* Date Range Filter */}
+        <RangePicker
+          placeholder={["Từ ngày", "Đến ngày"]}
+          format="DD/MM/YYYY"
+          value={dateRange}
+          onChange={onDateRangeChange}
+          size="middle"
+        />
+
+        {/* Export Button */}
+        <Button
+          type="primary"
+          icon={<Download className="w-4 h-4" />}
+          onClick={onExport}
+          disabled={selectedCount === 0}
+          size="middle">
+          Xuất Excel ({selectedCount})
+        </Button>
       </div>
     </div>
   );
