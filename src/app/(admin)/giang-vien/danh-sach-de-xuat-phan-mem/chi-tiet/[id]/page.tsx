@@ -20,29 +20,18 @@ import {
   getSoftwareProposalById,
   getSoftwareProposalItems,
 } from "@/lib/mockData/softwareProposals";
-
-// Mock users và rooms data để hiển thị tên
-const mockUsers = {
-  "user-5": "Nguyễn Văn A",
-  "user-6": "Trần Thị B",
-  "user-1": "Lê Văn C",
-} as const;
-
-const mockRooms = {
-  ROOM001: "H101",
-  ROOM002: "H102",
-  ROOM003: "H103",
-  ROOM004: "H201",
-  ROOM005: "H202",
-} as const;
+import { users } from "@/lib/mockData/users";
+import { mockRooms } from "@/lib/mockData/rooms";
 
 // Helper functions
 const getUserName = (userId: string): string => {
-  return (mockUsers as Record<string, string>)[userId] || userId;
+  const user = users.find((u) => u.id === userId);
+  return user ? user.fullName : userId;
 };
 
 const getRoomName = (roomId: string): string => {
-  return (mockRooms as Record<string, string>)[roomId] || roomId;
+  const room = mockRooms.find((r) => r.id === roomId);
+  return room ? room.roomNumber : roomId;
 };
 
 // Config cho trạng thái đề xuất
