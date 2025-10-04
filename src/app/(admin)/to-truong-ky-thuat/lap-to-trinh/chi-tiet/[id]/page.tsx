@@ -21,9 +21,9 @@ export default function ChiTietLapToTrinhPage() {
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
   const request = useMemo(() => {
-    // Lấy đề xuất từ mockReplacementRequestItem với trạng thái ĐÃ_DUYỆT
+    // Lấy đề xuất từ mockReplacementRequestItem với trạng thái ĐÃ_LẬP_TỜ_TRÌNH
     return mockReplacementRequestItem.find(
-      (r) => r.id === id && r.status === ReplacementStatus.ĐÃ_DUYỆT
+      (r) => r.id === id && r.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH
     );
   }, [id]);
 
@@ -37,8 +37,10 @@ export default function ChiTietLapToTrinhPage() {
         return "bg-green-100 text-green-800";
       case ReplacementStatus.ĐÃ_TỪ_CHỐI:
         return "bg-red-100 text-red-800";
-      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
         return "bg-purple-100 text-purple-800";
+      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+        return "bg-indigo-100 text-indigo-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -54,6 +56,8 @@ export default function ChiTietLapToTrinhPage() {
         return "Đã duyệt";
       case ReplacementStatus.ĐÃ_TỪ_CHỐI:
         return "Từ chối";
+      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
+        return "Đã lập tờ trình";
       case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
         return "Đã mua sắm";
       default:
@@ -111,12 +115,13 @@ export default function ChiTietLapToTrinhPage() {
         <div className="flex items-center space-x-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              Chi tiết đề xuất {request.proposalCode}
+              Chi tiết tờ trình {request.proposalCode}
             </h1>
-            <p className="text-gray-600 mt-1">{request.title}</p>
+            <p className="text-gray-600 mt-1">
+              Tờ trình đã lập cho đề xuất: {request.title}
+            </p>
           </div>
         </div>
-
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -171,6 +176,141 @@ export default function ChiTietLapToTrinhPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Submission Form Information */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <FileText className="h-5 w-5 text-purple-600" />
+              <h2 className="text-lg font-semibold text-gray-900">
+                Thông tin tờ trình đã lập
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Người đề nghị
+                  </label>
+                  <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded-md">
+                    Giảng Thanh Trọn
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Chức vụ
+                  </label>
+                  <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded-md">
+                    Tổ trưởng kỹ thuật
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Đơn vị đề nghị
+                  </label>
+                  <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded-md">
+                    Khoa Công Nghệ Thông Tin
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Đơn vị tiếp nhận
+                  </label>
+                  <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded-md">
+                    Phòng Quản trị
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Đề nghị
+                  </label>
+                  <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded-md">
+                    Đề xuất thay thế linh kiện thiết bị
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Văn bản kèm theo
+                  </label>
+                  <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded-md">
+                    Đề xuất {request.proposalCode}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Giám đốc
+                  </label>
+                  <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded-md">
+                    TS. Lê Nhất Duy
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Hiệu trưởng
+                  </label>
+                  <div className="text-sm text-gray-900 p-3 bg-gray-50 rounded-md">
+                    TS. Phan Hồng Hải
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-500 mb-2">
+                Nội dung tờ trình
+              </label>
+              <div className="text-sm text-gray-900 p-4 bg-gray-50 rounded-md min-h-[200px] leading-relaxed">
+                {`Phòng Lab ${request.components?.[0]?.buildingName} - ${
+                  request.components?.[0]?.roomName
+                } của Khoa CNTT đang cần thay thế thiết bị. Một số linh kiện máy tính đã hư hỏng và cần được thay thế để đảm bảo hoạt động ổn định của hệ thống.
+
+Thông tin chi tiết về đề xuất thay thế:
+
+${
+  request.components
+    ?.map(
+      (comp) =>
+        `- ${comp.componentName} (${comp.assetCode}) tại ${comp.roomName}: ${comp.reason} → Thay thế bằng ${comp.newItemName} (${comp.newItemSpecs})`
+    )
+    .join("\n") || ""
+}
+
+Khoa CNTT kính trình Ban Giám hiệu phê duyệt chi ngân sách cho Phòng Quản trị tiến hành thay thế các linh kiện để phục vụ công tác giảng dạy cho sinh viên được tốt hơn.
+
+Thông tin tổng hợp:
+- Mã đề xuất: ${request.proposalCode}
+- Tiêu đề: ${request.title}
+- Người đề xuất: ${request.createdBy || "Không xác định"}
+- Tổng số linh kiện cần thay: ${request.components?.length || 0}
+
+Khoa rất mong Ban Giám hiệu xem xét và đồng ý cho thực hiện.
+
+Trân trọng kính trình.`}
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-green-800">
+                  Tờ trình đã được lập và gửi tới Phòng Quản trị
+                </span>
+              </div>
+              <div className="text-xs text-green-600 mt-1">
+                Ngày lập: {new Date().toLocaleDateString("vi-VN")} -{" "}
+                {new Date().toLocaleTimeString("vi-VN")}
+              </div>
+            </div>
           </div>
 
           {/* Basic Information */}
@@ -377,7 +517,6 @@ export default function ChiTietLapToTrinhPage() {
             </div>
           </div>
 
-
           {/* Additional Info */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -413,11 +552,14 @@ export default function ChiTietLapToTrinhPage() {
               </div>
 
               <div className="pt-3 border-t border-gray-200">
-                <div className="text-gray-500 mb-2">Trạng thái chi tiết:</div>
+                <div className="text-gray-500 mb-2">Tiến trình xử lý:</div>
                 <div className="text-xs space-y-1">
                   <div>✓ Đã được kỹ thuật viên đề xuất</div>
                   <div>✓ Đã được tổ trưởng phê duyệt</div>
-                  <div className="text-blue-600">⏳ Chờ lập tờ trình</div>
+                  <div className="text-purple-600 font-medium">
+                    ✓ Đã lập tờ trình
+                  </div>
+                  <div className="text-gray-400">⏳ Chờ phê duyệt tờ trình</div>
                 </div>
               </div>
             </div>
