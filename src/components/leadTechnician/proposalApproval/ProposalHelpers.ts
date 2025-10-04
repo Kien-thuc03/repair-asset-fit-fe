@@ -53,6 +53,9 @@ export const filterProposals = (
   return requests.filter((request) => {
     const matchesStatus =
       selectedStatus === "all" ||
+      selectedStatus === "" ||
+      !selectedStatus ||
+      request.status === selectedStatus ||
       (selectedStatus === "pending" &&
         (request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
           request.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT)) ||

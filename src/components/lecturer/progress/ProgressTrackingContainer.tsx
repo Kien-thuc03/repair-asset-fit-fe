@@ -12,6 +12,7 @@ import ProgressFilters from "./ProgressFilters";
 import RequestTable from "./RequestTable";
 import RequestCards from "./RequestCards";
 import NoRequestsFound from "./NoRequestsFound";
+import type { Dayjs } from "dayjs";
 
 export default function ProgressTrackingContainer() {
   const router = useRouter();
@@ -20,6 +21,9 @@ export default function ProgressTrackingContainer() {
     useState<RepairRequest[]>(mockRepairRequests);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateRange, setDateRange] = useState<
+    [Dayjs | null, Dayjs | null] | null
+  >(null);
 
   // Selection state for export
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -90,6 +94,21 @@ export default function ProgressTrackingContainer() {
       filtered = filtered.filter((request) => request.status === statusFilter);
     }
 
+    // Date range filtering
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      filtered = filtered.filter((request) => {
+        const requestDate = new Date(request.createdAt);
+        const startDate = dateRange[0]?.startOf("day").toDate();
+        const endDate = dateRange[1]?.endOf("day").toDate();
+        return (
+          startDate &&
+          endDate &&
+          requestDate >= startDate &&
+          requestDate <= endDate
+        );
+      });
+    }
+
     // Apply sorting
     if (sortField && sortDirection) {
       filtered.sort((a, b) => {
@@ -134,7 +153,7 @@ export default function ProgressTrackingContainer() {
 
     // Reset to first page when filter changes
     setCurrentPage(1);
-  }, [requests, searchTerm, statusFilter, sortField, sortDirection]);
+  }, [requests, searchTerm, statusFilter, dateRange, sortField, sortDirection]);
 
   // Handle pagination
   useEffect(() => {
@@ -277,9 +296,12 @@ export default function ProgressTrackingContainer() {
 
       <ProgressFilters
         searchTerm={searchTerm}
-        totalCount={filteredRequests.length}
+        statusFilter={statusFilter}
+        dateRange={dateRange}
         selectedCount={selectedItems.length}
         onSearchChange={setSearchTerm}
+        onStatusChange={setStatusFilter}
+        onDateRangeChange={setDateRange}
         onExport={handleExportExcel}
       />
 

@@ -147,7 +147,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
             icon: ClipboardEdit,
           },
           {
-            name: "Quản lý tờ trình",
+            name: "Danh sách tờ trình",
             href: "/to-truong-ky-thuat/lap-to-trinh",
             icon: FileText,
           },

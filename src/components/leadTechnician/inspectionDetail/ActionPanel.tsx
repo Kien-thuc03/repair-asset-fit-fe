@@ -1,16 +1,14 @@
-import { Signature, Send } from "lucide-react";
+import { Signature } from "lucide-react";
 
 interface ActionPanelProps {
   status: string;
   onSignReport: () => void;
-  onSendBack: () => void;
   onGoBack: () => void;
 }
 
 export default function ActionPanel({
   status,
   onSignReport,
-  onSendBack,
   onGoBack,
 }: ActionPanelProps) {
   return (
@@ -28,14 +26,7 @@ export default function ActionPanel({
               Ký xác nhận
             </button>
           )}
-          {status === "signed" && (
-            <button
-              onClick={onSendBack}
-              className="w-full px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <Send className="h-4 w-4 mr-2 inline" />
-              Gửi lại
-            </button>
-          )}
+         
           <button
             onClick={onGoBack}
             className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500">

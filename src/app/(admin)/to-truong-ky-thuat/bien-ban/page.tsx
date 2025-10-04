@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Clock, Send, XCircle } from "lucide-react";
+import { CheckCircle, Clock, XCircle } from "lucide-react";
 import { Modal } from "antd";
 import Pagination from "@/components/common/Pagination";
 import {
@@ -10,7 +10,7 @@ import {
   InspectionTable,
   InspectionMobileView,
 } from "@/components/leadTechnician/inspection";
-import { SignConfirmModal, SuccessModal } from "@/components/modal";
+import { SignConfirmModal } from "@/components/modal";
 import {
   getReplacementRequestsByStatus,
   mockReplacementRequestItem,
@@ -25,7 +25,7 @@ interface InspectionReport {
   relatedReportTitle: string;
   createdBy: string;
   inspectionDate: string;
-  status: "pending" | "signed" | "sent_back";
+  status: "pending" | "signed" | "sent_back"; // Giữ để tương thích với component interface
   leaderSignature?: string;
   leaderSignedAt?: string;
 }
@@ -63,24 +63,17 @@ const convertToInspectionReport = (
 export default function BienBanPage() {
   const router = useRouter();
 
-  // Lấy các đề xuất có trạng thái ĐÃ_GỬI_BIÊN_BẢN và ĐÃ_KÝ_BIÊN_BẢN
+  // Chỉ lấy các đề xuất có trạng thái ĐÃ_GỬI_BIÊN_BẢN
   const sentReports = getReplacementRequestsByStatus(
     ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN
   );
-  const signedReports = getReplacementRequestsByStatus(
-    ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN
-  );
-  const allReplacementRequests = [...sentReports, ...signedReports];
 
   // Chuyển đổi sang InspectionReport format
-  const mockInspectionReports: InspectionReport[] = allReplacementRequests.map(
+  const mockInspectionReports: InspectionReport[] = sentReports.map(
     (request) => ({
       ...convertToInspectionReport(request),
-      // Cập nhật status dựa trên ReplacementStatus
-      status:
-        request.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN
-          ? "signed"
-          : "pending",
+      // Tất cả đều có status "pending" vì chỉ hiển thị ĐÃ_GỬI_BIÊN_BẢN
+      status: "pending",
     })
   );
 
@@ -111,7 +104,6 @@ export default function BienBanPage() {
   const [selectedReportForSign, setSelectedReportForSign] =
     useState<InspectionReport | null>(null);
   const [isSigningInProgress, setIsSigningInProgress] = useState(false);
-  const [showSignSuccessModal, setShowSignSuccessModal] = useState(false);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -236,7 +228,7 @@ export default function BienBanPage() {
       case "signed":
         return <CheckCircle className="h-4 w-4" />;
       case "sent_back":
-        return <Send className="h-4 w-4" />;
+        return <Clock className="h-4 w-4" />; // Sử dụng Clock thay vì Send
       default:
         return <Clock className="h-4 w-4" />;
     }
@@ -283,18 +275,10 @@ export default function BienBanPage() {
         });
       }
 
-      // Cập nhật UI - chuyển trạng thái thành "signed"
+      // Cập nhật UI - loại bỏ biên bản đã ký khỏi danh sách
+      // vì trang này chỉ hiển thị trạng thái ĐÃ_GỬI_BIÊN_BẢN
       setInspectionReports((reports) =>
-        reports.map((report) =>
-          report.id === selectedReportForSign.id
-            ? {
-                ...report,
-                status: "signed" as const,
-                leaderSignature: currentUserName,
-                leaderSignedAt: signedAt,
-              }
-            : report
-        )
+        reports.filter((report) => report.id !== selectedReportForSign.id)
       );
 
       console.log("✅ Successfully signed inspection report:", {
@@ -303,9 +287,8 @@ export default function BienBanPage() {
         signedAt,
       });
 
-      // Đóng modal xác nhận và hiển thị thông báo thành công
+      // Đóng modal xác nhận - không cần hiển thị thông báo thành công
       setShowSignModal(false);
-      setShowSignSuccessModal(true);
     } catch (error) {
       console.error("❌ Error signing report:", error);
       alert("Có lỗi xảy ra khi ký biên bản. Vui lòng thử lại.");
@@ -315,14 +298,10 @@ export default function BienBanPage() {
     }
   };
 
+  // Dummy function để thỏa mãn interface - không sử dụng vì đã bỏ tính năng gửi lại
   const handleSendBack = (reportId: string) => {
-    setInspectionReports((reports) =>
-      reports.map((report) =>
-        report.id === reportId
-          ? { ...report, status: "sent_back" as const }
-          : report
-      )
-    );
+    // Không làm gì cả - tính năng gửi lại đã bị loại bỏ
+    console.log("Send back functionality has been removed:", reportId);
   };
 
   // Pagination logic
@@ -490,14 +469,6 @@ export default function BienBanPage() {
         reportTitle={selectedReportForSign?.title || ""}
         reportNumber={selectedReportForSign?.reportNumber || ""}
         isLoading={isSigningInProgress}
-      />
-
-      {/* Sign Success Modal */}
-      <SuccessModal
-        isOpen={showSignSuccessModal}
-        onClose={() => setShowSignSuccessModal(false)}
-        title="Ký biên bản thành công!"
-        message="Biên bản đã được ký xác nhận thành công. Trạng thái đã được cập nhật."
       />
 
       {/* Export Modals */}

@@ -91,7 +91,7 @@ const AreasTable: React.FC<AreasTableProps> = ({
 
       <div className="overflow-auto">
         <table className="min-w-full divide-y divide-gray-200 table-fixed">
-          <thead className="bg-gray-50 sticky top-0 z-10">
+          <thead className="bg-gray-50 sticky top-0">
             <tr>
               <th className="px-3 py-3 text-left w-12">
                 <button

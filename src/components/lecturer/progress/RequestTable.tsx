@@ -126,15 +126,15 @@ export default function RequestTable({
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                 </td>
-                <td className="px-2 py-4 text-xs font-medium text-blue-600 align-middle">
+                <td className="px-2 py-4 text-sm font-medium text-blue-600 align-middle">
                   <div
-                    className="max-w-[100px] truncate"
+                    className="max-w-[150px] truncate"
                     title={request.requestCode}>
                     {request.requestCode}
                   </div>
                 </td>
                 <td className="px-2 py-4 align-middle">
-                  <div className="max-w-[140px]">
+                  <div className="max-w-[150px]">
                     <div
                       className="text-sm font-medium text-gray-900 truncate"
                       title={`${request.assetName} (${request.assetCode})${
