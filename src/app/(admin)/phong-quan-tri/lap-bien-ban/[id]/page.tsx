@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   FileText,
   Building,
@@ -17,6 +17,7 @@ import { ReplacementStatus } from "@/types/repair";
 
 export default function RequestDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
   const [showInspectionForm, setShowInspectionForm] = useState(false);
 
@@ -51,67 +52,26 @@ export default function RequestDetailPage() {
   };
 
   const handleCreateInspectionReport = () => {
+   
     setShowInspectionForm(true);
   };
 
   const handleCloseInspectionForm = () => {
+    
     setShowInspectionForm(false);
   };
 
-  const handleSubmitInspectionReport = async () => {
-    if (!request) {
-      Modal.error({
-        title: "Lỗi",
-        content: "Không tìm thấy thông tin tờ trình!",
-      });
-      return;
-    }
+  const handleSubmitInspectionReport = () => {
+  
 
-    try {
-      // Simulate API call để cập nhật status và lưu biên bản
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Đóng modal biên bản trước
+    setShowInspectionForm(false);
 
-      // In thực tế, sẽ gọi API để:
-      // 1. Lưu biên bản kiểm tra
-      // 2. Cập nhật status thành ĐÃ_KÝ_BIÊN_BẢN
-      console.log(`Gửi biên bản cho tờ trình ${request.id}`, {
-        newStatus: "ĐÃ_KÝ_BIÊN_BẢN", // ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN
-        submittedAt: new Date().toISOString(),
-        inspectionReport: {
-          // Dữ liệu biên bản sẽ được thu thập từ form
-          components: request.components,
-          submittedBy: "Phòng Quản trị",
-        },
-      });
+    // Tăng thời gian chờ để đảm bảo modal đã được đóng hoàn toàn trước khi chuyển trang
+    setTimeout(() => {
 
-      setShowInspectionForm(false);
-
-      // Hiển thị modal thành công
-      Modal.success({
-        title: "Gửi biên bản thành công",
-        content: (
-          <div>
-            <p>Biên bản kiểm tra đã được gửi thành công!</p>
-            <p>
-              Trạng thái tờ trình đã được cập nhật thành{" "}
-              <strong>&ldquo;Đã ký biên bản&rdquo;</strong>.
-            </p>
-          </div>
-        ),
-        okText: "Đóng",
-        onOk: () => {
-          // Có thể redirect về danh sách hoặc refresh trang để cập nhật trạng thái
-          // window.location.reload(); // Refresh để cập nhật status
-        },
-      });
-    } catch (error) {
-      console.error("Error submitting inspection report:", error);
-      Modal.error({
-        title: "Lỗi",
-        content: "Có lỗi xảy ra khi gửi biên bản. Vui lòng thử lại.",
-        okText: "Đóng",
-      });
-    }
+      router.push("/phong-quan-tri/lap-bien-ban");
+    }, 300);
   };
 
   if (!request) {
@@ -384,23 +344,10 @@ export default function RequestDetailPage() {
             </button>,
             <button
               key="submit"
+              type="button"
               onClick={() => {
-                Modal.confirm({
-                  title: "Xác nhận gửi biên bản",
-                  content: (
-                    <div>
-                      <p>Bạn có chắc chắn muốn gửi biên bản kiểm tra này?</p>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Sau khi gửi, trạng thái tờ trình sẽ được cập nhật thành
-                        &ldquo;Đã ký biên bản&rdquo;.
-                      </p>
-                    </div>
-                  ),
-                  okText: "Gửi biên bản",
-                  cancelText: "Hủy",
-                  okType: "primary",
-                  onOk: handleSubmitInspectionReport,
-                });
+                console.log("Clicked: Gửi biên bản");
+                handleSubmitInspectionReport();
               }}
               className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
               Gửi biên bản
