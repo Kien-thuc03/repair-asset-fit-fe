@@ -112,7 +112,7 @@ export default function ProposalTable({
               sortField={sortField}
               sortDirection={sortDirection}
               onSort={onSort}>
-              Mã yêu cầu
+              Mã đề xuất
             </ProposalSortableHeader>
             <ProposalSortableHeader
               field="title"
@@ -169,7 +169,7 @@ export default function ProposalTable({
                     <span>{(currentPage - 1) * pageSize + index + 1}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
                   {record.proposalCode}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700">
