@@ -178,22 +178,12 @@ export default function XuLyToTrinhDetailPage() {
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      // Hiển thị thông báo thành công trước khi redirect
-      Modal.success({
-        title: "Duyệt tờ trình thành công",
-        content: (
-          <div>
-            <p>Tờ trình {proposal.proposalCode} đã được duyệt thành công!</p>
-            <p>Hệ thống sẽ chuyển bạn đến trang lập biên bản.</p>
-          </div>
-        ),
-        okText: "Tiếp tục",
-        onOk: () => {
-          // Redirect về trang lập biên bản chi tiết sau khi duyệt xong
-          console.log("Redirecting to lap-bien-ban page...");
-          router.replace(`/phong-quan-tri/lap-bien-ban/${proposal.id}`);
-        },
-      });
+      // Đóng modal
+      setShowSignConfirmModal(false);
+
+      // Chuyển hướng đến trang lập biên bản
+      console.log("Redirecting to lap-bien-ban page...");
+      router.push("/phong-quan-tri/lap-bien-ban");
     } catch (error) {
       console.error("Error approving proposal:", error);
       setIsProcessing(false);

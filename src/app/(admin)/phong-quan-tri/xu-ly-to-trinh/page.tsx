@@ -15,11 +15,13 @@ import { Breadcrumb, Button, Modal } from "antd";
 import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
 import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
 import { Pagination, SortableHeader } from "@/components/common";
+import { useRouter } from "next/navigation";
 
 type SortField = keyof ReplacementRequestItem;
 type SortDirection = "asc" | "desc" | null;
 
 export default function XuLyToTrinhPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -27,6 +29,9 @@ export default function XuLyToTrinhPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [selectedProposal, setSelectedProposal] =
+    useState<ReplacementRequestItem | null>(null);
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
   const itemsPerPage = 10;
@@ -123,6 +128,24 @@ export default function XuLyToTrinhPage() {
   const getStatusText = () => {
     // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị "Chờ xử lý"
     return "Chờ xử lý";
+  };
+
+  // Hàm xử lý khi nhấn nút duyệt tờ trình
+  const handleApproveClick = (proposal: ReplacementRequestItem) => {
+    setSelectedProposal(proposal);
+    setShowApprovalModal(true);
+  };
+
+  // Hàm xử lý khi xác nhận duyệt tờ trình
+  const handleApproveConfirm = () => {
+    // Xử lý logic khi xác nhận duyệt tờ trình
+    // TODO: Gọi API để cập nhật trạng thái tờ trình thành "Đã duyệt"
+
+    // Đóng modal
+    setShowApprovalModal(false);
+
+    // Chuyển hướng đến trang lập biên bản
+    router.push("/phong-quan-tri/lap-bien-ban");
   };
 
   // Hàm xuất Excel
@@ -430,12 +453,20 @@ export default function XuLyToTrinhPage() {
                     </div>
                   </td>
                   <td className="px-2 py-3 text-center">
-                    <Link
-                      href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
-                      className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      title="Xem chi tiết">
-                      <Eye className="w-3 h-3" />
-                    </Link>
+                    <div className="flex items-center justify-center space-x-1">
+                      <Link
+                        href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        title="Xem chi tiết">
+                        <Eye className="w-3 h-3" />
+                      </Link>
+                      <button
+                        onClick={() => handleApproveClick(item)}
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                        title="Duyệt tờ trình">
+                        <CheckCircle className="w-3 h-3" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -524,6 +555,62 @@ export default function XuLyToTrinhPage() {
               một tờ trình và thử lại.
             </p>
           </div>
+        </div>
+      </Modal>
+
+      {/* Approval Confirmation Modal */}
+      <Modal
+        open={showApprovalModal}
+        onCancel={() => setShowApprovalModal(false)}
+        footer={[
+          <button
+            key="cancel"
+            onClick={() => setShowApprovalModal(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
+            Hủy
+          </button>,
+          <button
+            key="confirm"
+            onClick={handleApproveConfirm}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Xác nhận duyệt
+          </button>,
+        ]}
+        centered
+        width={500}
+        title="Xác nhận duyệt tờ trình">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                Bạn có chắc chắn muốn duyệt tờ trình sau?
+              </h3>
+              <p className="text-sm text-red-500 mt-1 font-medium">
+                Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành
+                &ldquo;Đã duyệt&rdquo; và không thể hoàn tác.
+              </p>
+            </div>
+          </div>
+
+          {selectedProposal && (
+            <div className="bg-gray-50 p-4 rounded-md">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-600">Mã tờ trình:</div>
+                <div className="font-medium">
+                  {selectedProposal.proposalCode}
+                </div>
+
+                <div className="text-gray-600">Tiêu đề:</div>
+                <div className="font-medium">{selectedProposal.title}</div>
+
+                <div className="text-gray-600">Thời gian duyệt:</div>
+                <div className="font-medium">
+                  {new Date().toLocaleString("vi-VN")}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

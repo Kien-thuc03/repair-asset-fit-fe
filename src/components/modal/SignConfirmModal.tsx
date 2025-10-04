@@ -41,7 +41,7 @@ export default function SignConfirmModal({
           confirmText: "Xác nhận duyệt",
           description: "Bạn có chắc chắn muốn duyệt tờ trình sau?",
           warning:
-            'Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành "Đã duyệt" và không thể hoàn tác.',
+            'Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành "Đã duyệt" và không thể hoàn tác. Hệ thống sẽ chuyển bạn đến trang lập biên bản.',
           icon: CheckCircle,
           numberLabel: "Mã tờ trình:",
           titleLabel: "Tiêu đề:",

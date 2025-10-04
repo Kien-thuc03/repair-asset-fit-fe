@@ -52,24 +52,19 @@ export default function RequestDetailPage() {
   };
 
   const handleCreateInspectionReport = () => {
-   
     setShowInspectionForm(true);
   };
 
   const handleCloseInspectionForm = () => {
-    
     setShowInspectionForm(false);
   };
 
   const handleSubmitInspectionReport = () => {
-  
-
     // Đóng modal biên bản trước
     setShowInspectionForm(false);
 
     // Tăng thời gian chờ để đảm bảo modal đã được đóng hoàn toàn trước khi chuyển trang
     setTimeout(() => {
-
       router.push("/phong-quan-tri/lap-bien-ban");
     }, 300);
   };
