@@ -413,7 +413,7 @@ export default function LapToTrinhPage() {
           </h2>
         </div>
 
-        <div className="flex flex-col h-[400px] sm:h-[500px] lg:h-[600px]">
+        <div className="flex flex-col h-[400px] sm:h-[500px] lg:h-[600px] ">
           <div className="flex-1 overflow-auto">
             {/* Mobile Card View */}
             <div className="block sm:hidden">
@@ -524,7 +524,7 @@ export default function LapToTrinhPage() {
             {/* Desktop Table View - Optimized for full width display */}
             <div className="hidden sm:block">
               <table className="w-full divide-y divide-gray-200 table-fixed">
-                <thead className="bg-gray-50 sticky top-0 z-10">
+                <thead className="bg-gray-50 sticky top-0 z-0">
                   <tr>
                     <th className="w-[5%] px-3 py-3 text-left">
                       <button

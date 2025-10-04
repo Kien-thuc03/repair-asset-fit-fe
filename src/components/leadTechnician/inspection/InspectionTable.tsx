@@ -84,7 +84,7 @@ export default function InspectionTable({
         <div className="flex-1 overflow-auto">
           <div className="hidden sm:block">
             <table className="w-full divide-y divide-gray-200 table-fixed">
-              <thead className="bg-gray-50 sticky top-0 z-10">
+              <thead className="bg-gray-50 sticky top-0">
                 <tr>
                   <th className="w-[5%] px-3 py-3 text-center">
                     <button
