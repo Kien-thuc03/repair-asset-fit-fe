@@ -5,7 +5,7 @@ import { RepairRequest } from '@/types'
 import Link from 'next/link'
 
 export default function RecentRequests() {
-	const items = getRecentRepairRequests(6)
+	const items = getRecentRepairRequests(4)
 
 	return (
 		<div className="bg-white shadow rounded-lg">
@@ -16,7 +16,7 @@ export default function RecentRequests() {
 						Xem tất cả
 					</Link>
 				</div>
-				<div className="divide-y">
+				<div className="divide-y divide-gray-300">
 					{items.map((req: RepairRequest) => {
 						const cfg = repairRequestStatusConfig[req.status]
 						return (

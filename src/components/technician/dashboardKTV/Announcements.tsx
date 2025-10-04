@@ -25,7 +25,7 @@ export default function Announcements() {
 				<h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Thông báo</h3>
 				<ul className="space-y-3">
 					{announcements.map((a) => (
-						<li key={a.id} className="border rounded-md p-3 hover:bg-gray-50">
+						<li key={a.id} className="border border-gray-300 rounded-md p-3 hover:bg-gray-50">
 							<p className="text-sm font-medium text-gray-900">{a.title}</p>
 							<p className="text-sm text-gray-600">{a.description}</p>
 							<p className="text-xs text-gray-500 mt-1">{new Date(a.createdAt).toLocaleString()}</p>
