@@ -165,7 +165,7 @@ export default function QTVKhoaDashboard() {
               </div>
             </Link>
 
-            <Link href="/qtv-khoa/giam-sat-he-thong" className="relative group bg-red-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-red-500 rounded-lg hover:bg-red-100 transition-colors">
+            {/* <Link href="/qtv-khoa/giam-sat-he-thong" className="relative group bg-red-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-red-500 rounded-lg hover:bg-red-100 transition-colors">
               <span className="rounded-lg inline-flex p-3 bg-red-600 text-white">
                 <Settings className="h-6 w-6" />
               </span>
@@ -177,7 +177,7 @@ export default function QTVKhoaDashboard() {
                   Theo dõi và quản lý hệ thống
                 </p>
               </div>
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>

@@ -177,7 +177,7 @@ export function ProfileEditComponent() {
   return (
     <div className="mx-auto space-y-6">
       {/* Header Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-4 mb-4">
         <button
           onClick={() => router.back()}
           className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -185,6 +185,14 @@ export function ProfileEditComponent() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Quay lại
         </button>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Chỉnh sửa thông tin cá nhân
+          </h1>
+          <p className="text-sm text-gray-500">
+            Cập nhật thông tin tài khoản của bạn
+          </p>
+        </div>
       </div>
 
       {/* Tab Navigation */}
