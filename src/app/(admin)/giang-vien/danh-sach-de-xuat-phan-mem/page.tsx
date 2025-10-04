@@ -307,9 +307,7 @@ export default function SoftwareProposalsPage() {
         <Row gutter={16}>
           {/* Search - chiếm 3 cột */}
           <Col xs={24} sm={18}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tìm kiếm đề xuất phần mềm
-            </label>
+
             <Input
               placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
               value={searchText}
@@ -322,9 +320,6 @@ export default function SoftwareProposalsPage() {
 
           {/* Export Button - chiếm 1 cột */}
           <Col xs={24} sm={6}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Xuất dữ liệu
-            </label>
             <Button
               onClick={handleExportExcel}
               disabled={selectedRowKeys.length === 0}
