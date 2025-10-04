@@ -162,7 +162,7 @@ export default function PhongQuanTriDashboard() {
       </div>
 
       {/* System Overview */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 ">
         {/* Recent Activities */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
