@@ -1,129 +1,57 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { RepairRequest } from "@/types";
-import { mockRepairRequests } from "@/lib/mockData";
-import { Breadcrumb } from "antd";
-import Pagination from "@/components/common/Pagination";
+
+import { useState, useMemo } from "react";
+import { Breadcrumb, Input, Select, DatePicker, Button, Modal } from "antd";
+import type { Dayjs } from "dayjs";
 import {
-  ReportListHeader,
-  ReportStats,
-  ReportFilters,
-  ReportTable,
-  ReportExportModals,
-} from "@/components/leadTechnician/reportList";
+  Search,
+  ChevronUp,
+  ChevronDown,
+  Eye,
+  Download,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+import Link from "next/link";
+import {
+  mockRepairRequests,
+  repairRequestStatusConfig,
+} from "@/lib/mockData/repairRequests";
+import { RepairStatus, RepairRequest } from "@/types";
+import { Pagination } from "@/components/ui";
+
+const { RangePicker } = DatePicker;
+const { Option } = Select;
+
+type SortField =
+  | "requestCode"
+  | "assetName"
+  | "location"
+  | "reporterName"
+  | "errorTypeName"
+  | "status"
+  | "createdAt";
+type SortDirection = "asc" | "desc" | "none";
+type RangeValue = [Dayjs | null, Dayjs | null] | null;
 
 export default function DanhSachBaoLoiPage() {
-  const router = useRouter();
-  const [requests] = useState<RepairRequest[]>(mockRepairRequests);
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedErrorType, setSelectedErrorType] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortField, setSortField] = useState<string>("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
-    "none"
-  );
-
-  // Pagination states
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState<RepairStatus | "">("");
+  const [dateRange, setDateRange] = useState<RangeValue>(null);
+  const [sortField, setSortField] = useState<SortField | "">("");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("none");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
-  // Selection states
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
-
-  // Export states
-  const [exportCount, setExportCount] = useState(0);
+  // Export modal states
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
-
-  // Inject CSS vào head để tắt scrollbar và tối ưu diện tích màn hình
-  useEffect(() => {
-    const style = document.createElement("style");
-    style.textContent = `
-      html {
-        overflow-y: auto;
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none; /* IE and Edge */
-      }
-      
-      html::-webkit-scrollbar {
-        display: none; /* Chrome, Safari and Opera */
-        width: 0px;
-        background: transparent;
-      }
-      
-      body {
-        min-height: 100vh;
-        overflow-x: hidden;
-        overflow-y: auto;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
-      
-      body::-webkit-scrollbar {
-        display: none;
-        width: 0px;
-        background: transparent;
-      }
-      
-      .main-content {
-        min-height: calc(100vh - 2rem);
-        width: 100vw;
-        max-width: 100%;
-        box-sizing: border-box;
-        overflow-x: hidden;
-      }
-      
-      /* Ẩn scrollbar cho tất cả các container */
-      .table-container {
-        overflow-y: auto;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
-      
-      .table-container::-webkit-scrollbar {
-        display: none;
-        width: 0px;
-      }
-      
-      .container {
-        width: 100% !important;
-        max-width: none !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        overflow-x: hidden;
-      }
-      
-      /* Cố định layout cho filter section */
-      .filter-section {
-        position: relative;
-        width: 100%;
-        overflow-x: hidden;
-      }
-      
-      /* Ẩn scrollbar cho tất cả elements */
-      * {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
-      
-      *::-webkit-scrollbar {
-        display: none;
-        width: 0px;
-        background: transparent;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Cleanup khi component unmount
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
 
   // Hàm xử lý sắp xếp 3 trạng thái
-  const handleSort = (field: string) => {
+  const handleSort = (field: SortField) => {
     if (sortField === field) {
       if (sortDirection === "asc") {
         setSortDirection("desc");
@@ -139,199 +67,522 @@ export default function DanhSachBaoLoiPage() {
     }
   };
 
-  const filteredRequests = requests.filter((request) => {
-    const matchesStatus =
-      selectedStatus === "all" || request.status === selectedStatus;
-    const matchesErrorType =
-      selectedErrorType === "all" ||
-      request.errorTypeName === selectedErrorType;
-    const matchesSearch =
-      searchTerm === "" ||
-      (request.assetCode ?? "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      (request.assetName ?? "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      (request.requestCode ?? "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-
-    return matchesStatus && matchesErrorType && matchesSearch;
-  });
-
-  // Sắp xếp requests đã lọc
-  const sortedRequests = [...filteredRequests].sort((a, b) => {
-    if (!sortField || sortDirection === "none") return 0;
-
-    let aValue: string | number = "";
-    let bValue: string | number = "";
-
-    switch (sortField) {
-      case "requestCode":
-        aValue = a.requestCode ?? "";
-        bValue = b.requestCode ?? "";
-        break;
-      case "assetCode":
-        aValue = a.assetCode ?? "";
-        bValue = b.assetCode ?? "";
-        break;
-      case "reporterName":
-        aValue = a.reporterName ?? "";
-        bValue = b.reporterName ?? "";
-        break;
-      case "errorTypeName":
-        aValue = a.errorTypeName || "";
-        bValue = b.errorTypeName || "";
-        break;
-      case "status":
-        aValue = a.status;
-        bValue = b.status;
-        break;
-      case "createdAt":
-        aValue = new Date(a.createdAt).getTime();
-        bValue = new Date(b.createdAt).getTime();
-        break;
-      default:
-        return 0;
+  // Hàm lấy icon sắp xếp
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field || sortDirection === "none") {
+      return (
+        <div className="flex flex-col opacity-50 group-hover:opacity-75 transition-opacity">
+          <ChevronUp className="h-3 w-3 text-gray-400" />
+          <ChevronDown className="h-3 w-3 -mt-1 text-gray-400" />
+        </div>
+      );
     }
 
-    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    return 0;
-  });
-
-  // Pagination logic
-  const getCurrentData = () => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return sortedRequests.slice(startIndex, endIndex);
-  };
-
-  // Selection handlers
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    setSelectedItems(
-      checked ? sortedRequests.map((request) => request.id) : []
+    return (
+      <div className="flex flex-col">
+        <ChevronUp
+          className={`h-3 w-3 ${
+            sortDirection === "asc" ? "text-blue-600" : "text-gray-300"
+          }`}
+        />
+        <ChevronDown
+          className={`h-3 w-3 -mt-1 ${
+            sortDirection === "desc" ? "text-blue-600" : "text-gray-300"
+          }`}
+        />
+      </div>
     );
   };
 
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems((prev) => [...prev, itemId]);
+  // Hàm xử lý chọn hàng
+  const handleRowSelect = (id: string, selected: boolean) => {
+    if (selected) {
+      setSelectedRowKeys((prev) => [...prev, id]);
     } else {
-      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
-      setSelectAll(false);
+      setSelectedRowKeys((prev) => prev.filter((key) => key !== id));
     }
   };
 
-  // Export handler
-  const handleExportExcel = () => {
-    const itemsToExport =
-      selectedItems.length > 0
-        ? sortedRequests.filter((request) => selectedItems.includes(request.id))
-        : sortedRequests;
+  // Hàm xử lý chọn tất cả
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      const currentPageKeys = paginatedData.map((row) => row.id);
+      setSelectedRowKeys((prev) => [...prev, ...currentPageKeys]);
+    } else {
+      const currentPageKeys = paginatedData.map((row) => row.id);
+      setSelectedRowKeys((prev) =>
+        prev.filter((key) => !currentPageKeys.includes(key))
+      );
+    }
+  };
 
-    if (itemsToExport.length === 0) {
+  // Hàm xuất Excel
+  const handleExportExcel = async () => {
+    const selectedData = filteredAndSortedData.filter((item) =>
+      selectedRowKeys.includes(item.id)
+    );
+
+    if (selectedData.length === 0) {
       setShowExportErrorModal(true);
       return;
     }
 
-    console.log("Xuất Excel:", itemsToExport);
-    // TODO: Implement actual Excel export logic
-    setExportCount(itemsToExport.length);
-    setShowExportSuccessModal(true);
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const XLSX = await import("xlsx");
+
+      // Tạo dữ liệu Excel
+      const excelData = selectedData.map((item, index) => ({
+        STT: index + 1,
+        "Mã yêu cầu": item.requestCode,
+        "Tên tài sản": item.assetName || "Chưa xác định",
+        "Mã tài sản": item.assetCode || "Chưa xác định",
+        "Linh kiện": item.componentName || "Chưa xác định",
+        "Vị trí": `${item.buildingName || "Chưa xác định"} - ${
+          item.roomName || "Chưa xác định"
+        }`,
+        Máy: `Máy ${item.machineLabel || "Chưa xác định"}`,
+        "Người báo": item.reporterName || "Chưa xác định",
+        "Loại lỗi": item.errorTypeName || "Chưa xác định",
+        "Mô tả lỗi": item.description || "",
+        "Trạng thái": repairRequestStatusConfig[item.status].label,
+        "Ngày báo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+      }));
+
+      // Tạo workbook và worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Thêm worksheet vào workbook
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách báo lỗi");
+
+      // Xuất file
+      const fileName = `danh-sach-bao-loi-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      setExportCount(selectedData.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setShowExportErrorModal(true);
+    }
   };
 
-  // View details handler
-  const handleViewDetails = (requestId: string) => {
-    router.push(
-      `/to-truong-ky-thuat/danh-sach-bao-loi/chi-tiet?id=${requestId}`
-    );
-  };
-
-  // Reset pagination when changing filters or search
-  useEffect(() => {
+  // Lọc và sắp xếp dữ liệu
+  const filteredAndSortedData = useMemo(() => {
+    // Reset về trang 1 khi filter thay đổi
     setCurrentPage(1);
-    setSelectedItems([]);
-    setSelectAll(false);
-  }, [selectedStatus, selectedErrorType, searchTerm]);
+
+    // Lọc dữ liệu
+    const filtered = mockRepairRequests.filter((item: RepairRequest) => {
+      const matchesSearch = searchText
+        ? [
+            item.requestCode,
+            item.assetName,
+            item.assetCode,
+            item.componentName,
+            item.errorTypeName,
+            item.roomName,
+            item.buildingName,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+            .includes(searchText.toLowerCase())
+        : true;
+
+      const matchesStatus = statusFilter ? item.status === statusFilter : true;
+
+      const createdAt = new Date(item.createdAt);
+      const matchesDateRange =
+        dateRange && dateRange[0] && dateRange[1]
+          ? createdAt >= dateRange[0].toDate() &&
+            createdAt <= dateRange[1].toDate()
+          : true;
+
+      return matchesSearch && matchesStatus && matchesDateRange;
+    });
+
+    // Sắp xếp dữ liệu
+    if (!sortField || sortDirection === "none") return filtered;
+
+    return [...filtered].sort((a, b) => {
+      let aValue: string | Date | number = "";
+      let bValue: string | Date | number = "";
+
+      switch (sortField) {
+        case "requestCode":
+          aValue = a.requestCode;
+          bValue = b.requestCode;
+          break;
+        case "assetName":
+          aValue = a.assetName || "";
+          bValue = b.assetName || "";
+          break;
+        case "location":
+          aValue = `${a.buildingName || ""} ${a.roomName || ""}`;
+          bValue = `${b.buildingName || ""} ${b.roomName || ""}`;
+          break;
+        case "reporterName":
+          aValue = a.reporterName || "";
+          bValue = b.reporterName || "";
+          break;
+        case "errorTypeName":
+          aValue = a.errorTypeName || "";
+          bValue = b.errorTypeName || "";
+          break;
+        case "status":
+          aValue = a.status;
+          bValue = b.status;
+          break;
+        case "createdAt":
+          aValue = new Date(a.createdAt);
+          bValue = new Date(b.createdAt);
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [searchText, statusFilter, dateRange, sortField, sortDirection]);
+
+  // Dữ liệu phân trang
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredAndSortedData.slice(startIndex, endIndex);
+  }, [filteredAndSortedData, currentPage, pageSize]);
 
   return (
-    <div className="container mx-auto px-4 py-2 main-content">
-      <div className="mb-2">
-        <Breadcrumb
-          items={[
-            {
-              href: "/to-truong-ky-thuat",
-              title: (
-                <div className="flex items-center">
-                  <span>Trang chủ</span>
+    <div className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          {
+            href: "/to-truong-ky-thuat",
+            title: (
+              <div className="flex items-center">
+                <span>Trang chủ</span>
+              </div>
+            ),
+          },
+          {
+            title: (
+              <div className="flex items-center">
+                <span>Danh sách báo lỗi</span>
+              </div>
+            ),
+          },
+        ]}
+      />
+
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          Danh sách báo lỗi
+        </h1>
+        <p className="mt-2 text-gray-600">
+          Theo dõi và quản lý các báo cáo lỗi từ giảng viên và kỹ thuật viên.
+        </p>
+      </div>
+
+      {/* Filters & Search */}
+      <div className="bg-white p-4 rounded-lg shadow space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <Input
+            className="col-span-1 md:col-span-2"
+            placeholder="Tìm kiếm theo mã, tên tài sản, linh kiện, loại lỗi, vị trí..."
+            prefix={<Search className="w-4 h-4" />}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+
+          <Select
+            placeholder="Chọn trạng thái"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            allowClear>
+            <Option value="">Tất cả trạng thái</Option>
+            <Option value={RepairStatus.CHỜ_TIẾP_NHẬN}>Chờ tiếp nhận</Option>
+            <Option value={RepairStatus.ĐÃ_TIẾP_NHẬN}>Đã tiếp nhận</Option>
+            <Option value={RepairStatus.ĐANG_XỬ_LÝ}>Đang xử lý</Option>
+            <Option value={RepairStatus.CHỜ_THAY_THẾ}>Chờ thay thế</Option>
+            <Option value={RepairStatus.ĐÃ_HOÀN_THÀNH}>Đã hoàn thành</Option>
+            <Option value={RepairStatus.ĐÃ_HỦY}>Đã hủy</Option>
+          </Select>
+
+          <RangePicker
+            placeholder={["Từ ngày", "Đến ngày"]}
+            format="DD/MM/YYYY"
+            value={dateRange}
+            onChange={setDateRange}
+          />
+
+          <Button
+            type="primary"
+            icon={<Download className="w-4 h-4" />}
+            onClick={handleExportExcel}
+            disabled={selectedRowKeys.length === 0}>
+            Xuất Excel ({selectedRowKeys.length})
+          </Button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto bg-white shadow rounded-lg">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300"
+                    checked={
+                      paginatedData.length > 0 &&
+                      paginatedData.every((row) =>
+                        selectedRowKeys.includes(row.id)
+                      )
+                    }
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    aria-label="Chọn tất cả báo lỗi"
+                  />
+                  <span>STT</span>
                 </div>
-              ),
-            },
-            {
-              title: (
-                <div className="flex items-center">
-                  <span>Danh sách báo lỗi</span>
+              </th>
+              <th
+                className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-24"
+                onClick={() => handleSort("requestCode")}>
+                <div className="flex items-center uppercase space-x-1">
+                  <span>Mã YC</span>
+                  {getSortIcon("requestCode")}
                 </div>
-              ),
-            },
-          ]}
+              </th>
+              <th
+                className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-40"
+                onClick={() => handleSort("assetName")}>
+                <div className="flex items-center uppercase space-x-1">
+                  <span>Tài sản</span>
+                  {getSortIcon("assetName")}
+                </div>
+              </th>
+              <th
+                className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-32"
+                onClick={() => handleSort("location")}>
+                <div className="flex items-center uppercase space-x-1">
+                  <span>Vị trí</span>
+                  {getSortIcon("location")}
+                </div>
+              </th>
+              <th
+                className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-28"
+                onClick={() => handleSort("reporterName")}>
+                <div className="flex items-center uppercase space-x-1">
+                  <span>Người báo</span>
+                  {getSortIcon("reporterName")}
+                </div>
+              </th>
+              <th
+                className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-32"
+                onClick={() => handleSort("errorTypeName")}>
+                <div className="flex items-center uppercase space-x-1">
+                  <span>Loại lỗi</span>
+                  {getSortIcon("errorTypeName")}
+                </div>
+              </th>
+              <th
+                className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-28"
+                onClick={() => handleSort("status")}>
+                <div className="flex items-center uppercase space-x-1">
+                  <span>Trạng thái</span>
+                  {getSortIcon("status")}
+                </div>
+              </th>
+              <th
+                className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-24"
+                onClick={() => handleSort("createdAt")}>
+                <div className="flex items-center uppercase space-x-1">
+                  <span>Ngày báo</span>
+                  {getSortIcon("createdAt")}
+                </div>
+              </th>
+              <th className="px-2 py-3 text-left text-xs uppercase font-medium text-gray-500 tracking-wider w-16">
+                Thao tác
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {paginatedData.map((record, index) => {
+              const config = repairRequestStatusConfig[record.status];
+              return (
+                <tr key={record.id} className="hover:bg-gray-50">
+                  <td className="px-2 py-3 text-sm text-gray-700 w-20">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300"
+                        checked={selectedRowKeys.includes(record.id)}
+                        onChange={(e) =>
+                          handleRowSelect(record.id, e.target.checked)
+                        }
+                        aria-label={`Chọn báo lỗi ${record.requestCode}`}
+                      />
+                      <span>{(currentPage - 1) * pageSize + index + 1}</span>
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-sm font-medium text-blue-600 w-24">
+                    <div className="truncate" title={record.requestCode}>
+                      {record.requestCode}
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-sm text-gray-700 w-40">
+                    <div>
+                      <div
+                        className="font-medium truncate"
+                        title={record.assetName || "Chưa xác định"}>
+                        {record.assetName || "Chưa xác định"}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-sm text-gray-700 w-32">
+                    <div>
+                      <div
+                        className="font-medium truncate"
+                        title={record.buildingName || "Chưa xác định"}>
+                        {record.buildingName || "Chưa xác định"}
+                      </div>
+                      <div
+                        className="text-xs text-gray-500 truncate"
+                        title={`${record.roomName || "Chưa xác định"} - Máy ${
+                          record.machineLabel || "N/A"
+                        }`}>
+                        {record.roomName || "Chưa xác định"} - M
+                        {record.machineLabel || "N/A"}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-sm text-gray-700 w-28">
+                    <div
+                      className="truncate"
+                      title={record.reporterName || "Chưa xác định"}>
+                      {record.reporterName || "Chưa xác định"}
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-sm text-gray-700 w-32">
+                    <div
+                      className="truncate"
+                      title={record.errorTypeName || "Chưa xác định"}>
+                      {record.errorTypeName || "Chưa xác định"}
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 w-28">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${config.color} truncate`}
+                      title={config.label}>
+                      {config.label}
+                    </span>
+                  </td>
+                  <td className="px-2 py-3 text-sm text-gray-700 w-24">
+                    <div
+                      className="truncate"
+                      title={new Date(record.createdAt).toLocaleDateString(
+                        "vi-VN"
+                      )}>
+                      {new Date(record.createdAt).toLocaleDateString("vi-VN")}
+                    </div>
+                  </td>
+                  <td className="px-2 py-3 text-center w-16">
+                    <Link
+                      href={`/to-truong-ky-thuat/danh-sach-bao-loi/chi-tiet?id=${record.id}`}>
+                      <button
+                        title="Xem chi tiết"
+                        className="text-blue-600 hover:text-blue-900 inline-flex items-center">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={filteredAndSortedData.length}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          showSizeChanger={true}
+          pageSizeOptions={[10, 20, 50, 100]}
+          showQuickJumper={true}
+          showTotal={true}
         />
       </div>
 
-      {/* Header */}
-      <ReportListHeader
-        selectedItemsCount={selectedItems.length}
-        totalItems={sortedRequests.length}
-        onExportExcel={handleExportExcel}
-      />
+      {/* Export Success Modal */}
+      <Modal
+        open={showExportSuccessModal}
+        onCancel={() => setShowExportSuccessModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportSuccessModal(false)}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <CheckCircle className="h-8 w-8 text-green-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Xuất Excel thành công!
+            </h3>
+            <p className="text-sm text-gray-500">
+              Đã xuất {exportCount} báo lỗi ra file {exportFileName} thành công.
+            </p>
+          </div>
+        </div>
+      </Modal>
 
-      {/* Stats */}
-      <ReportStats requests={requests} />
-
-      {/* Filters */}
-      <ReportFilters
-        searchTerm={searchTerm}
-        selectedStatus={selectedStatus}
-        selectedErrorType={selectedErrorType}
-        onSearchChange={setSearchTerm}
-        onStatusChange={setSelectedStatus}
-        onErrorTypeChange={setSelectedErrorType}
-      />
-
-      {/* Requests Table */}
-      <ReportTable
-        requests={getCurrentData()}
-        selectedItems={selectedItems}
-        selectAll={selectAll}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        onSelectAll={handleSelectAll}
-        onSelectItem={handleSelectItem}
-        onViewDetails={handleViewDetails}
-      />
-
-      {/* Pagination */}
-      <Pagination
-        currentPage={currentPage}
-        pageSize={pageSize}
-        total={sortedRequests.length}
-        onPageChange={setCurrentPage}
-        onPageSizeChange={setPageSize}
-        className="mt-6"
-      />
-
-      {/* Export Modals */}
-      <ReportExportModals
-        showExportSuccessModal={showExportSuccessModal}
-        showExportErrorModal={showExportErrorModal}
-        exportCount={exportCount}
-        onCloseSuccessModal={() => setShowExportSuccessModal(false)}
-        onCloseErrorModal={() => setShowExportErrorModal(false)}
-      />
+      {/* Export Error Modal */}
+      <Modal
+        open={showExportErrorModal}
+        onCancel={() => setShowExportErrorModal(false)}
+        footer={[
+          <button
+            key="ok"
+            onClick={() => setShowExportErrorModal(false)}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+            Đóng
+          </button>,
+        ]}
+        centered
+        width={400}>
+        <div className="flex items-center space-x-3">
+          <XCircle className="h-8 w-8 text-red-600" />
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">
+              Không thể xuất Excel
+            </h3>
+            <p className="text-sm text-gray-500">
+              Không có dữ liệu để xuất hoặc có lỗi xảy ra. Vui lòng chọn ít nhất
+              một báo lỗi và thử lại.
+            </p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
