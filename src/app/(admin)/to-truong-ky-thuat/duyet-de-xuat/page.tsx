@@ -4,7 +4,7 @@ import { ReplacementRequestItem, ReplacementStatus } from "@/types";
 import { mockReplacementRequestItem } from "@/lib/mockData";
 import { Breadcrumb, Modal } from "antd";
 import { CheckCircle, XCircle } from "lucide-react";
-import { Pagination, ExcelExportButton } from "@/components/common";
+import { Pagination } from "@/components/common";
 import {
   ProposalFilters,
   ProposalTable,
@@ -220,13 +220,6 @@ export default function DuyetDeXuatPage() {
                 Duyệt đề xuất thay thế linh kiện
               </h1>
             </div>
-
-            <ExcelExportButton
-              totalCount={sortedData.length}
-              selectedCount={selectedRowKeys.length}
-              onExport={handleExportExcel}
-              label="Xuất Excel"
-            />
           </div>
         </div>
 
@@ -234,8 +227,10 @@ export default function DuyetDeXuatPage() {
         <ProposalFilters
           searchTerm={searchTerm}
           selectedStatus={selectedStatus}
+          selectedCount={selectedRowKeys.length}
           onSearchChange={setSearchTerm}
           onStatusChange={setSelectedStatus}
+          onExport={handleExportExcel}
         />
 
         {/* Table */}

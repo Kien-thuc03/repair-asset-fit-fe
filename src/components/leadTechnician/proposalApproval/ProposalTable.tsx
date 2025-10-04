@@ -1,5 +1,5 @@
 import { Tag } from "antd";
-import { Eye, ChevronUp, ChevronDown } from "lucide-react";
+import { Eye, ChevronUp, ChevronDown, Ticket, TicketCheck, Check, X } from "lucide-react";
 import Link from "next/link";
 import { ReplacementRequestItem, ReplacementStatus } from "@/types";
 
@@ -205,13 +205,15 @@ export default function ProposalTable({
                     <>
                       <button
                         onClick={() => onApprove(record.id)}
-                        className="text-green-600 hover:text-green-900 px-2 py-1 rounded text-xs">
-                        Duyệt
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+>
+                        <Check className="inline w-4 h-4 mr-1" />
                       </button>
                       <button
                         onClick={() => onReject(record.id)}
-                        className="text-red-600 hover:text-red-900 px-2 py-1 rounded text-xs">
-                        Từ chối
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-red-600 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                        <X className="inline w-4 h-4 mr-1" />
                       </button>
                     </>
                   )}
