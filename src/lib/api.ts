@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Có thể cấu hình từ biến môi trường
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
 
 export const api = axios.create({
   baseURL: API_URL,

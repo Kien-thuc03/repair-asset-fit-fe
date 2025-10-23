@@ -8,11 +8,13 @@ import {
   useEffect,
 } from "react";
 import { UserRole } from "@/types/repair";
-import { users } from "@/lib/mockData/users";
-import { users_roles } from "@/lib/mockData/users_roles";
-import { AuthenticatedUser, UserStatus, IRole } from "@/types/user";
-import { roles } from "@/lib/mockData/roles";
-import { units } from "@/lib/mockData/units";
+import { AuthenticatedUser, IRole } from "@/types/user";
+import {
+  loginAndSave,
+  logout as apiLogout,
+  getUser as getStoredUser,
+  saveUser as saveStoredUser,
+} from "@/lib/api/auth";
 
 // Type context để quản lý xác thực
 type AuthContextType = {
@@ -27,28 +29,46 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// Hàm helper để lấy các vai trò của user
-const getUserRoles = (userId: string): IRole[] => {
-  // Lấy danh sách roleId của user
-  const userRoleIds = users_roles
-    .filter((ur) => ur.userId === userId)
-    .map((ur) => ur.roleId);
+// Hàm helper để chuyển đổi response từ API thành AuthenticatedUser
+const mapLoginResponseToUser = (
+  apiUser: {
+    id: string;
+    username: string;
+    fullName: string;
+    email?: string;
+    phoneNumber?: string;
+    birthDate?: string;
+    roles: string[];
+    permissions: string[];
+  }
+): AuthenticatedUser => {
+  // Convert role codes to IRole objects
+  const userRoles: IRole[] = apiUser.roles.map((roleCode) => ({
+    id: roleCode, // Sử dụng code làm id tạm thời
+    name: roleCode,
+    code: roleCode,
+  }));
 
-  // Lấy danh sách IRole từ roleId
-  return roles
-    .filter((role) => userRoleIds.includes(role.id))
-    .map((role) => ({
-      id: role.id,
-      name: role.name,
-      code: role.code
-    }));
-};
+  // Convert permission codes to IPermission objects
+  const userPermissions = apiUser.permissions.map((permCode) => ({
+    id: permCode,
+    name: permCode,
+    code: permCode,
+  }));
 
-// Hàm helper để lấy đơn vị của user
-const getUserDepartment = (unitId?: string): string => {
-  if (!unitId) return "";
-  const unit = units.find((u) => u.id === unitId);
-  return unit ? unit.name : "";
+  return {
+    id: apiUser.id,
+    username: apiUser.username,
+    fullName: apiUser.fullName,
+    email: apiUser.email || "",
+    roles: userRoles,
+    activeRole: userRoles[0], // First role is default
+    permissions: userPermissions,
+    // Optional fields - không thêm phoneNumber vì không có trong AuthenticatedUser type
+    unitId: undefined,
+    unit: undefined,
+    department: undefined,
+  };
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -59,38 +79,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user is logged in on app start
   useEffect(() => {
-    // Đặt một timeout nhỏ để đảm bảo hydration đã hoàn tất
     const checkAuth = async () => {
-      const savedUser = localStorage.getItem("repair_user");
-      if (savedUser) {
-        try {
-          const parsedUser = JSON.parse(savedUser);
-          // Kiểm tra tính hợp lệ của dữ liệu người dùng
-          if (
-            parsedUser &&
-            parsedUser.id &&
-            parsedUser.roles &&
-            parsedUser.activeRole
-          ) {
-            setUser(parsedUser);
-            // Set cookie for middleware
-            document.cookie = `repair_user=${savedUser}; path=/; max-age=${
-              7 * 24 * 60 * 60
-            }`; // 7 days
-          } else {
-            // Xóa dữ liệu không hợp lệ
-            localStorage.removeItem("repair_user");
-            document.cookie =
-              "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-          }
-        } catch {
-          localStorage.removeItem("repair_user");
-          document.cookie =
-            "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      try {
+        // Lấy user từ storage (đã được lưu bởi API auth)
+        const savedUser = getStoredUser();
+        if (savedUser) {
+          // Convert saved user to AuthenticatedUser format
+          const authenticatedUser = mapLoginResponseToUser(savedUser);
+          setUser(authenticatedUser);
+          
+          // Set cookie for middleware
+          const userJson = JSON.stringify(authenticatedUser);
+          document.cookie = `repair_user=${userJson}; path=/; max-age=${
+            7 * 24 * 60 * 60
+          }`; // 7 days
         }
+      } catch (error) {
+        console.error("Error loading user from storage:", error);
+        // Clear invalid data
+        apiLogout();
+      } finally {
+        setIsInitializing(false);
       }
-      // Đánh dấu quá trình khởi tạo đã hoàn tất
-      setIsInitializing(false);
     };
 
     checkAuth();
@@ -99,66 +109,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function login(username: string, password: string) {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Call API login (sẽ tự động lưu token và user info vào localStorage)
+      const response = await loginAndSave({ username, password });
 
-      // Tìm user từ dữ liệu - có thể đăng nhập bằng username hoặc email
-      const foundUser = users.find(
-        (u) =>
-          (u.username === username || u.email === username) &&
-          u.password === password &&
-          u.status === UserStatus.ACTIVE
-      );
+      // Convert API response to AuthenticatedUser format
+      const authenticatedUser = mapLoginResponseToUser(response.user);
 
-      if (foundUser) {
-        // Lấy danh sách vai trò của user
-        const userRolesList = getUserRoles(foundUser.id);
+      console.log("✅ Login successful:", authenticatedUser);
 
-        // Kiểm tra vai trò
-        console.log("User roles:", userRolesList);
+      // Update state
+      setUser(authenticatedUser);
 
-        // Nếu không có vai trò nào, không cho phép đăng nhập
-        if (userRolesList.length === 0) {
-          throw new Error("Tài khoản không có quyền truy cập");
-        }
-
-        // Tạo đối tượng user đã xác thực
-        const authenticatedUser: AuthenticatedUser = {
-          id: foundUser.id,
-          username: foundUser.username,
-          fullName: foundUser.fullName,
-          email: foundUser.email,
-          unitId: foundUser.unitId,
-          roles: userRolesList,
-          activeRole: userRolesList[0], // Vai trò đầu tiên là vai trò mặc định
-          unit: foundUser.unitId ? units.find(u => u.id === foundUser.unitId) : undefined,
-          permissions: [], // Sẽ được tính dựa trên roles
-          department: getUserDepartment(foundUser.unitId),
-        };
-
-        console.log("Authenticated user:", authenticatedUser);
-
-        setUser(authenticatedUser);
-        const userJson = JSON.stringify(authenticatedUser);
-        localStorage.setItem("repair_user", userJson);
-        // Set cookie for middleware
-        document.cookie = `repair_user=${userJson}; path=/; max-age=${
-          7 * 24 * 60 * 60
-        }`; // 7 days
-      } else {
-        throw new Error("Thông tin đăng nhập không chính xác");
-      }
+      // Set cookie for middleware
+      const userJson = JSON.stringify(authenticatedUser);
+      document.cookie = `repair_user=${userJson}; path=/; max-age=${
+        7 * 24 * 60 * 60
+      }`; // 7 days
     } catch (error) {
-      console.error("Login error details:", error);
-      throw new Error((error as Error).message || "Lỗi đăng nhập");
+      console.error("❌ Login error:", error);
+      throw new Error(
+        error instanceof Error
+          ? error.message
+          : "Thông tin đăng nhập không chính xác"
+      );
     } finally {
       setIsLoading(false);
     }
   }
 
   function logout() {
+    // Call API logout để xóa token và user info từ localStorage
+    apiLogout();
+    
+    // Clear state
     setUser(null);
-    localStorage.removeItem("repair_user");
+    
     // Remove cookie
     document.cookie =
       "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -166,15 +151,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Function to switch between roles for users with multiple roles
   function switchRole(role: IRole) {
-    if (user && user.roles.some(r => r.code === role.code)) {
+    if (user && user.roles.some((r) => r.code === role.code)) {
       const updatedUser = {
         ...user,
         activeRole: role,
       };
 
       setUser(updatedUser);
+
+      // Save updated user to storage
+      // Convert back to API format for storage
+      const userForStorage = {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        roles: updatedUser.roles.map((r) => r.code || ""),
+        permissions: updatedUser.permissions.map((p) => p.code || ""),
+      };
+      saveStoredUser(userForStorage);
+
+      // Set cookie for middleware
       const userJson = JSON.stringify(updatedUser);
-      localStorage.setItem("repair_user", userJson);
       document.cookie = `repair_user=${userJson}; path=/; max-age=${
         7 * 24 * 60 * 60
       }`; // 7 days
@@ -183,7 +181,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Sử dụng window.location thay vì router để đảm bảo làm mới toàn bộ trang
       if (role.code) {
         import("@/types/repair").then(({ RoleInfo }) => {
-          const defaultRoute = RoleInfo[role.code as UserRole]?.defaultRoute || "/";
+          const defaultRoute =
+            RoleInfo[role.code as UserRole]?.defaultRoute || "/";
           window.location.href = defaultRoute;
         });
       }
