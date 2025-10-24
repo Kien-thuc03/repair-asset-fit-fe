@@ -217,7 +217,7 @@ export default function SoftwareProposalsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
