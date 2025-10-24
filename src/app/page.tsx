@@ -11,10 +11,16 @@ export default function Home() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (isAuthenticated && user) {
+      if (isAuthenticated && user && user.activeRole) {
         // Redirect to role-specific dashboard
-        const defaultRoute = RoleInfo[(user.activeRole as unknown) as UserRole]?.defaultRoute 
-        router.push(defaultRoute)
+        const defaultRoute = RoleInfo[user.activeRole.code as UserRole]?.defaultRoute
+        if (defaultRoute) {
+          router.push(defaultRoute)
+        } else {
+          // Fallback if no default route is found for the role
+          console.warn('No default route found for role:', user.activeRole.code)
+          router.push('/login')
+        }
       } else {
         router.push('/login')
       }
