@@ -446,7 +446,7 @@ Trân trọng kính trình.`;
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -469,12 +469,12 @@ Trân trọng kính trình.`;
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
             Chi tiết đề xuất • {request.proposalCode}
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-sm sm:text-base text-gray-600">
             Thông tin chi tiết về đề xuất thay thế linh kiện
           </p>
         </div>
@@ -500,12 +500,12 @@ Trân trọng kính trình.`;
       )}
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Info */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Basic Info */}
           <Card title="Thông tin cơ bản" className="shadow">
-            <Descriptions column={2} bordered>
+            <Descriptions column={{ xs: 1, sm: 2 }} bordered size="small">
               <Descriptions.Item label="Mã đề xuất" span={1}>
                 <span className="font-mono font-medium text-blue-600">
                   {request.proposalCode}
@@ -523,17 +523,19 @@ Trân trọng kính trình.`;
               </Descriptions.Item>
               {canApproveOrReject ? (
                 <Descriptions.Item label="Hành động">
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                     <Button
                       type="primary"
                       icon={<CheckCircle className="h-4 w-4" />}
-                      onClick={() => setShowApproveModal(true)}>
+                      onClick={() => setShowApproveModal(true)}
+                      className="w-full sm:w-auto">
                       Phê duyệt
                     </Button>
                     <Button
                       danger
                       icon={<XCircle className="h-4 w-4" />}
-                      onClick={() => setShowRejectModal(true)}>
+                      onClick={() => setShowRejectModal(true)}
+                      className="w-full sm:w-auto">
                       Từ chối
                     </Button>
                   </div>
@@ -582,6 +584,7 @@ Trân trọng kính trình.`;
               rowKey="id"
               pagination={false}
               size="middle"
+              scroll={{ x: true }}
             />
           </Card>
         </div>
@@ -676,7 +679,8 @@ Trân trọng kính trình.`;
         }
         open={showSubmissionModal}
         onCancel={() => setShowSubmissionModal(false)}
-        width={800}
+        width="90%"
+        style={{ maxWidth: "800px" }}
         destroyOnClose={false}
         maskClosable={false}
         footer={[
