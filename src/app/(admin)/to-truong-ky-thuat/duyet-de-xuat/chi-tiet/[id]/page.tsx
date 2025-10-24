@@ -615,7 +615,7 @@ Trân trọng kính trình.`;
                 rowKey="id"
                 pagination={false}
                 size="small"
-                scroll={{ x: 'max-content' }}
+                scroll={{ x: "max-content" }}
                 className="responsive-table"
               />
             </div>
