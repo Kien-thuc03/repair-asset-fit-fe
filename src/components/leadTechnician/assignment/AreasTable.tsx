@@ -82,14 +82,14 @@ const AreasTable: React.FC<AreasTableProps> = ({
   };
 
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden">
+    <div className="bg-white shadow rounded-lg overflow-hidden hidden lg:block">
       <div className="px-6 py-4 border-b border-gray-200">
         <h2 className="text-lg font-medium text-gray-900">
           Danh sách khu vực ({rooms.length})
         </h2>
       </div>
 
-      <div className="overflow-auto">
+      <div className="overflow-auto min-h-[500px]">
         <table className="min-w-full divide-y divide-gray-200 table-fixed">
           <thead className="bg-gray-50 sticky top-0">
             <tr>
