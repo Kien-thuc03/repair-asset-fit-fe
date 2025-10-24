@@ -295,10 +295,10 @@ export default function BaoCaoLoiPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-blue-900 mb-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-blue-900 mb-2">
           Báo cáo lỗi thiết bị
         </h1>
-        <p className="text-gray-600">
+        <p className="text-sm sm:text-base text-gray-600">
           Báo cáo sự cố và lỗi thiết bị máy tính trong phòng học
         </p>
       </div>
@@ -308,31 +308,32 @@ export default function BaoCaoLoiPage() {
         <Steps
           current={currentStep}
           size="small"
+          direction={isMobile ? "vertical" : "horizontal"}
           items={[
             {
               title: "Chọn vị trí",
               icon: <EnvironmentOutlined />,
-              description: "Tòa nhà → Tầng → Phòng",
+              description: isMobile ? undefined : "Tòa nhà → Tầng → Phòng",
             },
             {
               title: "Chọn thiết bị",
               icon: <LaptopOutlined />,
-              description: "Máy tính cần báo lỗi",
+              description: isMobile ? undefined : "Máy tính cần báo lỗi",
             },
             {
               title: "Loại lỗi",
               icon: <WarningOutlined />,
-              description: "Chọn loại sự cố",
+              description: isMobile ? undefined : "Chọn loại sự cố",
             },
             {
               title: "Mô tả chi tiết",
               icon: <EditOutlined />,
-              description: "Thông tin chi tiết về lỗi",
+              description: isMobile ? undefined : "Thông tin chi tiết về lỗi",
             },
             {
               title: "Hoàn tất",
               icon: <CheckCircleOutlined />,
-              description: "Đính kèm hình ảnh & gửi",
+              description: isMobile ? undefined : "Đính kèm hình ảnh & gửi",
             },
           ]}
         />
@@ -340,16 +341,17 @@ export default function BaoCaoLoiPage() {
 
       {/* QR Scanner for Mobile */}
       {isMobile && (
-        <Card>
-          <div className="text-center">
+        <Card className="bg-blue-50 border-blue-200">
+          <div className="text-center py-2">
             <Button
               type="primary"
               size="large"
               icon={<ScanOutlined />}
-              className="mb-2">
+              className="mb-3 w-full sm:w-auto"
+              style={{ height: "48px", fontSize: "16px" }}>
               Quét mã QR thiết bị
             </Button>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Quét mã QR trên thiết bị để tự động điền thông tin
             </p>
           </div>
@@ -418,7 +420,7 @@ export default function BaoCaoLoiPage() {
         <Form layout="vertical" onFinish={handleSubmit}>
           {/* Bước 1: Chọn vị trí */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+            <h3 className="text-base sm:text-lg font-semibold mb-4 text-blue-900">
               Bước 1: Chọn vị trí thiết bị
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -467,7 +469,7 @@ export default function BaoCaoLoiPage() {
 
           {/* Bước 2: Chọn thiết bị */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+            <h3 className="text-base sm:text-lg font-semibold mb-4 text-blue-900">
               Bước 2: Chọn thiết bị
             </h3>
             <Form.Item label="Chọn thiết bị" required>
@@ -497,7 +499,7 @@ export default function BaoCaoLoiPage() {
 
           {/* Bước 3: Chọn loại lỗi */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+            <h3 className="text-base sm:text-lg font-semibold mb-4 text-blue-900">
               Bước 3: Chọn loại lỗi
             </h3>
 
@@ -563,7 +565,7 @@ export default function BaoCaoLoiPage() {
 
           {/* Bước 4: Mô tả chi tiết */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+            <h3 className="text-base sm:text-lg font-semibold mb-4 text-blue-900">
               Bước 4: Mô tả chi tiết vấn đề
             </h3>
             <Form.Item label="Mô tả chi tiết lỗi" required>
@@ -589,7 +591,7 @@ export default function BaoCaoLoiPage() {
                 ? "opacity-50"
                 : ""
             }`}>
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+            <h3 className="text-base sm:text-lg font-semibold mb-4 text-blue-900">
               Bước 5: Chọn{" "}
               {errorCategory === "software" ? "phần mềm" : "linh kiện"} bị lỗi
               (tùy chọn)
@@ -678,12 +680,12 @@ export default function BaoCaoLoiPage() {
 
           {/* Bước 6: Đính kèm hình ảnh */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+            <h3 className="text-base sm:text-lg font-semibold mb-4 text-blue-900">
               Bước 6: Đính kèm hình ảnh (tùy chọn)
             </h3>
 
             <Form.Item label="Hình ảnh minh họa">
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                 <input
                   type="file"
                   accept="image/*"
@@ -694,18 +696,18 @@ export default function BaoCaoLoiPage() {
                 />
                 <label
                   htmlFor="media-upload"
-                  className="flex items-center px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600">
+                  className="flex items-center justify-center px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600 transition-colors w-full sm:w-auto">
                   <CameraOutlined className="mr-2" />
                   Chọn hình ảnh
                 </label>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 text-center sm:text-left">
                   Có thể chọn nhiều hình ảnh
                 </span>
               </div>
 
               {/* Display selected images */}
               {formData.mediaFiles.length > 0 && (
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                   {formData.mediaFiles.map((file, index) => (
                     <div key={index} className="relative">
                       <Image
@@ -721,7 +723,7 @@ export default function BaoCaoLoiPage() {
                         size="small"
                         icon={<DeleteOutlined />}
                         onClick={() => handleRemoveFile(index)}
-                        className="absolute -top-2 -right-2"
+                        className="absolute -top-2 -right-2 shadow-lg"
                       />
                     </div>
                   ))}
@@ -733,8 +735,11 @@ export default function BaoCaoLoiPage() {
           {/* Form Actions */}
 
           {/* Submit Buttons */}
-          <div className="flex justify-end space-x-4">
-            <Button size="large" onClick={handleCancel}>
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
+            <Button
+              size="large"
+              onClick={handleCancel}
+              className="w-full sm:w-auto">
               Hủy bỏ
             </Button>
             <Button
@@ -742,6 +747,7 @@ export default function BaoCaoLoiPage() {
               size="large"
               htmlType="submit"
               loading={isSubmitting}
+              className="w-full sm:w-auto"
               disabled={
                 !formData.building ||
                 !formData.roomId ||
