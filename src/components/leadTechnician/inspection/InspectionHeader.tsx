@@ -25,14 +25,16 @@ export default function InspectionHeader() {
         />
       </div>
 
-      <div className="mb-4 sm:mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Xác nhận biên bản
-          </h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">
-            Xem và ký xác nhận các biên bản kiểm tra do Phòng Quản trị gửi đến
-          </p>
+      <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              Xác nhận biên bản
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600">
+              Xem và ký xác nhận các biên bản kiểm tra do Phòng Quản trị gửi đến
+            </p>
+          </div>
         </div>
       </div>
     </>
