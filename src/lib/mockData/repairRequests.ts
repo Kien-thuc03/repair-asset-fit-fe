@@ -288,7 +288,9 @@ export const getRepairRequestWithDetails = (
 
 // Hàm hủy yêu cầu sửa chữa (chỉ cho mock data)
 export const cancelRepairRequest = (requestId: string): boolean => {
-  const index = mockRepairRequests.findIndex(request => request.id === requestId);
+  const index = mockRepairRequests.findIndex(
+    (request) => request.id === requestId
+  );
   if (index !== -1) {
     // Xóa request khỏi mảng
     mockRepairRequests.splice(index, 1);

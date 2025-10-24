@@ -39,7 +39,7 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
     null
   );
   const [loading, setLoading] = useState(true);
-  
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -533,7 +533,6 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
               )}
           </Card>
         </div>
-
       </div>
 
       {/* Modals */}
