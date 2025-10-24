@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { UserRole, RoleInfo } from '@/types/repair'
 import { IRole } from '@/types/user'
 import { useAuth } from '@/contexts/AuthContext'
@@ -13,6 +12,7 @@ interface RoleSelectionModalProps {
 }
 
 const RoleIcons: Record<UserRole, React.ComponentType<{ className?: string }>> = {
+  [UserRole.ADMIN]: ShieldCheck,
   [UserRole.GIANG_VIEN]: Users,
   [UserRole.KY_THUAT_VIEN]: Wrench, 
   [UserRole.TO_TRUONG_KY_THUAT]: ShieldCheck,
@@ -22,16 +22,18 @@ const RoleIcons: Record<UserRole, React.ComponentType<{ className?: string }>> =
 
 export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps) {
   const { user, switchRole } = useAuth()
-  const router = useRouter()
   const [selectedRole, setSelectedRole] = useState<IRole | null>(null)
   const [isAutoSelectEnabled, setIsAutoSelectEnabled] = useState(true)
   const [countdown, setCountdown] = useState(10)
 
   const handleContinue = () => {
     if (selectedRole) {
+      console.log("🎯 User selected role:", selectedRole);
       // Chỉ gọi switchRole, việc chuyển hướng sẽ được xử lý bên trong hàm switchRole
-      switchRole(selectedRole)
-      onClose()
+      switchRole(selectedRole);
+      onClose();
+    } else {
+      console.error("❌ No role selected");
     }
   }
 
@@ -54,6 +56,8 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
   // Thêm một timeout để tự động chọn vai trò sau 10 giây nếu người dùng không chọn
   useEffect(() => {
     if (isOpen && isAutoSelectEnabled && selectedRole) {
+      console.log("⏱️ Auto-select timer started for role:", selectedRole);
+      
       // Reset đếm ngược
       setCountdown(10);
       
@@ -71,6 +75,7 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
       // Tự động chọn vai trò sau 10 giây
       const timer = setTimeout(() => {
         if (selectedRole) {
+          console.log("⏰ Auto-selecting role:", selectedRole);
           // Chỉ gọi switchRole, việc chuyển hướng sẽ được xử lý bên trong hàm switchRole
           switchRole(selectedRole);
           onClose();
@@ -82,7 +87,7 @@ export function RoleSelectionModal({ isOpen, onClose }: RoleSelectionModalProps)
         clearInterval(countdownInterval);
       };
     }
-  }, [isOpen, isAutoSelectEnabled, selectedRole, router, switchRole, onClose]);
+  }, [isOpen, isAutoSelectEnabled, selectedRole, switchRole, onClose]);
 
   if (!isOpen || !user || !user.roles || user.roles.length <= 1) return null
 

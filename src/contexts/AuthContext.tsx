@@ -7,8 +7,8 @@ import {
   ReactNode,
   useEffect,
 } from "react";
-import { UserRole } from "@/types/repair";
-import { AuthenticatedUser, IRole } from "@/types/user";
+import { UserRole, RoleInfo } from "@/types/repair";
+import { AuthenticatedUser, IRole, IPermission } from "@/types/user";
 import {
   loginAndSave,
   logout as apiLogout,
@@ -40,35 +40,63 @@ const mapLoginResponseToUser = (
     birthDate?: string;
     roles: string[];
     permissions: string[];
+    activeRole?: string; // Optional: active role code from storage
   }
 ): AuthenticatedUser => {
-  // Convert role codes to IRole objects
-  const userRoles: IRole[] = apiUser.roles.map((roleCode) => ({
-    id: roleCode, // Sử dụng code làm id tạm thời
-    name: roleCode,
-    code: roleCode,
-  }));
+  console.log("🔄 Mapping API user to AuthenticatedUser:", apiUser);
+  
+  // Convert role codes to IRole objects with proper name and description
+  const userRoles: IRole[] = apiUser.roles.map((roleCode) => {
+    // Get role info from RoleInfo if available
+    const roleInfo = RoleInfo[roleCode as UserRole];
+    
+    console.log(`  📌 Mapping role: ${roleCode}`, roleInfo ? "✅ Found" : "❌ Not found");
+    
+    return {
+      id: roleCode, // Use code as id
+      name: roleInfo?.name || roleCode, // Use name from RoleInfo or fallback to code
+      code: roleCode,
+    };
+  });
 
   // Convert permission codes to IPermission objects
-  const userPermissions = apiUser.permissions.map((permCode) => ({
+  const userPermissions: IPermission[] = apiUser.permissions.map((permCode) => ({
     id: permCode,
     name: permCode,
     code: permCode,
   }));
 
-  return {
+  // Determine active role
+  let activeRole = userRoles[0]; // Default to first role
+  if (apiUser.activeRole) {
+    // Try to find the saved active role
+    const savedActiveRole = userRoles.find((r) => r.code === apiUser.activeRole);
+    if (savedActiveRole) {
+      activeRole = savedActiveRole;
+      console.log("  ✅ Using saved active role:", activeRole.code);
+    } else {
+      console.log("  ⚠️ Saved active role not found, using first role:", activeRole.code);
+    }
+  } else {
+    console.log("  ℹ️ No saved active role, using first role:", activeRole.code);
+  }
+
+  const authenticatedUser: AuthenticatedUser = {
     id: apiUser.id,
     username: apiUser.username,
     fullName: apiUser.fullName,
     email: apiUser.email || "",
     roles: userRoles,
-    activeRole: userRoles[0], // First role is default
+    activeRole: activeRole,
     permissions: userPermissions,
-    // Optional fields - không thêm phoneNumber vì không có trong AuthenticatedUser type
+    // Optional fields
     unitId: undefined,
     unit: undefined,
     department: undefined,
   };
+  
+  console.log("✅ Mapped AuthenticatedUser:", authenticatedUser);
+  return authenticatedUser;
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -77,27 +105,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Thêm trạng thái isInitializing để kiểm soát quá trình khởi tạo
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Check if user is logged in on app start
+      // Check if user is logged in on app start
   useEffect(() => {
     const checkAuth = async () => {
       try {
         // Lấy user từ storage (đã được lưu bởi API auth)
         const savedUser = getStoredUser();
         if (savedUser) {
+          console.log("🔍 Found saved user in storage:", savedUser);
+          
           // Convert saved user to AuthenticatedUser format
           const authenticatedUser = mapLoginResponseToUser(savedUser);
           setUser(authenticatedUser);
           
-          // Set cookie for middleware
-          const userJson = JSON.stringify(authenticatedUser);
-          document.cookie = `repair_user=${userJson}; path=/; max-age=${
+          // Set cookie for middleware với cấu trúc đơn giản
+          const cookieData = {
+            id: authenticatedUser.id,
+            username: authenticatedUser.username,
+            fullName: authenticatedUser.fullName,
+            email: authenticatedUser.email,
+            activeRole: authenticatedUser.activeRole?.code || "",
+            roles: authenticatedUser.roles.map(r => r.code || ""),
+          };
+          
+          const userJson = JSON.stringify(cookieData);
+          document.cookie = `repair_user=${encodeURIComponent(userJson)}; path=/; max-age=${
             7 * 24 * 60 * 60
           }`; // 7 days
+          
+          console.log("🍪 Cookie restored:", cookieData);
         }
       } catch (error) {
         console.error("Error loading user from storage:", error);
         // Clear invalid data
         apiLogout();
+        // Clear cookie
+        document.cookie =
+          "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       } finally {
         setIsInitializing(false);
       }
@@ -120,11 +164,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Update state
       setUser(authenticatedUser);
 
-      // Set cookie for middleware
-      const userJson = JSON.stringify(authenticatedUser);
-      document.cookie = `repair_user=${userJson}; path=/; max-age=${
+      // Set cookie for middleware với cấu trúc đơn giản hơn để middleware có thể đọc
+      // Chỉ lưu activeRole.code thay vì toàn bộ object
+      const cookieData = {
+        id: authenticatedUser.id,
+        username: authenticatedUser.username,
+        fullName: authenticatedUser.fullName,
+        email: authenticatedUser.email,
+        activeRole: authenticatedUser.activeRole?.code || "", // Chỉ lưu code
+        roles: authenticatedUser.roles.map(r => r.code || ""), // Chỉ lưu mảng code
+      };
+      
+      const userJson = JSON.stringify(cookieData);
+      document.cookie = `repair_user=${encodeURIComponent(userJson)}; path=/; max-age=${
         7 * 24 * 60 * 60
       }`; // 7 days
+      
+      console.log("🍪 Cookie set:", cookieData);
     } catch (error) {
       console.error("❌ Login error:", error);
       throw new Error(
@@ -159,7 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setUser(updatedUser);
 
-      // Save updated user to storage
+      // Save updated user to storage với activeRole
       // Convert back to API format for storage
       const userForStorage = {
         id: updatedUser.id,
@@ -168,24 +224,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: updatedUser.email,
         roles: updatedUser.roles.map((r) => r.code || ""),
         permissions: updatedUser.permissions.map((p) => p.code || ""),
+        activeRole: role.code, // Save active role code
       };
       saveStoredUser(userForStorage);
 
-      // Set cookie for middleware
-      const userJson = JSON.stringify(updatedUser);
-      document.cookie = `repair_user=${userJson}; path=/; max-age=${
-        7 * 24 * 60 * 60
-      }`; // 7 days
+      // Set cookie for middleware với cấu trúc đơn giản
+      const cookieData = {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        activeRole: role.code || "",
+        roles: updatedUser.roles.map(r => r.code || ""),
+      };
+      
+      const userJson = JSON.stringify(cookieData);
+      document.cookie = `repair_user=${encodeURIComponent(
+        userJson
+      )}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
+
+      console.log("✅ Switched to role:", role.name || role.code);
+      console.log("🍪 Updated cookie:", cookieData);
+      console.log("📍 Redirecting to:", RoleInfo[role.code as UserRole]?.defaultRoute);
 
       // Chuyển hướng tới URL tương ứng với vai trò được chọn
-      // Sử dụng window.location thay vì router để đảm bảo làm mới toàn bộ trang
       if (role.code) {
-        import("@/types/repair").then(({ RoleInfo }) => {
-          const defaultRoute =
-            RoleInfo[role.code as UserRole]?.defaultRoute || "/";
-          window.location.href = defaultRoute;
-        });
+        const defaultRoute = RoleInfo[role.code as UserRole]?.defaultRoute || "/";
+        // Sử dụng window.location để refresh page và load layout mới
+        window.location.href = defaultRoute;
       }
+    } else {
+      console.error("❌ Role not found in user roles:", role);
     }
   }
 
