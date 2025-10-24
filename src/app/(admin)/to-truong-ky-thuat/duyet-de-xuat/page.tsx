@@ -14,6 +14,7 @@ import { users } from "@/lib/mockData/users";
 import {
   ProposalFilters,
   ProposalTable,
+  ProposalCards,
   STATUS_CONFIG,
   filterProposals,
   sortProposals,
@@ -309,7 +310,7 @@ Trân trọng kính trình.`;
   return (
     <>
       <div
-        className="container mx-auto px-2 sm:px-4 py-2 sm:py-2 min-h-screen"
+        className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen"
         style={{ position: "relative", zIndex: 1 }}>
         <div className="mb-2">
           <Breadcrumb
@@ -334,13 +335,13 @@ Trân trọng kính trình.`;
         </div>
 
         {/* Header*/}
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
-          <div className="flex justify-between items-center">
+        <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                 Duyệt đề xuất thay thế linh kiện
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Quản lý và duyệt các đề xuất thay thế linh kiện từ kỹ thuật
                 viên. Hiển thị các đề xuất chờ duyệt, đã duyệt và đã từ chối.
               </p>
@@ -361,6 +362,7 @@ Trân trọng kính trình.`;
         {/* Table */}
         <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
           <div className="min-h-[500px] flex flex-col">
+            {/* Desktop Table View */}
             <ProposalTable
               paginatedData={paginatedData}
               selectedRowKeys={selectedRowKeys}
@@ -377,12 +379,38 @@ Trân trọng kính trình.`;
               onCreateSubmission={handleCreateSubmission}
             />
 
+            {/* Mobile Card View */}
+            <ProposalCards
+              proposals={paginatedData}
+              selectedItems={selectedRowKeys}
+              selectAll={
+                paginatedData.length > 0 &&
+                paginatedData.every((item) => selectedRowKeys.includes(item.id))
+              }
+              statusConfig={STATUS_CONFIG}
+              onSelectAll={() => {
+                const allSelected =
+                  paginatedData.length > 0 &&
+                  paginatedData.every((item) =>
+                    selectedRowKeys.includes(item.id)
+                  );
+                handleSelectAll(!allSelected);
+              }}
+              onSelectItem={(id) => {
+                const isSelected = selectedRowKeys.includes(id);
+                handleRowSelect(id, !isSelected);
+              }}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              onCreateSubmission={handleCreateSubmission}
+            />
+
             {/* Spacer để đảm bảo chiều cao tối thiểu */}
             <div className="flex-1 min-h-[100px]"></div>
           </div>
 
           {/* Pagination */}
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-3">
+          <div className="border-t border-gray-200 bg-gray-50 px-3 sm:px-6 py-3">
             <Pagination
               currentPage={currentPage}
               pageSize={pageSize}
@@ -417,18 +445,19 @@ Trân trọng kính trình.`;
           </button>,
         ]}
         centered
-        width={500}>
+        width="90%"
+        style={{ maxWidth: "500px" }}>
         <div className="text-center py-4">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-500 mx-auto mb-4" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
             Xuất Excel thành công!
           </h3>
-          <p className="text-gray-600 mb-1">
+          <p className="text-sm sm:text-base text-gray-600 mb-1">
             File{" "}
             <span className="font-medium">&ldquo;{exportFileName}&rdquo;</span>{" "}
             đã được tải xuống
           </p>
-          <p className="text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600">
             <span className="font-medium">({exportCount} bản ghi)</span>
           </p>
         </div>
@@ -453,13 +482,14 @@ Trân trọng kính trình.`;
           </button>,
         ]}
         centered
-        width={500}>
+        width="90%"
+        style={{ maxWidth: "500px" }}>
         <div className="text-center py-4">
-          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <XCircle className="w-12 h-12 sm:w-16 sm:h-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
             Lỗi xuất Excel
           </h3>
-          <p className="text-gray-600">{exportError}</p>
+          <p className="text-sm sm:text-base text-gray-600">{exportError}</p>
         </div>
       </Modal>
 
@@ -473,7 +503,8 @@ Trân trọng kính trình.`;
         }
         open={showSubmissionModal}
         onCancel={() => setShowSubmissionModal(false)}
-        width={800}
+        width="90%"
+        style={{ maxWidth: "800px" }}
         footer={[
           <Button key="cancel" onClick={() => setShowSubmissionModal(false)}>
             Hủy
