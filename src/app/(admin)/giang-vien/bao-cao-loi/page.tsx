@@ -81,6 +81,19 @@ export default function BaoCaoLoiPage() {
     "hardware" | "software" | ""
   >(""); // Phân loại lỗi phần cứng/phần mềm
 
+  // Các loại lỗi được phép chọn linh kiện
+  const errorTypesAllowingComponentSelection = [
+    "ET001", // Máy không khởi động
+    "ET005", // Máy không sử dụng được
+    "ET009", // Máy chạy chậm
+  ];
+
+  // Kiểm tra xem loại lỗi hiện tại có cho phép chọn linh kiện không
+  const canSelectComponents =
+    errorCategory === "hardware" &&
+    formData.errorTypeId &&
+    errorTypesAllowingComponentSelection.includes(formData.errorTypeId);
+
   // Danh sách tòa nhà duy nhất từ mockRooms
   const buildings = [
     ...new Set(mockRooms.map((room) => room.building).filter(Boolean)),
@@ -523,9 +536,19 @@ export default function BaoCaoLoiPage() {
                 <Select
                   placeholder="Chọn loại lỗi phần cứng"
                   value={formData.errorTypeId}
-                  onChange={(errorTypeId) =>
-                    setFormData((prev) => ({ ...prev, errorTypeId }))
-                  }>
+                  onChange={(errorTypeId) => {
+                    setFormData((prev) => ({ ...prev, errorTypeId }));
+
+                    // Nếu chuyển sang loại lỗi không cho phép chọn linh kiện, reset selection
+                    if (
+                      !errorTypesAllowingComponentSelection.includes(
+                        errorTypeId
+                      )
+                    ) {
+                      setSelectedComponentIds([]);
+                      setShowComponentSelection(false);
+                    }
+                  }}>
                   {mockErrorTypes
                     .filter((errorType) => errorType.name !== "Máy hư phần mềm")
                     .map((errorType) => (
@@ -606,11 +629,22 @@ export default function BaoCaoLoiPage() {
               </div>
             ) : (
               <div>
+                {!canSelectComponents &&
+                  errorCategory === "hardware" &&
+                  formData.errorTypeId && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <p className="text-sm text-blue-800">
+                        <strong>Lưu ý:</strong> Chỉ có thể chọn linh kiện cụ thể
+                        cho các loại lỗi: &quot;Máy không khởi động&quot;,
+                        &quot;Máy không sử dụng được&quot;, hoặc &quot;Máy chạy
+                        chậm&quot;.
+                      </p>
+                    </div>
+                  )}
+
                 <Button
                   type={showComponentSelection ? "primary" : "dashed"}
-                  disabled={
-                    errorCategory !== "hardware" || !formData.errorTypeId
-                  }
+                  disabled={!canSelectComponents}
                   onClick={() =>
                     setShowComponentSelection(!showComponentSelection)
                   }
@@ -626,9 +660,7 @@ export default function BaoCaoLoiPage() {
                       mode="multiple"
                       placeholder="Chọn các linh kiện bị lỗi"
                       value={selectedComponentIds}
-                      disabled={
-                        errorCategory !== "hardware" || !formData.errorTypeId
-                      }
+                      disabled={!canSelectComponents}
                       onChange={setSelectedComponentIds}>
                       {filteredComponents.map((component) => (
                         <Option key={component.id} value={component.id}>
