@@ -313,8 +313,8 @@ export default function GuiDeXuatThayThePage() {
               Danh sách mua sắm thiết bị
             </h1>
             <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-              Quản lý và theo dõi các đề xuất thay thế linh kiện, thiết bị đã được
-              tổ trưởng ký biên bản hoặc đã hoàn tất mua sắm.
+              Quản lý và theo dõi các đề xuất thay thế linh kiện, thiết bị đã
+              được tổ trưởng ký biên bản hoặc đã hoàn tất mua sắm.
             </p>
           </div>
         </div>
