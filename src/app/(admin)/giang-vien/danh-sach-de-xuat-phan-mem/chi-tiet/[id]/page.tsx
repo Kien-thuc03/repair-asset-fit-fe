@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
   Monitor,
   User,
@@ -13,15 +13,22 @@ import {
   Clock,
   Package,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { SoftwareProposalStatus, SoftwareProposalItem } from "@/types/software";
 import {
   getSoftwareProposalById,
   getSoftwareProposalItems,
+  cancelSoftwareProposal,
 } from "@/lib/mockData/softwareProposals";
 import { users } from "@/lib/mockData/users";
 import { mockRooms } from "@/lib/mockData/rooms";
+import {
+  CancelConfirmModal,
+  SuccessModal,
+  ErrorModal,
+} from "@/components/modal";
 
 // Helper functions
 const getUserName = (userId: string): string => {
@@ -60,7 +67,14 @@ const softwareProposalStatusConfig = {
 
 export default function SoftwareProposalDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const proposalId = params.id as string;
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Lấy dữ liệu đề xuất
   const proposal = useMemo(() => {
@@ -71,6 +85,44 @@ export default function SoftwareProposalDetailPage() {
   const proposalItems = useMemo(() => {
     return getSoftwareProposalItems(proposalId);
   }, [proposalId]);
+
+  // Hàm mở modal xác nhận hủy
+  const handleOpenCancelModal = () => {
+    setShowCancelModal(true);
+  };
+
+  // Hàm hủy đề xuất
+  const handleCancelProposal = async () => {
+    try {
+      setIsDeleting(true);
+
+      // Giả lập delay API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Xóa đề xuất khỏi mock data
+      const success = cancelSoftwareProposal(proposalId);
+
+      if (success) {
+        setShowCancelModal(false);
+        setShowSuccessModal(true);
+      } else {
+        throw new Error("Không tìm thấy đề xuất để hủy");
+      }
+    } catch (error) {
+      setShowCancelModal(false);
+      setErrorMessage("Có lỗi xảy ra khi hủy đề xuất. Vui lòng thử lại.");
+      setShowErrorModal(true);
+      console.error(error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Hàm xử lý sau khi thành công
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    router.push("/giang-vien/danh-sach-de-xuat-phan-mem");
+  };
 
   if (!proposal) {
     return (
@@ -133,6 +185,17 @@ export default function SoftwareProposalDetailPage() {
             </p>
           </div>
         </div>
+
+        {/* Nút hủy đề xuất - chỉ hiển thị khi trạng thái là Chờ duyệt */}
+        {proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT && (
+          <button
+            onClick={handleOpenCancelModal}
+            disabled={isDeleting}
+            className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            <Trash2 className="h-4 w-4 mr-2" />
+            Hủy đề xuất
+          </button>
+        )}
       </div>
 
       {/* Main Content */}
@@ -331,6 +394,33 @@ export default function SoftwareProposalDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <CancelConfirmModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancelProposal}
+        title="Xác nhận hủy đề xuất"
+        message="Bạn có chắc chắn muốn hủy đề xuất phần mềm này không? Hành động này không thể hoàn tác."
+        confirmText="Hủy đề xuất"
+        cancelText="Đóng"
+        isLoading={isDeleting}
+      />
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessClose}
+        title="Hủy đề xuất thành công!"
+        message="Đề xuất phần mềm đã được hủy thành công."
+      />
+
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="Có lỗi xảy ra!"
+        message={errorMessage}
+        showRetry={false}
+      />
     </div>
   );
 }

@@ -39,10 +39,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow mb-6">
+    <div className="bg-white p-3 sm:p-4 lg:p-6 rounded-lg shadow mb-4 sm:mb-6">
       <Row gutter={[16, 16]}>
-        {/* Search Input - 1 cột */}
-        <Col xs={24} sm={8}>
+        {/* Search Input */}
+        <Col xs={24} sm={12} md={8} lg={8}>
           <Input
             prefix={<Search className="h-4 w-4 text-gray-400" />}
             placeholder="Tìm theo phòng, tòa nhà, tầng..."
@@ -53,8 +53,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           />
         </Col>
 
-        {/* Building Filter - 1 cột */}
-        <Col xs={24} sm={5}>
+        {/* Building Filter */}
+        <Col xs={12} sm={6} md={5} lg={5}>
           <Select
             placeholder="Chọn tòa"
             value={buildingFilter || undefined}
@@ -70,8 +70,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           </Select>
         </Col>
 
-        {/* Floor Filter - 1 cột */}
-        <Col xs={24} sm={5}>
+        {/* Floor Filter */}
+        <Col xs={12} sm={6} md={5} lg={5}>
           <Select
             placeholder="Chọn tầng"
             value={floorFilter || undefined}
@@ -87,17 +87,25 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           </Select>
         </Col>
 
-        {/* Export Button - 1 cột */}
-        <Col xs={24} sm={6}>
+        {/* Export Button */}
+        <Col xs={24} sm={24} md={6} lg={6}>
           <Button
             onClick={onExportExcel}
             icon={<Download className="w-3 h-3" />}
             size="middle"
             className="w-full"
-            type="default">
-            <span className="hidden lg:inline">Xuất Excel</span>
-            <span className="lg:hidden">Excel</span>
-            {selectedItemsCount > 0 && ` (${selectedItemsCount})`}
+            type="primary"
+            disabled={selectedItemsCount === 0}
+            style={{
+              backgroundColor: selectedItemsCount > 0 ? "#16a34a" : undefined,
+              borderColor: selectedItemsCount > 0 ? "#16a34a" : undefined,
+            }}>
+            <span className="hidden sm:inline">
+              Xuất Excel {selectedItemsCount > 0 && `(${selectedItemsCount})`}
+            </span>
+            <span className="sm:hidden">
+              Xuất {selectedItemsCount > 0 && `(${selectedItemsCount})`}
+            </span>
           </Button>
         </Col>
       </Row>

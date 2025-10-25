@@ -20,6 +20,7 @@ import { mockSoftwareProposals } from "@/lib/mockData/softwareProposals";
 import { users } from "@/lib/mockData/users";
 import { mockRooms } from "@/lib/mockData/rooms";
 import { Pagination } from "@/components/common";
+import SoftwareProposalCards from "@/components/lecturer/softwareProposal/SoftwareProposalCards";
 
 const { Option } = Select;
 const getUserName = (userId: string): string => {
@@ -217,7 +218,7 @@ export default function SoftwareProposalsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -240,23 +241,23 @@ export default function SoftwareProposalsPage() {
       />
 
       {/* Header */}
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Monitor className="h-6 w-6 text-blue-600" />
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Monitor className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             Danh sách đề xuất phần mềm
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
             Theo dõi tiến độ xử lý các đề xuất cài đặt phần mềm.
           </p>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white p-3 sm:p-4 rounded-lg shadow space-y-3 sm:space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Input
-            className="col-span-1 md:col-span-2"
+            className="col-span-1 sm:col-span-2"
             placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
             prefix={<Search className="w-4 h-4" />}
             value={searchText}
@@ -270,7 +271,8 @@ export default function SoftwareProposalsPage() {
             value={statusFilter}
             onChange={setStatusFilter}
             allowClear
-            size="middle">
+            size="middle"
+            className="w-full">
             <Option value="">Tất cả trạng thái</Option>
             <Option value={SoftwareProposalStatus.CHỜ_DUYỆT}>Chờ duyệt</Option>
             <Option value={SoftwareProposalStatus.ĐÃ_DUYỆT}>Đã duyệt</Option>
@@ -287,19 +289,22 @@ export default function SoftwareProposalsPage() {
             icon={<Download className="w-4 h-4" />}
             onClick={handleExportExcel}
             disabled={selectedRowKeys.length === 0}
-            size="middle">
-            Xuất Excel ({selectedRowKeys.length})
+            size="middle"
+            className="w-full">
+            <span className="hidden sm:inline">Xuất Excel</span>
+            <span className="sm:hidden">Xuất</span> ({selectedRowKeys.length})
           </Button>
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <input
                     type="checkbox"
                     checked={
@@ -312,22 +317,22 @@ export default function SoftwareProposalsPage() {
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Mã đề xuất
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Người đề xuất
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Phòng
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Ngày tạo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
@@ -336,7 +341,7 @@ export default function SoftwareProposalsPage() {
               {paginatedData.map((proposal) => {
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={selectedRowKeys.includes(proposal.id)}
@@ -346,49 +351,49 @@ export default function SoftwareProposalsPage() {
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-blue-600">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                      <div className="text-xs sm:text-sm font-medium text-blue-600">
                         {proposal.proposalCode}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <User className="h-4 w-4 text-gray-400 mr-2" />
-                        <div className="text-sm text-gray-900">
+                        <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2" />
+                        <div className="text-xs sm:text-sm text-gray-900">
                           {getUserName(proposal.proposerId)}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <Building className="h-4 w-4 text-gray-400 mr-2" />
-                        <div className="text-sm text-gray-900">
+                        <Building className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2" />
+                        <div className="text-xs sm:text-sm text-gray-900">
                           {getRoomName(proposal.roomId)}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                        className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                           softwareProposalStatusConfig[proposal.status].color
                         }`}>
                         {softwareProposalStatusConfig[proposal.status].label}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-gray-900">
-                        <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                      <div className="flex items-center text-xs sm:text-sm text-gray-900">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2" />
                         {new Date(proposal.createdAt).toLocaleDateString(
                           "vi-VN"
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <button
                         title="Xem chi tiết"
                         onClick={() => handleViewProposal(proposal)}
-                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <Eye className="h-4 w-4 items-center" />
+                        className="inline-flex items-center justify-center p-1 sm:p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 items-center" />
                       </button>
                     </td>
                   </tr>
@@ -398,13 +403,37 @@ export default function SoftwareProposalsPage() {
           </table>
         </div>
 
+        {/* Mobile Card View */}
+        <SoftwareProposalCards
+          proposals={paginatedData}
+          selectedItems={selectedRowKeys}
+          selectAll={
+            paginatedData.length > 0 &&
+            paginatedData.every((item) => selectedRowKeys.includes(item.id))
+          }
+          statusConfig={softwareProposalStatusConfig}
+          onSelectAll={() => {
+            const allSelected =
+              paginatedData.length > 0 &&
+              paginatedData.every((item) => selectedRowKeys.includes(item.id));
+            handleSelectAll(!allSelected);
+          }}
+          onSelectItem={(id) => {
+            const isSelected = selectedRowKeys.includes(id);
+            handleSelectRow(id, !isSelected);
+          }}
+          onViewDetails={handleViewProposal}
+          getUserName={getUserName}
+          getRoomName={getRoomName}
+        />
+
         {paginatedData.length === 0 && (
-          <div className="text-center py-12">
-            <Monitor className="mx-auto h-12 w-12 text-gray-400" />
+          <div className="text-center py-8 sm:py-12 px-4">
+            <Monitor className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
               Không có đề xuất nào
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-xs sm:text-sm text-gray-500">
               Chưa có đề xuất phần mềm nào được tạo.
             </p>
           </div>

@@ -10,13 +10,14 @@ import {
   getAssignmentsForTechnician,
   mockTechnicianAssignments,
 } from "@/lib/mockData/technicianAssignments";
-import { Breadcrumb, Modal } from "antd";
+import { Modal } from "antd";
 import Pagination from "@/components/common/Pagination";
 import {
   AssignmentHeader,
   TabNavigation,
   SearchFilters,
   AreasTable,
+  AreasMobileView,
   TechniciansGrid,
 } from "@/components/leadTechnician/assignment";
 
@@ -352,35 +353,12 @@ export default function PhanCongPage() {
   };
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-2">
-      <div className="mb-2">
-        <Breadcrumb
-          items={[
-            {
-              href: "/to-truong-ky-thuat",
-              title: (
-                <div className="flex items-center">
-                  <span>Trang chủ</span>
-                </div>
-              ),
-            },
-            {
-              title: (
-                <div className="flex items-center">
-                  <span>Phân công khu vực</span>
-                </div>
-              ),
-            },
-          ]}
-        />
-      </div>
-
-      {/* Header */}
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen">
       <AssignmentHeader
         selectedItemsCount={selectedItems.length}
         totalItems={getCurrentTotal()}
-        onExportExcel={() => {}} // Empty function since export is now in filters
-        activeTab="technicians" // Hide export button
+        onExportExcel={() => {}}
+        activeTab="technicians"
       />
 
       {/* Tabs */}
@@ -422,14 +400,24 @@ export default function PhanCongPage() {
             onSetSelectedTechnician={setSelectedTechnician}
           />
 
-          {/* Pagination for Areas */}
-          <Pagination
-            currentPage={currentPage}
-            pageSize={pageSize}
-            total={getCurrentTotal()}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
+          <AreasMobileView
+            rooms={getCurrentData() as Room[]}
+            technicians={technicians}
+            selectedItems={selectedItems}
+            onSelectItem={handleSelectItem}
+            onEditRoom={handleEditRoom}
           />
+
+          {/* Pagination for Areas */}
+          <div className="mt-4 sm:mt-6">
+            <Pagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              total={getCurrentTotal()}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
         </>
       ) : (
         /* Technicians Tab */

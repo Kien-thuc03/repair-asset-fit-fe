@@ -84,8 +84,8 @@ export default function RequestDetailPage() {
   }
 
   return (
-    <div>
-      <div className="space-y-6">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen">
+      <div className="space-y-4 sm:space-y-6">
         {/* Breadcrumb */}
         <div className="mb-2">
           <Breadcrumb
@@ -127,19 +127,19 @@ export default function RequestDetailPage() {
 
         {/* Main Content */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">
+          <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg sm:text-xl font-semibold text-gray-900">
                   Chi tiết tờ trình thay thế linh kiện
                 </h1>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-xs sm:text-sm text-gray-500 truncate">
                   Mã tờ trình: {request.proposalCode}
                 </p>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
+                  className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium border ${getStatusColor(
                     request.status
                   )}`}>
                   {getStatusIcon(request.status)}
@@ -147,61 +147,62 @@ export default function RequestDetailPage() {
                 </span>
                 <button
                   onClick={handleCreateInspectionReport}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                  <FileCheck className="w-4 h-4 mr-2" />
-                  Lập biên bản
+                  className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  <FileCheck className="w-3 sm:w-4 h-3 sm:h-4 mr-1.5 sm:mr-2" />
+                  <span className="hidden sm:inline">Lập biên bản</span>
+                  <span className="sm:hidden">Lập BB</span>
                 </button>
               </div>
             </div>
           </div>
 
-          <div className="px-6 py-6 space-y-6">
+          <div className="px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6">
             {/* Request Information */}
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
                 Thông tin tờ trình
               </h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Mã tờ trình
                     </label>
-                    <p className="mt-1 text-sm text-gray-900">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-900">
                       {request.proposalCode}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Tiêu đề
                     </label>
-                    <p className="mt-1 text-sm text-gray-900">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-900">
                       {request.title}
                     </p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Ngày tạo
                     </label>
-                    <div className="mt-1 flex items-center text-sm text-gray-900">
-                      <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                    <div className="mt-1 flex items-center text-xs sm:text-sm text-gray-900">
+                      <Calendar className="w-3 sm:w-4 h-3 sm:h-4 mr-1.5 sm:mr-2 text-gray-400" />
                       {new Date(request.createdAt).toLocaleDateString("vi-VN")}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Người tạo
                     </label>
-                    <div className="mt-1 flex items-center text-sm text-gray-900">
-                      <User className="w-4 h-4 mr-2 text-gray-400" />
+                    <div className="mt-1 flex items-center text-xs sm:text-sm text-gray-900">
+                      <User className="w-3 sm:w-4 h-3 sm:h-4 mr-1.5 sm:mr-2 text-gray-400" />
                       {request.createdBy}
                     </div>
                   </div>
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">
                       Mô tả
                     </label>
-                    <p className="mt-1 text-sm text-gray-900">
+                    <p className="mt-1 text-xs sm:text-sm text-gray-900">
                       {request.description}
                     </p>
                   </div>
@@ -211,11 +212,13 @@ export default function RequestDetailPage() {
 
             {/* Components List */}
             <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
                 Danh sách linh kiện cần thay thế ({request.components.length}{" "}
                 loại)
               </h3>
-              <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+
+              {/* Desktop Table View */}
+              <div className="hidden lg:block overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                 <table className="min-w-full divide-y divide-gray-300">
                   <thead className="bg-gray-50">
                     <tr>
@@ -295,30 +298,102 @@ export default function RequestDetailPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Mobile Card View */}
+              <div className="lg:hidden space-y-3">
+                {request.components.map((component, index) => (
+                  <div
+                    key={component.id}
+                    className="bg-white border rounded-lg shadow-sm p-3 space-y-3">
+                    {/* Header */}
+                    <div className="flex items-start gap-2">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium flex-shrink-0">
+                        {index + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">
+                          {component.componentName}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {component.assetName} ({component.assetCode})
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Location */}
+                    <div className="flex items-start gap-2 bg-gray-50 p-2 rounded">
+                      <Building className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div className="text-xs">
+                        <p className="font-medium text-gray-900">
+                          {component.buildingName} - {component.roomName}
+                        </p>
+                        <p className="text-gray-600 mt-0.5">
+                          Máy: {component.machineLabel}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Info Grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-500">Số lượng:</span>
+                        <p className="font-medium text-gray-900 mt-0.5">
+                          {component.quantity}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Lý do:</span>
+                        <p className="font-medium text-gray-900 mt-0.5 line-clamp-2">
+                          {component.reason}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Replacement Info */}
+                    <div className="border-t pt-2 space-y-2">
+                      <div>
+                        <span className="text-xs text-gray-500">
+                          Linh kiện thay thế:
+                        </span>
+                        <p className="text-xs font-medium text-green-700 mt-0.5">
+                          {component.newItemName}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          {component.newItemSpecs}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Metadata */}
-            <div className="border-t border-gray-200 pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-500">
+            <div className="border-t border-gray-200 pt-4 sm:pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
                 <div>
                   <span className="font-medium">Ngày tạo:</span>
-                  <span className="ml-2">
+                  <span className="ml-2 block sm:inline mt-1 sm:mt-0">
                     {new Date(request.createdAt).toLocaleString("vi-VN")}
                   </span>
                 </div>
                 <div>
                   <span className="font-medium">Cập nhật lần cuối:</span>
-                  <span className="ml-2">
+                  <span className="ml-2 block sm:inline mt-1 sm:mt-0">
                     {new Date(request.updatedAt).toLocaleString("vi-VN")}
                   </span>
                 </div>
                 <div>
                   <span className="font-medium">Người tạo:</span>
-                  <span className="ml-2">{request.createdBy}</span>
+                  <span className="ml-2 block sm:inline mt-1 sm:mt-0">
+                    {request.createdBy}
+                  </span>
                 </div>
                 <div>
                   <span className="font-medium">Trạng thái:</span>
-                  <span className="ml-2">{getStatusText(request.status)}</span>
+                  <span className="ml-2 block sm:inline mt-1 sm:mt-0">
+                    {getStatusText(request.status)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -334,7 +409,7 @@ export default function RequestDetailPage() {
             <button
               key="cancel"
               onClick={handleCloseInspectionForm}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-3">
+              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-2 sm:mr-3">
               Hủy
             </button>,
             <button
@@ -344,51 +419,56 @@ export default function RequestDetailPage() {
                 console.log("Clicked: Gửi biên bản");
                 handleSubmitInspectionReport();
               }}
-              className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
               Gửi biên bản
             </button>,
           ]}
-          width={1000}
+          width="90%"
+          style={{ maxWidth: 1000 }}
           centered
           className="inspection-report-modal">
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 max-h-[80vh] overflow-y-auto px-2 sm:px-4">
             {/* Header */}
             <div className="text-center">
-              <div className="text-sm text-gray-600 mb-2">
+              <div className="text-xs sm:text-sm text-gray-600 mb-2">
                 TRƯỜNG ĐẠI HỌC CÔNG
                 NGHIỆP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CỘNG
                 HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM
               </div>
-              <div className="text-sm text-gray-600 mb-2">
+              <div className="text-xs sm:text-sm text-gray-600 mb-2">
                 THÀNH PHỐ HỒ CHÍ
                 MINH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Độc
                 lập - Tự do - Hạnh phúc
               </div>
-              <div className="text-sm text-gray-600 mb-4">PHÒNG QUẢN TRỊ</div>
-              <div className="text-right text-sm text-gray-600 mb-6">
+              <div className="text-xs sm:text-sm text-gray-600 mb-4">
+                PHÒNG QUẢN TRỊ
+              </div>
+              <div className="text-right text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
                 Thành phố Hồ Chí Minh, ngày ___ tháng ___ năm 2025
               </div>
-              <div className="text-xl font-bold text-center mb-2">BIÊN BẢN</div>
-              <div className="text-base font-semibold text-center mb-4">
+              <div className="text-lg sm:text-xl font-bold text-center mb-2">
+                BIÊN BẢN
+              </div>
+              <div className="text-sm sm:text-base font-semibold text-center mb-2 sm:mb-4">
                 Kiểm tra tình trạng kỹ thuật cơ sở vật chất hư hỏng hoặc cần cải
                 tạo
               </div>
-              <div className="text-base font-semibold text-center mb-6">
+              <div className="text-sm sm:text-base font-semibold text-center mb-4 sm:mb-6">
                 để đề xuất giải pháp khắc phục
               </div>
             </div>
 
             {/* Content */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Thông tin chung */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
+                <div className="col-span-1 sm:col-span-2">
                   <span className="font-medium">Căn cứ đề nghị của: </span>
                   <span className="underline">Khoa CNTT Nam Thăng</span>
-                  <span className="ml-4 font-medium">Năm: </span>
+                  <span className="ml-2 sm:ml-4 font-medium">Năm: </span>
                   <span className="underline">2025</span>
                 </div>
-                <div>
+                <div className="col-span-1 sm:col-span-2">
                   <span className="font-medium">Hôm nay, </span>
                   <span className="font-medium">Ngày: </span>
                   <span className="underline">___</span>
@@ -397,30 +477,30 @@ export default function RequestDetailPage() {
                   <span className="font-medium ml-2">Năm: </span>
                   <span className="underline">2025</span>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <span className="font-medium">Tại vị trí: </span>
                   <span className="underline">
                     _________________________________
                   </span>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <span className="font-medium">Chúng tôi gồm có: </span>
                 </div>
-                <div className="col-span-2 ml-4">
+                <div className="col-span-1 sm:col-span-2 ml-2 sm:ml-4">
                   <div className="mb-2">
                     <span className="font-medium">1. Ông: </span>
                     <span className="underline">Giang Thanh Trọn</span>
-                    <span className="ml-8 font-medium">đại diện: </span>
+                    <span className="ml-4 sm:ml-8 font-medium">đại diện: </span>
                     <span className="underline">Khoa CNTT</span>
                   </div>
                   <div className="mb-2">
                     <span className="font-medium">2. Ông: </span>
                     <span className="underline">Nguyễn Văn Ngã</span>
-                    <span className="ml-8 font-medium">đại diện: </span>
+                    <span className="ml-4 sm:ml-8 font-medium">đại diện: </span>
                     <span className="underline">Phòng Quản trị</span>
                   </div>
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <span className="font-medium">
                     Cùng lập biên bản kiểm tra tình trạng kỹ thuật của cơ sở vật
                     chất hư hỏng cần thay thế:{" "}
@@ -429,37 +509,37 @@ export default function RequestDetailPage() {
               </div>
 
               {/* Bảng linh kiện */}
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-400 text-sm">
+              <div className="overflow-x-auto -mx-2 sm:mx-0">
+                <table className="w-full border-collapse border border-gray-400 text-xs sm:text-sm">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
                         TT
                       </th>
-                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
                         Nội dung kiểm tra
                       </th>
-                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
-                        Số lượng
+                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
+                        SL
                       </th>
-                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
                         Vị trí
                       </th>
-                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
+                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
                         Tình trạng
                       </th>
-                      <th className="border border-gray-400 px-2 py-2 text-center font-medium">
-                        Giải pháp khắc phục
+                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
+                        Giải pháp
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {request.components.map((component, index) => (
                       <tr key={component.id}>
-                        <td className="border border-gray-400 px-2 py-2 text-center">
+                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
                           {index + 1}
                         </td>
-                        <td className="border border-gray-400 px-2 py-2">
+                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
                           <div className="font-medium">
                             {component.componentName}
                           </div>
@@ -467,10 +547,10 @@ export default function RequestDetailPage() {
                             {component.assetName} ({component.assetCode})
                           </div>
                         </td>
-                        <td className="border border-gray-400 px-2 py-2 text-center">
+                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
                           {component.quantity}
                         </td>
-                        <td className="border border-gray-400 px-2 py-2">
+                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
                           <div className="text-xs">
                             {component.buildingName} - {component.roomName}
                           </div>
@@ -478,10 +558,10 @@ export default function RequestDetailPage() {
                             Máy: {component.machineLabel}
                           </div>
                         </td>
-                        <td className="border border-gray-400 px-2 py-2">
+                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
                           Hỏng
                         </td>
-                        <td className="border border-gray-400 px-2 py-2">
+                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
                           <div className="text-xs">- Đề nghị thay thế:</div>
                           <div className="text-xs font-medium">
                             1. {component.newItemName}
@@ -497,8 +577,8 @@ export default function RequestDetailPage() {
               </div>
 
               {/* Kết luận */}
-              <div className="space-y-4">
-                <div className="text-sm">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="text-xs sm:text-sm">
                   <span className="font-medium">
                     Đại diện các đơn vị tham gia công tác kiểm tra tình trạng kỹ
                     thuật của cơ sở vật chất hư hỏng cùng đồng ý với nội dung
@@ -507,28 +587,40 @@ export default function RequestDetailPage() {
                   <span className="font-medium">Đồng ý với kỹ sư. </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-8 mt-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 mt-6 sm:mt-8">
                   <div className="text-center">
-                    <div className="font-medium mb-16">Khoa CNTT</div>
-                    <div className="font-medium mb-4">Nhân viên Kỹ thuật</div>
+                    <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
+                      Khoa CNTT
+                    </div>
+                    <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
+                      Nhân viên Kỹ thuật
+                    </div>
                     <div className="text-center">
-                      <div className="font-medium">Giang Thanh Trọn</div>
+                      <div className="font-medium text-xs sm:text-sm">
+                        Giang Thanh Trọn
+                      </div>
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="font-medium mb-16">Phòng Quản trị</div>
-                    <div className="font-medium mb-4">Người thực hiện</div>
+                    <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
+                      Phòng Quản trị
+                    </div>
+                    <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
+                      Người thực hiện
+                    </div>
                     <div className="text-center">
-                      <div className="font-medium">Nguyễn Ngã</div>
+                      <div className="font-medium text-xs sm:text-sm">
+                        Nguyễn Ngã
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="text-center mt-8">
-                  <div className="font-medium mb-4">
+                <div className="text-center mt-6 sm:mt-8">
+                  <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
                     Ý kiến của Lãnh đạo Phòng Quản trị:
                   </div>
-                  <div className="h-16 border-b border-gray-300 mb-4"></div>
+                  <div className="h-12 sm:h-16 border-b border-gray-300 mb-4"></div>
                 </div>
               </div>
             </div>
