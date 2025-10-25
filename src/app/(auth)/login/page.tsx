@@ -29,11 +29,17 @@ export default function LoginPage() {
   
   // Check if user is logged in and has multiple roles
   useEffect(() => {
+    console.log("📍 LoginPage useEffect - user:", user);
+    
     if (user && user.roles && user.roles.length > 1) {
+      console.log("🔀 User has multiple roles, showing role selection modal");
       setShowRoleModal(true)
     } else if (user && user.activeRole) {
+      console.log("✅ User has single role or activeRole is set:", user.activeRole);
+      
       // If user has only one role or activeRole is set, redirect to their role-specific page
       const roleRoutes = {
+        'ADMIN': '/qtv-khoa',
         'QTV_KHOA': '/qtv-khoa',
         'PHONG_QUAN_TRI': '/phong-quan-tri', 
         'TO_TRUONG_KY_THUAT': '/to-truong-ky-thuat',
@@ -41,6 +47,7 @@ export default function LoginPage() {
         'GIANG_VIEN': '/giang-vien'
       }
       const route = roleRoutes[user.activeRole?.code as keyof typeof roleRoutes] || '/login'
+      console.log("➡️ Redirecting to:", route);
       router.push(route)
     }
   }, [user, router])
@@ -55,20 +62,25 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
+      console.log("🔑 Attempting login with username:", data.username);
+      
       // Sử dụng trực tiếp username không chuyển đổi thành email
       await login(data.username, data.password)
       toast.success('Đăng nhập thành công!')
       
+      console.log("✅ Login successful, waiting for role selection or redirect...");
+      
       // Role selection will be handled by useEffect to avoid race conditions
     } catch (error) {
-      console.error('Login error:', error)
+      console.error('❌ Login error:', error)
       toast.error('Tên đăng nhập hoặc mật khẩu không chính xác!')
     }
   }
 
   const handleCloseRoleModal = () => {
     setShowRoleModal(false)
-    router.push('/login') // Redirect to login if modal is closed without selection
+    // Không redirect về login, giữ nguyên modal để user chọn lại
+    console.log("⚠️ User closed role selection modal without choosing")
   }
   
   return (

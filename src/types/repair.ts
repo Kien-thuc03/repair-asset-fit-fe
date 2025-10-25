@@ -8,6 +8,7 @@ export interface ErrorType {
 
 // Định nghĩa các vai trò trong hệ thống sửa chữa tài sản
 export enum UserRole {
+  ADMIN = "ADMIN", // Quản trị viên hệ thống
   GIANG_VIEN = "GIANG_VIEN", // Giảng viên
   KY_THUAT_VIEN = "KY_THUAT_VIEN", // Kỹ thuật viên
   TO_TRUONG_KY_THUAT = "TO_TRUONG_KY_THUAT", // Tổ trưởng Kỹ thuật
@@ -117,6 +118,17 @@ export interface ReplacementComponent {
 
 // Định nghĩa thông tin chi tiết về vai trò
 export const RoleInfo = {
+  [UserRole.ADMIN]: {
+    name: "Quản trị viên hệ thống",
+    description: "Quản lý toàn bộ hệ thống",
+    defaultRoute: "/qtv-khoa", // Admin có thể truy cập tất cả, mặc định là QTV_KHOA
+    permissions: [
+      "full_access",
+      "manage_users",
+      "manage_roles",
+      "system_oversight",
+    ],
+  },
   [UserRole.GIANG_VIEN]: {
     name: "Giảng viên",
     description: "Người dùng cuối, báo cáo sự cố thiết bị",

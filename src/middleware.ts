@@ -6,6 +6,7 @@ import type { NextRequest } from 'next/server'
 
 // Định nghĩa các vai trò trong hệ thống
 enum UserRole {
+  ADMIN = 'ADMIN',                             // Quản trị viên hệ thống
   GIANG_VIEN = 'GIANG_VIEN',                    // Giảng viên
   KY_THUAT_VIEN = 'KY_THUAT_VIEN',             // Kỹ thuật viên
   TO_TRUONG_KY_THUAT = 'TO_TRUONG_KY_THUAT',   // Tổ trưởng Kỹ thuật
@@ -15,6 +16,36 @@ enum UserRole {
 
 // Định nghĩa các route được bảo vệ theo vai trò
 const roleBasedRoutes = {
+  // Routes dành cho Admin - Có quyền truy cập tất cả
+  [UserRole.ADMIN]: [
+    '/qtv-khoa',
+    '/qtv-khoa/quan-ly-nguoi-dung',
+    '/qtv-khoa/phe-duyet-cuoi-cung',
+    '/qtv-khoa/thong-ke-bao-cao',
+    '/qtv-khoa/giam-sat-he-thong',
+    '/phong-quan-tri',
+    '/phong-quan-tri/xu-ly-to-trinh',
+    '/phong-quan-tri/kiem-tra-thuc-te',
+    '/phong-quan-tri/lap-bien-ban',
+    '/phong-quan-tri/gui-de-xuat',
+    '/to-truong-ky-thuat',
+    '/to-truong-ky-thuat/quan-ly-ky-thuat-vien',
+    '/to-truong-ky-thuat/giam-sat-loi',
+    '/to-truong-ky-thuat/phe-duyet-thay-the',
+    '/to-truong-ky-thuat/lap-to-trinh',
+    '/to-truong-ky-thuat/xac-nhan-bien-ban',
+    '/ky-thuat-vien',
+    '/ky-thuat-vien/xu-ly-loi',
+    '/ky-thuat-vien/de-xuat-thay-the',
+    '/ky-thuat-vien/quan-ly-tai-san',
+    '/ky-thuat-vien/thong-ke-ca-nhan',
+    '/giang-vien',
+    '/giang-vien/bao-cao-loi',
+    '/giang-vien/theo-doi-tien-do',
+    '/giang-vien/tra-cuu-thiet-bi',
+    '/giang-vien/thong-tin-ca-nhan'
+  ],
+  
   // Routes dành cho Giảng viên
   [UserRole.GIANG_VIEN]: [
     '/giang-vien',
@@ -78,8 +109,7 @@ const publicRoutes = [
   '/_next',
   '/favicon.ico',
   '/public',
-  '/images',
-  '/'
+  '/images'
 ]
 
 // Routes xác thực (không cần đăng nhập)
@@ -91,28 +121,26 @@ const authRoutes = [
 ]
 
 // Routes admin chung (có thể truy cập bởi nhiều vai trò)
-const adminRoutes = [
-  '/'
-]
+const adminRoutes: string[] = []
 
 /**
  * Kiểm tra xem user có quyền truy cập route không dựa trên vai trò hiện tại
  */
 function hasAccessToRoute(userRole: UserRole, pathname: string): boolean {
   // Admin routes - có thể truy cập bởi tất cả vai trò đã đăng nhập
-  if (adminRoutes.some(route => pathname.startsWith(route))) {
+  if (adminRoutes.some((route: string) => pathname.startsWith(route))) {
     return true
   }
   
   // Common protected routes - tất cả user đã đăng nhập đều có thể truy cập
-  if (commonProtectedRoutes.some(route => pathname.startsWith(route))) {
+  if (commonProtectedRoutes.some((route: string) => pathname.startsWith(route))) {
     return true
   }
   
   // Kiểm tra routes theo vai trò
-  const userRoutes = roleBasedRoutes[userRole]
+  const userRoutes = roleBasedRoutes[userRole as keyof typeof roleBasedRoutes]
   if (userRoutes) {
-    return userRoutes.some(route => pathname.startsWith(route))
+    return userRoutes.some((route: string) => pathname.startsWith(route))
   }
   
   return false
@@ -123,6 +151,8 @@ function hasAccessToRoute(userRole: UserRole, pathname: string): boolean {
  */
 function getDefaultRouteByRole(userRole: string): string {
   switch (userRole) {
+    case UserRole.ADMIN:
+      return '/qtv-khoa' // Admin mặc định vào QTV_KHOA
     case UserRole.GIANG_VIEN:
       return '/giang-vien'
     case UserRole.KY_THUAT_VIEN:
@@ -142,7 +172,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
   // Skip middleware for public routes and Next.js internals
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
+  if (publicRoutes.some((route: string) => pathname.startsWith(route))) {
     return NextResponse.next()
   }
 
@@ -152,8 +182,9 @@ export function middleware(request: NextRequest) {
   
   if (authUser) {
     try {
-      user = JSON.parse(authUser)
-    } catch {
+      user = JSON.parse(decodeURIComponent(authUser))
+    } catch (error) {
+      console.error('❌ Middleware: Error parsing user cookie:', error)
       // Cookie không hợp lệ, xóa cookie
       const response = NextResponse.redirect(new URL('/login', request.url))
       response.cookies.delete('repair_user')
@@ -162,10 +193,12 @@ export function middleware(request: NextRequest) {
   }
 
   const isAuthenticated = !!user
-  const activeRole = user?.activeRole
+  // activeRole giờ là string trực tiếp, không phải object
+  const activeRole = user?.activeRole || ""
+  
 
   // Redirect authenticated users away from auth pages
-  if (authRoutes.some(route => pathname.startsWith(route)) && isAuthenticated) {
+  if (authRoutes.some((route: string) => pathname.startsWith(route)) && isAuthenticated) {
     const defaultRoute = getDefaultRouteByRole(activeRole)
     return NextResponse.redirect(new URL(defaultRoute, request.url))
   }
@@ -175,7 +208,7 @@ export function middleware(request: NextRequest) {
     ...commonProtectedRoutes,
     ...adminRoutes,
     ...Object.values(roleBasedRoutes).flat()
-  ].some(route => pathname.startsWith(route))
+  ].some((route: string) => pathname.startsWith(route))
 
   if (isProtectedRoute && !isAuthenticated) {
     return NextResponse.redirect(new URL('/login', request.url))
@@ -183,7 +216,9 @@ export function middleware(request: NextRequest) {
 
   // Kiểm tra quyền truy cập theo vai trò
   if (isAuthenticated && isProtectedRoute) {
-    if (!hasAccessToRoute(activeRole, pathname)) {
+    const hasAccess = hasAccessToRoute(activeRole as UserRole, pathname)
+    
+    if (!hasAccess) {
       // User không có quyền truy cập, redirect về trang mặc định của họ
       const defaultRoute = getDefaultRouteByRole(activeRole)
       return NextResponse.redirect(new URL(defaultRoute, request.url))
