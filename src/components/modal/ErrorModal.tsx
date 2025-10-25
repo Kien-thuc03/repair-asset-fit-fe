@@ -54,10 +54,11 @@ export default function ErrorModal({
 
   return (
     <div
-      className={`fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center transition-opacity duration-200 ${
+      className={`fixed inset-0 bg-gray-600/50 overflow-y-auto h-full w-full z-50 flex items-center justify-center transition-opacity duration-200 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
-      onClick={handleBackdropClick}>
+      onClick={handleBackdropClick}
+      style={{ backgroundColor: "rgba(75, 85, 99, 0.5)" }}>
       <div
         className={`relative p-6 mx-4 w-full max-w-md bg-white rounded-lg shadow-xl transform transition-all duration-200 ${
           isVisible ? "scale-100" : "scale-95"

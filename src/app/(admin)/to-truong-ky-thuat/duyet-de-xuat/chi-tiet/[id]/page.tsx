@@ -185,6 +185,7 @@ export default function ChiTietDuyetDeXuatPage() {
       title: "STT",
       key: "index",
       width: 60,
+      responsive: ["md"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
       render: (_: unknown, __: unknown, index: number) => index + 1,
     },
     {
@@ -194,7 +195,7 @@ export default function ChiTietDuyetDeXuatPage() {
       render: (text: string, record: ComponentFromRequest) => (
         <div>
           <div className="font-medium">{text}</div>
-          <div className="text-sm text-gray-500">
+          <div className="text-xs sm:text-sm text-gray-500">
             Loại: {record.componentType}
           </div>
         </div>
@@ -203,10 +204,13 @@ export default function ChiTietDuyetDeXuatPage() {
     {
       title: "Linh kiện thay thế",
       key: "newItem",
+      responsive: ["lg"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
       render: (record: ComponentFromRequest) => (
         <div>
           <div className="font-medium">{record.newItemName}</div>
-          <div className="text-sm text-gray-500">{record.newItemSpecs}</div>
+          <div className="text-xs sm:text-sm text-gray-500">
+            {record.newItemSpecs}
+          </div>
         </div>
       ),
     },
@@ -216,22 +220,33 @@ export default function ChiTietDuyetDeXuatPage() {
       render: (record: ComponentFromRequest) => (
         <div>
           <div className="font-medium">{record.assetName}</div>
-          <div className="text-sm text-gray-500">Mã: {record.assetCode}</div>
+          <div className="text-xs sm:text-sm text-gray-500">
+            Mã: {record.assetCode}
+          </div>
           {record.machineLabel && (
-            <div className="text-sm text-blue-600">
+            <div className="text-xs sm:text-sm text-blue-600">
               Máy số: {record.machineLabel}
             </div>
           )}
+          {/* Show replacement item on mobile */}
+          <div className="lg:hidden mt-2 pt-2 border-t border-gray-100">
+            <div className="text-xs text-gray-500">Thay thế:</div>
+            <div className="font-medium text-sm">{record.newItemName}</div>
+            <div className="text-xs text-gray-500">{record.newItemSpecs}</div>
+          </div>
         </div>
       ),
     },
     {
       title: "Vị trí",
       key: "location",
+      responsive: ["md"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
       render: (record: ComponentFromRequest) => (
         <div>
           <div className="font-medium">{record.roomName}</div>
-          <div className="text-sm text-gray-500">{record.buildingName}</div>
+          <div className="text-xs sm:text-sm text-gray-500">
+            {record.buildingName}
+          </div>
         </div>
       ),
     },
@@ -240,7 +255,8 @@ export default function ChiTietDuyetDeXuatPage() {
       dataIndex: "quantity",
       key: "quantity",
       align: "center" as const,
-      width: 100,
+      width: 80,
+      responsive: ["sm"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
       render: (quantity: number) => (
         <span className="font-medium text-blue-600">{quantity}</span>
       ),
@@ -249,6 +265,7 @@ export default function ChiTietDuyetDeXuatPage() {
       title: "Lý do thay thế",
       dataIndex: "reason",
       key: "reason",
+      responsive: ["xl"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
       render: (reason: string) => (
         <div className="text-sm text-gray-700">{reason}</div>
       ),
@@ -446,7 +463,7 @@ Trân trọng kính trình.`;
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -469,12 +486,12 @@ Trân trọng kính trình.`;
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
             Chi tiết đề xuất • {request.proposalCode}
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-sm sm:text-base text-gray-600">
             Thông tin chi tiết về đề xuất thay thế linh kiện
           </p>
         </div>
@@ -487,6 +504,7 @@ Trân trọng kính trình.`;
           description="Đề xuất này đã bị từ chối bởi tổ trưởng kỹ thuật"
           type="error"
           showIcon
+          className="text-xs sm:text-sm"
         />
       )}
 
@@ -496,126 +514,159 @@ Trân trọng kính trình.`;
           description="Đề xuất này đã được phê duyệt và chuyển tiếp để xử lý."
           type="success"
           showIcon
+          className="text-xs sm:text-sm"
         />
       )}
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Info */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Basic Info */}
           <Card title="Thông tin cơ bản" className="shadow">
-            <Descriptions column={2} bordered>
-              <Descriptions.Item label="Mã đề xuất" span={1}>
-                <span className="font-mono font-medium text-blue-600">
+            <Descriptions
+              column={{ xs: 1, sm: 1, md: 2 }}
+              bordered
+              size="small"
+              labelStyle={{ fontWeight: 500 }}>
+              <Descriptions.Item
+                label="Mã đề xuất"
+                span={{ xs: 1, sm: 1, md: 1 }}>
+                <span className="font-mono font-medium text-blue-600 text-xs sm:text-sm">
                   {request.proposalCode}
                 </span>
               </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">
+              <Descriptions.Item
+                label="Trạng thái"
+                span={{ xs: 1, sm: 1, md: 1 }}>
                 <Tag
                   color={currentStatus.color}
-                  icon={<currentStatus.icon className="w-3 h-3" />}>
+                  icon={<currentStatus.icon className="w-3 h-3" />}
+                  className="text-xs">
                   {currentStatus.text}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Người đề xuất" span={1}>
-                <div className="font-medium">{proposerName}</div>
+              <Descriptions.Item
+                label="Người đề xuất"
+                span={{ xs: 1, sm: 1, md: 1 }}>
+                <div className="font-medium text-xs sm:text-sm">
+                  {proposerName}
+                </div>
               </Descriptions.Item>
-              {canApproveOrReject ? (
-                <Descriptions.Item label="Hành động">
-                  <div className="flex space-x-3">
+              <Descriptions.Item
+                label="Ngày tạo"
+                span={{ xs: 1, sm: 1, md: 1 }}>
+                <div className="text-xs sm:text-sm">
+                  {new Date(request.createdAt).toLocaleDateString("vi-VN", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </Descriptions.Item>
+              <Descriptions.Item
+                label="Số lượng linh kiện"
+                span={{ xs: 1, sm: 1, md: 2 }}>
+                <span className="font-medium text-blue-600 text-xs sm:text-sm">
+                  {replacementItems.length} linh kiện
+                </span>
+              </Descriptions.Item>
+              {canApproveOrReject && (
+                <Descriptions.Item
+                  label="Hành động"
+                  span={{ xs: 1, sm: 1, md: 2 }}>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Button
                       type="primary"
                       icon={<CheckCircle className="h-4 w-4" />}
-                      onClick={() => setShowApproveModal(true)}>
+                      onClick={() => setShowApproveModal(true)}
+                      className="w-full sm:w-auto text-sm"
+                      size="middle">
                       Phê duyệt
                     </Button>
                     <Button
                       danger
                       icon={<XCircle className="h-4 w-4" />}
-                      onClick={() => setShowRejectModal(true)}>
+                      onClick={() => setShowRejectModal(true)}
+                      className="w-full sm:w-auto text-sm"
+                      size="middle">
                       Từ chối
                     </Button>
                   </div>
                 </Descriptions.Item>
-              ) : (
-                <Descriptions.Item label="Ngày tạo" span={1}>
-                  <div>
-                    {new Date(request.createdAt).toLocaleDateString("vi-VN", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                </Descriptions.Item>
               )}
-              {canApproveOrReject && (
-                <Descriptions.Item label="Ngày tạo" span={2}>
-                  <div>
-                    {new Date(request.createdAt).toLocaleDateString("vi-VN", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                </Descriptions.Item>
-              )}
-              <Descriptions.Item label="Số lượng linh kiện" span={2}>
-                <span className="font-medium text-blue-600">
-                  {replacementItems.length} linh kiện
-                </span>
-              </Descriptions.Item>
             </Descriptions>
           </Card>
 
           {/* Components List */}
           <Card
-            title={`Danh sách linh kiện cần thay thế (${replacementItems.length})`}
+            title={
+              <span className="text-sm sm:text-base">
+                Danh sách linh kiện cần thay thế ({replacementItems.length})
+              </span>
+            }
             className="shadow">
-            <Table
-              dataSource={replacementItems}
-              columns={componentColumns}
-              rowKey="id"
-              pagination={false}
-              size="middle"
-            />
+            <div className="overflow-x-auto">
+              <Table
+                dataSource={replacementItems}
+                columns={componentColumns}
+                rowKey="id"
+                pagination={false}
+                size="small"
+                scroll={{ x: "max-content" }}
+                className="responsive-table"
+              />
+            </div>
           </Card>
         </div>
 
         {/* Timeline */}
         <div className="lg:col-span-1">
-          <Card title="Tiến trình xử lý" className="shadow">
-            <Timeline items={timelineItems} />
+          <Card
+            title={
+              <span className="text-sm sm:text-base">Tiến trình xử lý</span>
+            }
+            className="shadow">
+            <Timeline items={timelineItems} className="text-xs sm:text-sm" />
           </Card>
         </div>
       </div>
 
       {/* Approve Modal */}
       <Modal
-        title="Xác nhận phê duyệt"
+        title={<span className="text-sm sm:text-base">Xác nhận phê duyệt</span>}
         open={showApproveModal}
         onCancel={() => setShowApproveModal(false)}
         footer={[
-          <Button key="cancel" onClick={() => setShowApproveModal(false)}>
+          <Button
+            key="cancel"
+            onClick={() => setShowApproveModal(false)}
+            size="middle"
+            className="text-xs sm:text-sm">
             Hủy
           </Button>,
-          <Button key="approve" type="primary" onClick={handleApprovalConfirm}>
+          <Button
+            key="approve"
+            type="primary"
+            onClick={handleApprovalConfirm}
+            size="middle"
+            className="text-xs sm:text-sm">
             Phê duyệt
           </Button>,
         ]}
         centered>
-        <p className="text-gray-600">
+        <p className="text-gray-600 text-xs sm:text-sm">
           Bạn có chắc chắn muốn phê duyệt đề xuất này không?
         </p>
       </Modal>
 
       {/* Approval Confirmation Modal */}
       <Modal
-        title="Phê duyệt thành công!"
+        title={
+          <span className="text-sm sm:text-base">Phê duyệt thành công!</span>
+        }
         open={showApprovalConfirmModal}
         onCancel={() => {
           setShowApprovalConfirmModal(false);
@@ -627,7 +678,9 @@ Trân trọng kính trình.`;
             onClick={() => {
               setShowApprovalConfirmModal(false);
               router.push("/to-truong-ky-thuat/duyet-de-xuat");
-            }}>
+            }}
+            size="middle"
+            className="text-xs sm:text-sm">
             Không
           </Button>,
           <Button
@@ -636,12 +689,14 @@ Trân trọng kính trình.`;
             onClick={() => {
               setShowApprovalConfirmModal(false);
               handleCreateSubmissionForm();
-            }}>
+            }}
+            size="middle"
+            className="text-xs sm:text-sm">
             Có - Lập tờ trình
           </Button>,
         ]}
         centered>
-        <p className="text-gray-600">
+        <p className="text-gray-600 text-xs sm:text-sm">
           Đề xuất đã được phê duyệt. Bạn có muốn lập tờ trình ngay bây giờ
           không?
         </p>
@@ -649,19 +704,28 @@ Trân trọng kính trình.`;
 
       {/* Reject Modal */}
       <Modal
-        title="Từ chối đề xuất"
+        title={<span className="text-sm sm:text-base">Từ chối đề xuất</span>}
         open={showRejectModal}
         onCancel={() => setShowRejectModal(false)}
         footer={[
-          <Button key="cancel" onClick={() => setShowRejectModal(false)}>
+          <Button
+            key="cancel"
+            onClick={() => setShowRejectModal(false)}
+            size="middle"
+            className="text-xs sm:text-sm">
             Hủy
           </Button>,
-          <Button key="reject" danger onClick={handleReject}>
+          <Button
+            key="reject"
+            danger
+            onClick={handleReject}
+            size="middle"
+            className="text-xs sm:text-sm">
             Từ chối
           </Button>,
         ]}
         centered>
-        <p className="text-gray-600">
+        <p className="text-gray-600 text-xs sm:text-sm">
           Bạn có chắc chắn muốn từ chối đề xuất này không?
         </p>
       </Modal>
@@ -670,31 +734,37 @@ Trân trọng kính trình.`;
       <Modal
         title={
           <div className="flex items-center space-x-2">
-            <FileText className="w-5 h-5 text-purple-600" />
-            <span>Lập tờ trình đề xuất</span>
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+            <span className="text-sm sm:text-base">Lập tờ trình đề xuất</span>
           </div>
         }
         open={showSubmissionModal}
         onCancel={() => setShowSubmissionModal(false)}
-        width={800}
+        width="95%"
+        style={{ maxWidth: "800px", top: 20 }}
         destroyOnClose={false}
         maskClosable={false}
         footer={[
-          <Button key="cancel" onClick={() => setShowSubmissionModal(false)}>
+          <Button
+            key="cancel"
+            onClick={() => setShowSubmissionModal(false)}
+            className="text-xs sm:text-sm"
+            size="middle">
             Hủy
           </Button>,
           <Button
             key="submit"
             type="primary"
             onClick={handleSubmitSubmission}
-            className="bg-purple-600 hover:bg-purple-700">
+            className="bg-purple-600 hover:bg-purple-700 text-xs sm:text-sm"
+            size="middle">
             Gửi tờ trình
           </Button>,
         ]}>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-3 sm:space-y-4 max-h-[70vh] overflow-y-auto px-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Người đề nghị
               </label>
               <Input
@@ -705,10 +775,12 @@ Trân trọng kính trình.`;
                     submittedBy: e.target.value,
                   }))
                 }
+                className="text-xs sm:text-sm"
+                size="middle"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Chức vụ
               </label>
               <Input
@@ -719,10 +791,12 @@ Trân trọng kính trình.`;
                     position: e.target.value,
                   }))
                 }
+                className="text-xs sm:text-sm"
+                size="middle"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Đơn vị đề nghị
               </label>
               <Input
@@ -733,10 +807,12 @@ Trân trọng kính trình.`;
                     department: e.target.value,
                   }))
                 }
+                className="text-xs sm:text-sm"
+                size="middle"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Đơn vị tiếp nhận
               </label>
               <Input
@@ -747,12 +823,14 @@ Trân trọng kính trình.`;
                     recipientDepartment: e.target.value,
                   }))
                 }
+                className="text-xs sm:text-sm"
+                size="middle"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Đề nghị
             </label>
             <Input
@@ -763,15 +841,17 @@ Trân trọng kính trình.`;
                   subject: e.target.value,
                 }))
               }
+              className="text-xs sm:text-sm"
+              size="middle"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Nội dung tờ trình
             </label>
             <Input.TextArea
-              rows={8}
+              rows={6}
               value={submissionFormData.content}
               onChange={(e) =>
                 setSubmissionFormData((prev) => ({
@@ -780,11 +860,12 @@ Trân trọng kính trình.`;
                 }))
               }
               placeholder="Nội dung chi tiết của tờ trình..."
+              className="text-xs sm:text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
               Văn bản kèm theo
             </label>
             <Input
@@ -795,12 +876,14 @@ Trân trọng kính trình.`;
                   attachments: e.target.value,
                 }))
               }
+              className="text-xs sm:text-sm"
+              size="middle"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Giám đốc
               </label>
               <Input
@@ -811,10 +894,12 @@ Trân trọng kính trình.`;
                     director: e.target.value,
                   }))
                 }
+                className="text-xs sm:text-sm"
+                size="middle"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
                 Hiệu trưởng
               </label>
               <Input
@@ -825,6 +910,8 @@ Trân trọng kính trình.`;
                     rector: e.target.value,
                   }))
                 }
+                className="text-xs sm:text-sm"
+                size="middle"
               />
             </div>
           </div>

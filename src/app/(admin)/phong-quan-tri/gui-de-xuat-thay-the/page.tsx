@@ -273,7 +273,7 @@ export default function GuiDeXuatThayThePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
       <div className="mb-2">
         <Breadcrumb
@@ -306,21 +306,25 @@ export default function GuiDeXuatThayThePage() {
       </div>
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Danh sách mua sắm thiết bị
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Quản lý và theo dõi các đề xuất thay thế linh kiện, thiết bị đã được
-          tổ trưởng ký biên bản hoặc đã hoàn tất mua sắm.
-        </p>
+      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              Danh sách mua sắm thiết bị
+            </h1>
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
+              Quản lý và theo dõi các đề xuất thay thế linh kiện, thiết bị đã
+              được tổ trưởng ký biên bản hoặc đã hoàn tất mua sắm.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Search và xuất file Excel  */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 md:w-3/4">
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
+          {/* Search - 3 columns on desktop, full width on mobile */}
+          <div className="sm:col-span-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -328,30 +332,41 @@ export default function GuiDeXuatThayThePage() {
                 placeholder="Tìm kiếm theo mã đề xuất, tiêu đề..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
             </div>
           </div>
 
-          {/* Export Excel Button */}
-          <div className="md:w-1/4">
+          {/* Export Excel Button - 1 column on desktop, full width on mobile */}
+          <div className="sm:col-span-1 flex justify-end">
             <Button
               onClick={handleExportExcel}
               icon={<Download className="w-3 h-3" />}
               size="middle"
-              className="w-full"
-              type="default">
-              <span className="hidden lg:inline">Xuất Excel</span>
-              <span className="lg:hidden">Excel</span>
+              className={`w-full ${
+                selectedRowKeys.length > 0
+                  ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
+                  : ""
+              }`}
+              type={selectedRowKeys.length > 0 ? "primary" : "default"}>
+              <span className="hidden sm:inline">Xuất Excel</span>
+              <span className="sm:hidden">Excel</span>
               {selectedRowKeys.length > 0 && ` (${selectedRowKeys.length})`}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="w-full">
+      {/* Desktop Table View */}
+      <div className="hidden lg:block bg-white rounded-lg shadow">
+        {/* Table Header */}
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            Danh sách đề xuất ({filteredData.length})
+          </h2>
+        </div>
+
+        <div className="overflow-x-auto min-h-[500px]">
           <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -532,10 +547,125 @@ export default function GuiDeXuatThayThePage() {
             </p>
           </div>
         )}
+      </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+      {/* Mobile View */}
+      <div className="lg:hidden bg-white shadow rounded-lg">
+        {/* Header */}
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            Danh sách đề xuất ({filteredData.length})
+          </h2>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="p-4 space-y-4">
+          {paginatedData.length > 0 ? (
+            paginatedData.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white border rounded-lg shadow-sm p-4 space-y-3">
+                {/* Header Row */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 flex-1">
+                    <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm">
+                        {item.proposalCode}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                        {item.title}
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={selectedRowKeys.includes(item.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRowKeys([...selectedRowKeys, item.id]);
+                      } else {
+                        setSelectedRowKeys(
+                          selectedRowKeys.filter((key) => key !== item.id)
+                        );
+                      }
+                    }}
+                    className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                  />
+                </div>
+
+                {/* Description */}
+                <p className="text-xs text-gray-500 line-clamp-2">
+                  {item.description}
+                </p>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-500">Người tạo:</span>
+                    <p className="font-medium text-gray-900 mt-0.5">
+                      {item.createdBy || "Chưa xác định"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Số lượng:</span>
+                    <p className="font-medium text-gray-900 mt-0.5">
+                      {item.components.length} linh kiện
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Ngày tạo:</span>
+                    <p className="font-medium text-gray-900 mt-0.5">
+                      {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Trạng thái:</span>
+                    <div className="mt-0.5">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor(
+                          item.status
+                        )}`}>
+                        {getStatusText(item.status)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer with Actions */}
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Link
+                    href={`/phong-quan-tri/gui-de-xuat-thay-the/${item.id}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>Xem chi tiết</span>
+                  </Link>
+                  {item.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN && (
+                    <button
+                      onClick={() => handleOpenConfirmModal(item)}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      <span>Hoàn tất</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">
+                Không tìm thấy đề xuất nào
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 sm:mt-6">
+          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 rounded-lg shadow-sm">
             <Pagination
               currentPage={currentPage}
               pageSize={itemsPerPage}
@@ -545,8 +675,8 @@ export default function GuiDeXuatThayThePage() {
               showSizeChanger={false}
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Modal xác nhận hoàn tất mua sắm */}
       <SignConfirmModal

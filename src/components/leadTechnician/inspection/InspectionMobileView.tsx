@@ -35,92 +35,104 @@ export default function InspectionMobileView({
   getStatusIcon,
 }: InspectionMobileViewProps) {
   return (
-    <div className="block sm:hidden">
-      <div className="p-3 space-y-3">
+    <div className="lg:hidden bg-white shadow rounded-lg">
+      <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+        <h2 className="text-base sm:text-lg font-medium text-gray-900">
+          Danh sách biên bản ({reports.length})
+        </h2>
+      </div>
+      <div className="p-4 space-y-4">
         {reports.length > 0 ? (
           reports.map((report) => (
             <div
               key={report.id}
-              className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center">
-                  <button
-                    onClick={() =>
-                      onSelectItem(
-                        report.id,
-                        !selectedItems.includes(report.id)
-                      )
-                    }
-                    className="mr-2 flex-shrink-0">
-                    {selectedItems.includes(report.id) ? (
-                      <CheckSquare className="h-4 w-4 text-blue-600" />
-                    ) : (
-                      <Square className="h-4 w-4 text-gray-400" />
-                    )}
-                  </button>
-                  <FileText className="h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {report.reportNumber}
+              className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+              {/* Header with icon, number, and checkbox */}
+              <div className="flex items-start gap-3 mb-3">
+                <FileText className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                    {report.reportNumber}
+                  </h3>
+                  <p className="text-xs text-gray-500 line-clamp-2">
+                    {report.relatedReportTitle}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    onSelectItem(report.id, !selectedItems.includes(report.id))
+                  }
+                  className="flex-shrink-0">
+                  {selectedItems.includes(report.id) ? (
+                    <CheckSquare className="h-5 w-5 text-blue-600" />
+                  ) : (
+                    <Square className="h-5 w-5 text-gray-400" />
+                  )}
+                </button>
+              </div>
+
+              {/* Info grid */}
+              <div className="space-y-2 mb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="text-xs text-gray-500 mb-0.5">
+                      Người lập
                     </div>
-                    <div className="text-xs text-gray-500 truncate">
-                      Tờ trình: {report.relatedReportTitle}
+                    <div className="text-sm text-gray-900 font-medium">
+                      {report.createdBy}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-xs text-gray-500 mb-0.5">
+                      Ngày kiểm tra
+                    </div>
+                    <div className="text-sm text-gray-900">
+                      {new Date(report.inspectionDate).toLocaleDateString(
+                        "vi-VN"
+                      )}
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Footer with status and actions */}
+              <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                 <span
-                  className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
+                  className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusBadge(
                     report.status
                   )}`}>
                   {getStatusIcon(report.status)}
                   <span className="ml-1">{getStatusText(report.status)}</span>
                 </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                <div>
-                  <div className="text-gray-500">Người lập</div>
-                  <div className="text-gray-900 font-medium">
-                    {report.createdBy}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-gray-500">Ngày kiểm tra</div>
-                  <div className="text-gray-900">
-                    {new Date(report.inspectionDate).toLocaleDateString(
-                      "vi-VN"
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end space-x-2">
-                <button
-                  onClick={() => onViewDetail(report)}
-                  className="text-indigo-600 hover:text-indigo-900 p-1"
-                  title="Xem chi tiết">
-                  <Eye className="h-4 w-4" />
-                </button>
-                {report.status === "pending" && (
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => onSignReport(report)}
-                    className="px-3 py-1 text-xs font-medium text-green-700 bg-green-100 border border-green-300 rounded-md hover:bg-green-200">
-                    Ký xác nhận
+                    onClick={() => onViewDetail(report)}
+                    className="flex items-center gap-1 text-indigo-600 hover:text-indigo-900 text-sm font-medium"
+                    title="Xem chi tiết">
+                    <Eye className="h-4 w-4" />
+                    <span>Xem</span>
                   </button>
-                )}
-                {report.status === "signed" && (
-                  <button
-                    onClick={() => onSendBack(report.id)}
-                    className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200">
-                    Gửi lại
-                  </button>
-                )}
+                  {report.status === "pending" && (
+                    <button
+                      onClick={() => onSignReport(report)}
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700">
+                      Ký
+                    </button>
+                  )}
+                  {report.status === "signed" && (
+                    <button
+                      onClick={() => onSendBack(report.id)}
+                      className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                      Gửi lại
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="text-center py-8">
-            <Search className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+          <div className="text-center py-12">
+            <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
             <h3 className="text-sm font-medium text-gray-900 mb-1">
               Không tìm thấy kết quả
             </h3>

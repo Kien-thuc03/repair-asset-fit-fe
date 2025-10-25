@@ -260,7 +260,7 @@ export default function LapBienBanPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
       <div className="mb-2">
         <Breadcrumb
@@ -293,57 +293,68 @@ export default function LapBienBanPage() {
       </div>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Danh sách biên bản kiểm tra
-          </h1>
-          <p className="text-gray-600">
-            Quản lý các biên bản kiểm tra thực tế đã được tạo
-          </p>
-        </div>
-      </div>
-
-      {/* Search and Export */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="grid grid-cols-4 gap-4">
-            {/* Search - 3 columns */}
-            <div className="col-span-3">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                  placeholder="Nhập mã biên bản, tên người tạo, hoặc thông tin khác..."
-                />
-              </div>
-            </div>
-
-            {/* Export Excel - 1 column */}
-            <div className="col-span-1 flex justify-end">
-              <Button
-                onClick={handleExportExcel}
-                icon={<Download className="w-3 h-3" />}
-                size="middle"
-                className="w-full"
-                type="default">
-                <span className="hidden lg:inline">Xuất Excel</span>
-                <span className="lg:hidden">Excel</span>
-                {selectedRowKeys.length > 0 && ` (${selectedRowKeys.length})`}
-              </Button>
-            </div>
+      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+              Danh sách biên bản kiểm tra
+            </h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
+              Quản lý các biên bản kiểm tra thực tế đã được tạo
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="w-full">
+      {/* Search and Export */}
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 sm:gap-4">
+          {/* Search - 3 columns on desktop, full width on mobile */}
+          <div className="sm:col-span-3">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                placeholder="Nhập mã biên bản, tên người tạo..."
+              />
+            </div>
+          </div>
+
+          {/* Export Excel - 1 column on desktop, full width on mobile */}
+          <div className="sm:col-span-1 flex justify-end">
+            <Button
+              onClick={handleExportExcel}
+              icon={<Download className="w-3 h-3" />}
+              size="middle"
+              className={`w-full ${
+                selectedRowKeys.length > 0
+                  ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
+                  : ""
+              }`}
+              type={selectedRowKeys.length > 0 ? "primary" : "default"}>
+              <span className="hidden sm:inline">Xuất Excel</span>
+              <span className="sm:hidden">Excel</span>
+              {selectedRowKeys.length > 0 && ` (${selectedRowKeys.length})`}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block bg-white rounded-lg shadow">
+        {/* Table Header */}
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            Danh sách biên bản ({filteredReports.length})
+          </h2>
+        </div>
+
+        <div className="overflow-x-auto min-h-[500px]">
           <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -506,6 +517,127 @@ export default function LapBienBanPage() {
             </p>
           </div>
         )}
+      </div>
+
+      {/* Mobile View */}
+      <div className="lg:hidden bg-white shadow rounded-lg">
+        {/* Header */}
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            Danh sách biên bản ({filteredReports.length})
+          </h2>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="p-4 space-y-4">
+          {filteredReports.length > 0 ? (
+            filteredReports.map((request) => {
+              const stats = getRequestStatistics(request);
+              return (
+                <div
+                  key={request.id}
+                  className="bg-white border rounded-lg shadow-sm p-4 space-y-3">
+                  {/* Header Row */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 flex-1">
+                      <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm">
+                          {request.proposalCode}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                          {request.title}
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={selectedRowKeys.includes(request.id)}
+                      onChange={() => handleSelectItem(request.id)}
+                      className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                    />
+                  </div>
+
+                  {/* Info Grid */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-gray-500">Ngày lập:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {new Date(request.updatedAt).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Người tạo:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {request.createdBy}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Phòng:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {stats.totalRooms} phòng
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Linh kiện:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {stats.totalComponents} loại
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Room Info */}
+                  <div className="flex flex-wrap gap-1">
+                    {stats.roomsList
+                      .slice(0, 2)
+                      .map((room: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          {room.length > 20
+                            ? `${room.substring(0, 20)}...`
+                            : room}
+                        </span>
+                      ))}
+                    {stats.roomsList.length > 2 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                        +{stats.roomsList.length - 2}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Footer with Status and Action */}
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t">
+                    <span
+                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                        request.status
+                      )}`}>
+                      {getStatusIcon(request.status)}
+                      <span className="ml-1">Đã duyệt</span>
+                    </span>
+                    <button
+                      onClick={() => handleViewReport(request.id)}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>Xem chi tiết</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">
+                {searchTerm
+                  ? "Không tìm thấy biên bản nào phù hợp"
+                  : "Chưa có biên bản nào được tạo"}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Export Success Modal */}

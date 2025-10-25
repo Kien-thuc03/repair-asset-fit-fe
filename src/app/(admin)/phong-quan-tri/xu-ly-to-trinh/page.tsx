@@ -236,7 +236,7 @@ export default function XuLyToTrinhPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
       <div className="mb-2">
         <Breadcrumb
@@ -269,11 +269,11 @@ export default function XuLyToTrinhPage() {
       </div>
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           Xử lý tờ trình thay thế
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-sm sm:text-base text-gray-600">
           Danh sách các tờ trình đang chờ xử lý từ tổ trưởng kỹ thuật. Tất cả tờ
           trình ở đây đều có trạng thái &ldquo;Đã lập tờ trình&rdquo; và cần
           được xem xét phê duyệt.
@@ -281,8 +281,8 @@ export default function XuLyToTrinhPage() {
       </div>
 
       {/* Search và Xuất Excel */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
           {/* Search - chiếm 3 cột */}
           <div className="md:col-span-3">
             <div className="relative">
@@ -304,16 +304,33 @@ export default function XuLyToTrinhPage() {
               icon={<Download className="w-4 h-4" />}
               onClick={handleExportExcel}
               disabled={selectedRowKeys.length === 0}
+              style={{
+                backgroundColor:
+                  selectedRowKeys.length > 0 ? "#16a34a" : undefined,
+                borderColor: selectedRowKeys.length > 0 ? "#16a34a" : undefined,
+              }}
               className="w-full h-[40px] flex items-center justify-center">
-              Xuất Excel ({selectedRowKeys.length})
+              <span className="hidden sm:inline">
+                Xuất Excel{" "}
+                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+              </span>
+              <span className="sm:hidden">
+                Xuất{" "}
+                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+              </span>
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="w-full">
+      {/* Table - Desktop */}
+      <div className="bg-white rounded-lg shadow overflow-hidden hidden lg:block">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+          <h2 className="text-base sm:text-lg font-medium text-gray-900">
+            Danh sách tờ trình ({filteredData.length})
+          </h2>
+        </div>
+        <div className="overflow-x-auto min-h-[500px]">
           <table className="w-full table-fixed divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -486,10 +503,108 @@ export default function XuLyToTrinhPage() {
             </p>
           </div>
         )}
+      </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+      {/* Mobile View */}
+      <div className="lg:hidden bg-white shadow rounded-lg">
+        {/* Header */}
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            Danh sách tờ trình ({filteredData.length})
+          </h2>
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="p-4 space-y-4">
+          {paginatedData.length > 0 ? (
+            paginatedData.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+                {/* Header Row */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 flex-1">
+                    <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm">
+                        {item.proposalCode}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                        {item.title}
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={selectedRowKeys.includes(item.id)}
+                    onChange={(e) => handleRowSelect(item.id, e.target.checked)}
+                    className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                  />
+                </div>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-gray-500">Người tạo:</span>
+                    <p className="font-medium text-gray-900 mt-0.5">
+                      {item.createdBy}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Số lượng:</span>
+                    <p className="font-medium text-gray-900 mt-0.5">
+                      {item.components.length} thiết bị
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Ngày tạo:</span>
+                    <p className="font-medium text-gray-900 mt-0.5">
+                      {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Trạng thái:</span>
+                    <div className="mt-0.5">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor()}`}>
+                        {getStatusText()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer with Actions */}
+                <div className="flex items-center gap-2 pt-2 ">
+                  <Link
+                    href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>Xem chi tiết</span>
+                  </Link>
+                  <button
+                    onClick={() => handleApproveClick(item)}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    <span>Duyệt</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">
+                Không tìm thấy tờ trình nào
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 sm:mt-6">
+          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 rounded-lg shadow-sm">
             <Pagination
               currentPage={currentPage}
               pageSize={itemsPerPage}
@@ -499,8 +614,8 @@ export default function XuLyToTrinhPage() {
               showSizeChanger={false}
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Export Success Modal */}
       <Modal

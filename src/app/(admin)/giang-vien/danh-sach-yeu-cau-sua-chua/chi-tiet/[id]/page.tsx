@@ -16,14 +16,20 @@ import {
   Package,
   Monitor,
   Info,
-  ArrowLeft,
+  Trash2,
 } from "lucide-react";
 import {
   getRepairRequestWithDetails,
   repairRequestStatusConfig,
+  cancelRepairRequest,
 } from "@/lib/mockData";
 import { RepairStatus, RepairRequest } from "@/types";
 import ImageViewer from "@/components/ui/ImageViewer";
+import {
+  CancelConfirmModal,
+  SuccessModal,
+  ErrorModal,
+} from "@/components/modal";
 
 export default function ChiTietDanhSachYeuCauSuaChuaPage() {
   const params = useParams();
@@ -33,6 +39,12 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
     null
   );
   const [loading, setLoading] = useState(true);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const req = useMemo(() => {
     const result = getRepairRequestWithDetails(id);
@@ -75,6 +87,44 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
       return `${diffDays} ngày ${diffHours % 24} giờ`;
     }
     return `${diffHours} giờ`;
+  };
+
+  // Hàm mở modal xác nhận hủy
+  const handleOpenCancelModal = () => {
+    setShowCancelModal(true);
+  };
+
+  // Hàm hủy yêu cầu
+  const handleCancelRequest = async () => {
+    try {
+      setIsDeleting(true);
+
+      // Giả lập delay API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Xóa yêu cầu khỏi mock data
+      const success = cancelRepairRequest(id);
+
+      if (success) {
+        setShowCancelModal(false);
+        setShowSuccessModal(true);
+      } else {
+        throw new Error("Không tìm thấy yêu cầu để hủy");
+      }
+    } catch (error) {
+      setShowCancelModal(false);
+      setErrorMessage("Có lỗi xảy ra khi hủy yêu cầu. Vui lòng thử lại.");
+      setShowErrorModal(true);
+      console.error(error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Hàm xử lý sau khi thành công
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    router.push("/giang-vien/danh-sach-yeu-cau-sua-chua");
   };
 
   if (loading) {
@@ -184,21 +234,33 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
             </p>
           </div>
           <div className="flex flex-col items-start lg:items-end gap-2">
-            <Tag
-              color={
-                statusConfig.color.includes("yellow")
-                  ? "orange"
-                  : statusConfig.color.includes("blue")
-                  ? "blue"
-                  : statusConfig.color.includes("green")
-                  ? "green"
-                  : statusConfig.color.includes("red")
-                  ? "red"
-                  : "default"
-              }
-              className="text-sm px-3 py-1">
-              {statusConfig.label}
-            </Tag>
+            <div className="flex items-center gap-2">
+              <Tag
+                color={
+                  statusConfig.color.includes("yellow")
+                    ? "orange"
+                    : statusConfig.color.includes("blue")
+                    ? "blue"
+                    : statusConfig.color.includes("green")
+                    ? "green"
+                    : statusConfig.color.includes("red")
+                    ? "red"
+                    : "default"
+                }
+                className="text-sm px-3 py-1">
+                {statusConfig.label}
+              </Tag>
+              {/* Nút hủy yêu cầu - chỉ hiển thị khi trạng thái là Chờ tiếp nhận */}
+              {currentRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN && (
+                <button
+                  onClick={handleOpenCancelModal}
+                  disabled={isDeleting}
+                  className="inline-flex items-center px-3 py-1 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Hủy yêu cầu
+                </button>
+              )}
+            </div>
             <div className="text-sm text-gray-500 flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               Báo lúc:{" "}
@@ -298,7 +360,7 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-1">
         <div className="xl:col-span-2 space-y-6">
           {/* Enhanced Info Card */}
           <Card
@@ -471,39 +533,34 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
               )}
           </Card>
         </div>
-
-        {/* Sidebar - Quick Actions */}
-        <div className="xl:col-span-1">
-          <Card title="Thao tác nhanh">
-            <div className="space-y-3">
-              <button
-                onClick={() => router.back()}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <ArrowLeft className="w-4 h-4" />
-                Quay lại danh sách
-              </button>
-
-              {currentRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN && (
-                <div className="bg-blue-50 p-3 rounded-md border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    <strong>Lưu ý:</strong> Bạn có thể chỉnh sửa hoặc hủy yêu
-                    cầu này khi chưa được tiếp nhận.
-                  </p>
-                </div>
-              )}
-
-              {currentRequest.status === RepairStatus.ĐANG_XỬ_LÝ && (
-                <div className="bg-yellow-50 p-3 rounded-md border border-yellow-200">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Đang xử lý:</strong> Kỹ thuật viên đang tiến hành
-                    khắc phục sự cố.
-                  </p>
-                </div>
-              )}
-            </div>
-          </Card>
-        </div>
       </div>
+
+      {/* Modals */}
+      <CancelConfirmModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancelRequest}
+        title="Xác nhận hủy yêu cầu"
+        message="Bạn có chắc chắn muốn hủy yêu cầu sửa chữa này không? Hành động này không thể hoàn tác."
+        confirmText="Hủy yêu cầu"
+        cancelText="Đóng"
+        isLoading={isDeleting}
+      />
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessClose}
+        title="Hủy yêu cầu thành công!"
+        message="Yêu cầu sửa chữa đã được hủy thành công."
+      />
+
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="Có lỗi xảy ra!"
+        message={errorMessage}
+        showRetry={false}
+      />
     </div>
   );
 }

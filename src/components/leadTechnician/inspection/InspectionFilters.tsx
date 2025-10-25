@@ -15,7 +15,7 @@ export default function InspectionFilters({
   onExportExcel,
 }: InspectionFiltersProps) {
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-lg shadow mb-6">
+    <div className="bg-white p-3 sm:p-4 lg:p-6 rounded-lg shadow mb-4 sm:mb-6">
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={24} md={18} lg={18}>
           <Input
@@ -24,6 +24,7 @@ export default function InspectionFilters({
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full"
+            size="middle"
           />
         </Col>
         <Col xs={24} sm={24} md={6} lg={6}>
@@ -32,6 +33,7 @@ export default function InspectionFilters({
             icon={<Download className="h-4 w-4" />}
             onClick={onExportExcel}
             disabled={selectedCount === 0}
+            size="middle"
             className={`w-full ${
               selectedCount > 0
                 ? "bg-green-600 hover:bg-green-700 border-green-600 hover:border-green-700"
@@ -44,7 +46,9 @@ export default function InspectionFilters({
             <span className="hidden sm:inline">
               Xuất Excel {selectedCount > 0 && `(${selectedCount})`}
             </span>
-            <span className="sm:hidden">Xuất</span>
+            <span className="sm:hidden">
+              Xuất {selectedCount > 0 && `(${selectedCount})`}
+            </span>
           </Button>
         </Col>
       </Row>

@@ -5,3 +5,4 @@ export { default as InspectionReportDetailModal } from "./InspectionReportDetail
 export { default as InspectionSignConfirmModal } from "./InspectionSignConfirmModal";
 export { default as SignConfirmModal } from "./SignConfirmModal";
 export { default as ProposalConfirmModal } from "./ProposalConfirmModal";
+export { default as CancelConfirmModal } from "./CancelConfirmModal";
