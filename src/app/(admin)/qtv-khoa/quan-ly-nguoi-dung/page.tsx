@@ -7,7 +7,8 @@ import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
 import { IUserWithRoles, UserStatus } from '@/types';
 import { UserTable, UserConfirmModal } from '@/components/qtvKhoa';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { mockRoles, mockUnits } from '@/lib/mockData/usersManagement';
 
 export default function UsersManagementPage() {
   const router = useRouter();
@@ -27,21 +28,46 @@ export default function UsersManagementPage() {
   // Hooks
   const {
     users,
-    stats,
-    units,
-    roles,
     loading,
     error,
     filters,
     page,
     limit,
     total,
+    totalPages,
     updateFilters,
     resetFilters,
     changePage,
     changeLimit,
-    clearError
+    clearError,
+    toggleUserStatus,
+    deleteUser,
   } = useUsersManagement();
+
+  // Tính toán stats từ danh sách users
+  const stats = useMemo(() => {
+    const activeUsers = users.filter(u => u.status === UserStatus.ACTIVE);
+    const inactiveUsers = users.filter(u => u.status === UserStatus.INACTIVE);
+    
+    // Group by unit
+    const byUnit = users.reduce((acc, user) => {
+      const unitName = user.unit?.name || 'Chưa phân công';
+      const existing = acc.find(item => item.unitName === unitName);
+      if (existing) {
+        existing.count++;
+      } else {
+        acc.push({ unitName, count: 1 });
+      }
+      return acc;
+    }, [] as { unitName: string; count: number }[]);
+
+    return {
+      total: total,
+      active: activeUsers.length,
+      inactive: inactiveUsers.length,
+      byUnit,
+    };
+  }, [users, total]);
 
   // Navigation handlers
   const handleCreateUser = () => {
@@ -87,28 +113,29 @@ export default function UsersManagementPage() {
     if (!confirmModal.user) return;
 
     try {
-      // TODO: Implement actual API calls
       if (confirmModal.action === 'toggle-status') {
-        const newStatus = confirmModal.user.status === UserStatus.ACTIVE 
-          ? UserStatus.INACTIVE 
-          : UserStatus.ACTIVE;
-        
-        // Simulate API call
-        console.log(`Toggling status for user ${confirmModal.user.id} to ${newStatus}`);
-        message.success(
-          `${newStatus === UserStatus.ACTIVE ? 'Mở khóa' : 'Khóa'} tài khoản thành công!`
-        );
+        const success = await toggleUserStatus(confirmModal.user.id);
+        if (success) {
+          const newStatus = confirmModal.user.status === UserStatus.ACTIVE 
+            ? UserStatus.INACTIVE 
+            : UserStatus.ACTIVE;
+          message.success(
+            `${newStatus === UserStatus.ACTIVE ? 'Mở khóa' : 'Khóa'} tài khoản thành công!`
+          );
+        } else {
+          message.error('Có lỗi xảy ra khi thay đổi trạng thái tài khoản');
+        }
       } else if (confirmModal.action === 'delete') {
-        // Simulate API call
-        console.log(`Deleting user ${confirmModal.user.id}`);
-        message.success('Xóa tài khoản thành công!');
+        const success = await deleteUser(confirmModal.user.id, false); // Soft delete
+        if (success) {
+          message.success('Xóa tài khoản thành công!');
+        } else {
+          message.error('Có lỗi xảy ra khi xóa tài khoản');
+        }
       }
       
       // Close modal
       handleCloseModal();
-      
-      // TODO: Refresh data sau khi thực hiện action
-      // Có thể gọi lại API hoặc update local state
       
     } catch (error) {
       console.error('Error performing action:', error);
@@ -310,7 +337,7 @@ export default function UsersManagementPage() {
               onChange={(value) => updateFilters({ unitId: value || '' })}
               allowClear
             >
-              {units.map(unit => (
+              {mockUnits.map(unit => (
                 <Select.Option key={unit.id} value={unit.id}>
                   {unit.name}
                 </Select.Option>
@@ -322,12 +349,12 @@ export default function UsersManagementPage() {
             <Select
               placeholder="Tất cả vai trò"
               style={{ width: '100%' }}
-              value={filters.roleCode || undefined}
-              onChange={(value) => updateFilters({ roleCode: value || '' })}
+              value={filters.roleId || undefined}
+              onChange={(value) => updateFilters({ roleId: value || '' })}
               allowClear
             >
-              {roles.map(role => (
-                <Select.Option key={role.id} value={role.code}>
+              {mockRoles.map(role => (
+                <Select.Option key={role.id} value={role.id}>
                   {role.name}
                 </Select.Option>
               ))}

@@ -122,3 +122,30 @@ export interface LegacyTechnicianAssignment {
   building: string; // Tên tòa nhà được phân công
   floor: string; // Tên tầng được phân công
 }
+
+
+// Interface Call API user
+/**
+ * Interface cho query parameters khi lấy danh sách người dùng
+ */
+export interface GetUsersQueryParams {
+  search?: string; // Tìm kiếm theo tên đăng nhập, họ tên hoặc email
+  status?: 'ACTIVE' | 'INACTIVE' | 'LOCKED' | 'DELETED'; // Lọc theo trạng thái người dùng
+  unitId?: string; // Lọc theo ID đơn vị
+  roleId?: string; // Lọc theo ID vai trò
+  page?: number; // Số trang (mặc định: 1)
+  limit?: number; // Số lượng bản ghi trên mỗi trang (mặc định: 10)
+  sortBy?: 'fullName' | 'email' | 'createdAt' | 'updatedAt'; // Sắp xếp theo trường
+  sortOrder?: 'ASC' | 'DESC'; // Thứ tự sắp xếp (mặc định: DESC)
+}
+
+/**
+ * Interface cho response khi lấy danh sách người dùng
+ */
+export interface GetUsersResponse {
+  data: IUserWithRoles[]; // Danh sách người dùng
+  total: number; // Tổng số người dùng
+  page: number; // Trang hiện tại
+  limit: number; // Số lượng bản ghi trên mỗi trang
+  totalPages: number; // Tổng số trang
+}

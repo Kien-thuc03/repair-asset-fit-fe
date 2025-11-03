@@ -9,8 +9,10 @@ export * from './auth';
 // Export submission form APIs
 export * from './submissionForm';
 
+// Export users APIs
+export * from './users';
+
 // TODO: Thêm các API modules khác ở đây khi phát triển
-// export * from './users';
 // export * from './repairs';
 // export * from './assets';
 // etc.
