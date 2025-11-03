@@ -2,6 +2,8 @@
 export enum UserStatus {
   ACTIVE = "ACTIVE", // Hoạt động
   INACTIVE = "INACTIVE", // Không hoạt động
+  LOCKED = "LOCKED", // Đã khóa
+  DELETED = "DELETED", // Đã xóa
 }
 
 // Interface cho vai trò từ database
@@ -132,7 +134,7 @@ export interface LegacyTechnicianAssignment {
  */
 export interface GetUsersQueryParams {
   search?: string; // Tìm kiếm theo tên đăng nhập, họ tên hoặc email
-  status?: 'ACTIVE' | 'INACTIVE' | 'LOCKED' | 'DELETED'; // Lọc theo trạng thái người dùng
+  status?: UserStatus // Lọc theo trạng thái người dùng
   unitId?: string; // Lọc theo ID đơn vị
   roleId?: string; // Lọc theo ID vai trò
   page?: number; // Số trang (mặc định: 1)

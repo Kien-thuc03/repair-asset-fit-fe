@@ -5,10 +5,11 @@ import { UserPlus, Users as UsersIcon, UserCheck, UserX, Building, Download } fr
 import { Breadcrumb, message, Input, Select, Button, Card, Row, Col, Alert } from 'antd';
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
+import { useRoles } from '@/hooks/useRoles';
+import { useUnits } from '@/hooks/useUnits';
 import { IUserWithRoles, UserStatus } from '@/types';
 import { UserTable, UserConfirmModal } from '@/components/qtvKhoa';
 import { useState, useMemo } from 'react';
-import { mockRoles, mockUnits } from '@/lib/mockData/usersManagement';
 
 export default function UsersManagementPage() {
   const router = useRouter();
@@ -34,7 +35,6 @@ export default function UsersManagementPage() {
     page,
     limit,
     total,
-    totalPages,
     updateFilters,
     resetFilters,
     changePage,
@@ -43,6 +43,14 @@ export default function UsersManagementPage() {
     toggleUserStatus,
     deleteUser,
   } = useUsersManagement();
+
+  // Fetch roles and units for filters
+  const { roles, loading: rolesLoading, error: rolesError } = useRoles();
+  const { units, loading: unitsLoading, error: unitsError } = useUnits();
+
+  // Log để debug
+  console.log('Roles:', roles, 'Loading:', rolesLoading, 'Error:', rolesError);
+  console.log('Units:', units, 'Loading:', unitsLoading, 'Error:', unitsError);
 
   // Tính toán stats từ danh sách users
   const stats = useMemo(() => {
@@ -336,8 +344,9 @@ export default function UsersManagementPage() {
               value={filters.unitId || undefined}
               onChange={(value) => updateFilters({ unitId: value || '' })}
               allowClear
+              loading={unitsLoading}
             >
-              {mockUnits.map(unit => (
+              {units.map(unit => (
                 <Select.Option key={unit.id} value={unit.id}>
                   {unit.name}
                 </Select.Option>
@@ -352,8 +361,9 @@ export default function UsersManagementPage() {
               value={filters.roleId || undefined}
               onChange={(value) => updateFilters({ roleId: value || '' })}
               allowClear
+              loading={rolesLoading}
             >
-              {mockRoles.map(role => (
+              {roles.map(role => (
                 <Select.Option key={role.id} value={role.id}>
                   {role.name}
                 </Select.Option>
@@ -371,6 +381,8 @@ export default function UsersManagementPage() {
             >
               <Select.Option value={UserStatus.ACTIVE}>Đang hoạt động</Select.Option>
               <Select.Option value={UserStatus.INACTIVE}>Bị khóa</Select.Option>
+              <Select.Option value={UserStatus.LOCKED}>Đã khóa</Select.Option>
+              <Select.Option value={UserStatus.DELETED}>Đã xóa</Select.Option>
             </Select>
           </Col>
 
@@ -396,6 +408,28 @@ export default function UsersManagementPage() {
           showIcon
           closable
           onClose={clearError}
+        />
+      )}
+      
+      {/* Roles Error */}
+      {rolesError && (
+        <Alert
+          message="Lỗi tải danh sách vai trò"
+          description={rolesError}
+          type="warning"
+          showIcon
+          closable
+        />
+      )}
+      
+      {/* Units Error */}
+      {unitsError && (
+        <Alert
+          message="Lỗi tải danh sách đơn vị"
+          description={unitsError}
+          type="warning"
+          showIcon
+          closable
         />
       )}
 

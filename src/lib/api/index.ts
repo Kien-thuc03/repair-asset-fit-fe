@@ -12,6 +12,12 @@ export * from './submissionForm';
 // Export users APIs
 export * from './users';
 
+// Export roles APIs
+export * from './roles';
+
+// Export units APIs
+export * from './units';
+
 // TODO: Thêm các API modules khác ở đây khi phát triển
 // export * from './repairs';
 // export * from './assets';
