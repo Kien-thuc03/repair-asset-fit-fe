@@ -32,35 +32,74 @@ export interface RepairRequestComponent {
   note?: string; // Ghi chú về linh kiện bị lỗi cụ thể
 }
 
-// Interface cho yêu cầu sửa chữa
+// Interface cho yêu cầu sửa chữa - Match với backend response
 export interface RepairRequest {
   id: string;
   requestCode: string; // Mã yêu cầu tự tăng: YCSC-2025-0001
-  computerAssetId: string; // FK to assets.id (thay đổi từ assetId)
-  assetCode?: string; // Mã tài sản QR code được in từ bảng assets (computed)
-  assetName?: string; // Tên tài sản (computed)
-  componentName?: string; // Tên linh kiện cụ thể bị lỗi (computed for display)
+  computerAssetId: string; // FK to assets.id
   reporterId: string;
-  reporterName?: string; // Tên người báo lỗi (computed)
-  reporterRole?: string; // Vai trò: Giảng viên/KTV (computed)
   assignedTechnicianId?: string;
-  assignedTechnicianName?: string; // Tên KTV (computed)
-  roomName?: string; // Tên phòng máy (computed từ computerAssetId)
-  machineLabel?: string; // Số máy từ bảng computers (computed)
-  buildingName?: string; // Tên tòa nhà (computed)
-  errorTypeId?: string;
-  errorTypeName?: string; // Tên loại lỗi (computed)
+  errorType?: string; // Enum string từ ErrorType
   description: string; // Mô tả chi tiết lỗi
   mediaUrls?: string[]; // Mảng URL ảnh/video minh họa
   status: RepairStatus;
   resolutionNotes?: string; // Ghi chú KTV về kết quả xử lý
-  createdAt: string; // Thời điểm báo lỗi
-  acceptedAt?: string; // Thời điểm KTV tiếp nhận
-  completedAt?: string; // Thời điểm hoàn tất
-  unit?: string; // Đơn vị/Khoa (computed)
+  createdAt: string; // Thời điểm báo lỗi (ISO string)
+  acceptedAt?: string; // Thời điểm KTV tiếp nhận (ISO string)
+  completedAt?: string; // Thời điểm hoàn tất (ISO string)
 
-  // Optional: Để hiển thị danh sách linh kiện khi cần
-  components?: RepairRequestComponent[];
+  // Nested objects từ backend (JOIN relations)
+  computerAsset?: {
+    id: string;
+    ktCode: string;
+    name: string;
+    type: string;
+    status: string;
+  };
+  
+  room?: {
+    id: string;
+    name: string;
+    building: string;
+    floor: string;
+    roomNumber: string;
+  };
+
+  reporter?: {
+    id: string;
+    fullName: string;
+    email: string;
+    username: string;
+  };
+
+  assignedTechnician?: {
+    id: string;
+    fullName: string;
+    email: string;
+    username: string;
+  };
+
+  components?: Array<{
+    id: string;
+    name: string;
+    type: string;
+    specifications: string;
+    status: string;
+  }>;
+
+  // Computed fields for backward compatibility (optional)
+  assetCode?: string; // Mã tài sản QR code
+  assetName?: string; // Tên tài sản
+  componentName?: string; // Tên linh kiện cụ thể bị lỗi
+  reporterName?: string; // Tên người báo lỗi
+  reporterRole?: string; // Vai trò: Giảng viên/KTV
+  assignedTechnicianName?: string; // Tên KTV
+  roomName?: string; // Tên phòng máy
+  machineLabel?: string; // Số máy từ bảng computers
+  buildingName?: string; // Tên tòa nhà
+  errorTypeId?: string;
+  errorTypeName?: string; // Tên loại lỗi
+  unit?: string; // Đơn vị/Khoa
 }
 
 // Interface cho RepairRequest với thông tin chi tiết đầy đủ (computed từ join các bảng)

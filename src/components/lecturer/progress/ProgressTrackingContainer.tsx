@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "antd";
 import { CheckCircle, XCircle } from "lucide-react";
-import { RepairRequest } from "@/types";
-import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
+import { RepairRequest, RepairStatus } from "@/types";
+import { repairRequestStatusConfig } from "@/lib/mockData";
+import { useRepairs } from "@/hooks";
 import Pagination from "@/components/common/Pagination";
 import ProgressHeader from "./ProgressHeader";
 import ProgressFilters from "./ProgressFilters";
@@ -16,9 +17,6 @@ import type { Dayjs } from "dayjs";
 
 export default function ProgressTrackingContainer() {
   const router = useRouter();
-  const [requests] = useState<RepairRequest[]>(mockRepairRequests);
-  const [filteredRequests, setFilteredRequests] =
-    useState<RepairRequest[]>(mockRepairRequests);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<
@@ -44,9 +42,20 @@ export default function ProgressTrackingContainer() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [paginatedRequests, setPaginatedRequests] = useState<RepairRequest[]>(
-    []
-  );
+
+  // Use API hook để lấy dữ liệu
+  const {
+    data: apiData,
+    meta,
+    loading,
+    error,
+    updateParams,
+  } = useRepairs({
+    page: currentPage,
+    limit: pageSize,
+  });
+
+  const [filteredRequests, setFilteredRequests] = useState<RepairRequest[]>([]);
 
   // Handle sorting
   const handleSort = (field: keyof RepairRequest) => {
@@ -68,8 +77,9 @@ export default function ProgressTrackingContainer() {
     }
   };
 
+  // Áp dụng filter và sort trên client side
   useEffect(() => {
-    let filtered = requests;
+    let filtered = [...apiData];
 
     if (searchTerm) {
       filtered = filtered.filter(
@@ -150,19 +160,63 @@ export default function ProgressTrackingContainer() {
     // Reset selection when filter changes
     setSelectedItems([]);
     setSelectAll(false);
+  }, [apiData, searchTerm, statusFilter, dateRange, sortField, sortDirection]);
 
-    // Reset to first page when filter changes
-    setCurrentPage(1);
-  }, [requests, searchTerm, statusFilter, dateRange, sortField, sortDirection]);
-
-  // Handle pagination
+  // Cập nhật API params khi có thay đổi
   useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const paginated = filteredRequests.slice(startIndex, endIndex);
+    const params: {
+      page: number;
+      limit: number;
+      status?: RepairStatus;
+      search?: string;
+      fromDate?: string;
+      toDate?: string;
+      sortBy?:
+        | "createdAt"
+        | "requestCode"
+        | "status"
+        | "acceptedAt"
+        | "completedAt";
+      sortOrder?: "ASC" | "DESC";
+    } = {
+      page: currentPage,
+      limit: pageSize,
+    };
 
-    setPaginatedRequests(paginated);
-  }, [filteredRequests, currentPage, pageSize]);
+    if (statusFilter && statusFilter !== "all") {
+      params.status = statusFilter as RepairStatus;
+    }
+
+    if (searchTerm) {
+      params.search = searchTerm;
+    }
+
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      params.fromDate = dateRange[0].toISOString();
+      params.toDate = dateRange[1].toISOString();
+    }
+
+    if (sortField && sortDirection) {
+      params.sortBy = sortField as
+        | "createdAt"
+        | "requestCode"
+        | "status"
+        | "acceptedAt"
+        | "completedAt";
+      params.sortOrder = sortDirection === "asc" ? "ASC" : "DESC";
+    }
+
+    updateParams(params);
+  }, [
+    currentPage,
+    pageSize,
+    statusFilter,
+    searchTerm,
+    dateRange,
+    sortField,
+    sortDirection,
+    updateParams,
+  ]);
 
   // Pagination handlers
   const handlePageChange = (page: number) => {
@@ -188,7 +242,7 @@ export default function ProgressTrackingContainer() {
       setSelectedItems([]);
       setSelectAll(false);
     } else {
-      setSelectedItems(paginatedRequests.map((req) => req.id));
+      setSelectedItems(filteredRequests.map((req) => req.id));
       setSelectAll(true);
     }
   };
@@ -201,7 +255,7 @@ export default function ProgressTrackingContainer() {
     } else {
       const newSelected = [...selectedItems, id];
       setSelectedItems(newSelected);
-      setSelectAll(newSelected.length === paginatedRequests.length);
+      setSelectAll(newSelected.length === filteredRequests.length);
     }
   };
 
@@ -278,17 +332,42 @@ export default function ProgressTrackingContainer() {
     }
   };
 
-  // Update selectAll when paginatedRequests changes
+  // Update selectAll when filteredRequests changes
   useEffect(() => {
-    if (selectedItems.length > 0 && paginatedRequests.length > 0) {
+    if (selectedItems.length > 0 && filteredRequests.length > 0) {
       setSelectAll(
-        selectedItems.length === paginatedRequests.length &&
-          paginatedRequests.every((req) => selectedItems.includes(req.id))
+        selectedItems.length === filteredRequests.length &&
+          filteredRequests.every((req: RepairRequest) =>
+            selectedItems.includes(req.id)
+          )
       );
     } else {
       setSelectAll(false);
     }
-  }, [paginatedRequests, selectedItems]);
+  }, [filteredRequests, selectedItems]);
+
+  // Show loading or error state
+  if (loading && apiData.length === 0) {
+    return (
+      <div className="space-y-6 min-h-screen">
+        <ProgressHeader />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-500">Đang tải dữ liệu...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && apiData.length === 0) {
+    return (
+      <div className="space-y-6 min-h-screen">
+        <ProgressHeader />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-red-500">Có lỗi xảy ra: {error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 min-h-screen">
@@ -308,7 +387,7 @@ export default function ProgressTrackingContainer() {
       {/* Requests List */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <RequestTable
-          requests={paginatedRequests}
+          requests={filteredRequests}
           selectedItems={selectedItems}
           selectAll={selectAll}
           sortField={sortField}
@@ -321,7 +400,7 @@ export default function ProgressTrackingContainer() {
         />
 
         <RequestCards
-          requests={paginatedRequests}
+          requests={filteredRequests}
           selectedItems={selectedItems}
           selectAll={selectAll}
           onSelectAll={handleSelectAll}
@@ -337,7 +416,7 @@ export default function ProgressTrackingContainer() {
           <Pagination
             currentPage={currentPage}
             pageSize={pageSize}
-            total={filteredRequests.length}
+            total={meta?.total || 0}
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
             showSizeChanger={true}
