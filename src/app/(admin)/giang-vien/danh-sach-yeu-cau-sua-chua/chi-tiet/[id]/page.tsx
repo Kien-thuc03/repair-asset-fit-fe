@@ -567,6 +567,66 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
                 </>
               )}
           </Card>
+
+          {/* Components Card - Hiển thị linh kiện bị hỏng */}
+          {currentRequest.components &&
+            currentRequest.components.length > 0 && (
+              <Card
+                title={
+                  <div className="flex items-center gap-2">
+                    <Package className="w-5 h-5 text-orange-600" />
+                    <span>Linh kiện bị hỏng</span>
+                    <Tag color="orange">
+                      {currentRequest.components.length} linh kiện
+                    </Tag>
+                  </div>
+                }>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {currentRequest.components.map((component, index) => (
+                    <div
+                      key={component.id || index}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-semibold text-gray-900">
+                          {component.name}
+                        </h4>
+                        <Tag
+                          color={
+                            component.status === "FAULTY"
+                              ? "red"
+                              : component.status === "INSTALLED"
+                              ? "green"
+                              : component.status === "REMOVED"
+                              ? "orange"
+                              : "default"
+                          }
+                          className="text-xs">
+                          {component.status === "FAULTY"
+                            ? "Hỏng"
+                            : component.status === "INSTALLED"
+                            ? "Đã lắp"
+                            : component.status === "REMOVED"
+                            ? "Đã tháo"
+                            : component.status}
+                        </Tag>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <p className="text-gray-600">
+                          <span className="font-medium">Loại:</span>{" "}
+                          {component.type}
+                        </p>
+                        {component.specifications && (
+                          <p className="text-gray-600">
+                            <span className="font-medium">Thông số:</span>{" "}
+                            {component.specifications}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
         </div>
       </div>
 

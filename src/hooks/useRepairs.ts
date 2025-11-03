@@ -11,16 +11,15 @@ import { RepairRequest, RepairRequestWithDetails } from "@/types/repair";
  */
 const errorTypeMap: Record<string, string> = {
   MAY_KHONG_KHOI_DONG: "Máy không khởi động",
-  BAN_PHIM_LOI: "Bàn phím lỗi",
-  CHUOT_LOI: "Chuột lỗi",
-  MAN_HINH_LOI: "Màn hình lỗi",
-  KHONG_KET_NOI_MANG: "Không kết nối mạng",
-  LOI_HE_DIEU_HANH: "Lỗi hệ điều hành",
-  LOI_PHAN_MEM: "Lỗi phần mềm",
-  NHIEM_VIRUS: "Nhiễm virus",
-  LOI_LINH_KIEN_KHAC: "Lỗi linh kiện khác",
-  THIET_BI_BI_HU_HONG: "Thiết bị bị hư hỏng",
-  KHAC: "Khác",
+  MAY_HU_PHAN_MEM: "Máy hư phần mềm",
+  MAY_HU_BAN_PHIM: "Máy hư bàn phím",
+  MAY_HU_CHUOT: "Máy hư chuột",
+  MAY_KHONG_SU_DUNG_DUOC: "Máy không sử dụng được",
+  MAY_KHONG_KET_NOI_MANG: "Máy không kết nối mạng",
+  MAY_HU_MAN_HINH: "Máy hư màn hình",
+  MAY_MAT_CHUOT: "Máy mất chuột",
+  MAY_MAT_BAN_PHIM: "Máy mất bàn phím",
+  LOI_KHAC: "Lỗi khác",
 };
 
 /**
