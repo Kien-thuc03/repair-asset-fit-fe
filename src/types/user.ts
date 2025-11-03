@@ -62,6 +62,8 @@ export interface IUserWithRoles extends Omit<UserEntity, "password"> {
   };
   roles: IRole[];
   permissions: IPermission[];
+  createdAt: string; // ISO timestamp string
+  updatedAt: string; // ISO timestamp string
 }
 
 // Interface để tạo người dùng mới
