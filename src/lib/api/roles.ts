@@ -31,5 +31,5 @@ export const getRolesApi = async (): Promise<RoleResponseDto[]> => {
  * @returns Promise<RoleResponseDto>
  */
 export const getRoleByIdApi = async (id: string): Promise<RoleResponseDto> => {
-  return await apiClient.get<RoleResponseDto>(`/roles/${id}`);
+  return await apiClient.get<RoleResponseDto>(`/api/v1/roles/${id}`);
 };

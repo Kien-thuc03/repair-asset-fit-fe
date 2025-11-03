@@ -25,7 +25,7 @@ export interface UnitResponseDto {
  * @returns Promise<UnitResponseDto[]>
  */
 export const getUnitsApi = async (): Promise<UnitResponseDto[]> => {
-  return await apiClient.get<UnitResponseDto[]>('api/v1/units');
+  return await apiClient.get<UnitResponseDto[]>('/api/v1/units');
 };
 
 /**
@@ -34,7 +34,7 @@ export const getUnitsApi = async (): Promise<UnitResponseDto[]> => {
  * @returns Promise<UnitResponseDto>
  */
 export const getUnitByIdApi = async (id: string): Promise<UnitResponseDto> => {
-  return await apiClient.get<UnitResponseDto>(`/units/${id}`);
+  return await apiClient.get<UnitResponseDto>(`/api/v1/units/${id}`);
 };
 
 /**
@@ -43,14 +43,14 @@ export const getUnitByIdApi = async (id: string): Promise<UnitResponseDto> => {
  * @returns Promise<UnitResponseDto[]>
  */
 export const getUnitsByTypeApi = async (type: UnitType): Promise<UnitResponseDto[]> => {
-  return await apiClient.get<UnitResponseDto[]>(`/units/type/${type}`);
+  return await apiClient.get<UnitResponseDto[]>(`/api/v1/units/type/${type}`);
 };
 
 /**
- * Get child units of a parent unit
+ * Get Đại học Công nghiệp Thành phố Hồ Chí Minh unit
  * @param parentId - Parent unit UUID
  * @returns Promise<UnitResponseDto[]>
  */
 export const getChildUnitsApi = async (parentId: string): Promise<UnitResponseDto[]> => {
-  return await apiClient.get<UnitResponseDto[]>(`/units/${parentId}/children`);
+  return await apiClient.get<UnitResponseDto[]>(`/api/v1/units/${parentId}/children`);
 };

@@ -7,6 +7,8 @@ import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
 import { useRoles } from '@/hooks/useRoles';
 import { useUnits } from '@/hooks/useUnits';
+import type { UnitResponseDto } from '@/lib/api/units';
+import type { RoleResponseDto } from '@/lib/api/roles';
 import { IUserWithRoles, UserStatus } from '@/types';
 import { UserTable, UserConfirmModal } from '@/components/qtvKhoa';
 import { useState, useMemo } from 'react';
@@ -47,10 +49,6 @@ export default function UsersManagementPage() {
   // Fetch roles and units for filters
   const { roles, loading: rolesLoading, error: rolesError } = useRoles();
   const { units, loading: unitsLoading, error: unitsError } = useUnits();
-
-  // Log để debug
-  console.log('Roles:', roles, 'Loading:', rolesLoading, 'Error:', rolesError);
-  console.log('Units:', units, 'Loading:', unitsLoading, 'Error:', unitsError);
 
   // Tính toán stats từ danh sách users
   const stats = useMemo(() => {
@@ -345,12 +343,17 @@ export default function UsersManagementPage() {
               onChange={(value) => updateFilters({ unitId: value || '' })}
               allowClear
               loading={unitsLoading}
+              notFoundContent={unitsLoading ? 'Đang tải...' : 'Không có dữ liệu'}
             >
-              {units.map(unit => (
-                <Select.Option key={unit.id} value={unit.id}>
-                  {unit.name}
-                </Select.Option>
-              ))}
+              {units && units.length > 0 ? (
+                units.map((unit: UnitResponseDto) => (
+                  <Select.Option key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </Select.Option>
+                ))
+              ) : (
+                !unitsLoading && <Select.Option value="" disabled>Không có đơn vị</Select.Option>
+              )}
             </Select>
           </Col>
 
@@ -362,12 +365,17 @@ export default function UsersManagementPage() {
               onChange={(value) => updateFilters({ roleId: value || '' })}
               allowClear
               loading={rolesLoading}
+              notFoundContent={rolesLoading ? 'Đang tải...' : 'Không có dữ liệu'}
             >
-              {roles.map(role => (
-                <Select.Option key={role.id} value={role.id}>
-                  {role.name}
-                </Select.Option>
-              ))}
+              {roles && roles.length > 0 ? (
+                roles.map((role: RoleResponseDto) => (
+                  <Select.Option key={role.id} value={role.id}>
+                    {role.name}
+                  </Select.Option>
+                ))
+              ) : (
+                !rolesLoading && <Select.Option value="" disabled>Không có vai trò</Select.Option>
+              )}
             </Select>
           </Col>
 
