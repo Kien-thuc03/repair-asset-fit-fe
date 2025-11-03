@@ -7,6 +7,23 @@ import {
 import { RepairRequest, RepairRequestWithDetails } from "@/types/repair";
 
 /**
+ * Mapping errorType enum to Vietnamese display names
+ */
+const errorTypeMap: Record<string, string> = {
+  MAY_KHONG_KHOI_DONG: "Máy không khởi động",
+  BAN_PHIM_LOI: "Bàn phím lỗi",
+  CHUOT_LOI: "Chuột lỗi",
+  MAN_HINH_LOI: "Màn hình lỗi",
+  KHONG_KET_NOI_MANG: "Không kết nối mạng",
+  LOI_HE_DIEU_HANH: "Lỗi hệ điều hành",
+  LOI_PHAN_MEM: "Lỗi phần mềm",
+  NHIEM_VIRUS: "Nhiễm virus",
+  LOI_LINH_KIEN_KHAC: "Lỗi linh kiện khác",
+  THIET_BI_BI_HU_HONG: "Thiết bị bị hư hỏng",
+  KHAC: "Khác",
+};
+
+/**
  * Transform backend response to include computed fields for backward compatibility
  */
 const transformRepairRequest = (request: RepairRequest): RepairRequest => {
@@ -18,8 +35,13 @@ const transformRepairRequest = (request: RepairRequest): RepairRequest => {
     roomName: request.room?.name,
     buildingName: request.room?.building,
     reporterName: request.reporter?.fullName,
+    reporterRole: "Giảng viên", // Default role, should come from backend if available
     assignedTechnicianName: request.assignedTechnician?.fullName,
-    errorTypeName: request.errorType,
+    errorTypeName: request.errorType
+      ? errorTypeMap[request.errorType] || request.errorType
+      : undefined,
+    unit: request.room?.building, // Using building as unit for now
+    machineLabel: request.room?.roomNumber, // Can be enhanced if backend provides machine label
   };
 };
 
@@ -124,20 +146,30 @@ export const useRepairDetail = (id: string) => {
    * Lấy chi tiết yêu cầu sửa chữa
    */
   const fetchRepairDetail = useCallback(async () => {
-    if (!id) return;
+    if (!id) {
+      console.warn("⚠️ useRepairDetail: No ID provided");
+      return;
+    }
 
+    console.log("🔍 useRepairDetail: Fetching detail for ID:", id);
     setLoading(true);
     setError(null);
     try {
       const response = await getRepairById(id);
-      setData(response.data);
+      console.log("✅ useRepairDetail: Raw API Response:", response);
+
+      // Apply transform to map nested objects to computed fields
+      const transformedData = transformRepairRequest(response as RepairRequest);
+      console.log("✅ useRepairDetail: Transformed Data:", transformedData);
+
+      setData(transformedData as RepairRequestWithDetails);
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
           : "Có lỗi xảy ra khi lấy chi tiết yêu cầu sửa chữa.";
       setError(errorMessage);
-      console.error("Error fetching repair detail:", err);
+      console.error("❌ useRepairDetail: Error fetching repair detail:", err);
     } finally {
       setLoading(false);
     }

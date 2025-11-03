@@ -47,10 +47,9 @@ export interface GetRepairsResponse {
 
 /**
  * Interface cho response khi lấy chi tiết một yêu cầu sửa chữa
+ * Backend trả về trực tiếp object, không có wrapper
  */
-export interface GetRepairDetailResponse {
-  data: RepairRequestWithDetails;
-}
+export type GetRepairDetailResponse = RepairRequestWithDetails;
 
 /**
  * Interface cho request tạo yêu cầu sửa chữa mới
@@ -107,13 +106,21 @@ export const getRepairById = async (
   id: string
 ): Promise<GetRepairDetailResponse> => {
   try {
+    console.log("🌐 API Call: GET /v1/repairs/" + id);
     const response = await api.get<GetRepairDetailResponse>(
       `/v1/repairs/${id}`
     );
+    console.log("✅ API Response:", response.data);
     return response.data;
   } catch (error: unknown) {
     console.error("❌ Get repair detail error:", error);
-    const err = error as { response?: { data?: { message?: string } } };
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
     throw new Error(
       err.response?.data?.message || "Lấy chi tiết yêu cầu sửa chữa thất bại."
     );

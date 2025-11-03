@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Breadcrumb, Steps, Tag, Card, Divider, Spin, Alert } from "antd";
 import {
@@ -18,27 +18,49 @@ import {
   Info,
   Trash2,
 } from "lucide-react";
-import {
-  getRepairRequestWithDetails,
-  repairRequestStatusConfig,
-  cancelRepairRequest,
-} from "@/lib/mockData";
-import { RepairStatus, RepairRequest } from "@/types";
+import { RepairStatus } from "@/types";
 import ImageViewer from "@/components/ui/ImageViewer";
 import {
   CancelConfirmModal,
   SuccessModal,
   ErrorModal,
 } from "@/components/modal";
+import { useRepairDetail } from "@/hooks";
+
+const repairRequestStatusConfig = {
+  [RepairStatus.CHỜ_TIẾP_NHẬN]: {
+    label: "Chờ tiếp nhận",
+    color: "border-yellow-300 bg-yellow-50 text-yellow-700",
+  },
+  [RepairStatus.ĐÃ_TIẾP_NHẬN]: {
+    label: "Đã tiếp nhận",
+    color: "border-blue-300 bg-blue-50 text-blue-700",
+  },
+  [RepairStatus.ĐANG_XỬ_LÝ]: {
+    label: "Đang xử lý",
+    color: "border-purple-300 bg-purple-50 text-purple-700",
+  },
+  [RepairStatus.CHỜ_THAY_THẾ]: {
+    label: "Chờ thay thế",
+    color: "border-orange-300 bg-orange-50 text-orange-700",
+  },
+  [RepairStatus.ĐÃ_HOÀN_THÀNH]: {
+    label: "Đã hoàn thành",
+    color: "border-green-300 bg-green-50 text-green-700",
+  },
+  [RepairStatus.ĐÃ_HỦY]: {
+    label: "Đã hủy",
+    color: "border-red-300 bg-red-50 text-red-700",
+  },
+};
 
 export default function ChiTietDanhSachYeuCauSuaChuaPage() {
   const params = useParams();
   const router = useRouter();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
-  const [currentRequest, setCurrentRequest] = useState<RepairRequest | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
+
+  // Use API hook để lấy chi tiết
+  const { data: currentRequest, loading, error } = useRepairDetail(id);
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -46,22 +68,82 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const req = useMemo(() => {
-    const result = getRepairRequestWithDetails(id);
-    return result;
-  }, [id]);
+  // Debug logging
+  console.log("🔍 Detail Page - ID:", id);
+  console.log("📦 Current Request Data:", currentRequest);
+  console.log("⏳ Loading:", loading);
+  console.log("❌ Error:", error);
 
-  // Simulate loading and auto status update
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (req) {
-        setCurrentRequest(req);
-      }
-      setLoading(false);
-    }, 500);
+  // Show loading state
+  if (loading) {
+    return (
+      <div style={{ padding: "24px", textAlign: "center", minHeight: "400px" }}>
+        <Spin size="large">
+          <div style={{ paddingTop: "50px" }}>Đang tải dữ liệu...</div>
+        </Spin>
+      </div>
+    );
+  }
 
-    return () => clearTimeout(timer);
-  }, [req]);
+  // Show error state
+  if (error) {
+    return (
+      <Alert
+        message="Lỗi tải dữ liệu"
+        description={error}
+        type="error"
+        showIcon
+        style={{ margin: "24px" }}
+      />
+    );
+  }
+
+  // Show not found state
+  if (!currentRequest) {
+    return (
+      <Alert
+        message="Không tìm thấy"
+        description="Không tìm thấy yêu cầu sửa chữa này."
+        type="warning"
+        showIcon
+        style={{ margin: "24px" }}
+      />
+    );
+  }
+
+  // Hàm mở modal xác nhận hủy
+  const handleOpenCancelModal = () => {
+    setShowCancelModal(true);
+  };
+
+  // Hàm hủy yêu cầu
+  const handleCancelRequest = async () => {
+    try {
+      setIsDeleting(true);
+
+      // TODO: Call API to cancel repair request
+      // await cancelRepair(id, "Hủy bởi người dùng");
+
+      // Giả lập delay API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      setShowCancelModal(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      setShowCancelModal(false);
+      setErrorMessage("Có lỗi xảy ra khi hủy yêu cầu. Vui lòng thử lại.");
+      setShowErrorModal(true);
+      console.error(error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Hàm xử lý sau khi thành công
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    router.push("/giang-vien/danh-sach-yeu-cau-sua-chua");
+  };
 
   // Helper function to get status step
   const getStatusStep = (status: RepairStatus) => {
@@ -87,44 +169,6 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
       return `${diffDays} ngày ${diffHours % 24} giờ`;
     }
     return `${diffHours} giờ`;
-  };
-
-  // Hàm mở modal xác nhận hủy
-  const handleOpenCancelModal = () => {
-    setShowCancelModal(true);
-  };
-
-  // Hàm hủy yêu cầu
-  const handleCancelRequest = async () => {
-    try {
-      setIsDeleting(true);
-
-      // Giả lập delay API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Xóa yêu cầu khỏi mock data
-      const success = cancelRepairRequest(id);
-
-      if (success) {
-        setShowCancelModal(false);
-        setShowSuccessModal(true);
-      } else {
-        throw new Error("Không tìm thấy yêu cầu để hủy");
-      }
-    } catch (error) {
-      setShowCancelModal(false);
-      setErrorMessage("Có lỗi xảy ra khi hủy yêu cầu. Vui lòng thử lại.");
-      setShowErrorModal(true);
-      console.error(error);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  // Hàm xử lý sau khi thành công
-  const handleSuccessClose = () => {
-    setShowSuccessModal(false);
-    router.push("/giang-vien/danh-sach-yeu-cau-sua-chua");
   };
 
   if (loading) {
@@ -382,15 +426,6 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
                       {currentRequest.reporterName}
                     </span>
                     <Tag className="text-xs">{currentRequest.reporterRole}</Tag>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">
-                    Đơn vị
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Info className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">{currentRequest.unit}</span>
                   </p>
                 </div>
                 <div>
