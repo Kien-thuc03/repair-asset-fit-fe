@@ -13,28 +13,56 @@ export interface AssetSoftware {
   notes: string;
 }
 
-// Software Proposal Types - Synchronized with database-sync.json
+// Nested object types from backend
+export interface ProposerInfo {
+  id: string;
+  fullName: string;
+  email: string;
+  unitName: string;
+}
+
+export interface ApproverInfo {
+  id: string;
+  fullName: string;
+  email: string;
+  unitName: string;
+}
+
+export interface RoomInfo {
+  id: string;
+  name: string;
+  building: string;
+  floor: string;
+  roomNumber: string;
+}
+
+// Software Proposal Types - Synchronized with backend response
 export interface SoftwareProposal {
   id: string;
   proposalCode: string;
   proposerId: string;
-  approverId: string | null;
+  approverId?: string | null;
   roomId: string;
   reason: string;
   status: SoftwareProposalStatus;
   createdAt: string;
   updatedAt: string;
+  // Nested objects from backend
+  proposer?: ProposerInfo;
+  approver?: ApproverInfo;
+  room?: RoomInfo;
+  items?: SoftwareProposalItem[];
 }
 
 export interface SoftwareProposalItem {
   id: string;
-  proposalId: string;
+  proposalId?: string;
   softwareName: string;
-  version: string;
-  publisher: string;
+  version?: string;
+  publisher?: string;
   quantity: number;
-  licenseType: string;
-  newlyAcquiredSoftwareId: string | null;
+  licenseType?: string;
+  newlyAcquiredSoftwareId?: string | null;
 }
 
 export enum SoftwareProposalStatus {
