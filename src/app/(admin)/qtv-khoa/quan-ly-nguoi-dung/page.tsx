@@ -5,9 +5,13 @@ import { UserPlus, Users as UsersIcon, UserCheck, UserX, Building, Download } fr
 import { Breadcrumb, message, Input, Select, Button, Card, Row, Col, Alert } from 'antd';
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
+import { useRoles } from '@/hooks/useRoles';
+import { useUnits } from '@/hooks/useUnits';
+import type { UnitResponseDto } from '@/lib/api/units';
+import type { RoleResponseDto } from '@/lib/api/roles';
 import { IUserWithRoles, UserStatus } from '@/types';
 import { UserTable, UserConfirmModal } from '@/components/qtvKhoa';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export default function UsersManagementPage() {
   const router = useRouter();
@@ -27,9 +31,6 @@ export default function UsersManagementPage() {
   // Hooks
   const {
     users,
-    stats,
-    units,
-    roles,
     loading,
     error,
     filters,
@@ -40,8 +41,39 @@ export default function UsersManagementPage() {
     resetFilters,
     changePage,
     changeLimit,
-    clearError
+    clearError,
+    toggleUserStatus,
+    deleteUser,
   } = useUsersManagement();
+
+  // Fetch roles and units for filters
+  const { roles, loading: rolesLoading, error: rolesError } = useRoles();
+  const { units, loading: unitsLoading, error: unitsError } = useUnits();
+
+  // Tính toán stats từ danh sách users
+  const stats = useMemo(() => {
+    const activeUsers = users.filter(u => u.status === UserStatus.ACTIVE);
+    const inactiveUsers = users.filter(u => u.status === UserStatus.INACTIVE);
+    
+    // Group by unit
+    const byUnit = users.reduce((acc, user) => {
+      const unitName = user.unit?.name || 'Chưa phân công';
+      const existing = acc.find(item => item.unitName === unitName);
+      if (existing) {
+        existing.count++;
+      } else {
+        acc.push({ unitName, count: 1 });
+      }
+      return acc;
+    }, [] as { unitName: string; count: number }[]);
+
+    return {
+      total: total,
+      active: activeUsers.length,
+      inactive: inactiveUsers.length,
+      byUnit,
+    };
+  }, [users, total]);
 
   // Navigation handlers
   const handleCreateUser = () => {
@@ -87,28 +119,29 @@ export default function UsersManagementPage() {
     if (!confirmModal.user) return;
 
     try {
-      // TODO: Implement actual API calls
       if (confirmModal.action === 'toggle-status') {
-        const newStatus = confirmModal.user.status === UserStatus.ACTIVE 
-          ? UserStatus.INACTIVE 
-          : UserStatus.ACTIVE;
-        
-        // Simulate API call
-        console.log(`Toggling status for user ${confirmModal.user.id} to ${newStatus}`);
-        message.success(
-          `${newStatus === UserStatus.ACTIVE ? 'Mở khóa' : 'Khóa'} tài khoản thành công!`
-        );
+        const success = await toggleUserStatus(confirmModal.user.id);
+        if (success) {
+          const newStatus = confirmModal.user.status === UserStatus.ACTIVE 
+            ? UserStatus.INACTIVE 
+            : UserStatus.ACTIVE;
+          message.success(
+            `${newStatus === UserStatus.ACTIVE ? 'Mở khóa' : 'Khóa'} tài khoản thành công!`
+          );
+        } else {
+          message.error('Có lỗi xảy ra khi thay đổi trạng thái tài khoản');
+        }
       } else if (confirmModal.action === 'delete') {
-        // Simulate API call
-        console.log(`Deleting user ${confirmModal.user.id}`);
-        message.success('Xóa tài khoản thành công!');
+        const success = await deleteUser(confirmModal.user.id, false); // Soft delete
+        if (success) {
+          message.success('Xóa tài khoản thành công!');
+        } else {
+          message.error('Có lỗi xảy ra khi xóa tài khoản');
+        }
       }
       
       // Close modal
       handleCloseModal();
-      
-      // TODO: Refresh data sau khi thực hiện action
-      // Có thể gọi lại API hoặc update local state
       
     } catch (error) {
       console.error('Error performing action:', error);
@@ -309,12 +342,18 @@ export default function UsersManagementPage() {
               value={filters.unitId || undefined}
               onChange={(value) => updateFilters({ unitId: value || '' })}
               allowClear
+              loading={unitsLoading}
+              notFoundContent={unitsLoading ? 'Đang tải...' : 'Không có dữ liệu'}
             >
-              {units.map(unit => (
-                <Select.Option key={unit.id} value={unit.id}>
-                  {unit.name}
-                </Select.Option>
-              ))}
+              {units && units.length > 0 ? (
+                units.map((unit: UnitResponseDto) => (
+                  <Select.Option key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </Select.Option>
+                ))
+              ) : (
+                !unitsLoading && <Select.Option value="" disabled>Không có đơn vị</Select.Option>
+              )}
             </Select>
           </Col>
 
@@ -322,15 +361,21 @@ export default function UsersManagementPage() {
             <Select
               placeholder="Tất cả vai trò"
               style={{ width: '100%' }}
-              value={filters.roleCode || undefined}
-              onChange={(value) => updateFilters({ roleCode: value || '' })}
+              value={filters.roleId || undefined}
+              onChange={(value) => updateFilters({ roleId: value || '' })}
               allowClear
+              loading={rolesLoading}
+              notFoundContent={rolesLoading ? 'Đang tải...' : 'Không có dữ liệu'}
             >
-              {roles.map(role => (
-                <Select.Option key={role.id} value={role.code}>
-                  {role.name}
-                </Select.Option>
-              ))}
+              {roles && roles.length > 0 ? (
+                roles.map((role: RoleResponseDto) => (
+                  <Select.Option key={role.id} value={role.id}>
+                    {role.name}
+                  </Select.Option>
+                ))
+              ) : (
+                !rolesLoading && <Select.Option value="" disabled>Không có vai trò</Select.Option>
+              )}
             </Select>
           </Col>
 
@@ -344,6 +389,8 @@ export default function UsersManagementPage() {
             >
               <Select.Option value={UserStatus.ACTIVE}>Đang hoạt động</Select.Option>
               <Select.Option value={UserStatus.INACTIVE}>Bị khóa</Select.Option>
+              <Select.Option value={UserStatus.LOCKED}>Đã khóa</Select.Option>
+              <Select.Option value={UserStatus.DELETED}>Đã xóa</Select.Option>
             </Select>
           </Col>
 
@@ -369,6 +416,28 @@ export default function UsersManagementPage() {
           showIcon
           closable
           onClose={clearError}
+        />
+      )}
+      
+      {/* Roles Error */}
+      {rolesError && (
+        <Alert
+          message="Lỗi tải danh sách vai trò"
+          description={rolesError}
+          type="warning"
+          showIcon
+          closable
+        />
+      )}
+      
+      {/* Units Error */}
+      {unitsError && (
+        <Alert
+          message="Lỗi tải danh sách đơn vị"
+          description={unitsError}
+          type="warning"
+          showIcon
+          closable
         />
       )}
 

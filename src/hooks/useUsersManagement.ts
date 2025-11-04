@@ -1,34 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
-import { 
-  IUserWithRoles, 
-  ICreateUserRequest, 
-  IUpdateUserRequest, 
+import {
+  IUserWithRoles,
+  ICreateUserRequest,
+  IUpdateUserRequest,
   UserStatus,
-  PaginatedResponse 
-} from '@/types';
-import { 
-  mockUsersManagement, 
-  createUser, 
-  updateUser, 
-  toggleUserStatus, 
-  deleteUser,
-  searchUsers,
-  getUsersStats,
-  mockUnits,
-  mockRoles
-} from '@/lib/mockData/usersManagement';
+  GetUsersQueryParams,
+} from '@/types/user';
+import {
+  getUsers,
+  createUser as createUserApi,
+  updateUser as updateUserApi,
+  deleteUser as deleteUserApi,
+} from '@/lib/api/users';
 
 export interface UseUsersManagementOptions {
   initialPage?: number;
   initialLimit?: number;
   unitId?: string;
-  roleCode?: string;
+  roleId?: string;
 }
 
 export interface UsersFilters {
   search: string;
   unitId: string;
-  roleCode: string;
+  roleId: string;
   status: UserStatus | 'all';
 }
 
@@ -37,7 +32,7 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
     initialPage = 1,
     initialLimit = 10,
     unitId: initialUnitId = '',
-    roleCode: initialRoleCode = ''
+    roleId: initialRoleId = '',
   } = options;
 
   // State
@@ -46,103 +41,67 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(initialPage);
   const [limit, setLimit] = useState(initialLimit);
-  
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
   const [filters, setFilters] = useState<UsersFilters>({
     search: '',
     unitId: initialUnitId,
-    roleCode: initialRoleCode,
-    status: 'all'
+    roleId: initialRoleId,
+    status: 'all',
   });
 
-  // Computed values
-  const stats = getUsersStats();
-  const units = mockUnits;
-  const roles = mockRoles;
-
   /**
-   * Lọc và phân trang users
-   */
-  const getFilteredUsers = useCallback((): PaginatedResponse<IUserWithRoles> => {
-    let filteredUsers = [...mockUsersManagement];
-
-    // Apply search filter
-    if (filters.search) {
-      filteredUsers = searchUsers(filters.search);
-    }
-
-    // Apply unit filter
-    if (filters.unitId) {
-      filteredUsers = filteredUsers.filter(user => user.unitId === filters.unitId);
-    }
-
-    // Apply role filter
-    if (filters.roleCode) {
-      filteredUsers = filteredUsers.filter(user => 
-        user.roles.some(role => role.code === filters.roleCode)
-      );
-    }
-
-    // Apply status filter
-    if (filters.status !== 'all') {
-      filteredUsers = filteredUsers.filter(user => user.status === filters.status);
-    }
-
-    // Filter out deleted users
-    filteredUsers = filteredUsers.filter(user => !user.deletedAt);
-
-    // Pagination
-    const total = filteredUsers.length;
-    const totalPages = Math.ceil(total / limit);
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
-
-    return {
-      data: paginatedUsers,
-      total,
-      page,
-      limit,
-      totalPages
-    };
-  }, [filters, page, limit]);
-
-  /**
-   * Tải danh sách users
+   * Tải danh sách users từ API
    */
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const result = getFilteredUsers();
-      setUsers(result.data);
+      const params: GetUsersQueryParams = {
+        page,
+        limit,
+        search: filters.search || undefined,
+        unitId: filters.unitId || undefined,
+        roleId: filters.roleId || undefined,
+        status: filters.status !== 'all' ? filters.status : undefined,
+        sortBy: 'createdAt',
+        sortOrder: 'DESC',
+      };
+
+      const response = await getUsers(params);
+      setUsers(response.data);
+      setTotal(response.total);
+      setTotalPages(response.totalPages);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải dữ liệu');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải dữ liệu';
+      setError(errorMessage);
+      console.error('Error fetching users:', err);
     } finally {
       setLoading(false);
     }
-  }, [getFilteredUsers]);
+  }, [filters, page, limit]);
 
   /**
    * Tạo user mới
    */
-  const handleCreateUser = async (userData: ICreateUserRequest): Promise<boolean> => {
+  const handleCreateUser = async (
+    userData: ICreateUserRequest
+  ): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      createUser(userData);
+      await createUserApi(userData);
       await fetchUsers();
-      
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tạo user');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Có lỗi xảy ra khi tạo user';
+      setError(errorMessage);
+      console.error('Error creating user:', err);
       return false;
     } finally {
       setLoading(false);
@@ -152,23 +111,22 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
   /**
    * Cập nhật user
    */
-  const handleUpdateUser = async (userId: string, updateData: IUpdateUserRequest): Promise<boolean> => {
+  const handleUpdateUser = async (
+    userId: string,
+    updateData: IUpdateUserRequest
+  ): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const result = updateUser(userId, updateData);
-      if (!result) {
-        throw new Error('Không tìm thấy người dùng');
-      }
-      
+      await updateUserApi(userId, updateData);
       await fetchUsers();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi cập nhật user');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Có lỗi xảy ra khi cập nhật user';
+      setError(errorMessage);
+      console.error('Error updating user:', err);
       return false;
     } finally {
       setLoading(false);
@@ -183,18 +141,28 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
     setError(null);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const result = toggleUserStatus(userId);
-      if (!result) {
+      // Tìm user hiện tại
+      const currentUser = users.find((u) => u.id === userId);
+      if (!currentUser) {
         throw new Error('Không tìm thấy người dùng');
       }
-      
+
+      // Toggle status
+      const newStatus: UserStatus =
+        currentUser.status === UserStatus.ACTIVE
+          ? UserStatus.INACTIVE
+          : UserStatus.ACTIVE;
+
+      await updateUserApi(userId, { status: newStatus });
       await fetchUsers();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi thay đổi trạng thái user');
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Có lỗi xảy ra khi thay đổi trạng thái user';
+      setError(errorMessage);
+      console.error('Error toggling user status:', err);
       return false;
     } finally {
       setLoading(false);
@@ -204,23 +172,22 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
   /**
    * Xóa user
    */
-  const handleDeleteUser = async (userId: string): Promise<boolean> => {
+  const handleDeleteUser = async (
+    userId: string,
+    hardDelete = false
+  ): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const result = deleteUser(userId);
-      if (!result) {
-        throw new Error('Không tìm thấy người dùng');
-      }
-      
+      await deleteUserApi(userId, hardDelete);
       await fetchUsers();
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi xóa user');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Có lỗi xảy ra khi xóa user';
+      setError(errorMessage);
+      console.error('Error deleting user:', err);
       return false;
     } finally {
       setLoading(false);
@@ -230,22 +197,25 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
   /**
    * Import bulk users từ Excel
    */
-  const handleBulkImport = async (usersData: ICreateUserRequest[]): Promise<void> => {
+  const handleBulkImport = async (
+    usersData: ICreateUserRequest[]
+  ): Promise<void> => {
     setLoading(true);
     setError(null);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Create users one by one (in real app, should be a batch API call)
+      // Create users one by one
+      // TODO: Implement batch API endpoint for better performance
       for (const userData of usersData) {
-        createUser(userData);
+        await createUserApi(userData);
       }
-      
+
       await fetchUsers();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi import users');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Có lỗi xảy ra khi import users';
+      setError(errorMessage);
+      console.error('Error importing users:', err);
       throw err; // Re-throw to handle in component
     } finally {
       setLoading(false);
@@ -267,8 +237,8 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
     setFilters({
       search: '',
       unitId: '',
-      roleCode: '',
-      status: 'all'
+      roleId: '',
+      status: 'all',
     });
     setPage(1);
   };
@@ -277,7 +247,6 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
    * Thay đổi trang
    */
   const changePage = (newPage: number) => {
-    const totalPages = Math.ceil(getFilteredUsers().total / limit);
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
     }
@@ -296,26 +265,21 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
     fetchUsers();
   }, [fetchUsers]);
 
-  const pagination = getFilteredUsers();
-
   return {
     // Data
     users,
-    stats,
-    units,
-    roles,
-    
+
     // State
     loading,
     error,
     filters,
-    
+
     // Pagination
     page,
     limit,
-    total: pagination.total,
-    totalPages: pagination.totalPages,
-    
+    total,
+    totalPages,
+
     // Actions
     fetchUsers,
     createUser: handleCreateUser,
@@ -323,14 +287,14 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
     toggleUserStatus: handleToggleUserStatus,
     deleteUser: handleDeleteUser,
     bulkImport: handleBulkImport,
-    
+
     // Filters & Pagination
     updateFilters,
     resetFilters,
     changePage,
     changeLimit,
-    
+
     // Utils
-    clearError: () => setError(null)
+    clearError: () => setError(null),
   };
 };
