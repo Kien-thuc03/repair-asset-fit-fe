@@ -13,6 +13,9 @@ import {
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
 import { getComponentsByComputerId } from "@/lib/api/components";
+import { createRepair, CreateRepairRequest } from "@/lib/api/repairs";
+import { useProfileDatabase } from "@/hooks";
+import { ERROR_TYPE_MAP } from "@/lib/constants/errorTypes";
 import { mockErrorTypes, getSoftwareByAssetId } from "@/lib/mockData";
 import {
   Breadcrumb,
@@ -48,6 +51,7 @@ interface LecturerReportFormType extends ReportFormType {
 
 export default function BaoCaoLoiPage() {
   const router = useRouter();
+  const { userDetails } = useProfileDatabase();
 
   const [formData, setFormData] = useState<LecturerReportFormType>({
     building: "",
@@ -61,6 +65,7 @@ export default function BaoCaoLoiPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedComputerId, setSelectedComputerId] = useState<string>(""); // Store computer.id for loading components
   const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
   const [filteredComputers, setFilteredComputers] = useState<
@@ -223,6 +228,7 @@ export default function BaoCaoLoiPage() {
   // Handle room change
   const handleRoomChange = async (roomId: string) => {
     setFormData((prev) => ({ ...prev, roomId, assetId: "", componentId: "" }));
+    setSelectedComputerId("");
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
     setShowComponentSelection(false);
@@ -256,7 +262,6 @@ export default function BaoCaoLoiPage() {
 
   // Handle asset change
   const handleAssetChange = async (computerId: string) => {
-    setFormData((prev) => ({ ...prev, assetId: computerId, componentId: "" }));
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
     setShowComponentSelection(false);
@@ -283,7 +288,25 @@ export default function BaoCaoLoiPage() {
       return;
     }
 
+    // Check if computer has asset
+    if (!selectedComputer.asset?.id) {
+      console.error("❌ Computer has no asset", selectedComputer);
+      message.error("Máy tính này chưa được gán tài sản");
+      return;
+    }
+
     console.log("✅ Selected computer:", selectedComputer);
+    console.log("📍 Asset ID:", selectedComputer.asset.id);
+
+    // Store asset.id instead of computer.id
+    setFormData((prev) => ({
+      ...prev,
+      assetId: selectedComputer.asset!.id, // Use asset.id for backend
+      componentId: "",
+    }));
+
+    // Store computer.id for loading components
+    setSelectedComputerId(computerId);
 
     // Fetch components for the selected computer using computer ID
     try {
@@ -341,35 +364,69 @@ export default function BaoCaoLoiPage() {
 
   // Handle form submit
   const handleSubmit = async () => {
+    // Validate user is logged in
+    if (!userDetails?.id) {
+      message.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Prepare request data
+      const requestData: CreateRepairRequest = {
+        computerAssetId: formData.assetId, // This is now computer.id
+        errorType: formData.errorTypeId
+          ? ERROR_TYPE_MAP[formData.errorTypeId]
+          : undefined,
+        description: formData.description,
+        mediaUrls: [], // TODO: Upload images first and get URLs
+        componentIds:
+          selectedComponentIds.length > 0 ? selectedComponentIds : undefined,
+        softwareIds:
+          selectedSoftwareIds.length > 0 ? selectedSoftwareIds : undefined,
+      };
 
-    setIsSubmitting(false);
-    setShowSuccessModal(true);
+      console.log("📤 Submitting repair request:", requestData);
 
-    // Reset form
-    setFormData({
-      building: "",
-      floor: "",
-      assetId: "",
-      componentId: "",
-      roomId: "",
-      errorTypeId: "",
-      description: "",
-      mediaFiles: [],
-    });
-    setErrorCategory("");
-    setSelectedComponentIds([]);
-    setSelectedSoftwareIds([]);
-    setShowComponentSelection(false);
-    setShowSoftwareSelection(false);
-    setFilteredFloors([]);
-    setFilteredRooms([]);
-    setFilteredComputers([]);
-    setFilteredComponents([]);
-    setFilteredSoftware([]);
+      // Call API to create repair request
+      const result = await createRepair(requestData);
+
+      console.log("✅ Repair request created:", result);
+
+      setIsSubmitting(false);
+      setShowSuccessModal(true);
+
+      // Reset form
+      setFormData({
+        building: "",
+        floor: "",
+        assetId: "",
+        componentId: "",
+        roomId: "",
+        errorTypeId: "",
+        description: "",
+        mediaFiles: [],
+      });
+      setErrorCategory("");
+      setSelectedComponentIds([]);
+      setSelectedSoftwareIds([]);
+      setShowComponentSelection(false);
+      setShowSoftwareSelection(false);
+      setFilteredFloors([]);
+      setFilteredRooms([]);
+      setFilteredComputers([]);
+      setFilteredComponents([]);
+      setFilteredSoftware([]);
+    } catch (error) {
+      console.error("❌ Error creating repair request:", error);
+      setIsSubmitting(false);
+      message.error(
+        error instanceof Error
+          ? error.message
+          : "Tạo yêu cầu sửa chữa thất bại. Vui lòng thử lại."
+      );
+    }
   };
 
   // Handle success modal close
@@ -492,7 +549,7 @@ export default function BaoCaoLoiPage() {
                   {(() => {
                     if (!Array.isArray(filteredComputers)) return "N/A";
                     const computer = filteredComputers.find(
-                      (c) => c.id === formData.assetId
+                      (c) => c.id === selectedComputerId
                     );
                     return computer
                       ? `Máy ${computer.machineLabel} - ${

@@ -56,11 +56,11 @@ export type GetRepairDetailResponse = RepairRequestWithDetails;
  */
 export interface CreateRepairRequest {
   computerAssetId: string; // ID tài sản máy tính
-  reporterId: string; // ID người báo lỗi
-  errorTypeId?: string; // ID loại lỗi (optional)
+  errorType?: string; // Loại lỗi (ErrorType enum)
   description: string; // Mô tả chi tiết lỗi
   mediaUrls?: string[]; // Mảng URL ảnh/video minh họa (optional)
   componentIds?: string[]; // Danh sách ID linh kiện bị lỗi (optional)
+  softwareIds?: string[]; // Danh sách ID phần mềm bị lỗi (optional)
 }
 
 /**
@@ -93,6 +93,37 @@ export const getRepairs = async (
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
       err.response?.data?.message || "Lấy danh sách yêu cầu sửa chữa thất bại."
+    );
+  }
+};
+
+/**
+ * Tạo yêu cầu sửa chữa mới
+ * @param data Dữ liệu yêu cầu sửa chữa mới
+ * @returns Promise với thông tin yêu cầu sửa chữa đã tạo
+ */
+export const createRepair = async (
+  data: CreateRepairRequest
+): Promise<GetRepairDetailResponse> => {
+  try {
+    console.log("🌐 API Call: POST /api/v1/repairs", data);
+    const response = await api.post<GetRepairDetailResponse>(
+      "/api/v1/repairs",
+      data
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Create repair error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message || "Tạo yêu cầu sửa chữa thất bại."
     );
   }
 };
