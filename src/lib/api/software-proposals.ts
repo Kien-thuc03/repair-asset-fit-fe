@@ -120,3 +120,53 @@ export const getSoftwareProposalsByProposer = async (
     );
   }
 };
+
+/**
+ * Interface cho request body khi tạo đề xuất phần mềm mới
+ */
+export interface CreateSoftwareProposalRequest {
+  roomId: string;
+  reason: string;
+  items: {
+    softwareName: string;
+    version?: string;
+    publisher?: string;
+    quantity: number;
+    licenseType?: string;
+  }[];
+}
+
+/**
+ * Tạo đề xuất phần mềm mới
+ * @param data Thông tin đề xuất phần mềm
+ * @returns Promise với đề xuất phần mềm đã tạo
+ */
+export const createSoftwareProposal = async (
+  data: CreateSoftwareProposalRequest
+): Promise<SoftwareProposal> => {
+  try {
+    console.log("🌐 API Call: POST /api/v1/software-proposals", data);
+    const response = await api.post<SoftwareProposal>(
+      "/api/v1/software-proposals",
+      data
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Create software proposal error:", error);
+    const err = error as {
+      response?: { data?: { message?: string | string[] }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+
+    // Handle array of error messages
+    const errorMessage = Array.isArray(err.response?.data?.message)
+      ? err.response.data.message.join(", ")
+      : err.response?.data?.message;
+
+    throw new Error(errorMessage || "Tạo đề xuất phần mềm thất bại.");
+  }
+};
