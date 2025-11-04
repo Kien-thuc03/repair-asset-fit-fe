@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Breadcrumb, Modal, Input, Button, Select } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
-import { Pagination } from "@/components/common";
+import { Pagination, SortableHeader } from "@/components/common";
 import SoftwareProposalCards from "@/components/lecturer/softwareProposal/SoftwareProposalCards";
 import { useSoftwareProposals } from "@/hooks/useSoftwareProposals";
 
@@ -68,6 +68,14 @@ export default function SoftwareProposalsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  // Sorting state
+  const [sortField, setSortField] = useState<keyof SoftwareProposal | null>(
+    null
+  );
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+    null
+  );
+
   // Export modal states
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
@@ -102,10 +110,90 @@ export default function SoftwareProposalsPage() {
     setSelectedRowKeys([]);
   }, [searchText, statusFilter]);
 
+  // Handle sorting
+  const handleSort = (field: keyof SoftwareProposal) => {
+    if (sortField === field) {
+      // Cycling through: asc -> desc -> null
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortField(null);
+      } else {
+        setSortDirection("asc");
+        setSortField(field);
+      }
+    } else {
+      // New field, start with asc
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Apply sorting to proposals
+  const sortedProposals = [...proposals].sort((a, b) => {
+    if (!sortField || !sortDirection) return 0;
+
+    let aValue: string | undefined;
+    let bValue: string | undefined;
+
+    // Handle nested fields
+    switch (sortField) {
+      case "proposalCode":
+        aValue = a.proposalCode;
+        bValue = b.proposalCode;
+        break;
+      case "proposerId":
+        aValue = getUserName(a);
+        bValue = getUserName(b);
+        break;
+      case "roomId":
+        aValue = getRoomName(a);
+        bValue = getRoomName(b);
+        break;
+      case "status":
+        aValue = a.status;
+        bValue = b.status;
+        break;
+      case "createdAt":
+        aValue = a.createdAt;
+        bValue = b.createdAt;
+        break;
+      default:
+        return 0;
+    }
+
+    // Handle null/undefined values
+    if (!aValue && !bValue) return 0;
+    if (!aValue) return sortDirection === "asc" ? -1 : 1;
+    if (!bValue) return sortDirection === "asc" ? 1 : -1;
+
+    // Handle date comparison
+    if (sortField === "createdAt") {
+      const aTime = new Date(aValue).getTime();
+      const bTime = new Date(bValue).getTime();
+      return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
+    }
+
+    // Handle string comparison
+    const aLower = aValue.toLowerCase();
+    const bLower = bValue.toLowerCase();
+
+    if (aLower < bLower) {
+      return sortDirection === "asc" ? -1 : 1;
+    }
+    if (aLower > bLower) {
+      return sortDirection === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
+
   // Checkbox handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRowKeys(proposals.map((item: SoftwareProposal) => item.id));
+      setSelectedRowKeys(
+        sortedProposals.map((item: SoftwareProposal) => item.id)
+      );
     } else {
       setSelectedRowKeys([]);
     }
@@ -121,11 +209,12 @@ export default function SoftwareProposalsPage() {
 
   // Hàm xuất Excel
   const handleExportExcel = async () => {
-    const selectedData = proposals.filter((item: SoftwareProposal) =>
+    const selectedData = sortedProposals.filter((item: SoftwareProposal) =>
       selectedRowKeys.includes(item.id)
     );
 
-    const itemsToExport = selectedData.length > 0 ? selectedData : proposals;
+    const itemsToExport =
+      selectedData.length > 0 ? selectedData : sortedProposals;
 
     if (itemsToExport.length === 0) {
       setShowExportErrorModal(true);
@@ -309,8 +398,8 @@ export default function SoftwareProposalsPage() {
                   <input
                     type="checkbox"
                     checked={
-                      proposals.length > 0 &&
-                      proposals.every((item: SoftwareProposal) =>
+                      sortedProposals.length > 0 &&
+                      sortedProposals.every((item: SoftwareProposal) =>
                         selectedRowKeys.includes(item.id)
                       )
                     }
@@ -318,31 +407,51 @@ export default function SoftwareProposalsPage() {
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                 </th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader
+                  field="proposalCode"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
                   Mã đề xuất
-                </th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader
+                  field="proposerId"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
                   Người đề xuất
-                </th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader
+                  field="roomId"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
                   Phòng
-                </th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader
+                  field="status"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
                   Trạng thái
-                </th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <SortableHeader
+                  field="createdAt"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
                   Ngày tạo
-                </th>
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </SortableHeader>
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {proposals.map((proposal: SoftwareProposal) => {
+              {sortedProposals.map((proposal: SoftwareProposal) => {
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <td className=" py-3 sm:py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={selectedRowKeys.includes(proposal.id)}
@@ -352,12 +461,12 @@ export default function SoftwareProposalsPage() {
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
-                      <div className="text-xs sm:text-sm font-medium text-blue-600">
+                    <td className="py-3 sm:py-4 whitespace-nowrap">
+                      <div className="text-xs  sm:text-sm font-medium text-blue-600">
                         {proposal.proposalCode}
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <td className=" py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2" />
                         <div className="text-xs sm:text-sm text-gray-900">
@@ -365,7 +474,7 @@ export default function SoftwareProposalsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <td className=" py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Building className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2" />
                         <div className="text-xs sm:text-sm text-gray-900">
@@ -373,7 +482,7 @@ export default function SoftwareProposalsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <td className=" py-3 sm:py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                           softwareProposalStatusConfig[proposal.status].color
@@ -381,7 +490,7 @@ export default function SoftwareProposalsPage() {
                         {softwareProposalStatusConfig[proposal.status].label}
                       </span>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <td className=" py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center text-xs sm:text-sm text-gray-900">
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2" />
                         {new Date(proposal.createdAt).toLocaleDateString(
@@ -389,7 +498,7 @@ export default function SoftwareProposalsPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <td className=" py-3 sm:py-4 whitespace-nowrap text-center">
                       <button
                         title="Xem chi tiết"
                         onClick={() => handleViewProposal(proposal)}
@@ -406,19 +515,19 @@ export default function SoftwareProposalsPage() {
 
         {/* Mobile Card View */}
         <SoftwareProposalCards
-          proposals={proposals}
+          proposals={sortedProposals}
           selectedItems={selectedRowKeys}
           selectAll={
-            proposals.length > 0 &&
-            proposals.every((item: SoftwareProposal) =>
+            sortedProposals.length > 0 &&
+            sortedProposals.every((item: SoftwareProposal) =>
               selectedRowKeys.includes(item.id)
             )
           }
           statusConfig={softwareProposalStatusConfig}
           onSelectAll={() => {
             const allSelected =
-              proposals.length > 0 &&
-              proposals.every((item: SoftwareProposal) =>
+              sortedProposals.length > 0 &&
+              sortedProposals.every((item: SoftwareProposal) =>
                 selectedRowKeys.includes(item.id)
               );
             handleSelectAll(!allSelected);
@@ -429,16 +538,18 @@ export default function SoftwareProposalsPage() {
           }}
           onViewDetails={handleViewProposal}
           getUserName={(userId: string) => {
-            const proposal = proposals.find((p) => p.proposerId === userId);
+            const proposal = sortedProposals.find(
+              (p) => p.proposerId === userId
+            );
             return proposal ? getUserName(proposal) : userId;
           }}
           getRoomName={(roomId: string) => {
-            const proposal = proposals.find((p) => p.roomId === roomId);
+            const proposal = sortedProposals.find((p) => p.roomId === roomId);
             return proposal ? getRoomName(proposal) : roomId;
           }}
         />
 
-        {proposals.length === 0 && !loading && (
+        {sortedProposals.length === 0 && !loading && (
           <div className="text-center py-8 sm:py-12 px-4">
             <Monitor className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
