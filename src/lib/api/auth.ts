@@ -68,7 +68,7 @@ export const login = async (
 ): Promise<LoginResponse> => {
   try {
     const response = await api.post<LoginResponse>(
-      "/api/v1/auth/login",
+      "/v1/auth/login",
       credentials
     );
     return response.data;
@@ -91,7 +91,7 @@ export const changePassword = async (
 ): Promise<{ message: string }> => {
   try {
     const response = await api.put<{ message: string }>(
-      "/api/v1/auth/change-password",
+      "/v1/auth/change-password",
       data
     );
     return response.data;
@@ -114,7 +114,7 @@ export const updateProfile = async (
 ): Promise<ProfileResponse> => {
   try {
     const response = await api.patch<ProfileResponse>(
-      "/api/v1/auth/update-profile",
+      "/v1/auth/update-profile",
       data
     );
     return response.data;

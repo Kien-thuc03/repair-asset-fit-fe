@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Monitor,
@@ -16,29 +16,21 @@ import {
   Trash2,
 } from "lucide-react";
 import { Breadcrumb } from "antd";
-import { SoftwareProposalStatus, SoftwareProposalItem } from "@/types/software";
-import {
-  getSoftwareProposalById,
-  getSoftwareProposalItems,
-  cancelSoftwareProposal,
-} from "@/lib/mockData/softwareProposals";
-import { users } from "@/lib/mockData/users";
-import { mockRooms } from "@/lib/mockData/rooms";
+import { SoftwareProposalStatus, SoftwareProposal } from "@/types/software";
 import {
   CancelConfirmModal,
   SuccessModal,
   ErrorModal,
 } from "@/components/modal";
+import { useSoftwareProposalDetail } from "@/hooks/useSoftwareProposals";
 
-// Helper functions
-const getUserName = (userId: string): string => {
-  const user = users.find((u) => u.id === userId);
-  return user ? user.fullName : userId;
+// Helper functions to get names from nested objects
+const getUserName = (proposal: SoftwareProposal): string => {
+  return proposal.proposer?.fullName || proposal.proposerId;
 };
 
-const getRoomName = (roomId: string): string => {
-  const room = mockRooms.find((r) => r.id === roomId);
-  return room ? room.roomNumber : roomId;
+const getRoomName = (proposal: SoftwareProposal): string => {
+  return proposal.room?.name || proposal.room?.roomNumber || proposal.roomId;
 };
 
 // Config cho trạng thái đề xuất
@@ -76,38 +68,31 @@ export default function SoftwareProposalDetailPage() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Lấy dữ liệu đề xuất
-  const proposal = useMemo(() => {
-    return getSoftwareProposalById(proposalId);
-  }, [proposalId]);
-
-  // Lấy items của proposal
-  const proposalItems = useMemo(() => {
-    return getSoftwareProposalItems(proposalId);
-  }, [proposalId]);
+  // Use API hook to fetch proposal details
+  const {
+    data: proposal,
+    loading,
+    error,
+  } = useSoftwareProposalDetail(proposalId);
 
   // Hàm mở modal xác nhận hủy
   const handleOpenCancelModal = () => {
     setShowCancelModal(true);
   };
 
-  // Hàm hủy đề xuất
+  // Hàm hủy đề xuất (TODO: implement API call)
   const handleCancelProposal = async () => {
     try {
       setIsDeleting(true);
 
+      // TODO: Call API to cancel proposal
+      // await cancelSoftwareProposal(proposalId);
+
       // Giả lập delay API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Xóa đề xuất khỏi mock data
-      const success = cancelSoftwareProposal(proposalId);
-
-      if (success) {
-        setShowCancelModal(false);
-        setShowSuccessModal(true);
-      } else {
-        throw new Error("Không tìm thấy đề xuất để hủy");
-      }
+      setShowCancelModal(false);
+      setShowSuccessModal(true);
     } catch (error) {
       setShowCancelModal(false);
       setErrorMessage("Có lỗi xảy ra khi hủy đề xuất. Vui lòng thử lại.");
@@ -124,12 +109,25 @@ export default function SoftwareProposalDetailPage() {
     router.push("/giang-vien/danh-sach-de-xuat-phan-mem");
   };
 
-  if (!proposal) {
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !proposal) {
     return (
       <div className="text-center py-12">
         <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
         <h3 className="mt-2 text-sm font-medium text-gray-900">
-          Không tìm thấy đề xuất
+          {error || "Không tìm thấy đề xuất"}
         </h3>
         <p className="mt-1 text-sm text-gray-500">
           Đề xuất phần mềm không tồn tại hoặc đã bị xóa.
@@ -223,7 +221,7 @@ export default function SoftwareProposalDetailPage() {
                 <div>
                   <p className="text-sm text-gray-500">Người đề xuất</p>
                   <p className="font-medium text-gray-900">
-                    {getUserName(proposal.proposerId)}
+                    {getUserName(proposal)}
                   </p>
                 </div>
               </div>
@@ -233,7 +231,7 @@ export default function SoftwareProposalDetailPage() {
                 <div>
                   <p className="text-sm text-gray-500">Phòng</p>
                   <p className="font-medium text-gray-900">
-                    {getRoomName(proposal.roomId)}
+                    {getRoomName(proposal)}
                   </p>
                 </div>
               </div>
@@ -255,7 +253,8 @@ export default function SoftwareProposalDetailPage() {
                     <div>
                       <p className="text-sm text-gray-500">Đã được duyệt</p>
                       <p className="font-medium text-gray-900">
-                        Bởi: {getUserName(proposal.approverId)}
+                        Bởi:{" "}
+                        {proposal.approver?.fullName || proposal.approverId}
                       </p>
                     </div>
                   </div>
@@ -282,28 +281,31 @@ export default function SoftwareProposalDetailPage() {
             </h2>
 
             <div className="space-y-3">
-              {proposalItems.map((item: SoftwareProposalItem) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                  <div className="flex items-center gap-3">
-                    <Monitor className="h-5 w-5 text-blue-500" />
-                    <div>
+              {proposal.items && proposal.items.length > 0 ? (
+                proposal.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                    <div className="flex items-center gap-3">
+                      <Monitor className="h-5 w-5 text-blue-500" />
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {item.softwareName} {item.version}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {item.publisher} • {item.licenseType}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">Số lượng</p>
                       <p className="font-medium text-gray-900">
-                        {item.softwareName} {item.version}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {item.publisher} • {item.licenseType}
+                        {item.quantity}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Số lượng</p>
-                    <p className="font-medium text-gray-900">{item.quantity}</p>
-                  </div>
-                </div>
-              ))}
-              {proposalItems.length === 0 && (
+                ))
+              ) : (
                 <div className="text-center py-4 text-gray-500">
                   Chưa có phần mềm nào trong đề xuất này.
                 </div>
@@ -344,7 +346,8 @@ export default function SoftwareProposalDetailPage() {
                     <div>
                       <p className="font-medium text-gray-900">Đã duyệt</p>
                       <p className="text-sm text-gray-500">
-                        Bởi: {getUserName(proposal.approverId)}
+                        Bởi:{" "}
+                        {proposal.approver?.fullName || proposal.approverId}
                       </p>
                       <p className="text-xs text-gray-400">
                         {new Date(proposal.updatedAt).toLocaleString("vi-VN")}
@@ -363,7 +366,8 @@ export default function SoftwareProposalDetailPage() {
                     <p className="font-medium text-gray-900">Đã từ chối</p>
                     {proposal.approverId && (
                       <p className="text-sm text-gray-500">
-                        Bởi: {getUserName(proposal.approverId)}
+                        Bởi:{" "}
+                        {proposal.approver?.fullName || proposal.approverId}
                       </p>
                     )}
                     <p className="text-xs text-gray-400">
