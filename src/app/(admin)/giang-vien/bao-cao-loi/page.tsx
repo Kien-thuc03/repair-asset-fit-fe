@@ -9,11 +9,10 @@ import {
   Component,
   Software,
 } from "@/types";
-import { Room } from "@/types/unit";
+import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import {
   mockErrorTypes,
   mockAssets,
-  mockRooms,
   mockComponents,
   mockComputers,
   getSoftwareByAssetId,
@@ -28,6 +27,7 @@ import {
   Steps,
   Radio,
   Modal,
+  message,
 } from "antd";
 import {
   DeleteOutlined,
@@ -65,7 +65,7 @@ export default function BaoCaoLoiPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
-  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [filteredComponents, setFilteredComponents] = useState<Component[]>([]);
   const [filteredSoftware, setFilteredSoftware] = useState<Software[]>([]);
@@ -80,6 +80,7 @@ export default function BaoCaoLoiPage() {
   const [errorCategory, setErrorCategory] = useState<
     "hardware" | "software" | ""
   >(""); // Phân loại lỗi phần cứng/phần mềm
+  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
 
   // Các loại lỗi được phép chọn linh kiện
   const errorTypesAllowingComponentSelection = [
@@ -94,10 +95,24 @@ export default function BaoCaoLoiPage() {
     formData.errorTypeId &&
     errorTypesAllowingComponentSelection.includes(formData.errorTypeId);
 
-  // Danh sách tòa nhà duy nhất từ mockRooms
-  const buildings = [
-    ...new Set(mockRooms.map((room) => room.building).filter(Boolean)),
-  ];
+  // Extract unique buildings from rooms
+  const buildings = Array.from(
+    new Set(rooms.map((room) => room.building).filter(Boolean))
+  );
+
+  // Fetch rooms from API
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const roomsData = await getRoomsApi();
+        setRooms(roomsData);
+      } catch (error) {
+        console.error("Error fetching rooms:", error);
+        message.error("Không thể tải danh sách phòng");
+      }
+    };
+    fetchRooms();
+  }, []);
 
   // Tính toán bước hiện tại dựa trên dữ liệu đã điền
   const getCurrentStep = (): number => {
@@ -148,13 +163,14 @@ export default function BaoCaoLoiPage() {
     setShowSoftwareSelection(false);
 
     // Filter floors by building
-    const floorsInBuilding = [
-      ...new Set(
-        mockRooms
-          .filter((room) => room.building === building && room.floor)
-          .map((room) => room.floor!)
-      ),
-    ] as string[];
+    const floorsInBuilding = Array.from(
+      new Set(
+        rooms
+          .filter((room) => room.building === building)
+          .map((room) => room.floor)
+          .filter(Boolean)
+      )
+    );
     setFilteredFloors(floorsInBuilding);
     setFilteredRooms([]);
     setFilteredAssets([]);
@@ -177,7 +193,7 @@ export default function BaoCaoLoiPage() {
     setShowSoftwareSelection(false);
 
     // Filter rooms by building and floor
-    const roomsOnFloor = mockRooms.filter(
+    const roomsOnFloor = rooms.filter(
       (room) => room.building === formData.building && room.floor === floor
     );
     setFilteredRooms(roomsOnFloor);
@@ -368,7 +384,7 @@ export default function BaoCaoLoiPage() {
                 <div className="font-medium">
                   {formData.building} - {formData.floor} -{" "}
                   {filteredRooms.find((r) => r.id === formData.roomId)
-                    ?.roomNumber || "N/A"}
+                    ?.roomCode || "N/A"}
                 </div>
               </div>
             )}
@@ -459,7 +475,8 @@ export default function BaoCaoLoiPage() {
                   disabled={!formData.floor}>
                   {filteredRooms.map((room) => (
                     <Option key={room.id} value={room.id}>
-                      {room.roomNumber}
+                      {room.name ||
+                        `${room.building}.${room.floor}${room.roomNumber}`}
                     </Option>
                   ))}
                 </Select>

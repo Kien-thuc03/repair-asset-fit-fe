@@ -365,7 +365,7 @@ export default function DeXuatPhanMemPage() {
                 disabled={!locationData.floor}>
                 {filteredRooms.map((room) => (
                   <Option key={room.id} value={room.id}>
-                    {room.roomCode ||
+                    {room.name ||
                       `${room.building}.${room.floor}${room.roomNumber}`}
                   </Option>
                 ))}

@@ -19,6 +19,7 @@ export interface RoomResponseDto {
   floor: string;
   roomNumber: string;
   status: RoomStatus;
+  name: string;
   unitId?: string;
   unit?: {
     id: string;
