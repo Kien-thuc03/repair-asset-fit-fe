@@ -1,10 +1,8 @@
 'use client';
 
-import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Users, Shield, Calendar, Mail, Phone, Building, Edit } from "lucide-react";
 import { Breadcrumb } from 'antd';
-import { IUserWithRoles } from "@/types";
 import { useUsersManagement } from "@/hooks/useUsersManagement";
 
 export default function UserDetailPage() {
@@ -12,15 +10,7 @@ export default function UserDetailPage() {
   const params = useParams();
   const userId = params.id as string;
   
-  const { users, loading } = useUsersManagement();
-  const [user, setUser] = useState<IUserWithRoles | null>(null);
-
-  useEffect(() => {
-    if (users.length > 0 && userId) {
-      const foundUser = users.find(u => u.id === userId);
-      setUser(foundUser || null);
-    }
-  }, [users, userId]);
+  const { currentUser: user, loading, error } = useUsersManagement({ userId });
 
   if (loading) {
     return (
@@ -30,7 +20,7 @@ export default function UserDetailPage() {
     );
   }
 
-  if (!user) {
+  if (error || !user) {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
@@ -45,10 +35,13 @@ export default function UserDetailPage() {
         <div className="text-center py-12">
           <Users className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-lg font-medium text-gray-900">
-            Không tìm thấy người dùng
+            {error || 'Không tìm thấy người dùng'}
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Người dùng có ID {userId} không tồn tại trong hệ thống.
+            {error 
+              ? 'Đã xảy ra lỗi khi tải thông tin người dùng. Vui lòng thử lại sau.'
+              : `Người dùng có ID ${userId} không tồn tại trong hệ thống.`
+            }
           </p>
         </div>
       </div>

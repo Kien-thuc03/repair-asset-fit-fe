@@ -8,6 +8,7 @@ import {
 } from '@/types/user';
 import {
   getUsers,
+  getUserById,
   createUser as createUserApi,
   updateUser as updateUserApi,
   deleteUser as deleteUserApi,
@@ -18,10 +19,12 @@ export interface UseUsersManagementOptions {
   initialLimit?: number;
   unitId?: string;
   roleId?: string;
+  userId?: string; // For fetching single user detail
 }
 
 export interface UsersFilters {
   search: string;
+  campusId: string;
   unitId: string;
   roleId: string;
   status: UserStatus | 'all';
@@ -33,10 +36,12 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
     initialLimit = 10,
     unitId: initialUnitId = '',
     roleId: initialRoleId = '',
+    userId,
   } = options;
 
   // State
   const [users, setUsers] = useState<IUserWithRoles[]>([]);
+  const [currentUser, setCurrentUser] = useState<IUserWithRoles | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(initialPage);
@@ -46,6 +51,7 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
 
   const [filters, setFilters] = useState<UsersFilters>({
     search: '',
+    campusId: '',
     unitId: initialUnitId,
     roleId: initialRoleId,
     status: 'all',
@@ -63,6 +69,7 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
         page,
         limit,
         search: filters.search || undefined,
+        campusId: filters.campusId || undefined,
         unitId: filters.unitId || undefined,
         roleId: filters.roleId || undefined,
         status: filters.status !== 'all' ? filters.status : undefined,
@@ -83,6 +90,34 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
       setLoading(false);
     }
   }, [filters, page, limit]);
+
+  /**
+   * Tải thông tin chi tiết 1 user từ API
+   */
+  const fetchUserDetail = useCallback(async (id: string) => {
+    if (!id) {
+      setCurrentUser(null);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const userData = await getUserById(id);
+      setCurrentUser(userData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Có lỗi xảy ra khi tải thông tin người dùng';
+      setError(errorMessage);
+      console.error('Error fetching user detail:', err);
+      setCurrentUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   /**
    * Tạo user mới
@@ -236,6 +271,7 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
   const resetFilters = () => {
     setFilters({
       search: '',
+      campusId: '',
       unitId: '',
       roleId: '',
       status: 'all',
@@ -262,12 +298,19 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
 
   // Effects
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    if (userId) {
+      // Nếu có userId, fetch user detail
+      fetchUserDetail(userId);
+    } else {
+      // Nếu không có userId, fetch danh sách users
+      fetchUsers();
+    }
+  }, [userId, fetchUsers, fetchUserDetail]);
 
   return {
     // Data
     users,
+    currentUser, // Chi tiết người dùng hiện tại (khi có userId)
 
     // State
     loading,
@@ -282,6 +325,7 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
 
     // Actions
     fetchUsers,
+    fetchUserDetail, // Thêm function để fetch user detail
     createUser: handleCreateUser,
     updateUser: handleUpdateUser,
     toggleUserStatus: handleToggleUserStatus,

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProfileDatabase } from "@/hooks/useProfileDatabase";
+import { useProfile } from "@/hooks/useProfile";
 import { IUpdateUserRequest } from "@/types/user";
 import SuccessModal from "@/components/modal/SuccessModal";
 import ErrorModal from "@/components/modal/ErrorModal";
@@ -17,6 +17,7 @@ import {
   EyeOff,
   Phone,
   Calendar,
+  Shield,
 } from "lucide-react";
 
 /**
@@ -25,7 +26,7 @@ import {
 export function ProfileEditComponent() {
   const router = useRouter();
   const { user } = useAuth();
-  const { userDetails, updateProfile, changePassword, isLoading } = useProfileDatabase();
+  const { userDetails, updateProfile, changePassword, isLoading } = useProfile();
 
   // Form states - sử dụng dữ liệu từ database
   const [profileData, setProfileData] = useState<IUpdateUserRequest>({
@@ -81,44 +82,140 @@ export function ProfileEditComponent() {
     e.preventDefault();
 
     try {
-      // Validate
+      // === VALIDATE FULL NAME ===
       if (!profileData.fullName?.trim()) {
         setErrorMessage("Vui lòng nhập họ và tên");
         return;
       }
 
+      if (profileData.fullName.trim().length < 2) {
+        setErrorMessage("Họ và tên phải có ít nhất 2 ký tự");
+        return;
+      }
+
+      if (profileData.fullName.trim().length > 100) {
+        setErrorMessage("Họ và tên không được vượt quá 100 ký tự");
+        return;
+      }
+
+      // Kiểm tra họ tên chỉ chứa chữ cái, dấu cách và các ký tự tiếng Việt
+      const nameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ\s]+$/;
+      if (!nameRegex.test(profileData.fullName.trim())) {
+        setErrorMessage("Họ và tên chỉ được chứa chữ cái và khoảng trắng");
+        return;
+      }
+
+      // === VALIDATE EMAIL ===
       if (!profileData.email?.trim()) {
         setErrorMessage("Vui lòng nhập email");
         return;
       }
 
-      // Email format validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(profileData.email)) {
+      if (profileData.email.trim().length > 100) {
+        setErrorMessage("Email không được vượt quá 100 ký tự");
+        return;
+      }
+
+      // Email format validation - chuẩn RFC 5322
+      const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+      if (!emailRegex.test(profileData.email.trim())) {
         setErrorMessage("Định dạng email không hợp lệ");
         return;
       }
 
-      // Phone number validation (nếu có)
+      // === VALIDATE PHONE NUMBER (nếu có) ===
       if (profileData.phoneNumber && profileData.phoneNumber.trim()) {
-        const phoneRegex = /^[0-9+\-\s()]+$/;
-        if (!phoneRegex.test(profileData.phoneNumber)) {
-          setErrorMessage("Định dạng số điện thoại không hợp lệ");
+        const phoneNumber = profileData.phoneNumber.trim();
+        
+        // Định dạng số điện thoại Việt Nam: +84 hoặc 0, theo sau là 9-10 chữ số
+        const phoneRegex = /^(\+84|84|0)(3|5|7|8|9)[0-9]{8}$/;
+        
+        // Loại bỏ khoảng trắng, dấu ngoặc, dấu gạch ngang
+        const cleanPhone = phoneNumber.replace(/[\s()-]/g, '');
+        
+        if (!phoneRegex.test(cleanPhone)) {
+          setErrorMessage("Số điện thoại không hợp lệ (định dạng Việt Nam: 0xxx xxx xxx hoặc +84xxx xxx xxx)");
+          return;
+        }
+
+        if (cleanPhone.length < 10 || cleanPhone.length > 12) {
+          setErrorMessage("Số điện thoại phải từ 10-12 chữ số");
           return;
         }
       }
 
-      // Birth date validation (nếu có)
-      if (profileData.birthDate) {
-        const birthYear = new Date(profileData.birthDate).getFullYear();
-        const currentYear = new Date().getFullYear();
-        if (birthYear > currentYear || birthYear < 1900) {
+      // === VALIDATE BIRTH DATE (nếu có) ===
+      if (profileData.birthDate && profileData.birthDate.trim()) {
+        const birthDate = new Date(profileData.birthDate);
+        const today = new Date();
+        
+        // Kiểm tra ngày hợp lệ
+        if (isNaN(birthDate.getTime())) {
           setErrorMessage("Ngày sinh không hợp lệ");
           return;
         }
+
+        const birthYear = birthDate.getFullYear();
+        const currentYear = today.getFullYear();
+        
+        // Kiểm tra năm sinh
+        if (birthYear < 1900) {
+          setErrorMessage("Năm sinh không được trước năm 1900");
+          return;
+        }
+
+        if (birthYear > currentYear) {
+          setErrorMessage("Năm sinh không được là tương lai");
+          return;
+        }
+
+        // Kiểm tra ngày sinh không được là tương lai
+        if (birthDate > today) {
+          setErrorMessage("Ngày sinh không được là ngày trong tương lai");
+          return;
+        }
+
+        // Kiểm tra tuổi tối thiểu (ví dụ: 18 tuổi)
+        const age = currentYear - birthYear;
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        const dayDiff = today.getDate() - birthDate.getDate();
+        
+        let actualAge = age;
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+          actualAge--;
+        }
+
+        if (actualAge < 18) {
+          setErrorMessage("Người dùng phải đủ 18 tuổi trở lên");
+          return;
+        }
+
+        if (actualAge > 100) {
+          setErrorMessage("Tuổi không hợp lệ (vượt quá 100 tuổi)");
+          return;
+        }
       }
 
-      await updateProfile(profileData);
+      // Chuẩn bị dữ liệu để gửi - chỉ gửi những field có giá trị
+      const dataToUpdate: IUpdateUserRequest = {
+        fullName: profileData.fullName.trim(),
+        email: profileData.email.trim(),
+      };
+
+      // Thêm phoneNumber nếu có
+      if (profileData.phoneNumber && profileData.phoneNumber.trim()) {
+        // Chuẩn hóa số điện thoại về format backend yêu cầu
+        const cleanPhone = profileData.phoneNumber.trim().replace(/[\s()-]/g, '');
+        dataToUpdate.phoneNumber = cleanPhone;
+      }
+
+      // Thêm birthDate nếu có và đảm bảo format YYYY-MM-DD
+      if (profileData.birthDate && profileData.birthDate.trim()) {
+        // Đảm bảo chỉ lấy phần date, không có time
+        dataToUpdate.birthDate = profileData.birthDate.split('T')[0];
+      }
+
+      await updateProfile(dataToUpdate);
       setSuccessMessage("Cập nhật thông tin cá nhân thành công");
       
       // Refresh page after success
@@ -138,12 +235,18 @@ export function ProfileEditComponent() {
     e.preventDefault();
 
     try {
-      // Validate
+      // === VALIDATE CURRENT PASSWORD ===
       if (!passwordData.currentPassword.trim()) {
         setErrorMessage("Vui lòng nhập mật khẩu hiện tại");
         return;
       }
 
+      if (passwordData.currentPassword.length < 6) {
+        setErrorMessage("Mật khẩu hiện tại phải có ít nhất 6 ký tự");
+        return;
+      }
+
+      // === VALIDATE NEW PASSWORD ===
       if (!passwordData.newPassword.trim()) {
         setErrorMessage("Vui lòng nhập mật khẩu mới");
         return;
@@ -154,8 +257,64 @@ export function ProfileEditComponent() {
         return;
       }
 
+      if (passwordData.newPassword.length > 50) {
+        setErrorMessage("Mật khẩu mới không được vượt quá 50 ký tự");
+        return;
+      }
+
+      // Kiểm tra mật khẩu mới không được giống mật khẩu cũ
+      if (passwordData.newPassword === passwordData.currentPassword) {
+        setErrorMessage("Mật khẩu mới phải khác mật khẩu hiện tại");
+        return;
+      }
+
+      // Kiểm tra độ mạnh mật khẩu (tùy chọn - có thể bật/tắt)
+      const hasUpperCase = /[A-Z]/.test(passwordData.newPassword);
+      const hasLowerCase = /[a-z]/.test(passwordData.newPassword);
+      const hasNumber = /[0-9]/.test(passwordData.newPassword);
+      const hasSpecialChar = /[@$!%*?&#^()_+\-=\[\]{}|;:'",.<>\\/]/.test(passwordData.newPassword);
+
+      if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecialChar) {
+        setErrorMessage("Mật khẩu mới phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt");
+        return;
+      }
+
+
+      // Kiểm tra không chứa khoảng trắng
+      if (/\s/.test(passwordData.newPassword)) {
+        setErrorMessage("Mật khẩu không được chứa khoảng trắng");
+        return;
+      }
+
+      // Kiểm tra không chứa thông tin cá nhân dễ đoán
+      if (userDetails) {
+        const lowerPassword = passwordData.newPassword.toLowerCase();
+        const userName = userDetails.username?.toLowerCase() || '';
+        const fullName = userDetails.fullName?.toLowerCase() || '';
+        
+        if (lowerPassword.includes(userName) && userName.length > 0) {
+          setErrorMessage("Mật khẩu không được chứa tên đăng nhập");
+          return;
+        }
+
+        // Kiểm tra từng từ trong họ tên
+        const nameWords = fullName.split(' ').filter(word => word.length > 2);
+        for (const word of nameWords) {
+          if (lowerPassword.includes(word)) {
+            setErrorMessage("Mật khẩu không được chứa tên của bạn");
+            return;
+          }
+        }
+      }
+
+      // === VALIDATE CONFIRM PASSWORD ===
+      if (!passwordData.confirmPassword.trim()) {
+        setErrorMessage("Vui lòng xác nhận mật khẩu mới");
+        return;
+      }
+
       if (passwordData.newPassword !== passwordData.confirmPassword) {
-        setErrorMessage("Xác nhận mật khẩu không khớp");
+        setErrorMessage("Xác nhận mật khẩu không khớp với mật khẩu mới");
         return;
       }
 
@@ -243,12 +402,17 @@ export function ProfileEditComponent() {
                     <input
                       type="text"
                       required
+                      minLength={2}
+                      maxLength={100}
                       value={profileData.fullName || ""}
                       onChange={(e) => setProfileData(prev => ({ ...prev, fullName: e.target.value }))}
                       className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Nhập họ và tên"
+                      placeholder="Nguyễn Văn A"
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Từ 2-100 ký tự, chỉ chữ cái và khoảng trắng
+                  </p>
                 </div>
 
                 {/* Email */}
@@ -261,12 +425,16 @@ export function ProfileEditComponent() {
                     <input
                       type="email"
                       required
+                      maxLength={100}
                       value={profileData.email || ""}
                       onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
                       className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Nhập địa chỉ email"
+                      placeholder="example@domain.com"
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Email hợp lệ, tối đa 100 ký tự
+                  </p>
                 </div>
 
                 {/* Phone Number */}
@@ -281,9 +449,12 @@ export function ProfileEditComponent() {
                       value={profileData.phoneNumber || ""}
                       onChange={(e) => setProfileData(prev => ({ ...prev, phoneNumber: e.target.value }))}
                       className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Nhập số điện thoại"
+                      placeholder="0901234567 hoặc +84901234567"
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Số điện thoại Việt Nam (10-12 số)
+                  </p>
                 </div>
 
                 {/* Birth Date */}
@@ -298,9 +469,14 @@ export function ProfileEditComponent() {
                       type="date"
                       value={profileData.birthDate || ""}
                       onChange={(e) => setProfileData(prev => ({ ...prev, birthDate: e.target.value }))}
+                      max={new Date().toISOString().split('T')[0]}
+                      min="1900-01-01"
                       className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Tối thiểu 18 tuổi, tối đa 100 tuổi
+                  </p>
                 </div>
 
                 {/* Username (read-only) */}
@@ -465,15 +641,39 @@ export function ProfileEditComponent() {
               </div>
 
               {/* Password Requirements */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-blue-900 mb-3 flex items-center">
+                  <Shield className="h-4 w-4 mr-2" />
                   Yêu cầu mật khẩu:
                 </h4>
-                <ul className="text-xs text-gray-600 space-y-1">
-                  <li>• Tối thiểu 6 ký tự</li>
-                  <li>• Nên bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt</li>
-                  <li>• Không sử dụng thông tin cá nhân dễ đoán</li>
+                <ul className="text-xs text-blue-800 space-y-2">
+                  <li className="flex items-start">
+                    <span className="text-blue-600 mr-2">✓</span>
+                    <span><strong>Độ dài:</strong> Tối thiểu 6 ký tự, tối đa 50 ký tự</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-blue-600 mr-2">✓</span>
+                    <span><strong>Bắt buộc:</strong> Ít nhất 1 chữ hoa (A-Z), 1 chữ thường (a-z), 1 số (0-9)</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-blue-600 mr-2">✓</span>
+                    <span><strong>Khuyến nghị:</strong> Sử dụng ký tự đặc biệt (@, $, !, %, *, ?, &, #, ...)</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-red-600 mr-2">✗</span>
+                    <span><strong>Không được:</strong> Chứa khoảng trắng, tên đăng nhập, hoặc tên của bạn</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-red-600 mr-2">✗</span>
+                    <span><strong>Khác biệt:</strong> Mật khẩu mới phải khác mật khẩu hiện tại</span>
+                  </li>
                 </ul>
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <p className="text-xs text-blue-700">
+                    <strong>Gợi ý:</strong> Sử dụng cụm từ dễ nhớ kết hợp với số và ký tự đặc biệt. 
+                    Ví dụ: &ldquo;MyP@ssw0rd2024!&rdquo;
+                  </p>
+                </div>
               </div>
             </form>
           )}

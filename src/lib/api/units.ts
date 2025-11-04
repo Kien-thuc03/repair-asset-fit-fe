@@ -18,6 +18,7 @@ export interface UnitResponseDto {
   parentId: string | null;
   createdAt: Date;
   updatedAt: Date;
+  childUnits?: UnitResponseDto[]; // Nested child units
 }
 
 /**
