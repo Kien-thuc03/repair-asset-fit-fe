@@ -1,0 +1,33 @@
+/**
+ * Error Type Mapping
+ * Maps frontend mock error type IDs to backend ErrorType enum
+ */
+
+export const ERROR_TYPE_MAP: Record<string, string> = {
+  ET001: "MAY_KHONG_KHOI_DONG",
+  ET002: "MAY_HU_PHAN_MEM",
+  ET003: "MAY_HU_BAN_PHIM",
+  ET004: "MAY_HU_CHUOT",
+  ET005: "MAY_KHONG_SU_DUNG_DUOC",
+  ET006: "MAY_KHONG_KET_NOI_MANG",
+  ET007: "MAY_HU_MAN_HINH",
+  ET008: "MAY_MAT_CHUOT",
+  ET009: "MAY_MAT_BAN_PHIM",
+  ET010: "LOI_KHAC",
+};
+
+/**
+ * Backend ErrorType enum values
+ */
+export enum ErrorType {
+  MAY_KHONG_KHOI_DONG = "MAY_KHONG_KHOI_DONG",
+  MAY_HU_PHAN_MEM = "MAY_HU_PHAN_MEM",
+  MAY_HU_BAN_PHIM = "MAY_HU_BAN_PHIM",
+  MAY_HU_CHUOT = "MAY_HU_CHUOT",
+  MAY_KHONG_SU_DUNG_DUOC = "MAY_KHONG_SU_DUNG_DUOC",
+  MAY_KHONG_KET_NOI_MANG = "MAY_KHONG_KET_NOI_MANG",
+  MAY_HU_MAN_HINH = "MAY_HU_MAN_HINH",
+  MAY_MAT_CHUOT = "MAY_MAT_CHUOT",
+  MAY_MAT_BAN_PHIM = "MAY_MAT_BAN_PHIM",
+  LOI_KHAC = "LOI_KHAC",
+}

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getRepairs,
   getRepairById,
+  getRepairsByReporter,
   GetRepairsQueryParams,
 } from "@/lib/api/repairs";
 import { RepairRequest, RepairRequestWithDetails } from "@/types/repair";
@@ -184,6 +185,76 @@ export const useRepairDetail = (id: string) => {
   useEffect(() => {
     fetchRepairDetail();
   }, [fetchRepairDetail]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Custom hook để lấy danh sách yêu cầu sửa chữa theo người báo lỗi
+ * @param reporterId ID của người báo lỗi
+ * @returns Object chứa data, loading state, error, và hàm refetch
+ */
+export const useRepairsByReporter = (reporterId: string | undefined) => {
+  const [data, setData] = useState<RepairRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Lấy danh sách yêu cầu sửa chữa theo người báo lỗi
+   */
+  const fetchRepairsByReporter = useCallback(async () => {
+    if (!reporterId) {
+      console.warn("⚠️ useRepairsByReporter: No reporterId provided");
+      setData([]);
+      return;
+    }
+
+    console.log(
+      "🔍 useRepairsByReporter: Fetching repairs for reporterId:",
+      reporterId
+    );
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getRepairsByReporter(reporterId);
+      console.log("✅ useRepairsByReporter: Raw API Response:", response);
+
+      // Transform data to include computed fields
+      const transformedData = response.map(transformRepairRequest);
+      console.log(
+        "✅ useRepairsByReporter: Transformed Data:",
+        transformedData
+      );
+
+      setData(transformedData);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Có lỗi xảy ra khi lấy danh sách yêu cầu sửa chữa.";
+      setError(errorMessage);
+      console.error("❌ useRepairsByReporter: Error fetching repairs:", err);
+      setData([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  }, [reporterId]);
+
+  /**
+   * Refetch data
+   */
+  const refetch = useCallback(() => {
+    fetchRepairsByReporter();
+  }, [fetchRepairsByReporter]);
+
+  useEffect(() => {
+    fetchRepairsByReporter();
+  }, [fetchRepairsByReporter]);
 
   return {
     data,

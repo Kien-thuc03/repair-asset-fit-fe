@@ -51,7 +51,7 @@ export const getSoftwareProposals = async (
 ): Promise<GetSoftwareProposalsResponse> => {
   try {
     const response = await api.get<GetSoftwareProposalsResponse>(
-      "/v1/software-proposals",
+      "/api/v1/software-proposals",
       {
         params,
       }
@@ -76,7 +76,7 @@ export const getSoftwareProposalById = async (
 ): Promise<GetSoftwareProposalDetailResponse> => {
   try {
     const response = await api.get<GetSoftwareProposalDetailResponse>(
-      `/v1/software-proposals/${id}`
+      `/api/v1/software-proposals/${id}`
     );
     return response.data;
   } catch (error: unknown) {
@@ -85,5 +85,88 @@ export const getSoftwareProposalById = async (
     throw new Error(
       err.response?.data?.message || "Lấy chi tiết đề xuất phần mềm thất bại."
     );
+  }
+};
+
+/**
+ * Lấy danh sách đề xuất phần mềm theo người đề xuất (proposer)
+ * @param proposerId ID của người đề xuất
+ * @returns Promise với danh sách đề xuất phần mềm của người đề xuất
+ */
+export const getSoftwareProposalsByProposer = async (
+  proposerId: string
+): Promise<SoftwareProposal[]> => {
+  try {
+    console.log(
+      `🌐 API Call: GET /api/v1/software-proposals/proposals/proposers/${proposerId}`
+    );
+    const response = await api.get<SoftwareProposal[]>(
+      `/api/v1/software-proposals/proposals/proposers/${proposerId}`
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Get software proposals by proposer error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message ||
+        "Lấy danh sách đề xuất phần mềm theo người đề xuất thất bại."
+    );
+  }
+};
+
+/**
+ * Interface cho request body khi tạo đề xuất phần mềm mới
+ */
+export interface CreateSoftwareProposalRequest {
+  roomId: string;
+  reason: string;
+  items: {
+    softwareName: string;
+    version?: string;
+    publisher?: string;
+    quantity: number;
+    licenseType?: string;
+  }[];
+}
+
+/**
+ * Tạo đề xuất phần mềm mới
+ * @param data Thông tin đề xuất phần mềm
+ * @returns Promise với đề xuất phần mềm đã tạo
+ */
+export const createSoftwareProposal = async (
+  data: CreateSoftwareProposalRequest
+): Promise<SoftwareProposal> => {
+  try {
+    console.log("🌐 API Call: POST /api/v1/software-proposals", data);
+    const response = await api.post<SoftwareProposal>(
+      "/api/v1/software-proposals",
+      data
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Create software proposal error:", error);
+    const err = error as {
+      response?: { data?: { message?: string | string[] }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+
+    // Handle array of error messages
+    const errorMessage = Array.isArray(err.response?.data?.message)
+      ? err.response.data.message.join(", ")
+      : err.response?.data?.message;
+
+    throw new Error(errorMessage || "Tạo đề xuất phần mềm thất bại.");
   }
 };

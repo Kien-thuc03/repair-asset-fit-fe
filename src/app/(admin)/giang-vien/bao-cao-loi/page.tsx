@@ -5,19 +5,18 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   ReportForm as ReportFormType,
-  SimpleAsset as Asset,
   Component,
   Software,
+  ComponentStatus,
+  ComponentType,
 } from "@/types";
-import { Room } from "@/types/unit";
-import {
-  mockErrorTypes,
-  mockAssets,
-  mockRooms,
-  mockComponents,
-  mockComputers,
-  getSoftwareByAssetId,
-} from "@/lib/mockData";
+import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
+import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
+import { getComponentsByComputerId } from "@/lib/api/components";
+import { createRepair, CreateRepairRequest } from "@/lib/api/repairs";
+import { useProfileDatabase } from "@/hooks";
+import { ERROR_TYPE_MAP } from "@/lib/constants/errorTypes";
+import { mockErrorTypes, getSoftwareByAssetId } from "@/lib/mockData";
 import {
   Breadcrumb,
   Card,
@@ -28,6 +27,7 @@ import {
   Steps,
   Radio,
   Modal,
+  message,
 } from "antd";
 import {
   DeleteOutlined,
@@ -51,6 +51,7 @@ interface LecturerReportFormType extends ReportFormType {
 
 export default function BaoCaoLoiPage() {
   const router = useRouter();
+  const { userDetails } = useProfileDatabase();
 
   const [formData, setFormData] = useState<LecturerReportFormType>({
     building: "",
@@ -64,9 +65,12 @@ export default function BaoCaoLoiPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedComputerId, setSelectedComputerId] = useState<string>(""); // Store computer.id for loading components
   const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
-  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
+  const [filteredComputers, setFilteredComputers] = useState<
+    ComputerResponseDto[]
+  >([]);
   const [filteredComponents, setFilteredComponents] = useState<Component[]>([]);
   const [filteredSoftware, setFilteredSoftware] = useState<Software[]>([]);
   const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>(
@@ -80,6 +84,7 @@ export default function BaoCaoLoiPage() {
   const [errorCategory, setErrorCategory] = useState<
     "hardware" | "software" | ""
   >(""); // Phân loại lỗi phần cứng/phần mềm
+  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
 
   // Các loại lỗi được phép chọn linh kiện
   const errorTypesAllowingComponentSelection = [
@@ -94,10 +99,39 @@ export default function BaoCaoLoiPage() {
     formData.errorTypeId &&
     errorTypesAllowingComponentSelection.includes(formData.errorTypeId);
 
-  // Danh sách tòa nhà duy nhất từ mockRooms
-  const buildings = [
-    ...new Set(mockRooms.map((room) => room.building).filter(Boolean)),
-  ];
+  // Extract unique buildings from rooms
+  const buildings = Array.from(
+    new Set(rooms.map((room) => room.building).filter(Boolean))
+  );
+
+  // Debug: Log buildings whenever rooms change
+  useEffect(() => {
+    console.log("🏢 Buildings computed:", buildings);
+    console.log("📍 Total rooms available:", rooms.length);
+  }, [rooms, buildings]);
+
+  // Fetch rooms from API
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        console.log("🔍 Starting to fetch rooms...");
+        const roomsData = await getRoomsApi();
+        console.log("✅ Rooms fetched successfully:", roomsData);
+        console.log("📊 Total rooms:", roomsData.length);
+        setRooms(roomsData);
+
+        // Log unique buildings and floors
+        const uniqueBuildings = Array.from(
+          new Set(roomsData.map((room) => room.building).filter(Boolean))
+        );
+        console.log("🏢 Unique buildings:", uniqueBuildings);
+      } catch (error) {
+        console.error("❌ Error fetching rooms:", error);
+        message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
+      }
+    };
+    fetchRooms();
+  }, []);
 
   // Tính toán bước hiện tại dựa trên dữ liệu đã điền
   const getCurrentStep = (): number => {
@@ -134,6 +168,7 @@ export default function BaoCaoLoiPage() {
 
   // Handle building change
   const handleBuildingChange = (building: string) => {
+    console.log("🏢 Building selected:", building);
     setFormData((prev) => ({
       ...prev,
       building,
@@ -148,22 +183,25 @@ export default function BaoCaoLoiPage() {
     setShowSoftwareSelection(false);
 
     // Filter floors by building
-    const floorsInBuilding = [
-      ...new Set(
-        mockRooms
-          .filter((room) => room.building === building && room.floor)
-          .map((room) => room.floor!)
-      ),
-    ] as string[];
+    const floorsInBuilding = Array.from(
+      new Set(
+        rooms
+          .filter((room) => room.building === building)
+          .map((room) => room.floor)
+          .filter(Boolean)
+      )
+    );
+    console.log("🏢 Floors in building:", floorsInBuilding);
     setFilteredFloors(floorsInBuilding);
     setFilteredRooms([]);
-    setFilteredAssets([]);
+    setFilteredComputers([]);
     setFilteredComponents([]);
     setFilteredSoftware([]);
   };
 
   // Handle floor change
   const handleFloorChange = (floor: string) => {
+    console.log("🏢 Floor selected:", floor);
     setFormData((prev) => ({
       ...prev,
       floor,
@@ -177,42 +215,134 @@ export default function BaoCaoLoiPage() {
     setShowSoftwareSelection(false);
 
     // Filter rooms by building and floor
-    const roomsOnFloor = mockRooms.filter(
+    const roomsOnFloor = rooms.filter(
       (room) => room.building === formData.building && room.floor === floor
     );
+    console.log("🏢 Rooms on floor:", roomsOnFloor);
     setFilteredRooms(roomsOnFloor);
-    setFilteredAssets([]);
+    setFilteredComputers([]);
     setFilteredComponents([]);
     setFilteredSoftware([]);
   };
 
   // Handle room change
-  const handleRoomChange = (roomId: string) => {
+  const handleRoomChange = async (roomId: string) => {
     setFormData((prev) => ({ ...prev, roomId, assetId: "", componentId: "" }));
+    setSelectedComputerId("");
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
     setShowComponentSelection(false);
     setShowSoftwareSelection(false);
 
-    // Filter assets by room
-    const roomAssets = mockAssets.filter((asset) => asset.roomId === roomId);
-    setFilteredAssets(roomAssets);
+    // Reset computers first
+    setFilteredComputers([]);
     setFilteredComponents([]);
     setFilteredSoftware([]);
+
+    // Fetch computers for the selected room
+    try {
+      console.log("🔍 Fetching computers for room:", roomId);
+      const computers = await getComputersByRoomId(roomId);
+      console.log("✅ Computers fetched:", computers);
+
+      // Ensure it's an array
+      if (Array.isArray(computers)) {
+        setFilteredComputers(computers);
+      } else {
+        console.error("❌ Response is not an array:", computers);
+        setFilteredComputers([]);
+        message.error("Dữ liệu máy tính không đúng định dạng");
+      }
+    } catch (error) {
+      console.error("❌ Error fetching computers:", error);
+      message.error("Không thể tải danh sách máy tính");
+      setFilteredComputers([]);
+    }
   };
 
   // Handle asset change
-  const handleAssetChange = (assetId: string) => {
-    setFormData((prev) => ({ ...prev, assetId, componentId: "" }));
+  const handleAssetChange = async (computerId: string) => {
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
     setShowComponentSelection(false);
     setShowSoftwareSelection(false);
 
-    setFilteredComponents(
-      mockComponents.filter((comp) => comp.computerAssetId === assetId)
+    // Reset components and software first
+    setFilteredComponents([]);
+    setFilteredSoftware([]);
+
+    // Find the selected computer to get its details
+    const selectedComputer = filteredComputers.find(
+      (comp) => comp.id === computerId
     );
-    setFilteredSoftware(getSoftwareByAssetId(assetId));
+
+    if (!selectedComputer) {
+      console.error("❌ Selected computer not found", {
+        computerId,
+        availableComputers: filteredComputers.map((c) => ({
+          id: c.id,
+          machineLabel: c.machineLabel,
+        })),
+      });
+      message.error("Không tìm thấy máy tính được chọn");
+      return;
+    }
+
+    // Check if computer has asset
+    if (!selectedComputer.asset?.id) {
+      console.error("❌ Computer has no asset", selectedComputer);
+      message.error("Máy tính này chưa được gán tài sản");
+      return;
+    }
+
+    console.log("✅ Selected computer:", selectedComputer);
+    console.log("📍 Asset ID:", selectedComputer.asset.id);
+
+    // Store asset.id instead of computer.id
+    setFormData((prev) => ({
+      ...prev,
+      assetId: selectedComputer.asset!.id, // Use asset.id for backend
+      componentId: "",
+    }));
+
+    // Store computer.id for loading components
+    setSelectedComputerId(computerId);
+
+    // Fetch components for the selected computer using computer ID
+    try {
+      console.log("🔍 Fetching components for computer:", computerId);
+      const components = await getComponentsByComputerId(computerId);
+      console.log("✅ Components fetched:", components);
+
+      // Ensure it's an array
+      if (Array.isArray(components)) {
+        // Map ComponentResponseDto to Component interface
+        const mappedComponents: Component[] = components.map((comp) => ({
+          id: comp.id,
+          computerAssetId: selectedComputer.id, // Use computer ID
+          componentType: comp.componentType as unknown as ComponentType,
+          name: comp.name,
+          componentSpecs: comp.componentSpecs,
+          serialNumber: comp.serialNumber,
+          status: comp.status as unknown as ComponentStatus,
+          installedAt: comp.installedAt,
+          removedAt: comp.removedAt,
+          notes: comp.notes,
+        }));
+        setFilteredComponents(mappedComponents);
+      } else {
+        console.error("❌ Response is not an array:", components);
+        setFilteredComponents([]);
+        message.error("Dữ liệu linh kiện không đúng định dạng");
+      }
+    } catch (error) {
+      console.error("❌ Error fetching components:", error);
+      message.error("Không thể tải danh sách linh kiện");
+      setFilteredComponents([]);
+    }
+
+    // Fetch software (still using mock data for now)
+    setFilteredSoftware(getSoftwareByAssetId(computerId));
   };
 
   // Handle media upload
@@ -234,35 +364,69 @@ export default function BaoCaoLoiPage() {
 
   // Handle form submit
   const handleSubmit = async () => {
+    // Validate user is logged in
+    if (!userDetails?.id) {
+      message.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Prepare request data
+      const requestData: CreateRepairRequest = {
+        computerAssetId: formData.assetId, // This is now computer.id
+        errorType: formData.errorTypeId
+          ? ERROR_TYPE_MAP[formData.errorTypeId]
+          : undefined,
+        description: formData.description,
+        mediaUrls: [], // TODO: Upload images first and get URLs
+        componentIds:
+          selectedComponentIds.length > 0 ? selectedComponentIds : undefined,
+        softwareIds:
+          selectedSoftwareIds.length > 0 ? selectedSoftwareIds : undefined,
+      };
 
-    setIsSubmitting(false);
-    setShowSuccessModal(true);
+      console.log("📤 Submitting repair request:", requestData);
 
-    // Reset form
-    setFormData({
-      building: "",
-      floor: "",
-      assetId: "",
-      componentId: "",
-      roomId: "",
-      errorTypeId: "",
-      description: "",
-      mediaFiles: [],
-    });
-    setErrorCategory("");
-    setSelectedComponentIds([]);
-    setSelectedSoftwareIds([]);
-    setShowComponentSelection(false);
-    setShowSoftwareSelection(false);
-    setFilteredFloors([]);
-    setFilteredRooms([]);
-    setFilteredAssets([]);
-    setFilteredComponents([]);
-    setFilteredSoftware([]);
+      // Call API to create repair request
+      const result = await createRepair(requestData);
+
+      console.log("✅ Repair request created:", result);
+
+      setIsSubmitting(false);
+      setShowSuccessModal(true);
+
+      // Reset form
+      setFormData({
+        building: "",
+        floor: "",
+        assetId: "",
+        componentId: "",
+        roomId: "",
+        errorTypeId: "",
+        description: "",
+        mediaFiles: [],
+      });
+      setErrorCategory("");
+      setSelectedComponentIds([]);
+      setSelectedSoftwareIds([]);
+      setShowComponentSelection(false);
+      setShowSoftwareSelection(false);
+      setFilteredFloors([]);
+      setFilteredRooms([]);
+      setFilteredComputers([]);
+      setFilteredComponents([]);
+      setFilteredSoftware([]);
+    } catch (error) {
+      console.error("❌ Error creating repair request:", error);
+      setIsSubmitting(false);
+      message.error(
+        error instanceof Error
+          ? error.message
+          : "Tạo yêu cầu sửa chữa thất bại. Vui lòng thử lại."
+      );
+    }
   };
 
   // Handle success modal close
@@ -367,8 +531,14 @@ export default function BaoCaoLoiPage() {
                 <div className="text-sm text-gray-500">Vị trí</div>
                 <div className="font-medium">
                   {formData.building} - {formData.floor} -{" "}
-                  {filteredRooms.find((r) => r.id === formData.roomId)
-                    ?.roomNumber || "N/A"}
+                  {(() => {
+                    const room = filteredRooms.find(
+                      (r) => r.id === formData.roomId
+                    );
+                    return room
+                      ? room.name || room.roomCode || room.roomNumber
+                      : "N/A";
+                  })()}
                 </div>
               </div>
             )}
@@ -377,14 +547,14 @@ export default function BaoCaoLoiPage() {
                 <div className="text-sm text-gray-500">Thiết bị</div>
                 <div className="font-medium">
                   {(() => {
-                    const asset = filteredAssets.find(
-                      (a) => a.id === formData.assetId
+                    if (!Array.isArray(filteredComputers)) return "N/A";
+                    const computer = filteredComputers.find(
+                      (c) => c.id === selectedComputerId
                     );
-                    const computer = mockComputers.find(
-                      (c) => c.assetId === formData.assetId
-                    );
-                    return asset
-                      ? `Máy ${computer?.machineLabel || "N/A"} - ${asset.name}`
+                    return computer
+                      ? `Máy ${computer.machineLabel} - ${
+                          computer.asset?.name || "N/A"
+                        }`
                       : "N/A";
                   })()}
                 </div>
@@ -459,7 +629,7 @@ export default function BaoCaoLoiPage() {
                   disabled={!formData.floor}>
                   {filteredRooms.map((room) => (
                     <Option key={room.id} value={room.id}>
-                      {room.roomNumber}
+                      {room.name || room.roomNumber}
                     </Option>
                   ))}
                 </Select>
@@ -482,17 +652,12 @@ export default function BaoCaoLoiPage() {
                 value={formData.assetId}
                 onChange={handleAssetChange}
                 disabled={!formData.roomId}>
-                {filteredAssets.map((asset) => {
-                  const computer = mockComputers.find(
-                    (comp) => comp.assetId === asset.id
-                  );
-                  const machineLabel = computer?.machineLabel || "N/A";
-                  return (
-                    <Option key={asset.id} value={asset.id}>
-                      Máy {machineLabel} - {asset.name} ({asset.assetCode})
+                {Array.isArray(filteredComputers) &&
+                  filteredComputers.map((computer) => (
+                    <Option key={computer.id} value={computer.id}>
+                      Máy {computer.machineLabel}
                     </Option>
-                  );
-                })}
+                  ))}
               </Select>
             </Form.Item>
           </div>

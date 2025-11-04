@@ -6,12 +6,10 @@ import {
   NewSoftwareProposalForm as ProposalFormType,
   SoftwareItemForm,
 } from "@/types";
-import { mockAssets, mockRooms, mockComputers } from "@/lib/mockData";
-import {
-  QRScannerSection,
-  ProposalHeader,
-} from "@/components/lecturer/softwareProposal";
-import { Breadcrumb, Select, Modal, Button } from "antd";
+import { createSoftwareProposal } from "@/lib/api/software-proposals";
+import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
+import { ProposalHeader } from "@/components/lecturer/softwareProposal";
+import { Breadcrumb, Select, Modal, Button, message } from "antd";
 import { CheckCircleOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
@@ -41,7 +39,22 @@ export default function DeXuatPhanMemPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
+  const [createdProposalCode, setCreatedProposalCode] = useState<string>("");
+
+  // Fetch rooms from API
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const roomsData = await getRoomsApi();
+        setRooms(roomsData);
+      } catch (error) {
+        console.error("Error fetching rooms:", error);
+        message.error("Không thể tải danh sách phòng");
+      }
+    };
+    fetchRooms();
+  }, []);
 
   // Validation function to check if form is complete
   const isFormValid = () => {
@@ -64,34 +77,29 @@ export default function DeXuatPhanMemPage() {
     return hasValidSoftwareItems;
   };
 
-  // Lấy danh sách tòa nhà duy nhất từ mockRooms
+  // Extract unique buildings from rooms
   const buildings = Array.from(
-    new Set(mockRooms.map((room) => room.building).filter(Boolean))
+    new Set(rooms.map((room) => room.building).filter(Boolean))
   );
 
-  // Lấy danh sách tầng dựa trên tòa nhà đã chọn
-  const filteredFloors = mockRooms
-    .filter((room) => room.building === locationData.building)
-    .map((room) => room.floor)
-    .filter(Boolean)
-    .filter((floor, index, arr) => arr.indexOf(floor) === index); // Remove duplicates
+  // Get floors based on selected building
+  const filteredFloors = Array.from(
+    new Set(
+      rooms
+        .filter((room) => room.building === locationData.building)
+        .map((room) => room.floor)
+        .filter(Boolean)
+    )
+  );
 
-  // Lấy danh sách phòng dựa trên tòa nhà và tầng đã chọn
-  const filteredRooms = mockRooms.filter(
+  // Get rooms based on selected building and floor
+  const filteredRooms = rooms.filter(
     (room) =>
       room.building === locationData.building &&
       room.floor === locationData.floor
   );
 
-  // Detect if user is on mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  // Detect if user is on mobile device (removed - not needed without QR scanner)
 
   // Xử lý thay đổi tòa nhà
   const handleBuildingChange = (building: string) => {
@@ -164,40 +172,51 @@ export default function DeXuatPhanMemPage() {
 
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Call API to create software proposal
+      const createdProposal = await createSoftwareProposal({
+        roomId: formData.roomId,
+        reason: formData.reason,
+        items: formData.softwareItems,
+      });
 
-    console.log("Software Proposal Data:", {
-      roomId: formData.roomId,
-      reason: formData.reason,
-      softwareItems: formData.softwareItems,
-      proposerId: "user-5", // This would come from auth context
-      status: "CHỜ_DUYỆT",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
+      console.log("✅ Software Proposal Created:", createdProposal);
+      setCreatedProposalCode(createdProposal.proposalCode);
+      message.success("Đề xuất phần mềm đã được gửi thành công!");
+      setShowSuccessModal(true);
 
-    setIsSubmitting(false);
-    setShowSuccessModal(true);
-
-    // Reset form
-    setFormData({
-      roomId: "",
-      reason: "",
-      softwareItems: [
-        {
-          softwareName: "",
-          version: "",
-          publisher: "",
-          quantity: 1,
-          licenseType: "",
-        },
-      ],
-    });
-    setLocationData({
-      building: "",
-      floor: "",
-    });
+      // Reset form
+      setFormData({
+        roomId: "",
+        reason: "",
+        softwareItems: [
+          {
+            softwareName: "",
+            version: "",
+            publisher: "",
+            quantity: 1,
+            licenseType: "",
+          },
+        ],
+      });
+      setLocationData({
+        building: "",
+        floor: "",
+      });
+    } catch (error) {
+      console.error("❌ Create software proposal error:", error);
+      Modal.error({
+        title: "Lỗi gửi đề xuất",
+        content:
+          error instanceof Error
+            ? error.message
+            : "Đã xảy ra lỗi khi gửi đề xuất. Vui lòng thử lại.",
+        centered: true,
+        okText: "Đồng ý",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSuccessModalClose = () => {
@@ -211,9 +230,6 @@ export default function DeXuatPhanMemPage() {
 
   const handleRoomChange = (roomId: string) => {
     setFormData((prev) => ({ ...prev, roomId }));
-    // Lọc thiết bị theo phòng đã chọn (giữ để tương thích với QR scan)
-    const roomAssets = mockAssets.filter((asset) => asset.roomId === roomId);
-    console.log("Room assets:", roomAssets);
   };
 
   const handleReasonChange = (reason: string) => {
@@ -258,52 +274,6 @@ export default function DeXuatPhanMemPage() {
     }
   };
 
-  const handleAssetChange = (assetId: string) => {
-    // Giữ để tương thích với QR scan, nhưng không cần lưu assetId nữa
-    console.log("Asset selected:", assetId);
-  };
-
-  const handleQRScan = (qrCode: string) => {
-    console.log("QR Code scanned:", qrCode);
-    // Tìm asset dựa trên QR code
-    const asset = mockAssets.find((asset) => asset.assetCode === qrCode);
-    console.log("Found asset:", asset);
-
-    if (asset) {
-      // Tự động điền thông tin từ QR code
-      const room = mockRooms.find((room) => room.id === asset.roomId);
-      console.log("Found room:", room);
-
-      if (room) {
-        // Gọi handleRoomChange trước để set room và filter assets
-        handleRoomChange(asset.roomId);
-
-        // Sau đó gọi handleAssetChange để set asset
-        setTimeout(() => {
-          handleAssetChange(asset.id);
-
-          const computer = mockComputers.find(
-            (comp) => comp.assetId === asset.id
-          );
-          const machineLabel = computer?.machineLabel || "N/A";
-
-          alert(
-            `Đã quét thành công!\nMáy số: ${machineLabel}\nTên máy: ${asset.name}\nPhòng: ${room.roomNumber}\n\nTiếp theo:\n- Bước 2: Nhập thông tin phần mềm\n- Bước 3: Lý do đề xuất và mục đích sử dụng`
-          );
-        }, 100);
-      }
-    } else {
-      alert("Không tìm thấy thiết bị với mã QR này!");
-    }
-  };
-
-  const simulateQRScan = () => {
-    // Simulate QR scan for demo (in real app, this would use camera)
-    const randomAsset =
-      mockAssets[Math.floor(Math.random() * mockAssets.length)];
-    handleQRScan(randomAsset.assetCode);
-  };
-
   return (
     <div className="space-y-6">
       <div className="mb-2">
@@ -330,9 +300,6 @@ export default function DeXuatPhanMemPage() {
 
       {/* Header */}
       <ProposalHeader />
-
-      {/* QR Scanner Button for Mobile */}
-      <QRScannerSection isMobile={isMobile} onQRScan={simulateQRScan} />
 
       {/* Form */}
       <div className="bg-white rounded-lg shadow-sm p-6">
@@ -398,7 +365,8 @@ export default function DeXuatPhanMemPage() {
                 disabled={!locationData.floor}>
                 {filteredRooms.map((room) => (
                   <Option key={room.id} value={room.id}>
-                    {room.roomNumber}
+                    {room.name ||
+                      `${room.building}.${room.floor}${room.roomNumber}`}
                   </Option>
                 ))}
               </Select>
@@ -611,9 +579,9 @@ export default function DeXuatPhanMemPage() {
             {`Cảm ơn bạn đã gửi đề xuất trang bị ${
               formData.softwareItems.length
             } phần mềm cho phòng ${
-              mockRooms.find((r) => r.id === formData.roomId)?.roomNumber ||
+              rooms.find((r) => r.id === formData.roomId)?.roomCode ||
               formData.roomId
-            }. Kỹ thuật viên sẽ xem xét và phản hồi trong thời gian sớm nhất. Bạn có thể theo dõi trạng thái đề xuất trong mục quản lý đề xuất.`}
+            }. Mã đề xuất: ${createdProposalCode}. Kỹ thuật viên sẽ xem xét và phản hồi trong thời gian sớm nhất. Bạn có thể theo dõi trạng thái đề xuất trong mục quản lý đề xuất.`}
           </p>
         </div>
       </Modal>

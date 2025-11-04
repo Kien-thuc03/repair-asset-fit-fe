@@ -1,12 +1,11 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "antd";
 import { CheckCircle, XCircle } from "lucide-react";
-import { RepairRequest, RepairStatus } from "@/types";
+import { RepairRequest } from "@/types";
 import { repairRequestStatusConfig } from "@/lib/mockData";
-import { useRepairs } from "@/hooks";
+import { useRepairsByReporter } from "@/hooks";
+import { useAuth } from "@/contexts/AuthContext";
 import Pagination from "@/components/common/Pagination";
 import ProgressHeader from "./ProgressHeader";
 import ProgressFilters from "./ProgressFilters";
@@ -17,6 +16,7 @@ import type { Dayjs } from "dayjs";
 
 export default function ProgressTrackingContainer() {
   const router = useRouter();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<
@@ -43,17 +43,8 @@ export default function ProgressTrackingContainer() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Use API hook để lấy dữ liệu
-  const {
-    data: apiData,
-    meta,
-    loading,
-    error,
-    updateParams,
-  } = useRepairs({
-    page: currentPage,
-    limit: pageSize,
-  });
+  // Use API hook để lấy dữ liệu theo reporterId
+  const { data: apiData, loading, error } = useRepairsByReporter(user?.id);
 
   const [filteredRequests, setFilteredRequests] = useState<RepairRequest[]>([]);
 
@@ -162,62 +153,6 @@ export default function ProgressTrackingContainer() {
     setSelectAll(false);
   }, [apiData, searchTerm, statusFilter, dateRange, sortField, sortDirection]);
 
-  // Cập nhật API params khi có thay đổi
-  useEffect(() => {
-    const params: {
-      page: number;
-      limit: number;
-      status?: RepairStatus;
-      search?: string;
-      fromDate?: string;
-      toDate?: string;
-      sortBy?:
-        | "createdAt"
-        | "requestCode"
-        | "status"
-        | "acceptedAt"
-        | "completedAt";
-      sortOrder?: "ASC" | "DESC";
-    } = {
-      page: currentPage,
-      limit: pageSize,
-    };
-
-    if (statusFilter && statusFilter !== "all") {
-      params.status = statusFilter as RepairStatus;
-    }
-
-    if (searchTerm) {
-      params.search = searchTerm;
-    }
-
-    if (dateRange && dateRange[0] && dateRange[1]) {
-      params.fromDate = dateRange[0].toISOString();
-      params.toDate = dateRange[1].toISOString();
-    }
-
-    if (sortField && sortDirection) {
-      params.sortBy = sortField as
-        | "createdAt"
-        | "requestCode"
-        | "status"
-        | "acceptedAt"
-        | "completedAt";
-      params.sortOrder = sortDirection === "asc" ? "ASC" : "DESC";
-    }
-
-    updateParams(params);
-  }, [
-    currentPage,
-    pageSize,
-    statusFilter,
-    searchTerm,
-    dateRange,
-    sortField,
-    sortDirection,
-    updateParams,
-  ]);
-
   // Pagination handlers
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -231,6 +166,12 @@ export default function ProgressTrackingContainer() {
     setSelectedItems([]); // Reset selection
     setSelectAll(false);
   };
+
+  // Calculate paginated data for display
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN");
@@ -387,7 +328,7 @@ export default function ProgressTrackingContainer() {
       {/* Requests List */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <RequestTable
-          requests={filteredRequests}
+          requests={paginatedRequests}
           selectedItems={selectedItems}
           selectAll={selectAll}
           sortField={sortField}
@@ -400,7 +341,7 @@ export default function ProgressTrackingContainer() {
         />
 
         <RequestCards
-          requests={filteredRequests}
+          requests={paginatedRequests}
           selectedItems={selectedItems}
           selectAll={selectAll}
           onSelectAll={handleSelectAll}
@@ -416,7 +357,7 @@ export default function ProgressTrackingContainer() {
           <Pagination
             currentPage={currentPage}
             pageSize={pageSize}
-            total={meta?.total || 0}
+            total={filteredRequests.length}
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
             showSizeChanger={true}
