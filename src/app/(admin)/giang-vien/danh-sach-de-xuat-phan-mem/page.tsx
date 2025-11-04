@@ -84,10 +84,7 @@ export default function SoftwareProposalsPage() {
   const [exportCount, setExportCount] = useState(0);
 
   // Use API hook để lấy dữ liệu theo proposerId
-  const {
-    data: apiData,
-    loading,
-  } = useSoftwareProposalsByProposer(user?.id);
+  const { data: apiData, loading } = useSoftwareProposalsByProposer(user?.id);
 
   const [filteredProposals, setFilteredProposals] = useState<
     SoftwareProposal[]

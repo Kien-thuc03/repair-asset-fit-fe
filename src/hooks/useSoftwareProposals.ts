@@ -176,9 +176,7 @@ export const useSoftwareProposalsByProposer = (
    */
   const fetchSoftwareProposalsByProposer = useCallback(async () => {
     if (!proposerId) {
-      console.warn(
-        "⚠️ useSoftwareProposalsByProposer: No proposerId provided"
-      );
+      console.warn("⚠️ useSoftwareProposalsByProposer: No proposerId provided");
       setData([]);
       return;
     }

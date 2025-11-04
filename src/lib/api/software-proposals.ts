@@ -120,4 +120,3 @@ export const getSoftwareProposalsByProposer = async (
     );
   }
 };
-
