@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { UserPlus, Users as UsersIcon, UserCheck, UserX, Building, Download } from 'lucide-react';
 import { Breadcrumb, message, Input, Select, Button, Card, Row, Col, Alert } from 'antd';
-import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { SearchOutlined, SyncOutlined } from '@ant-design/icons';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
 import { useRoles } from '@/hooks/useRoles';
 import { useUnits } from '@/hooks/useUnits';
@@ -46,9 +46,9 @@ export default function UsersManagementPage() {
     deleteUser,
   } = useUsersManagement();
 
-  // Fetch roles and units for filters
+  // Fetch roles and units (including campuses) for filters
   const { roles, loading: rolesLoading, error: rolesError } = useRoles();
-  const { units, loading: unitsLoading, error: unitsError } = useUnits();
+  const { units, campuses, loading: unitsLoading, error: unitsError } = useUnits();
 
   // Tính toán stats từ danh sách users
   const stats = useMemo(() => {
@@ -325,7 +325,7 @@ export default function UsersManagementPage() {
       {/* Filters */}
       <Card>
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={5}>
             <Input
               placeholder="Tìm kiếm theo tên, email..."
               prefix={<SearchOutlined />}
@@ -333,6 +333,28 @@ export default function UsersManagementPage() {
               onChange={(e) => updateFilters({ search: e.target.value })}
               allowClear
             />
+          </Col>
+
+          <Col xs={24} sm={12} md={5}>
+            <Select
+              placeholder="Tất cả cơ sở"
+              style={{ width: '100%' }}
+              value={filters.campusId || undefined}
+              onChange={(value) => updateFilters({ campusId: value || '' })}
+              allowClear
+              loading={unitsLoading}
+              notFoundContent={unitsLoading ? 'Đang tải...' : 'Không có dữ liệu'}
+            >
+              {campuses && campuses.length > 0 ? (
+                campuses.map((campus: UnitResponseDto) => (
+                  <Select.Option key={campus.id} value={campus.id}>
+                    {campus.name}
+                  </Select.Option>
+                ))
+              ) : (
+                !unitsLoading && <Select.Option value="" disabled>Không có cơ sở</Select.Option>
+              )}
+            </Select>
           </Col>
           
           <Col xs={24} sm={12} md={5}>
@@ -357,7 +379,7 @@ export default function UsersManagementPage() {
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={5}>
+          <Col xs={24} sm={12} md={4}>
             <Select
               placeholder="Tất cả vai trò"
               style={{ width: '100%' }}
@@ -379,7 +401,7 @@ export default function UsersManagementPage() {
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={5}>
+          <Col xs={24} sm={12} md={4}>
             <Select
               placeholder="Tất cả trạng thái"
               style={{ width: '100%' }}
@@ -394,14 +416,14 @@ export default function UsersManagementPage() {
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={3}>
+          <Col xs={24} sm={12} md={1}>
             <Button
-              icon={<FilterOutlined />}
+              icon={<SyncOutlined />}
+              title='Tải lại bộ lọc'
               onClick={resetFilters}
               type="default"
               style={{ width: '100%' }}
             >
-              Xóa bộ lọc
             </Button>
           </Col>
         </Row>

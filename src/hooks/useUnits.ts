@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { getChildUnitsApi, getUnitsApi, UnitResponseDto, UnitType } from '@/lib/api/units';
 
 /**
- * Custom hook để fetch danh sách units con của Đại học Công nghiệp TP.HCM
- * Tự động tìm campus IUH và lấy tất cả units con (FACULTY và DEPARTMENT)
- * @returns {object} - { units, loading, error, refetch }
+ * Custom hook để fetch danh sách units và campuses
+ * - campuses: Danh sách tất cả các cơ sở (CAMPUS)
+ * - units: Danh sách units con của Đại học Công nghiệp TP.HCM (FACULTY và DEPARTMENT)
+ * @returns {object} - { units, campuses, loading, error, refetch }
  */
 export const useUnits = () => {
   const [units, setUnits] = useState<UnitResponseDto[]>([]);
+  const [campuses, setCampuses] = useState<UnitResponseDto[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,8 +17,12 @@ export const useUnits = () => {
     setLoading(true);
     setError(null);
     try {
-      // Bước 1: Lấy tất cả units để tìm campus IUH
+      // Bước 1: Lấy tất cả units
       const allUnits = await getUnitsApi();
+      
+      // Lọc campuses (các cơ sở)
+      const campusList = allUnits.filter(unit => unit.type === UnitType.CAMPUS);
+      setCampuses(campusList);
       
       // Bước 2: Tìm campus "Đại học Công nghiệp Thành phố Hồ Chí Minh"
       const iuhCampus = allUnits.find(
@@ -65,6 +71,7 @@ export const useUnits = () => {
 
   return {
     units,
+    campuses,
     loading,
     error,
     refetch: fetchUnits,

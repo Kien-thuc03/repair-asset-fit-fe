@@ -22,6 +22,7 @@ export interface UseUsersManagementOptions {
 
 export interface UsersFilters {
   search: string;
+  campusId: string;
   unitId: string;
   roleId: string;
   status: UserStatus | 'all';
@@ -46,6 +47,7 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
 
   const [filters, setFilters] = useState<UsersFilters>({
     search: '',
+    campusId: '',
     unitId: initialUnitId,
     roleId: initialRoleId,
     status: 'all',
@@ -236,6 +238,7 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
   const resetFilters = () => {
     setFilters({
       search: '',
+      campusId: '',
       unitId: '',
       roleId: '',
       status: 'all',
