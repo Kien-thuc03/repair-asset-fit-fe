@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProfileDatabase } from "@/hooks/useProfileDatabase";
+import { useProfile } from "@/hooks/useProfile";
 import { RoleInfo } from "@/types/repair";
 import { UserRole } from "@/types/repair";
 import {
@@ -24,7 +24,7 @@ import {
 export function ProfileInfoComponent() {
   const router = useRouter();
   const { user } = useAuth();
-  const { userDetails, isLoading } = useProfileDatabase();
+  const { userDetails, isLoading } = useProfile();
 
   if (!user) {
     return (

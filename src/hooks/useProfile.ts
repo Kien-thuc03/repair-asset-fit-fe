@@ -1,19 +1,105 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { AuthenticatedUser, IUpdateUserRequest } from "@/types/user";
+import { IUpdateUserRequest, IUserWithRoles } from "@/types/user";
+import { getUserById, updateUser as updateUserApi } from "@/lib/api/users";
+
+interface UserDetail {
+  id: string;
+  username: string;
+  fullName: string;
+  email: string;
+  unitId?: string;
+  phoneNumber?: string;
+  birthDate?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+  unitName?: string;
+  unitType?: string;
+  unitPhone?: string;
+  unitEmail?: string;
+}
 
 interface UseProfileReturn {
+  userDetails: UserDetail | null;
   updateProfile: (data: IUpdateUserRequest) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  refreshUserDetails: () => Promise<void>;
   isLoading: boolean;
+  error: string | null;
 }
 
 /**
- * Hook để quản lý thông tin cá nhân của user
+ * Hook để quản lý thông tin cá nhân của user với tích hợp PostgreSQL
  */
 export function useProfile(): UseProfileReturn {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetail | null>(null);
   const { user } = useAuth();
+
+  /**
+   * Chuyển đổi IUserWithRoles từ API sang UserDetail
+   */
+  const convertToUserDetail = (apiUser: IUserWithRoles): UserDetail => {
+    return {
+      id: apiUser.id,
+      username: apiUser.username,
+      fullName: apiUser.fullName,
+      email: apiUser.email || '',
+      unitId: apiUser.unit?.id,
+      phoneNumber: apiUser.phoneNumber,
+      birthDate: apiUser.birthDate,
+      status: apiUser.status,
+      createdAt: apiUser.createdAt || new Date().toISOString(),
+      updatedAt: apiUser.updatedAt || new Date().toISOString(),
+      deletedAt: apiUser.deletedAt || null,
+      unitName: apiUser.unit?.name,
+      unitType: apiUser.unit?.type,
+      // Note: phone và email không có trong unit type hiện tại
+      unitPhone: undefined,
+      unitEmail: undefined,
+    };
+  };
+
+  /**
+   * Lấy thông tin chi tiết của user từ PostgreSQL
+   */
+  const fetchUserDetails = useCallback(async (userId: string) => {
+    if (!userId) return;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Gọi API getUserById
+      const apiUser = await getUserById(userId);
+      
+      // Chuyển đổi sang format UserDetail
+      const userDetail = convertToUserDetail(apiUser);
+      
+      setUserDetails(userDetail);
+
+    } catch (err) {
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "Không thể lấy thông tin người dùng";
+      setError(errorMessage);
+      console.error("Fetch user details error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  /**
+   * Refresh thông tin user
+   */
+  const refreshUserDetails = useCallback(async () => {
+    if (user?.id) {
+      await fetchUserDetails(user.id);
+    }
+  }, [user?.id, fetchUserDetails]);
 
   /**
    * Cập nhật thông tin cá nhân
@@ -24,45 +110,56 @@ export function useProfile(): UseProfileReturn {
     }
 
     setIsLoading(true);
+    setError(null);
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Chuẩn bị dữ liệu để gửi lên API
+      const updateData: IUpdateUserRequest = {
+        ...data,
+      };
 
-      // TODO: Thay thế bằng API call thực tế
-      // const response = await fetch(`/api/users/${user.id}`, {
-      //   method: 'PUT',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(data),
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error('Cập nhật thông tin thất bại');
-      // }
-
-      console.log("Profile updated successfully:", data);
-      
-      // Cập nhật localStorage (tạm thời)
-      const savedUser = localStorage.getItem("repair_user");
-      if (savedUser) {
-        const parsedUser: AuthenticatedUser = JSON.parse(savedUser);
-        const updatedUser = {
-          ...parsedUser,
-          fullName: data.fullName || parsedUser.fullName,
-          email: data.email || parsedUser.email,
-          unitId: data.unitId || parsedUser.unitId,
-        };
-        localStorage.setItem("repair_user", JSON.stringify(updatedUser));
+      // Đảm bảo birthDate ở định dạng YYYY-MM-DD (nếu có)
+      if (updateData.birthDate) {
+        // Nếu là string có timestamp, chuyển về YYYY-MM-DD
+        if (updateData.birthDate.includes('T') || updateData.birthDate.includes(':')) {
+          const dateObj = new Date(updateData.birthDate);
+          updateData.birthDate = dateObj.toISOString().split('T')[0];
+        } else {
+          // Đảm bảo format YYYY-MM-DD
+          updateData.birthDate = updateData.birthDate.split('T')[0];
+        }
       }
 
-    } catch (error) {
-      console.error("Update profile error:", error);
-      throw error;
+      // Gọi API updateUser
+      await updateUserApi(user.id, updateData);
+
+      // Refresh user details sau khi cập nhật thành công
+      await refreshUserDetails();
+
+    } catch (err) {
+      let errorMessage = "Cập nhật thông tin thất bại";
+      
+      // Xử lý error message từ backend
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { message?: string | string[] } } };
+        if (axiosError.response?.data?.message) {
+          const backendMessage = axiosError.response.data.message;
+          // Nếu message là array, join thành string
+          errorMessage = Array.isArray(backendMessage) 
+            ? backendMessage.join(', ') 
+            : backendMessage;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      console.error("Update profile error:", err);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, refreshUserDetails]);
 
   /**
    * Thay đổi mật khẩu
@@ -74,10 +171,7 @@ export function useProfile(): UseProfileReturn {
 
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // TODO: Thay thế bằng API call thực tế
+      // TODO: Thay thế bằng API call thực tế khi backend có endpoint
       // const response = await fetch(`/api/users/${user.id}/change-password`, {
       //   method: 'POST',
       //   headers: {
@@ -93,7 +187,14 @@ export function useProfile(): UseProfileReturn {
       //   throw new Error('Thay đổi mật khẩu thất bại');
       // }
 
-      console.log("Password changed successfully", { currentPassword, newPassword });
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log("Password changed successfully", { 
+        userId: user.id, 
+        hasCurrentPassword: !!currentPassword, 
+        hasNewPassword: !!newPassword 
+      });
 
     } catch (error) {
       console.error("Change password error:", error);
@@ -103,9 +204,19 @@ export function useProfile(): UseProfileReturn {
     }
   }, [user]);
 
+  // Auto-fetch user details khi user thay đổi
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserDetails(user.id);
+    }
+  }, [user?.id, fetchUserDetails]);
+
   return {
+    userDetails,
     updateProfile,
     changePassword,
+    refreshUserDetails,
     isLoading,
+    error,
   };
 }
