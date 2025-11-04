@@ -26,6 +26,7 @@ import {
   ErrorModal,
 } from "@/components/modal";
 import { useRepairDetail } from "@/hooks";
+import { cancelRepair } from "@/lib/api/repairs";
 
 const repairRequestStatusConfig = {
   [RepairStatus.CHỜ_TIẾP_NHẬN]: {
@@ -121,11 +122,8 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
     try {
       setIsDeleting(true);
 
-      // TODO: Call API to cancel repair request
-      // await cancelRepair(id, "Hủy bởi người dùng");
-
-      // Giả lập delay API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Call API to cancel repair request
+      await cancelRepair(id, "Hủy bởi người dùng");
 
       setShowCancelModal(false);
       setShowSuccessModal(true);
@@ -590,25 +588,6 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
                         <h4 className="font-semibold text-gray-900">
                           {component.name}
                         </h4>
-                        <Tag
-                          color={
-                            component.status === "FAULTY"
-                              ? "red"
-                              : component.status === "INSTALLED"
-                              ? "green"
-                              : component.status === "REMOVED"
-                              ? "orange"
-                              : "default"
-                          }
-                          className="text-xs">
-                          {component.status === "FAULTY"
-                            ? "Hỏng"
-                            : component.status === "INSTALLED"
-                            ? "Đã lắp"
-                            : component.status === "REMOVED"
-                            ? "Đã tháo"
-                            : component.status}
-                        </Tag>
                       </div>
                       <div className="space-y-1 text-sm">
                         <p className="text-gray-600">

@@ -51,7 +51,7 @@ export const getSoftwareProposals = async (
 ): Promise<GetSoftwareProposalsResponse> => {
   try {
     const response = await api.get<GetSoftwareProposalsResponse>(
-      "/v1/software-proposals",
+      "/api/v1/software-proposals",
       {
         params,
       }
@@ -76,7 +76,7 @@ export const getSoftwareProposalById = async (
 ): Promise<GetSoftwareProposalDetailResponse> => {
   try {
     const response = await api.get<GetSoftwareProposalDetailResponse>(
-      `/v1/software-proposals/${id}`
+      `/api/v1/software-proposals/${id}`
     );
     return response.data;
   } catch (error: unknown) {
@@ -87,3 +87,4 @@ export const getSoftwareProposalById = async (
     );
   }
 };
+
