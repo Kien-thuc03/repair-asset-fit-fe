@@ -4,10 +4,13 @@
  */
 
 // Export authentication APIs
-export * from './auth';
+export * from "./auth";
 
 // Export submission form APIs
-export * from './submissionForm';
+export * from "./submissionForm";
+
+// Export repair request APIs
+export * from "./repairs";
 
 // Export users APIs
 export * from './users';
@@ -19,6 +22,5 @@ export * from './roles';
 export * from './units';
 
 // TODO: Thêm các API modules khác ở đây khi phát triển
-// export * from './repairs';
 // export * from './assets';
 // etc.

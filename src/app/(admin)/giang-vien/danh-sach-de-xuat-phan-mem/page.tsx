@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -16,21 +16,19 @@ import {
 } from "lucide-react";
 import { Breadcrumb, Modal, Input, Button, Select } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
-import { mockSoftwareProposals } from "@/lib/mockData/softwareProposals";
-import { users } from "@/lib/mockData/users";
-import { mockRooms } from "@/lib/mockData/rooms";
 import { Pagination } from "@/components/common";
 import SoftwareProposalCards from "@/components/lecturer/softwareProposal/SoftwareProposalCards";
+import { useSoftwareProposals } from "@/hooks/useSoftwareProposals";
 
 const { Option } = Select;
-const getUserName = (userId: string): string => {
-  const user = users.find((u) => u.id === userId);
-  return user ? user.fullName : userId;
+
+// Helper functions to get names from nested objects
+const getUserName = (proposal: SoftwareProposal): string => {
+  return proposal.proposer?.fullName || proposal.proposerId;
 };
 
-const getRoomName = (roomId: string): string => {
-  const room = mockRooms.find((r) => r.id === roomId);
-  return room ? room.roomNumber : roomId;
+const getRoomName = (proposal: SoftwareProposal): string => {
+  return proposal.room?.name || proposal.room?.roomNumber || proposal.roomId;
 };
 
 // Config cho trạng thái đề xuất
@@ -75,49 +73,39 @@ export default function SoftwareProposalsPage() {
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [exportCount, setExportCount] = useState(0);
 
-  // Lọc và sắp xếp dữ liệu
-  const filteredAndSortedData = useMemo(() => {
+  // Use API hook instead of mockData
+  const {
+    data: proposals,
+    meta,
+    loading,
+    updateParams,
+  } = useSoftwareProposals({
+    page: currentPage,
+    limit: pageSize,
+    search: searchText || undefined,
+    status: statusFilter || undefined,
+  });
+
+  // Update params when filters change
+  useEffect(() => {
+    updateParams({
+      page: currentPage,
+      limit: pageSize,
+      search: searchText || undefined,
+      status: statusFilter || undefined,
+    });
+  }, [currentPage, pageSize, searchText, statusFilter, updateParams]);
+
+  // Reset page when filters change
+  useEffect(() => {
     setCurrentPage(1);
-    setSelectedRowKeys([]); // Reset selection when filter changes
-
-    // Lọc dữ liệu
-    const filtered = mockSoftwareProposals.filter(
-      (proposal: SoftwareProposal) => {
-        const matchesSearch = searchText
-          ? [
-              proposal.proposalCode,
-              proposal.reason,
-              getUserName(proposal.proposerId),
-              getRoomName(proposal.roomId),
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase()
-              .includes(searchText.toLowerCase())
-          : true;
-
-        const matchesStatus = statusFilter
-          ? proposal.status === statusFilter
-          : true;
-
-        return matchesSearch && matchesStatus;
-      }
-    );
-
-    return filtered;
+    setSelectedRowKeys([]);
   }, [searchText, statusFilter]);
-
-  // Dữ liệu phân trang
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return filteredAndSortedData.slice(startIndex, endIndex);
-  }, [filteredAndSortedData, currentPage, pageSize]);
 
   // Checkbox handlers
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRowKeys(paginatedData.map((item) => item.id));
+      setSelectedRowKeys(proposals.map((item: SoftwareProposal) => item.id));
     } else {
       setSelectedRowKeys([]);
     }
@@ -133,12 +121,11 @@ export default function SoftwareProposalsPage() {
 
   // Hàm xuất Excel
   const handleExportExcel = async () => {
-    const selectedData = filteredAndSortedData.filter((item) =>
+    const selectedData = proposals.filter((item: SoftwareProposal) =>
       selectedRowKeys.includes(item.id)
     );
 
-    const itemsToExport =
-      selectedData.length > 0 ? selectedData : filteredAndSortedData;
+    const itemsToExport = selectedData.length > 0 ? selectedData : proposals;
 
     if (itemsToExport.length === 0) {
       setShowExportErrorModal(true);
@@ -150,16 +137,18 @@ export default function SoftwareProposalsPage() {
       const XLSX = await import("xlsx");
 
       // Tạo dữ liệu Excel
-      const excelData = itemsToExport.map((item, index) => ({
-        STT: index + 1,
-        "Mã đề xuất": item.proposalCode,
-        "Người đề xuất": getUserName(item.proposerId),
-        Phòng: getRoomName(item.roomId),
-        "Lý do đề xuất": item.reason || "",
-        "Trạng thái": softwareProposalStatusConfig[item.status].label,
-        "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
-        "Ngày cập nhật": new Date(item.updatedAt).toLocaleDateString("vi-VN"),
-      }));
+      const excelData = itemsToExport.map(
+        (item: SoftwareProposal, index: number) => ({
+          STT: index + 1,
+          "Mã đề xuất": item.proposalCode,
+          "Người đề xuất": getUserName(item),
+          Phòng: getRoomName(item),
+          "Lý do đề xuất": item.reason || "",
+          "Trạng thái": softwareProposalStatusConfig[item.status].label,
+          "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+          "Ngày cập nhật": new Date(item.updatedAt).toLocaleDateString("vi-VN"),
+        })
+      );
 
       // Tạo workbook và worksheet
       const wb = XLSX.utils.book_new();
@@ -216,6 +205,18 @@ export default function SoftwareProposalsPage() {
     setCurrentPage(1);
     setSelectedRowKeys([]); // Reset selection when changing page size
   };
+
+  // Show loading state
+  if (loading && proposals.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 min-h-screen">
@@ -308,8 +309,8 @@ export default function SoftwareProposalsPage() {
                   <input
                     type="checkbox"
                     checked={
-                      paginatedData.length > 0 &&
-                      paginatedData.every((item) =>
+                      proposals.length > 0 &&
+                      proposals.every((item: SoftwareProposal) =>
                         selectedRowKeys.includes(item.id)
                       )
                     }
@@ -338,7 +339,7 @@ export default function SoftwareProposalsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedData.map((proposal) => {
+              {proposals.map((proposal: SoftwareProposal) => {
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
                     <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
@@ -360,7 +361,7 @@ export default function SoftwareProposalsPage() {
                       <div className="flex items-center">
                         <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2" />
                         <div className="text-xs sm:text-sm text-gray-900">
-                          {getUserName(proposal.proposerId)}
+                          {getUserName(proposal)}
                         </div>
                       </div>
                     </td>
@@ -368,7 +369,7 @@ export default function SoftwareProposalsPage() {
                       <div className="flex items-center">
                         <Building className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mr-1 sm:mr-2" />
                         <div className="text-xs sm:text-sm text-gray-900">
-                          {getRoomName(proposal.roomId)}
+                          {getRoomName(proposal)}
                         </div>
                       </div>
                     </td>
@@ -405,17 +406,21 @@ export default function SoftwareProposalsPage() {
 
         {/* Mobile Card View */}
         <SoftwareProposalCards
-          proposals={paginatedData}
+          proposals={proposals}
           selectedItems={selectedRowKeys}
           selectAll={
-            paginatedData.length > 0 &&
-            paginatedData.every((item) => selectedRowKeys.includes(item.id))
+            proposals.length > 0 &&
+            proposals.every((item: SoftwareProposal) =>
+              selectedRowKeys.includes(item.id)
+            )
           }
           statusConfig={softwareProposalStatusConfig}
           onSelectAll={() => {
             const allSelected =
-              paginatedData.length > 0 &&
-              paginatedData.every((item) => selectedRowKeys.includes(item.id));
+              proposals.length > 0 &&
+              proposals.every((item: SoftwareProposal) =>
+                selectedRowKeys.includes(item.id)
+              );
             handleSelectAll(!allSelected);
           }}
           onSelectItem={(id) => {
@@ -423,11 +428,17 @@ export default function SoftwareProposalsPage() {
             handleSelectRow(id, !isSelected);
           }}
           onViewDetails={handleViewProposal}
-          getUserName={getUserName}
-          getRoomName={getRoomName}
+          getUserName={(userId: string) => {
+            const proposal = proposals.find((p) => p.proposerId === userId);
+            return proposal ? getUserName(proposal) : userId;
+          }}
+          getRoomName={(roomId: string) => {
+            const proposal = proposals.find((p) => p.roomId === roomId);
+            return proposal ? getRoomName(proposal) : roomId;
+          }}
         />
 
-        {paginatedData.length === 0 && (
+        {proposals.length === 0 && !loading && (
           <div className="text-center py-8 sm:py-12 px-4">
             <Monitor className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
@@ -442,7 +453,7 @@ export default function SoftwareProposalsPage() {
         <Pagination
           currentPage={currentPage}
           pageSize={pageSize}
-          total={filteredAndSortedData.length}
+          total={meta.total}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
           showSizeChanger={true}
