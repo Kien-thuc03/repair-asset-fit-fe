@@ -48,7 +48,20 @@ export default function UsersManagementPage() {
 
   // Fetch roles and units (including campuses) for filters
   const { roles, loading: rolesLoading, error: rolesError } = useRoles();
-  const { units, campuses, loading: unitsLoading, error: unitsError } = useUnits();
+  const { campuses, loading: unitsLoading, error: unitsError } = useUnits();
+
+  // Lọc units dựa trên campus đã chọn
+  const filteredUnits = useMemo(() => {
+    if (!filters.campusId) {
+      return []; // Không có campus nào được chọn, trả về mảng rỗng
+    }
+
+    // Tìm campus được chọn
+    const selectedCampus = campuses.find(c => c.id === filters.campusId);
+    
+    // Trả về childUnits của campus đó
+    return selectedCampus?.childUnits || [];
+  }, [filters.campusId, campuses]);
 
   // Tính toán stats từ danh sách users
   const stats = useMemo(() => {
@@ -340,7 +353,10 @@ export default function UsersManagementPage() {
               placeholder="Tất cả cơ sở"
               style={{ width: '100%' }}
               value={filters.campusId || undefined}
-              onChange={(value) => updateFilters({ campusId: value || '' })}
+              onChange={(value) => {
+                // Reset unitId khi đổi campus
+                updateFilters({ campusId: value || '', unitId: '' });
+              }}
               allowClear
               loading={unitsLoading}
               notFoundContent={unitsLoading ? 'Đang tải...' : 'Không có dữ liệu'}
@@ -359,22 +375,29 @@ export default function UsersManagementPage() {
           
           <Col xs={24} sm={12} md={5}>
             <Select
-              placeholder="Tất cả đơn vị"
+              placeholder={!filters.campusId ? "Chọn cơ sở trước" : "Tất cả đơn vị"}
               style={{ width: '100%' }}
               value={filters.unitId || undefined}
               onChange={(value) => updateFilters({ unitId: value || '' })}
               allowClear
+              disabled={!filters.campusId}
               loading={unitsLoading}
-              notFoundContent={unitsLoading ? 'Đang tải...' : 'Không có dữ liệu'}
+              notFoundContent={
+                !filters.campusId 
+                  ? 'Vui lòng chọn cơ sở trước'
+                  : unitsLoading 
+                    ? 'Đang tải...' 
+                    : 'Không có dữ liệu'
+              }
             >
-              {units && units.length > 0 ? (
-                units.map((unit: UnitResponseDto) => (
+              {filteredUnits && filteredUnits.length > 0 ? (
+                filteredUnits.map((unit) => (
                   <Select.Option key={unit.id} value={unit.id}>
                     {unit.name}
                   </Select.Option>
                 ))
               ) : (
-                !unitsLoading && <Select.Option value="" disabled>Không có đơn vị</Select.Option>
+                !unitsLoading && filters.campusId && <Select.Option value="" disabled>Không có đơn vị</Select.Option>
               )}
             </Select>
           </Col>
