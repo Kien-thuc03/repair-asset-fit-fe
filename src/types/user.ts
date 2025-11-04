@@ -135,6 +135,7 @@ export interface LegacyTechnicianAssignment {
 export interface GetUsersQueryParams {
   search?: string; // Tìm kiếm theo tên đăng nhập, họ tên hoặc email
   status?: UserStatus // Lọc theo trạng thái người dùng
+  campusId?: string; // Lọc theo ID cơ sở (campus) - lấy tất cả users thuộc các đơn vị con
   unitId?: string; // Lọc theo ID đơn vị
   roleId?: string; // Lọc theo ID vai trò
   page?: number; // Số trang (mặc định: 1)

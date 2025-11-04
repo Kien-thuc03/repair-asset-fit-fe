@@ -65,6 +65,7 @@ export const useUsersManagement = (options: UseUsersManagementOptions = {}) => {
         page,
         limit,
         search: filters.search || undefined,
+        campusId: filters.campusId || undefined,
         unitId: filters.unitId || undefined,
         roleId: filters.roleId || undefined,
         status: filters.status !== 'all' ? filters.status : undefined,
