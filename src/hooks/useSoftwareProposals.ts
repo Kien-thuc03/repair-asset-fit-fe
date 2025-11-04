@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getSoftwareProposals,
   getSoftwareProposalById,
+  getSoftwareProposalsByProposer,
   GetSoftwareProposalsQueryParams,
 } from "@/lib/api/software-proposals";
 import { SoftwareProposal } from "@/types/software";
@@ -149,6 +150,79 @@ export const useSoftwareProposalDetail = (id: string) => {
   useEffect(() => {
     fetchSoftwareProposalDetail();
   }, [fetchSoftwareProposalDetail]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Custom hook để lấy danh sách đề xuất phần mềm theo người đề xuất
+ * @param proposerId ID của người đề xuất
+ * @returns Object chứa data, loading state, error, và hàm refetch
+ */
+export const useSoftwareProposalsByProposer = (
+  proposerId: string | undefined
+) => {
+  const [data, setData] = useState<SoftwareProposal[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Lấy danh sách đề xuất phần mềm theo người đề xuất
+   */
+  const fetchSoftwareProposalsByProposer = useCallback(async () => {
+    if (!proposerId) {
+      console.warn(
+        "⚠️ useSoftwareProposalsByProposer: No proposerId provided"
+      );
+      setData([]);
+      return;
+    }
+
+    console.log(
+      "🔍 useSoftwareProposalsByProposer: Fetching proposals for proposerId:",
+      proposerId
+    );
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getSoftwareProposalsByProposer(proposerId);
+      console.log(
+        "✅ useSoftwareProposalsByProposer: Raw API Response:",
+        response
+      );
+
+      setData(response);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Có lỗi xảy ra khi lấy danh sách đề xuất phần mềm.";
+      setError(errorMessage);
+      console.error(
+        "❌ useSoftwareProposalsByProposer: Error fetching proposals:",
+        err
+      );
+      setData([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  }, [proposerId]);
+
+  /**
+   * Refetch data
+   */
+  const refetch = useCallback(() => {
+    fetchSoftwareProposalsByProposer();
+  }, [fetchSoftwareProposalsByProposer]);
+
+  useEffect(() => {
+    fetchSoftwareProposalsByProposer();
+  }, [fetchSoftwareProposalsByProposer]);
 
   return {
     data,

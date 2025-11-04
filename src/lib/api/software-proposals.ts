@@ -88,3 +88,36 @@ export const getSoftwareProposalById = async (
   }
 };
 
+/**
+ * Lấy danh sách đề xuất phần mềm theo người đề xuất (proposer)
+ * @param proposerId ID của người đề xuất
+ * @returns Promise với danh sách đề xuất phần mềm của người đề xuất
+ */
+export const getSoftwareProposalsByProposer = async (
+  proposerId: string
+): Promise<SoftwareProposal[]> => {
+  try {
+    console.log(
+      `🌐 API Call: GET /api/v1/software-proposals/proposals/proposers/${proposerId}`
+    );
+    const response = await api.get<SoftwareProposal[]>(
+      `/api/v1/software-proposals/proposals/proposers/${proposerId}`
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Get software proposals by proposer error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message ||
+        "Lấy danh sách đề xuất phần mềm theo người đề xuất thất bại."
+    );
+  }
+};
+

@@ -18,7 +18,8 @@ import { Breadcrumb, Modal, Input, Button, Select } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import { Pagination, SortableHeader } from "@/components/common";
 import SoftwareProposalCards from "@/components/lecturer/softwareProposal/SoftwareProposalCards";
-import { useSoftwareProposals } from "@/hooks/useSoftwareProposals";
+import { useSoftwareProposalsByProposer } from "@/hooks/useSoftwareProposals";
+import { useAuth } from "@/contexts/AuthContext";
 
 const { Option } = Select;
 
@@ -57,6 +58,7 @@ const softwareProposalStatusConfig = {
 
 export default function SoftwareProposalsPage() {
   const router = useRouter();
+  const { user } = useAuth();
 
   // State
   const [searchText, setSearchText] = useState("");
@@ -81,28 +83,48 @@ export default function SoftwareProposalsPage() {
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [exportCount, setExportCount] = useState(0);
 
-  // Use API hook instead of mockData
+  // Use API hook để lấy dữ liệu theo proposerId
   const {
-    data: proposals,
-    meta,
+    data: apiData,
     loading,
-    updateParams,
-  } = useSoftwareProposals({
-    page: currentPage,
-    limit: pageSize,
-    search: searchText || undefined,
-    status: statusFilter || undefined,
-  });
+  } = useSoftwareProposalsByProposer(user?.id);
 
-  // Update params when filters change
+  const [filteredProposals, setFilteredProposals] = useState<
+    SoftwareProposal[]
+  >([]);
+
+  // Apply filters to data
   useEffect(() => {
-    updateParams({
-      page: currentPage,
-      limit: pageSize,
-      search: searchText || undefined,
-      status: statusFilter || undefined,
-    });
-  }, [currentPage, pageSize, searchText, statusFilter, updateParams]);
+    let filtered = [...apiData];
+
+    // Apply search filter
+    if (searchText) {
+      filtered = filtered.filter(
+        (proposal) =>
+          proposal.proposalCode
+            .toLowerCase()
+            .includes(searchText.toLowerCase()) ||
+          proposal.reason?.toLowerCase().includes(searchText.toLowerCase()) ||
+          getUserName(proposal)
+            .toLowerCase()
+            .includes(searchText.toLowerCase()) ||
+          getRoomName(proposal).toLowerCase().includes(searchText.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter) {
+      filtered = filtered.filter(
+        (proposal) => proposal.status === statusFilter
+      );
+    }
+
+    setFilteredProposals(filtered);
+
+    // Reset selection and page when filter changes
+    setSelectedRowKeys([]);
+    setCurrentPage(1);
+  }, [apiData, searchText, statusFilter]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -131,7 +153,7 @@ export default function SoftwareProposalsPage() {
   };
 
   // Apply sorting to proposals
-  const sortedProposals = [...proposals].sort((a, b) => {
+  const sortedProposals = [...filteredProposals].sort((a, b) => {
     if (!sortField || !sortDirection) return 0;
 
     let aValue: string | undefined;
@@ -295,8 +317,14 @@ export default function SoftwareProposalsPage() {
     setSelectedRowKeys([]); // Reset selection when changing page size
   };
 
+  // Calculate paginated data for display
+  const paginatedProposals = sortedProposals.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   // Show loading state
-  if (loading && proposals.length === 0) {
+  if (loading && apiData.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -398,8 +426,8 @@ export default function SoftwareProposalsPage() {
                   <input
                     type="checkbox"
                     checked={
-                      sortedProposals.length > 0 &&
-                      sortedProposals.every((item: SoftwareProposal) =>
+                      paginatedProposals.length > 0 &&
+                      paginatedProposals.every((item: SoftwareProposal) =>
                         selectedRowKeys.includes(item.id)
                       )
                     }
@@ -448,7 +476,7 @@ export default function SoftwareProposalsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {sortedProposals.map((proposal: SoftwareProposal) => {
+              {paginatedProposals.map((proposal: SoftwareProposal) => {
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
                     <td className=" py-3 sm:py-4 whitespace-nowrap">
@@ -515,19 +543,19 @@ export default function SoftwareProposalsPage() {
 
         {/* Mobile Card View */}
         <SoftwareProposalCards
-          proposals={sortedProposals}
+          proposals={paginatedProposals}
           selectedItems={selectedRowKeys}
           selectAll={
-            sortedProposals.length > 0 &&
-            sortedProposals.every((item: SoftwareProposal) =>
+            paginatedProposals.length > 0 &&
+            paginatedProposals.every((item: SoftwareProposal) =>
               selectedRowKeys.includes(item.id)
             )
           }
           statusConfig={softwareProposalStatusConfig}
           onSelectAll={() => {
             const allSelected =
-              sortedProposals.length > 0 &&
-              sortedProposals.every((item: SoftwareProposal) =>
+              paginatedProposals.length > 0 &&
+              paginatedProposals.every((item: SoftwareProposal) =>
                 selectedRowKeys.includes(item.id)
               );
             handleSelectAll(!allSelected);
@@ -538,13 +566,15 @@ export default function SoftwareProposalsPage() {
           }}
           onViewDetails={handleViewProposal}
           getUserName={(userId: string) => {
-            const proposal = sortedProposals.find(
+            const proposal = paginatedProposals.find(
               (p) => p.proposerId === userId
             );
             return proposal ? getUserName(proposal) : userId;
           }}
           getRoomName={(roomId: string) => {
-            const proposal = sortedProposals.find((p) => p.roomId === roomId);
+            const proposal = paginatedProposals.find(
+              (p) => p.roomId === roomId
+            );
             return proposal ? getRoomName(proposal) : roomId;
           }}
         />
@@ -564,7 +594,7 @@ export default function SoftwareProposalsPage() {
         <Pagination
           currentPage={currentPage}
           pageSize={pageSize}
-          total={meta.total}
+          total={sortedProposals.length}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
           showSizeChanger={true}
