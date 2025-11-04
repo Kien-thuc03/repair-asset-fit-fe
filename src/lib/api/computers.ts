@@ -5,19 +5,37 @@ import { api } from "../api";
  */
 export interface ComputerResponseDto {
   id: string;
-  assetId: string;
   machineLabel: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
+  notes?: string;
   // Asset information
   asset?: {
     id: string;
     name: string;
-    assetCode: string;
-    roomId: string;
+    ktCode: string;
+    fixedCode: string;
     status: string;
+    specs?: string;
+    entrydate?: string;
+    origin?: string;
   };
+  // Room information
+  room?: {
+    id: string;
+    name: string;
+    roomCode: string;
+  };
+  // Components information
+  components?: Array<{
+    id: string;
+    componentType: string;
+    name: string;
+    componentSpecs?: string;
+    serialNumber?: string;
+    status: string;
+    installedAt: string;
+    notes?: string;
+  }>;
+  componentCount?: number;
 }
 
 /**

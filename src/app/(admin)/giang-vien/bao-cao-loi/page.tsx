@@ -3,14 +3,17 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ReportForm as ReportFormType, Component, Software } from "@/types";
+import {
+  ReportForm as ReportFormType,
+  Component,
+  Software,
+  ComponentStatus,
+  ComponentType,
+} from "@/types";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
-import {
-  mockErrorTypes,
-  mockComponents,
-  getSoftwareByAssetId,
-} from "@/lib/mockData";
+import { getComponentsByComputerId } from "@/lib/api/components";
+import { mockErrorTypes, getSoftwareByAssetId } from "@/lib/mockData";
 import {
   Breadcrumb,
   Card,
@@ -252,17 +255,71 @@ export default function BaoCaoLoiPage() {
   };
 
   // Handle asset change
-  const handleAssetChange = (assetId: string) => {
-    setFormData((prev) => ({ ...prev, assetId, componentId: "" }));
+  const handleAssetChange = async (computerId: string) => {
+    setFormData((prev) => ({ ...prev, assetId: computerId, componentId: "" }));
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
     setShowComponentSelection(false);
     setShowSoftwareSelection(false);
 
-    setFilteredComponents(
-      mockComponents.filter((comp) => comp.computerAssetId === assetId)
+    // Reset components and software first
+    setFilteredComponents([]);
+    setFilteredSoftware([]);
+
+    // Find the selected computer to get its details
+    const selectedComputer = filteredComputers.find(
+      (comp) => comp.id === computerId
     );
-    setFilteredSoftware(getSoftwareByAssetId(assetId));
+
+    if (!selectedComputer) {
+      console.error("❌ Selected computer not found", {
+        computerId,
+        availableComputers: filteredComputers.map((c) => ({
+          id: c.id,
+          machineLabel: c.machineLabel,
+        })),
+      });
+      message.error("Không tìm thấy máy tính được chọn");
+      return;
+    }
+
+    console.log("✅ Selected computer:", selectedComputer);
+
+    // Fetch components for the selected computer using computer ID
+    try {
+      console.log("🔍 Fetching components for computer:", computerId);
+      const components = await getComponentsByComputerId(computerId);
+      console.log("✅ Components fetched:", components);
+
+      // Ensure it's an array
+      if (Array.isArray(components)) {
+        // Map ComponentResponseDto to Component interface
+        const mappedComponents: Component[] = components.map((comp) => ({
+          id: comp.id,
+          computerAssetId: selectedComputer.id, // Use computer ID
+          componentType: comp.componentType as unknown as ComponentType,
+          name: comp.name,
+          componentSpecs: comp.componentSpecs,
+          serialNumber: comp.serialNumber,
+          status: comp.status as unknown as ComponentStatus,
+          installedAt: comp.installedAt,
+          removedAt: comp.removedAt,
+          notes: comp.notes,
+        }));
+        setFilteredComponents(mappedComponents);
+      } else {
+        console.error("❌ Response is not an array:", components);
+        setFilteredComponents([]);
+        message.error("Dữ liệu linh kiện không đúng định dạng");
+      }
+    } catch (error) {
+      console.error("❌ Error fetching components:", error);
+      message.error("Không thể tải danh sách linh kiện");
+      setFilteredComponents([]);
+    }
+
+    // Fetch software (still using mock data for now)
+    setFilteredSoftware(getSoftwareByAssetId(computerId));
   };
 
   // Handle media upload
@@ -435,7 +492,7 @@ export default function BaoCaoLoiPage() {
                   {(() => {
                     if (!Array.isArray(filteredComputers)) return "N/A";
                     const computer = filteredComputers.find(
-                      (c) => c.assetId === formData.assetId
+                      (c) => c.id === formData.assetId
                     );
                     return computer
                       ? `Máy ${computer.machineLabel} - ${
@@ -540,8 +597,8 @@ export default function BaoCaoLoiPage() {
                 disabled={!formData.roomId}>
                 {Array.isArray(filteredComputers) &&
                   filteredComputers.map((computer) => (
-                    <Option key={computer.id} value={computer.assetId}>
-                      Máy {computer.machineLabel} 
+                    <Option key={computer.id} value={computer.id}>
+                      Máy {computer.machineLabel}
                     </Option>
                   ))}
               </Select>
