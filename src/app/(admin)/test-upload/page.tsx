@@ -1,228 +1,308 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  uploadToCloudinary,
-  uploadMultipleToCloudinary,
-  deleteFromCloudinary,
-  getPublicIdFromUrl,
-  validateImageFile,
-  validateMultipleFiles,
-  getMaxFileSizeText,
-} from '@/lib/utils';
+import FileUpload from '@/components/common/FileUpload';
+import { getMaxFileSizeText } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import Image from 'next/image';
 
 export default function TestUploadPage() {
-  const [uploading, setUploading] = useState(false);
-  const [singleUrl, setSingleUrl] = useState('');
-  const [multipleUrls, setMultipleUrls] = useState<string[]>([]);
-
-  // Single file upload
-  const handleSingleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate
-    const validation = validateImageFile(file);
-    if (!validation.isValid) {
-      toast.error(validation.error!);
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const url = await uploadToCloudinary(file, 'repair-asset/test');
-      setSingleUrl(url);
-      toast.success('Upload thành công!');
-      console.log('Uploaded URL:', url);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Upload failed');
-      console.error('Upload error:', error);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // Multiple files upload
-  const handleMultipleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    // Validate
-    const validation = validateMultipleFiles(files, 'image');
-    if (!validation.isValid) {
-      toast.error(validation.error!);
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const urls = await uploadMultipleToCloudinary(files, 'repair-asset/test');
-      setMultipleUrls(urls);
-      toast.success(`Upload ${urls.length} ảnh thành công!`);
-      console.log('Uploaded URLs:', urls);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Upload failed');
-      console.error('Upload error:', error);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  // Delete image
-  const handleDelete = async (url: string) => {
-    try {
-      const publicId = getPublicIdFromUrl(url);
-      await deleteFromCloudinary(publicId);
-      
-      // Remove from state
-      if (url === singleUrl) {
-        setSingleUrl('');
-      } else {
-        setMultipleUrls(multipleUrls.filter(u => u !== url));
-      }
-      
-      toast.success('Xóa ảnh thành công!');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Delete failed');
-      console.error('Delete error:', error);
-    }
-  };
+  const [singleImageUrls, setSingleImageUrls] = useState<string[]>([]);
+  const [multipleImageUrls, setMultipleImageUrls] = useState<string[]>([]);
+  const [documentUrls, setDocumentUrls] = useState<string[]>([]);
+  const [mixedUrls, setMixedUrls] = useState<string[]>([]);
 
   return (
-    <div className="container mx-auto p-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">Test Upload Cloudinary</h1>
+    <div className="container mx-auto p-8 max-w-6xl">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">🧪 Test Upload Cloudinary</h1>
+        <p className="text-gray-600">
+          Test đầy đủ các tính năng upload file với component FileUpload
+        </p>
+      </div>
 
       {/* Upload Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-8">
-        <h2 className="font-semibold text-blue-900 mb-2">📋 Thông tin:</h2>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>✅ Backend: http://localhost:3001/upload</li>
-          <li>✅ Max file size: {getMaxFileSizeText()}</li>
-          <li>✅ Max files: 10 files</li>
-          <li>✅ Allowed types: JPG, PNG, GIF, WebP, SVG</li>
-        </ul>
-      </div>
-
-      {/* Single Upload */}
-      <div className="bg-white border rounded-lg p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4">1. Upload một ảnh</h2>
-        
-        <label className="block">
-          <span className="sr-only">Chọn ảnh để upload</span>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleSingleUpload}
-            disabled={uploading}
-            className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-50 file:text-blue-700
-              hover:file:bg-blue-100
-              disabled:opacity-50"
-          />
-        </label>
-
-        {uploading && (
-          <p className="mt-2 text-sm text-gray-600">Đang upload...</p>
-        )}
-
-        {singleUrl && (
-          <div className="mt-4">
-            <p className="text-sm text-green-600 mb-2">✅ Upload thành công!</p>
-            <div className="relative group">
-              <Image
-                src={singleUrl}
-                alt="Uploaded"
-                width={500}
-                height={300}
-                className="max-w-md rounded border"
-              />
-              <button
-                onClick={() => handleDelete(singleUrl)}
-                className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded text-sm
-                  opacity-0 group-hover:opacity-100 transition"
-              >
-                Xóa
-              </button>
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-8 shadow-sm">
+        <h2 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+          <span className="text-xl">📋</span>
+          Thông tin hệ thống Upload
+        </h2>
+        <div className="grid md:grid-cols-2 gap-4 text-sm">
+          <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✅</span>
+              <div>
+                <strong className="text-gray-800">Backend URL:</strong>
+                <code className="ml-2 bg-white px-2 py-1 rounded text-xs">
+                  http://localhost:3001/upload
+                </code>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-2 break-all">{singleUrl}</p>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✅</span>
+              <div>
+                <strong className="text-gray-800">Max file size:</strong>
+                <span className="ml-2 text-blue-700">{getMaxFileSizeText()}</span>
+              </div>
+            </div>
           </div>
-        )}
+          <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✅</span>
+              <div>
+                <strong className="text-gray-800">Max files:</strong>
+                <span className="ml-2 text-blue-700">10 files/lần</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✅</span>
+              <div>
+                <strong className="text-gray-800">Image types:</strong>
+                <span className="ml-2 text-blue-700">JPG, PNG, GIF, WebP, SVG</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-green-600">✅</span>
+              <div>
+                <strong className="text-gray-800">Document types:</strong>
+                <span className="ml-2 text-blue-700">PDF, DOC, DOCX, XLS, XLSX</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Multiple Upload */}
-      <div className="bg-white border rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">2. Upload nhiều ảnh (max 10)</h2>
-        
-        <label className="block">
-          <span className="sr-only">Chọn nhiều ảnh để upload</span>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleMultipleUpload}
-            disabled={uploading}
-            className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded file:border-0
-              file:text-sm file:font-semibold
-              file:bg-green-50 file:text-green-700
-              hover:file:bg-green-100
-              disabled:opacity-50"
+      {/* Test Cases Grid */}
+      <div className="grid lg:grid-cols-2 gap-6 mb-8">
+        {/* 1. Single Image Upload */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">🖼️</span>
+            <div>
+              <h2 className="text-lg font-semibold">Test 1: Upload một ảnh</h2>
+              <p className="text-sm text-gray-600">Single image upload với preview</p>
+            </div>
+          </div>
+          
+          <FileUpload
+            multiple={false}
+            label="Chọn một ảnh để upload"
+            folder="repair-asset/test/single"
+            onUploadSuccess={(urls) => {
+              setSingleImageUrls(urls);
+              console.log('Single image URL:', urls[0]);
+            }}
+            onUploadError={(error) => {
+              console.error('Upload error:', error);
+            }}
+            acceptType="image"
+            showPreview={true}
           />
-        </label>
 
-        {uploading && (
-          <p className="mt-2 text-sm text-gray-600">Đang upload...</p>
-        )}
+          {singleImageUrls.length > 0 && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+              <p className="text-sm text-green-800 font-medium mb-1">✅ Upload thành công!</p>
+              <p className="text-xs text-gray-600 break-all">{singleImageUrls[0]}</p>
+            </div>
+          )}
+        </div>
 
-        {multipleUrls.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm text-green-600 mb-3">
-              ✅ Upload {multipleUrls.length} ảnh thành công!
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {multipleUrls.map((url, idx) => (
-                <div key={idx} className="relative group">
-                  <Image
-                    src={url}
-                    alt={`Image ${idx + 1}`}
-                    width={300}
-                    height={200}
-                    className="w-full h-40 object-cover rounded border"
-                  />
-                  <button
-                    onClick={() => handleDelete(url)}
-                    className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs
-                      opacity-0 group-hover:opacity-100 transition"
-                  >
-                    Xóa
-                  </button>
-                  <p className="text-xs text-gray-500 mt-1 truncate">
-                    {url.split('/').pop()}
-                  </p>
+        {/* 2. Multiple Images Upload */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">📸</span>
+            <div>
+              <h2 className="text-lg font-semibold">Test 2: Upload nhiều ảnh</h2>
+              <p className="text-sm text-gray-600">Multiple images (max 5 ảnh)</p>
+            </div>
+          </div>
+          
+          <FileUpload
+            multiple={true}
+            maxFiles={5}
+            label="Chọn nhiều ảnh (tối đa 5)"
+            folder="repair-asset/test/multiple"
+            onUploadSuccess={(urls) => {
+              setMultipleImageUrls(urls);
+              console.log('Multiple image URLs:', urls);
+              toast.success(`Upload ${urls.length} ảnh thành công!`);
+            }}
+            acceptType="image"
+            showPreview={true}
+          />
+
+          {multipleImageUrls.length > 0 && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+              <p className="text-sm text-green-800 font-medium">
+                ✅ Đã upload {multipleImageUrls.length} ảnh
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* 3. Document Upload */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">📄</span>
+            <div>
+              <h2 className="text-lg font-semibold">Test 3: Upload tài liệu</h2>
+              <p className="text-sm text-gray-600">PDF, Word, Excel files</p>
+            </div>
+          </div>
+          
+          <FileUpload
+            multiple={true}
+            maxFiles={3}
+            label="Chọn tài liệu (PDF, DOC, XLS)"
+            folder="repair-asset/test/documents"
+            onUploadSuccess={(urls) => {
+              setDocumentUrls(urls);
+              console.log('Document URLs:', urls);
+              toast.success(`Upload ${urls.length} tài liệu thành công!`);
+            }}
+            acceptType="document"
+            showPreview={false}
+          />
+
+          {documentUrls.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm text-green-800 font-medium">
+                ✅ Đã upload {documentUrls.length} tài liệu:
+              </p>
+              {documentUrls.map((url, idx) => (
+                <div key={idx} className="p-2 bg-gray-50 rounded text-xs break-all">
+                  {idx + 1}. {url.split('/').pop()}
                 </div>
               ))}
             </div>
+          )}
+        </div>
+
+        {/* 4. Mixed Files Upload */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">📦</span>
+            <div>
+              <h2 className="text-lg font-semibold">Test 4: Upload tất cả loại file</h2>
+              <p className="text-sm text-gray-600">Images + Documents</p>
+            </div>
           </div>
-        )}
+          
+          <FileUpload
+            multiple={true}
+            maxFiles={10}
+            label="Chọn bất kỳ file nào (ảnh hoặc tài liệu)"
+            folder="repair-asset/test/mixed"
+            onUploadSuccess={(urls) => {
+              setMixedUrls(urls);
+              console.log('Mixed file URLs:', urls);
+              toast.success(`Upload ${urls.length} file thành công!`);
+            }}
+            acceptType="all"
+            showPreview={true}
+          />
+
+          {mixedUrls.length > 0 && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+              <p className="text-sm text-green-800 font-medium">
+                ✅ Đã upload {mixedUrls.length} file
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Instructions */}
-      <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded p-4">
-        <h3 className="font-semibold text-yellow-900 mb-2">📝 Hướng dẫn test:</h3>
-        <ol className="text-sm text-yellow-800 space-y-1 list-decimal list-inside">
-          <li>Đảm bảo Backend đang chạy: <code>pnpm run start:dev</code></li>
-          <li>Đã cấu hình Cloudinary credentials trong BE <code>.env</code></li>
-          <li>Chọn ảnh để upload (max 5MB)</li>
-          <li>Kiểm tra ảnh hiển thị và có thể xóa</li>
-          <li>Mở Console để xem URLs</li>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 shadow-sm">
+        <h3 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
+          <span className="text-xl">📝</span>
+          Hướng dẫn test
+        </h3>
+        <ol className="text-sm text-yellow-800 space-y-2 list-decimal list-inside">
+          <li>
+            <strong>Khởi động Backend:</strong>
+            <code className="ml-2 bg-white px-2 py-1 rounded text-xs">
+              cd repair-asset-fit-be && pnpm run start:dev
+            </code>
+          </li>
+          <li>
+            <strong>Kiểm tra Cloudinary credentials</strong> trong BE <code className="bg-white px-2 py-1 rounded">.env</code>:
+            <ul className="ml-6 mt-1 space-y-1 list-disc">
+              <li><code>CLOUDINARY_CLOUD_NAME</code> - Tên cloud từ dashboard</li>
+              <li><code>CLOUDINARY_API_KEY</code> - API key</li>
+              <li><code>CLOUDINARY_API_SECRET</code> - API secret</li>
+            </ul>
+          </li>
+          <li>Chọn file để upload (chú ý giới hạn 5MB/file)</li>
+          <li>Nhấn nút <strong>&quot;Upload&quot;</strong> và đợi kết quả</li>
+          <li>Kiểm tra preview ảnh và có thể xóa bằng nút <strong>&quot;Xóa&quot;</strong></li>
+          <li>Mở <strong>Console</strong> (F12) để xem URLs đầy đủ</li>
+          <li>Kiểm tra Cloudinary Dashboard để xem file đã upload</li>
         </ol>
       </div>
+
+      {/* Troubleshooting */}
+      <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-6 shadow-sm">
+        <h3 className="font-semibold text-red-900 mb-3 flex items-center gap-2">
+          <span className="text-xl">⚠️</span>
+          Nếu gặp lỗi
+        </h3>
+        <ul className="text-sm text-red-800 space-y-2">
+          <li>
+            <strong>401 Unauthorized:</strong> Kiểm tra lại Cloudinary credentials trong BE <code>.env</code>
+          </li>
+          <li>
+            <strong>File too large:</strong> Giảm kích thước file xuống dưới 5MB
+          </li>
+          <li>
+            <strong>Network error:</strong> Đảm bảo Backend đang chạy tại <code>http://localhost:3001</code>
+          </li>
+          <li>
+            <strong>CORS error:</strong> Kiểm tra cấu hình CORS trong Backend
+          </li>
+        </ul>
+        <div className="mt-3 p-3 bg-white rounded border border-red-300">
+          <p className="text-xs font-mono text-gray-700">
+            📚 Xem hướng dẫn chi tiết: <code>docs/FIX_CLOUDINARY_ERROR.md</code>
+          </p>
+        </div>
+      </div>
+
+      {/* Summary Stats */}
+      {(singleImageUrls.length > 0 || multipleImageUrls.length > 0 || documentUrls.length > 0 || mixedUrls.length > 0) && (
+        <div className="mt-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+            <span className="text-xl">📊</span>
+            Thống kê Upload
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="p-3 bg-white rounded border border-green-200">
+              <div className="text-2xl font-bold text-blue-600">{singleImageUrls.length}</div>
+              <div className="text-xs text-gray-600">Single Image</div>
+            </div>
+            <div className="p-3 bg-white rounded border border-green-200">
+              <div className="text-2xl font-bold text-purple-600">{multipleImageUrls.length}</div>
+              <div className="text-xs text-gray-600">Multiple Images</div>
+            </div>
+            <div className="p-3 bg-white rounded border border-green-200">
+              <div className="text-2xl font-bold text-orange-600">{documentUrls.length}</div>
+              <div className="text-xs text-gray-600">Documents</div>
+            </div>
+            <div className="p-3 bg-white rounded border border-green-200">
+              <div className="text-2xl font-bold text-green-600">{mixedUrls.length}</div>
+              <div className="text-xs text-gray-600">Mixed Files</div>
+            </div>
+          </div>
+          <div className="mt-4 p-3 bg-white rounded border border-green-300">
+            <div className="text-center">
+              <span className="text-lg font-bold text-green-700">
+                {singleImageUrls.length + multipleImageUrls.length + documentUrls.length + mixedUrls.length}
+              </span>
+              <span className="text-sm text-gray-600 ml-2">tổng số file đã upload thành công</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
