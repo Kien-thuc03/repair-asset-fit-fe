@@ -24,6 +24,7 @@ interface AreasTableProps {
   selectedTechnician: string;
   sortField: string;
   sortDirection: "asc" | "desc" | "none";
+  updating?: boolean;
   onSort: (field: string) => void;
   onSelectAll: (checked: boolean) => void;
   onSelectItem: (itemId: string, checked: boolean) => void;
@@ -42,6 +43,7 @@ const AreasTable: React.FC<AreasTableProps> = ({
   selectedTechnician,
   sortField,
   sortDirection,
+  updating = false,
   onSort,
   onSelectAll,
   onSelectItem,
@@ -165,9 +167,6 @@ const AreasTable: React.FC<AreasTableProps> = ({
                         <div className="text-sm font-medium text-gray-900 truncate">
                           {room.roomNumber}
                         </div>
-                        <div className="text-sm text-gray-500 truncate">
-                          Mã: {room.id}
-                        </div>
                       </div>
                     </div>
                   </td>
@@ -204,12 +203,14 @@ const AreasTable: React.FC<AreasTableProps> = ({
                           onClick={() =>
                             onAssignTechnician(room.id, selectedTechnician)
                           }
-                          className="inline-flex items-center p-2 border border-transparent rounded text-green-600 hover:bg-green-100 flex-shrink-0">
+                          disabled={updating}
+                          className="inline-flex items-center p-2 border border-transparent rounded text-green-600 hover:bg-green-100 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
                           <Save className="h-4 w-4" />
                         </button>
                         <button
                           onClick={onCancelEdit}
-                          className="inline-flex items-center p-2 border border-transparent rounded text-red-600 hover:bg-red-100 flex-shrink-0">
+                          disabled={updating}
+                          className="inline-flex items-center p-2 border border-transparent rounded text-red-600 hover:bg-red-100 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
                           <X className="h-4 w-4" />
                         </button>
                       </div>

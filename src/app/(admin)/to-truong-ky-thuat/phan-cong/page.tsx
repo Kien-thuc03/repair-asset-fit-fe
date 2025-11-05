@@ -1,16 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
-import { Technician } from "@/types";
-import { Room } from "@/types/unit";
-import { mockRooms as originalMockRooms } from "@/lib/mockData/rooms";
-import { users } from "@/lib/mockData/users";
-import {
-  getPrimaryTechnicianForArea,
-  getAssignmentsForTechnician,
-  mockTechnicianAssignments,
-} from "@/lib/mockData/technicianAssignments";
-import { Modal } from "antd";
+import { Modal, Spin, message } from "antd";
 import Pagination from "@/components/common/Pagination";
 import {
   AssignmentHeader,
@@ -20,67 +11,24 @@ import {
   AreasMobileView,
   TechniciansGrid,
 } from "@/components/leadTechnician/assignment";
+import {
+  getRoomsWithTechnicians,
+  getTechniciansWithRooms,
+  assignTechnicianToFloor,
+} from "@/lib/api/technician-assignments";
+import { Technician } from "@/types";
+import { Room, RoomStatus } from "@/types/unit";
+
+// Extended Room type to include assignmentId
+interface RoomWithAssignment extends Room {
+  assignmentId?: string | null;
+}
 
 export default function PhanCongPage() {
-  // Tạo danh sách technicians từ TechnicianAssignments và users data
-  const mockTechnicians: Technician[] = users
-    .filter((user) => {
-      // Lọc users có trong mockTechnicianAssignments và là active
-      return mockTechnicianAssignments.some(
-        (assignment) =>
-          assignment.technicianId === user.id && assignment.isActive
-      );
-    })
-    .map((user) => {
-      // Lấy tất cả assignments của technician này
-      const assignments = getAssignmentsForTechnician(user.id);
-
-      // Tạo assignedAreas từ assignments
-      const assignedAreas = assignments.map(
-        (assignment) =>
-          `${assignment.building} - Tầng ${assignment.floors.join(", ")}`
-      );
-
-      // Tạo current task dựa trên assignments
-      const currentTask =
-        assignments.length > 0
-          ? `Phụ trách ${assignments[0].building} ${
-              assignments[0].floors.length > 1
-                ? `tầng ${assignments[0].floors.join("-")}`
-                : `tầng ${assignments[0].floors[0]}`
-            }`
-          : "Chưa có phân công";
-
-      return {
-        id: user.id,
-        name: user.fullName,
-        email: user.email,
-        phone: user.phoneNumber,
-        status: "active" as const,
-        assignedAreas,
-        currentTask,
-      };
-    });
-
-  // Sử dụng rooms từ mockData và mapping assignedTechnician dựa trên TechnicianAssignments
-  const mockRooms: Room[] = originalMockRooms.map((room) => {
-    // Chuyển đổi format tầng từ "Tầng 1" -> "1"
-    const floorNumber = room.floor?.replace("Tầng ", "") || "1";
-
-    // Tìm kỹ thuật viên được phân công cho khu vực này từ database
-    const assignedTechnician = getPrimaryTechnicianForArea(
-      room.building || "Tòa H",
-      floorNumber
-    );
-
-    return {
-      ...room,
-      assignedTechnician,
-    };
-  });
-
-  const [technicians] = useState<Technician[]>(mockTechnicians);
-  const [rooms, setRooms] = useState<Room[]>(mockRooms);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [rooms, setRooms] = useState<RoomWithAssignment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState<"areas" | "technicians">("areas");
   const [searchTerm, setSearchTerm] = useState("");
   const [editingRoom, setEditingRoom] = useState<string | null>(null);
@@ -106,6 +54,69 @@ export default function PhanCongPage() {
   const [exportCount, setExportCount] = useState(0);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [roomsApiData, techniciansData] = await Promise.all([
+          getRoomsWithTechnicians(
+            buildingFilter || undefined,
+            floorFilter || undefined
+          ),
+          getTechniciansWithRooms(),
+        ]);
+
+        // Convert rooms data
+        const convertedRooms: RoomWithAssignment[] = roomsApiData.map(
+          (room) => ({
+            id: room.id,
+            roomNumber: room.roomCode,
+            building: room.building,
+            floor: `Tầng ${room.floor}`,
+            status: room.status as RoomStatus,
+            assignedTechnician: room.assignedTechnician?.id,
+            assignmentId: room.assignmentId,
+          })
+        );
+
+        // Convert technicians data
+        const convertedTechnicians: Technician[] = techniciansData.map(
+          (tech) => {
+            const assignedAreas = tech.assignments.map(
+              (assignment) =>
+                `${assignment.building} - Tầng ${assignment.floor}`
+            );
+
+            const currentTask =
+              tech.assignments.length > 0
+                ? `Phụ trách ${tech.totalRooms} phòng`
+                : "Chưa có phân công";
+
+            return {
+              id: tech.id,
+              name: tech.fullName,
+              email: tech.email,
+              phone: tech.phoneNumber || "",
+              status: "active" as const,
+              assignedAreas,
+              currentTask,
+            };
+          }
+        );
+
+        setRooms(convertedRooms);
+        setTechnicians(convertedTechnicians);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [buildingFilter, floorFilter]);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -142,16 +153,113 @@ export default function PhanCongPage() {
     }
   };
 
-  const handleAssignTechnician = (roomId: string, technicianId: string) => {
-    setRooms((prev) =>
-      prev.map((room) =>
-        room.id === roomId
-          ? { ...room, assignedTechnician: technicianId || undefined }
-          : room
-      )
-    );
-    setEditingRoom(null);
-    setSelectedTechnician("");
+  const handleAssignTechnician = async (
+    roomId: string,
+    technicianId: string
+  ) => {
+    try {
+      // Tìm room để lấy building và floor
+      const room = rooms.find((r) => r.id === roomId);
+
+      console.log("Assigning technician:", {
+        roomId,
+        room,
+        technicianId,
+      });
+
+      if (!room) {
+        message.error("Không tìm thấy thông tin phòng");
+        return;
+      }
+
+      if (!room.building || !room.floor) {
+        message.error("Thông tin tòa nhà hoặc tầng không hợp lệ");
+        return;
+      }
+
+      if (!technicianId) {
+        message.error("Vui lòng chọn kỹ thuật viên");
+        return;
+      }
+
+      setUpdating(true);
+
+      // Gọi API PATCH với building, floor, technicianId
+      // Xóa "Tầng " prefix từ floor string
+      const floorNumber = room.floor.replace("Tầng ", "");
+
+      console.log("Calling API with:", {
+        building: room.building,
+        floor: floorNumber,
+        technicianId: technicianId,
+      });
+
+      const result = await assignTechnicianToFloor(
+        room.building,
+        floorNumber,
+        technicianId
+      );
+
+      console.log("API result:", result);
+
+      message.success("Cập nhật kỹ thuật viên thành công!");
+
+      // Refresh data sau khi update
+      const [roomsApiData, techniciansData] = await Promise.all([
+        getRoomsWithTechnicians(
+          buildingFilter || undefined,
+          floorFilter || undefined
+        ),
+        getTechniciansWithRooms(),
+      ]);
+
+      const convertedRooms: RoomWithAssignment[] = roomsApiData.map((room) => ({
+        id: room.id,
+        roomNumber: room.roomCode,
+        building: room.building,
+        floor: `Tầng ${room.floor}`,
+        status: room.status as RoomStatus,
+        assignedTechnician: room.assignedTechnician?.id,
+        assignmentId: room.assignmentId,
+      }));
+
+      const convertedTechnicians: Technician[] = techniciansData.map((tech) => {
+        const assignedAreas = tech.assignments.map(
+          (assignment) => `${assignment.building} - Tầng ${assignment.floor}`
+        );
+
+        const currentTask =
+          tech.assignments.length > 0
+            ? `Phụ trách ${tech.totalRooms} phòng`
+            : "Chưa có phân công";
+
+        return {
+          id: tech.id,
+          name: tech.fullName,
+          email: tech.email,
+          phone: tech.phoneNumber || "",
+          status: "active" as const,
+          assignedAreas,
+          currentTask,
+        };
+      });
+
+      setRooms(convertedRooms);
+      setTechnicians(convertedTechnicians);
+
+      // Reset editing state
+      setEditingRoom(null);
+      setSelectedTechnician("");
+    } catch (error: unknown) {
+      console.error("Error updating technician:", error);
+      const err = error as { response?: { data?: { message?: string } } };
+      const errorMessage =
+        err?.response?.data?.message ||
+        "Có lỗi xảy ra khi cập nhật kỹ thuật viên";
+      message.error(errorMessage);
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const getTechnicianName = (techId: string) => {
@@ -379,7 +487,13 @@ export default function PhanCongPage() {
         floors={availableFloors}
       />
 
-      {activeTab === "areas" ? (
+      {loading ? (
+        <div className="flex justify-center items-center min-h-[400px]">
+          <Spin size="large">
+            <div className="text-center mt-4">Đang tải dữ liệu...</div>
+          </Spin>
+        </div>
+      ) : activeTab === "areas" ? (
         /* Areas Tab */
         <>
           <AreasTable
@@ -391,6 +505,7 @@ export default function PhanCongPage() {
             selectedTechnician={selectedTechnician}
             sortField={sortField}
             sortDirection={sortDirection}
+            updating={updating}
             onSort={handleSort}
             onSelectAll={handleSelectAll}
             onSelectItem={handleSelectItem}
