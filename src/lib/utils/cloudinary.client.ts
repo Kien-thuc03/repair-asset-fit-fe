@@ -1,7 +1,14 @@
 /**
  * Client-side Cloudinary Upload Utility
- * Sử dụng API route thay vì gọi trực tiếp Cloudinary SDK
+ * Sử dụng Backend API để upload file lên Cloudinary
  */
+
+import {
+  uploadFile as uploadFileAPI,
+  uploadMultipleFiles as uploadMultipleFilesAPI,
+  deleteFile as deleteFileAPI,
+  getPublicIdFromUrl as getPublicIdFromUrlAPI,
+} from '../api/upload';
 
 export interface UploadResponse {
   success: boolean;
@@ -11,7 +18,7 @@ export interface UploadResponse {
 }
 
 /**
- * Upload file lên Cloudinary thông qua API route
+ * Upload file lên Cloudinary thông qua Backend API
  * @param file - File cần upload
  * @param folder - Thư mục lưu trữ trên Cloudinary (optional)
  * @returns URL của file đã upload
@@ -20,22 +27,13 @@ export async function uploadToCloudinary(
   file: File,
   folder: string = 'repair-asset'
 ): Promise<string> {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('folder', folder);
+  const response = await uploadFileAPI(file, folder);
 
-  const response = await fetch('/api/upload', {
-    method: 'POST',
-    body: formData,
-  });
-
-  const data: UploadResponse = await response.json();
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.error || 'Upload failed');
+  if (!response.success) {
+    throw new Error(response.error || 'Upload failed');
   }
 
-  return data.url!;
+  return response.url!;
 }
 
 /**
@@ -48,10 +46,13 @@ export async function uploadMultipleToCloudinary(
   files: File[],
   folder: string = 'repair-asset'
 ): Promise<string[]> {
-  const uploadPromises = files.map((file) =>
-    uploadToCloudinary(file, folder)
-  );
-  return await Promise.all(uploadPromises);
+  const response = await uploadMultipleFilesAPI(files, folder);
+
+  if (!response.success) {
+    throw new Error(response.error || 'Upload failed');
+  }
+
+  return response.urls!;
 }
 
 /**
@@ -91,23 +92,7 @@ export function getMaxFileSizeText(): string {
  * @returns Public ID
  */
 export function getPublicIdFromUrl(url: string): string {
-  try {
-    const parts = url.split('/');
-    const filename = parts[parts.length - 1];
-    const publicId = filename.split('.')[0];
-
-    // Nếu có folder, cần thêm folder vào public ID
-    const folderIndex = parts.indexOf('upload') + 1;
-    if (folderIndex < parts.length - 1) {
-      const folders = parts.slice(folderIndex, -1).join('/');
-      return `${folders}/${publicId}`;
-    }
-
-    return publicId;
-  } catch (error) {
-    console.error('Error getting public ID from URL:', error);
-    throw new Error('Failed to extract public ID from URL');
-  }
+  return getPublicIdFromUrlAPI(url);
 }
 
 /**
@@ -118,18 +103,14 @@ export function getPublicIdFromUrl(url: string): string {
 export async function deleteFromCloudinary(
   publicId: string
 ): Promise<{ success: boolean; result?: string }> {
-  const response = await fetch(
-    `/api/upload/delete?publicId=${encodeURIComponent(publicId)}`,
-    {
-      method: 'DELETE',
-    }
-  );
+  const response = await deleteFileAPI(publicId);
 
-  const data = await response.json();
-
-  if (!response.ok || !data.success) {
-    throw new Error(data.error || 'Delete failed');
+  if (!response.success) {
+    throw new Error(response.error || 'Delete failed');
   }
 
-  return data;
+  return {
+    success: true,
+    result: response.result,
+  };
 }

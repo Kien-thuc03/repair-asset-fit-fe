@@ -34,6 +34,6 @@ export {
   useFileValidation,
 } from './cloudinary.validation';
 
-// Server-side cloudinary instance - ONLY use in API routes or server components
-// Do NOT import this in client components
-export { default as cloudinaryServer } from './cloudinary';
+// NOTE: cloudinary.ts (server-side SDK) is NOT exported here
+// It should only be used in API routes or server components
+// For client-side uploads, use the functions from cloudinary.client.ts above

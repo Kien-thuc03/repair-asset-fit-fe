@@ -21,6 +21,9 @@ export * from './roles';
 // Export units APIs
 export * from './units';
 
+// Export upload APIs
+export * from './upload';
+
 // TODO: Thêm các API modules khác ở đây khi phát triển
 // export * from './assets';
 // etc.
