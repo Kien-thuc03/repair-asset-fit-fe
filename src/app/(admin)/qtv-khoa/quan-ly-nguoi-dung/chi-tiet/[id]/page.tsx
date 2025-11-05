@@ -1,9 +1,12 @@
 'use client';
 
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Users, Shield, Calendar, Mail, Phone, Building, Edit } from "lucide-react";
+import { ArrowLeft, Users, Shield, Calendar, Mail, Phone, Building, Edit, MapPin } from "lucide-react";
 import { Breadcrumb } from 'antd';
 import { useUsersManagement } from "@/hooks/useUsersManagement";
+import { useUnits } from "@/hooks/useUnits";
+import { useState, useEffect } from "react";
+import type { UnitResponseDto } from "@/lib/api/units";
 
 export default function UserDetailPage() {
   const router = useRouter();
@@ -11,6 +14,38 @@ export default function UserDetailPage() {
   const userId = params.id as string;
   
   const { currentUser: user, loading, error } = useUsersManagement({ userId });
+  const { getUnitById } = useUnits();
+  const [unitDetails, setUnitDetails] = useState<UnitResponseDto | null>(null);
+  const [campus, setCampus] = useState<UnitResponseDto | null>(null);
+  const [loadingCampus, setLoadingCampus] = useState(false);
+
+  // Lấy thông tin chi tiết của đơn vị và cơ sở
+  useEffect(() => {
+    const fetchUnitAndCampus = async () => {
+      if (user?.unit?.id) {
+        setLoadingCampus(true);
+        try {
+          // Lấy thông tin đầy đủ của unit
+          const unitData = await getUnitById(user.unit.id);
+          setUnitDetails(unitData);
+          
+          // Nếu unit có parentUnitId, lấy thông tin campus
+          if (unitData.parentUnitId) {
+            const campusData = await getUnitById(unitData.parentUnitId);
+            setCampus(campusData);
+          }
+        } catch (err) {
+          console.error('Error fetching unit/campus:', err);
+          setUnitDetails(null);
+          setCampus(null);
+        } finally {
+          setLoadingCampus(false);
+        }
+      }
+    };
+
+    fetchUnitAndCampus();
+  }, [user?.unit?.id, getUnitById]);
 
   if (loading) {
     return (
@@ -162,6 +197,22 @@ export default function UserDetailPage() {
                   <div>
                     <p className="text-sm text-gray-600">Đơn vị</p>
                     <p className="text-gray-900">{user.unit.name}</p>
+                  </div>
+                </div>
+              )}
+
+              {campus && (
+                <div className="flex items-center space-x-3">
+                  <MapPin className="h-5 w-5 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-600">Cơ sở</p>
+                    <p className="text-gray-900">
+                      {loadingCampus ? (
+                        <span className="text-gray-500 italic">Đang tải...</span>
+                      ) : (
+                        campus.name
+                      )}
+                    </p>
                   </div>
                 </div>
               )}

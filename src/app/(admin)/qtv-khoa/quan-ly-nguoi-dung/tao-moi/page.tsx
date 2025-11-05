@@ -6,12 +6,15 @@ import { Eye, EyeOff, FileUp } from "lucide-react";
 import { Breadcrumb, Button, message } from 'antd';
 import { ICreateUserRequest } from "@/types";
 import { useUsersManagement } from "@/hooks/useUsersManagement";
-import { mockRoles, mockUnits } from "@/lib/mockData/usersManagement";
+import { useRoles } from "@/hooks/useRoles";
+import { useUnits } from "@/hooks/useUnits";
 import { UserExcelImportModal } from "@/components/qtvKhoa";
 
 export default function CreateUserPage() {
   const router = useRouter();
   const { createUser, bulkImport } = useUsersManagement();
+  const { roles, loading: rolesLoading } = useRoles();
+  const { units, campuses, loading: unitsLoading } = useUnits();
 
   const [formData, setFormData] = useState<ICreateUserRequest>({
     username: "",
@@ -24,25 +27,136 @@ export default function CreateUserPage() {
     roleIds: [],
   });
 
+  const [selectedCampusId, setSelectedCampusId] = useState<string>("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
+  // Filter units based on selected campus
+  const filteredUnits = selectedCampusId 
+    ? units.filter(unit => {
+        // Find the campus that contains this unit
+        const parentCampus = campuses.find(campus => 
+          campus.childUnits?.some(child => child.id === unit.id)
+        );
+        return parentCampus?.id === selectedCampusId;
+      })
+    : [];
+
+  // Handle campus selection - reset unit when campus changes
+  const handleCampusChange = (campusId: string) => {
+    setSelectedCampusId(campusId);
+    // Reset unitId when campus changes
+    setFormData(prev => ({ ...prev, unitId: "" }));
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.username) newErrors.username = "Tên đăng nhập là bắt buộc";
-    if (!formData.password) newErrors.password = "Mật khẩu là bắt buộc";
-    if (formData.password && formData.password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    // Username validation
+    if (!formData.username) {
+      newErrors.username = "Tên đăng nhập là bắt buộc";
+    } else if (formData.username.length < 3) {
+      newErrors.username = "Tên đăng nhập phải có ít nhất 3 ký tự";
+    } else if (formData.username.length > 50) {
+      newErrors.username = "Tên đăng nhập không được vượt quá 50 ký tự";
+    } else if (!/^[a-zA-Z0-9._-]+$/.test(formData.username)) {
+      newErrors.username = "Tên đăng nhập chỉ được chứa chữ cái, số và các ký tự . _ -";
     }
-    if (!formData.fullName) newErrors.fullName = "Họ và tên là bắt buộc";
-    if (!formData.email) newErrors.email = "Email là bắt buộc";
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = "Mật khẩu là bắt buộc";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+    } else if (formData.password.length > 50) {
+      newErrors.password = "Mật khẩu không được vượt quá 50 ký tự";
+    } else {
+      // Check password strength
+      const hasUppercase = /[A-Z]/.test(formData.password);
+      const hasLowercase = /[a-z]/.test(formData.password);
+      const hasNumber = /[0-9]/.test(formData.password);
+      const hasWhitespace = /\s/.test(formData.password);
+
+      if (hasWhitespace) {
+        newErrors.password = "Mật khẩu không được chứa khoảng trắng";
+      } else if (!hasUppercase || !hasLowercase || !hasNumber) {
+        newErrors.password = "Mật khẩu phải chứa chữ hoa, chữ thường và số";
+      }
+
+      // Check if password contains username
+      if (formData.username && formData.password.toLowerCase().includes(formData.username.toLowerCase())) {
+        newErrors.password = "Mật khẩu không được chứa tên đăng nhập";
+      }
+    }
+
+    // Full name validation
+    if (!formData.fullName) {
+      newErrors.fullName = "Họ và tên là bắt buộc";
+    } else if (formData.fullName.length < 2) {
+      newErrors.fullName = "Họ và tên phải có ít nhất 2 ký tự";
+    } else if (formData.fullName.length > 100) {
+      newErrors.fullName = "Họ và tên không được vượt quá 100 ký tự";
+    } else if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(formData.fullName)) {
+      newErrors.fullName = "Họ và tên chỉ được chứa chữ cái và khoảng trắng";
+    }
+
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = "Email là bắt buộc";
+    } else if (formData.email.length > 100) {
+      newErrors.email = "Email không được vượt quá 100 ký tự";
+    } else if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(formData.email)) {
       newErrors.email = "Email không hợp lệ";
     }
-    if (formData.roleIds.length === 0) newErrors.roles = "Phải chọn ít nhất một vai trò";
+
+    // Phone number validation (optional but must be valid if provided)
+    if (formData.phoneNumber && formData.phoneNumber.trim()) {
+      const cleanedPhone = formData.phoneNumber.replace(/[\s()-]/g, '');
+      if (!/^(\+84|84|0)(3|5|7|8|9)[0-9]{8}$/.test(cleanedPhone)) {
+        newErrors.phoneNumber = "Số điện thoại không đúng định dạng Việt Nam (VD: 0901234567, +84901234567)";
+      }
+    }
+
+    // Birth date validation (optional but must be valid if provided)
+    if (formData.birthDate && formData.birthDate.trim()) {
+      const birthDate = new Date(formData.birthDate);
+      const today = new Date();
+      
+      // Reset time parts for accurate comparison
+      today.setHours(0, 0, 0, 0);
+      birthDate.setHours(0, 0, 0, 0);
+
+      if (isNaN(birthDate.getTime())) {
+        newErrors.birthDate = "Ngày sinh không hợp lệ";
+      } else if (birthDate > today) {
+        newErrors.birthDate = "Ngày sinh không được là ngày trong tương lai";
+      } else if (birthDate.getFullYear() < 1900) {
+        newErrors.birthDate = "Năm sinh phải từ 1900 trở đi";
+      } else {
+        // Calculate age
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        const dayDiff = today.getDate() - birthDate.getDate();
+        
+        // Adjust age if birthday hasn't occurred this year
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+          age--;
+        }
+
+        if (age < 16) {
+          newErrors.birthDate = "Người dùng phải đủ 16 tuổi";
+        } else if (age > 100) {
+          newErrors.birthDate = "Tuổi không được vượt quá 100";
+        }
+      }
+    }
+
+    // Roles validation
+    if (formData.roleIds.length === 0) {
+      newErrors.roles = "Phải chọn ít nhất một vai trò";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -55,7 +169,32 @@ export default function CreateUserPage() {
 
     setIsSubmitting(true);
     try {
-      const success = await createUser(formData);
+      // Clean and prepare data before sending
+      const cleanedData: ICreateUserRequest = {
+        username: formData.username.trim(),
+        password: formData.password,
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim().toLowerCase(),
+        roleIds: formData.roleIds,
+      };
+
+      // Add optional fields only if they have values
+      if (formData.unitId && formData.unitId.trim()) {
+        cleanedData.unitId = formData.unitId.trim();
+      }
+
+      if (formData.phoneNumber && formData.phoneNumber.trim()) {
+        // Clean phone number: remove spaces, parentheses, hyphens
+        cleanedData.phoneNumber = formData.phoneNumber.replace(/[\s()-]/g, '');
+      }
+
+      if (formData.birthDate && formData.birthDate.trim()) {
+        // Ensure birthDate is in YYYY-MM-DD format
+        const birthDate = formData.birthDate.split('T')[0];
+        cleanedData.birthDate = birthDate;
+      }
+
+      const success = await createUser(cleanedData);
       if (success) {
         router.push('/qtv-khoa/quan-ly-nguoi-dung');
       }
@@ -151,8 +290,13 @@ export default function CreateUserPage() {
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   errors.username ? "border-red-500" : ""
                 }`}
-                placeholder="Nhập tên đăng nhập"
+                placeholder="VD: nguyenvana"
+                minLength={3}
+                maxLength={50}
+                pattern="[a-zA-Z0-9._-]+"
+                title="Chỉ được chứa chữ cái, số và các ký tự . _ -"
               />
+              <p className="mt-1 text-xs text-gray-500">Từ 3-50 ký tự, chỉ chữ cái, số và . _ -</p>
               {errors.username && (
                 <p className="mt-1 text-sm text-red-600">{errors.username}</p>
               )}
@@ -171,7 +315,10 @@ export default function CreateUserPage() {
                   className={`w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.password ? "border-red-500" : ""
                   }`}
-                  placeholder="Nhập mật khẩu"
+                  placeholder="Nhập mật khẩu mạnh"
+                  minLength={6}
+                  maxLength={50}
+                  title="Mật khẩu phải có ít nhất 6 ký tự"
                 />
                 <button
                   type="button"
@@ -185,6 +332,7 @@ export default function CreateUserPage() {
                   )}
                 </button>
               </div>
+              <p className="mt-1 text-xs text-gray-500">Tối thiểu 6 ký tự, bao gồm chữ hoa, chữ thường và số</p>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
               )}
@@ -202,8 +350,12 @@ export default function CreateUserPage() {
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   errors.fullName ? "border-red-500" : ""
                 }`}
-                placeholder="Nhập họ và tên"
+                placeholder="VD: Nguyễn Văn A"
+                minLength={2}
+                maxLength={100}
+                title="Nhập họ và tên đầy đủ"
               />
+              <p className="mt-1 text-xs text-gray-500">Từ 2-100 ký tự, chỉ chữ cái và khoảng trắng</p>
               {errors.fullName && (
                 <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
               )}
@@ -221,8 +373,11 @@ export default function CreateUserPage() {
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   errors.email ? "border-red-500" : ""
                 }`}
-                placeholder="Nhập email"
+                placeholder="VD: user@example.com"
+                maxLength={100}
+                title="Nhập địa chỉ email hợp lệ"
               />
+              <p className="mt-1 text-xs text-gray-500">Email hợp lệ, tối đa 100 ký tự</p>
               {errors.email && (
                 <p className="mt-1 text-sm text-red-600">{errors.email}</p>
               )}
@@ -237,9 +392,17 @@ export default function CreateUserPage() {
                 type="tel"
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nhập số điện thoại"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.phoneNumber ? "border-red-500" : ""
+                }`}
+                placeholder="VD: 0901234567 hoặc +84901234567"
+                pattern="(\+84|84|0)(3|5|7|8|9)[0-9]{8}"
+                title="Số điện thoại Việt Nam"
               />
+              <p className="mt-1 text-xs text-gray-500">Số điện thoại Việt Nam (10-12 số, bắt đầu 03/05/07/08/09)</p>
+              {errors.phoneNumber && (
+                <p className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>
+              )}
             </div>
 
             {/* Birth Date */}
@@ -251,29 +414,73 @@ export default function CreateUserPage() {
                 type="date"
                 value={formData.birthDate}
                 onChange={(e) => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.birthDate ? "border-red-500" : ""
+                }`}
+                min="1900-01-01"
+                max={new Date().toISOString().split('T')[0]}
                 title="Chọn ngày sinh"
               />
+              <p className="mt-1 text-xs text-gray-500">Tối thiểu 16 tuổi, tối đa 100 tuổi</p>
+              {errors.birthDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.birthDate}</p>
+              )}
             </div>
 
-            {/* Unit */}
-            <div className="md:col-span-2">
+            {/* Campus Selection */}
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Đơn vị
+                Cơ sở <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedCampusId}
+                onChange={(e) => handleCampusChange(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                title="Chọn cơ sở"
+                disabled={unitsLoading}
+              >
+                <option value="">
+                  {unitsLoading ? "Đang tải..." : "Chọn cơ sở"}
+                </option>
+                {campuses.map(campus => (
+                  <option key={campus.id} value={campus.id}>
+                    {campus.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">Chọn cơ sở trước để hiển thị danh sách đơn vị</p>
+            </div>
+
+            {/* Unit Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Đơn vị <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.unitId}
                 onChange={(e) => setFormData(prev => ({ ...prev, unitId: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 title="Chọn đơn vị"
+                disabled={!selectedCampusId || unitsLoading}
               >
-                <option value="">Chọn đơn vị</option>
-                {mockUnits.map(unit => (
+                <option value="">
+                  {!selectedCampusId 
+                    ? "Vui lòng chọn cơ sở trước" 
+                    : unitsLoading 
+                      ? "Đang tải..." 
+                      : "Chọn đơn vị"}
+                </option>
+                {filteredUnits.map(unit => (
                   <option key={unit.id} value={unit.id}>
-                    {unit.name}
+                    {unit.displayName}
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-xs text-gray-500">
+                {!selectedCampusId 
+                  ? "Chọn cơ sở để xem danh sách đơn vị" 
+                  : `${filteredUnits.length} đơn vị khả dụng`}
+              </p>
             </div>
           </div>
 
@@ -282,19 +489,23 @@ export default function CreateUserPage() {
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Vai trò <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {mockRoles.map(role => (
-                <label key={role.id} className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.roleIds.includes(role.id)}
-                    onChange={() => handleRoleToggle(role.id)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span className="text-sm text-gray-700">{role.name}</span>
-                </label>
-              ))}
-            </div>
+            {rolesLoading ? (
+              <div className="text-sm text-gray-500">Đang tải vai trò...</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {roles.map(role => (
+                  <label key={role.id} className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.roleIds.includes(role.id)}
+                      onChange={() => handleRoleToggle(role.id)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-700">{role.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
             {errors.roles && (
               <p className="mt-1 text-sm text-red-600">{errors.roles}</p>
             )}
