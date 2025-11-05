@@ -13,6 +13,7 @@ import {
   Table,
   Modal,
   Input,
+  Spin,
 } from "antd";
 import {
   Clock,
@@ -21,8 +22,12 @@ import {
   AlertTriangle,
   FileText,
 } from "lucide-react";
-import { mockReplacementRequestItem, users } from "@/lib/mockData";
-import { ComponentFromRequest, SubmissionFormData } from "@/types/repair";
+import { SubmissionFormData } from "@/types/repair";
+import {
+  useReplacementProposal,
+  useUpdateReplacementProposalStatus,
+} from "@/hooks/useReplacementProposals";
+import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 
 export default function ChiTietDuyetDeXuatPage() {
   const params = useParams();
@@ -56,32 +61,81 @@ export default function ChiTietDuyetDeXuatPage() {
   // Debug log
   console.log("showSubmissionModal state:", showSubmissionModal);
 
-  const request = useMemo(
-    () => mockReplacementRequestItem.find((r) => r.id === id),
-    [id]
-  );
+  // Fetch proposal detail from API
+  const {
+    data: proposal,
+    loading,
+    error,
+    refetch,
+  } = useReplacementProposal(id);
+
+  // Update status hook
+  const { updateStatus } = useUpdateReplacementProposalStatus();
 
   // Get replacement components for this proposal
-  const replacementItems = useMemo(() => request?.components || [], [request]);
+  const replacementItems = useMemo(() => proposal?.items || [], [proposal]);
 
-  // Get user names
+  // Transform items for table display
+  const tableData = useMemo(() => {
+    return replacementItems.map((item) => ({
+      id: item.id,
+      componentName: item.oldComponent?.name || "Chưa xác định",
+      componentType: item.oldComponent?.componentType || "Chưa xác định",
+      newItemName: item.newItemName || "",
+      newItemSpecs: item.newItemSpecs || "",
+      assetName: "N/A", // Not available in API
+      assetCode: "N/A", // Not available in API
+      roomName: "N/A", // Not available in API
+      buildingName: "N/A", // Not available in API
+      quantity: item.quantity || 1,
+      reason: item.reason || "",
+      machineLabel: undefined,
+    }));
+  }, [replacementItems]);
+
+  // Get user names from API response
   const proposerName = useMemo(
-    () =>
-      users.find((u) => u.id === request?.proposerId)?.fullName ||
-      "Không xác định",
-    [request?.proposerId]
+    () => proposal?.proposer?.fullName || "Không xác định",
+    [proposal?.proposer]
   );
 
   const teamLeadApproverName = useMemo(
-    () =>
-      request?.teamLeadApproverId
-        ? users.find((u) => u.id === request.teamLeadApproverId)?.fullName ||
-          "Không xác định"
-        : undefined,
-    [request?.teamLeadApproverId]
+    () => proposal?.teamLeadApprover?.fullName || undefined,
+    [proposal?.teamLeadApprover]
   );
 
-  if (!request) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" tip="Đang tải dữ liệu..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-4">
+        <Breadcrumb
+          items={[
+            { href: "/to-truong-ky-thuat", title: "Trang chủ" },
+            {
+              href: "/to-truong-ky-thuat/duyet-de-xuat",
+              title: "Duyệt đề xuất",
+            },
+            { title: "Chi tiết" },
+          ]}
+        />
+        <Alert
+          message="Lỗi tải dữ liệu"
+          description={error}
+          type="error"
+          showIcon
+        />
+      </div>
+    );
+  }
+
+  if (!proposal) {
     return (
       <div className="space-y-4">
         <Breadcrumb
@@ -111,6 +165,8 @@ export default function ChiTietDuyetDeXuatPage() {
     | "ĐÃ_LẬP_TỜ_TRÌNH"
     | "ĐÃ_DUYỆT_TỜ_TRÌNH"
     | "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH"
+    | "ĐÃ_GỬI_BIÊN_BẢN"
+    | "ĐÃ_KÝ_BIÊN_BẢN"
     | "ĐÃ_HOÀN_TẤT_MUA_SẮM";
 
   // Status configuration
@@ -162,6 +218,16 @@ export default function ChiTietDuyetDeXuatPage() {
       text: "Đã từ chối tờ trình",
       icon: XCircle,
     },
+    ĐÃ_GỬI_BIÊN_BẢN: {
+      color: "cyan",
+      text: "Đã gửi biên bản",
+      icon: CheckCircle,
+    },
+    ĐÃ_KÝ_BIÊN_BẢN: {
+      color: "geekblue",
+      text: "Đã ký biên bản",
+      icon: CheckCircle,
+    },
     ĐÃ_HOÀN_TẤT_MUA_SẮM: {
       color: "green",
       text: "Đã hoàn tất mua sắm",
@@ -169,8 +235,8 @@ export default function ChiTietDuyetDeXuatPage() {
     },
   };
 
-  // Get current status - use updated status if available, otherwise use original request status
-  const displayStatus = currentRequestStatus || request.status;
+  // Get current status - use updated status if available, otherwise use original proposal status
+  const displayStatus = currentRequestStatus || proposal.status;
   const currentStatus = statusConfig[
     displayStatus as ReplacementStatusType
   ] || {
@@ -184,127 +250,133 @@ export default function ChiTietDuyetDeXuatPage() {
     {
       title: "STT",
       key: "index",
-      width: 60,
+      width: 50,
       responsive: ["md"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
       render: (_: unknown, __: unknown, index: number) => index + 1,
     },
     {
-      title: "Tên linh kiện hiện tại",
+      title: "Linh kiện",
       dataIndex: "componentName",
       key: "componentName",
-      render: (text: string, record: ComponentFromRequest) => (
-        <div>
-          <div className="font-medium">{text}</div>
-          <div className="text-xs sm:text-sm text-gray-500">
+      ellipsis: true,
+      render: (text: string, record: (typeof tableData)[0]) => (
+        <div className="min-w-0">
+          <div className="font-medium truncate text-xs sm:text-sm">{text}</div>
+          <div className="text-xs text-gray-500 truncate">
             Loại: {record.componentType}
+          </div>
+          {/* Show replacement item on mobile and tablet */}
+          <div className="xl:hidden mt-2 pt-2 border-t border-gray-100">
+            <div className="text-xs text-gray-500">Thay thế:</div>
+            <div className="font-medium text-xs sm:text-sm truncate">
+              {record.newItemName}
+            </div>
+            <div className="text-xs text-gray-500 truncate">
+              {record.newItemSpecs}
+            </div>
+          </div>
+          {/* Show reason on mobile */}
+          <div className="xl:hidden mt-2 pt-2 border-t border-gray-100">
+            <div className="text-xs text-gray-500">Lý do:</div>
+            <div className="text-xs whitespace-pre-wrap break-words">
+              {record.reason}
+            </div>
           </div>
         </div>
       ),
     },
     {
-      title: "Linh kiện thay thế",
+      title: "Thay thế",
       key: "newItem",
-      responsive: ["lg"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
-      render: (record: ComponentFromRequest) => (
-        <div>
-          <div className="font-medium">{record.newItemName}</div>
-          <div className="text-xs sm:text-sm text-gray-500">
+      ellipsis: true,
+      responsive: ["xl"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
+      render: (record: (typeof tableData)[0]) => (
+        <div className="min-w-0">
+          <div className="font-medium truncate text-xs sm:text-sm">
+            {record.newItemName}
+          </div>
+          <div className="text-xs text-gray-500 truncate">
             {record.newItemSpecs}
           </div>
         </div>
       ),
     },
     {
-      title: "Tài sản",
-      key: "asset",
-      render: (record: ComponentFromRequest) => (
-        <div>
-          <div className="font-medium">{record.assetName}</div>
-          <div className="text-xs sm:text-sm text-gray-500">
-            Mã: {record.assetCode}
-          </div>
-          {record.machineLabel && (
-            <div className="text-xs sm:text-sm text-blue-600">
-              Máy số: {record.machineLabel}
-            </div>
-          )}
-          {/* Show replacement item on mobile */}
-          <div className="lg:hidden mt-2 pt-2 border-t border-gray-100">
-            <div className="text-xs text-gray-500">Thay thế:</div>
-            <div className="font-medium text-sm">{record.newItemName}</div>
-            <div className="text-xs text-gray-500">{record.newItemSpecs}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Vị trí",
-      key: "location",
-      responsive: ["md"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
-      render: (record: ComponentFromRequest) => (
-        <div>
-          <div className="font-medium">{record.roomName}</div>
-          <div className="text-xs sm:text-sm text-gray-500">
-            {record.buildingName}
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Số lượng",
+      title: "SL",
       dataIndex: "quantity",
       key: "quantity",
       align: "center" as const,
-      width: 80,
-      responsive: ["sm"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
+      width: 50,
       render: (quantity: number) => (
-        <span className="font-medium text-blue-600">{quantity}</span>
+        <span className="font-medium text-blue-600 text-xs sm:text-sm">
+          {quantity}
+        </span>
       ),
     },
     {
-      title: "Lý do thay thế",
+      title: "Lý do",
       dataIndex: "reason",
       key: "reason",
       responsive: ["xl"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
       render: (reason: string) => (
-        <div className="text-sm text-gray-700">{reason}</div>
+        <div className="text-xs text-gray-700 whitespace-pre-wrap break-words max-w-xs">
+          {reason}
+        </div>
       ),
     },
   ];
 
-  const handleApprovalConfirm = () => {
+  const handleApprovalConfirm = async () => {
     setShowApproveModal(false);
-    // Update status to ĐÃ_DUYỆT
-    setCurrentRequestStatus("ĐÃ_DUYỆT");
-    console.log("Request approved, status updated to ĐÃ_DUYỆT");
 
-    // Show confirmation modal for submission form
-    setShowApprovalConfirmModal(true);
+    try {
+      // CHỜ_TỔ_TRƯỞNG_DUYỆT → ĐÃ_DUYỆT
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_DUYỆT,
+      });
+
+      // Update local status
+      setCurrentRequestStatus("ĐÃ_DUYỆT");
+      console.log("Proposal approved, status updated to ĐÃ_DUYỆT");
+
+      // Refetch to get latest data
+      refetch();
+
+      // Show confirmation modal for submission form
+      setShowApprovalConfirmModal(true);
+    } catch (err) {
+      console.error("Error approving proposal:", err);
+      Modal.error({
+        title: "Lỗi",
+        content:
+          err instanceof Error ? err.message : "Không thể duyệt đề xuất.",
+        centered: true,
+      });
+    }
   };
 
   const handleCreateSubmissionForm = () => {
-    console.log("handleCreateSubmissionForm called, request:", request);
-    if (!request) {
-      console.log("No request found, returning");
+    console.log("handleCreateSubmissionForm called, proposal:", proposal);
+    if (!proposal) {
+      console.log("No proposal found, returning");
       return;
     }
 
-    // Auto-generate content based on the request
-    const proposer = users.find((u) => u.id === request.proposerId);
-    const componentsList = request.components
-      .map(
-        (comp) =>
-          `- ${comp.componentName} (${comp.assetCode}) tại ${comp.roomName}: ${comp.reason} → Thay thế bằng ${comp.newItemName} (${comp.newItemSpecs})`
-      )
-      .join("\n");
+    // Auto-generate content based on the proposal
+    const proposerName = proposal.proposer?.fullName || "Không xác định";
+    const componentsList =
+      proposal.items
+        ?.map(
+          (item) =>
+            `- ${item.oldComponent?.name || "N/A"}: ${
+              item.reason
+            } → Thay thế bằng ${item.newItemName} (${
+              item.newItemSpecs
+            }) - SL: ${item.quantity}`
+        )
+        .join("\n") || "";
 
-    const locations = [
-      ...new Set(
-        request.components.map((c) => `${c.buildingName} - ${c.roomName}`)
-      ),
-    ].join(", ");
-
-    const autoContent = `Phòng Lab ${locations} của Khoa CNTT đang cần thay thế thiết bị. Một số linh kiện máy tính đã hư hỏng và cần được thay thế để đảm bảo hoạt động ổn định của hệ thống.
+    const autoContent = `Khoa CNTT đang cần thay thế thiết bị. Một số linh kiện máy tính đã hư hỏng và cần được thay thế để đảm bảo hoạt động ổn định của hệ thống.
 
 Thông tin chi tiết về đề xuất thay thế:
 
@@ -313,13 +385,11 @@ ${componentsList}
 Khoa CNTT kính trình Ban Giám hiệu phê duyệt chi ngân sách cho Phòng Quản trị tiến hành thay thế các linh kiện để phục vụ công tác giảng dạy cho sinh viên được tốt hơn.
 
 Thông tin tổng hợp:
-- Mã đề xuất: ${request.proposalCode}
-- Tiêu đề: ${request.title}
-- Người đề xuất: ${proposer?.fullName || "Không xác định"}
-- Tổng số linh kiện cần thay: ${request.components.length}
-- Lý do chung: ${[...new Set(request.components.map((c) => c.reason))].join(
-      "; "
-    )}
+- Mã đề xuất: ${proposal.proposalCode}
+- Tiêu đề: ${proposal.title || "Đề xuất thay thế linh kiện"}
+- Người đề xuất: ${proposerName}
+- Tổng số linh kiện cần thay: ${proposal.items?.length || 0}
+- Mô tả: ${proposal.description || "Không có mô tả"}
 
 Khoa rất mong Ban Giám hiệu xem xét và đồng ý cho thực hiện.
 
@@ -328,8 +398,8 @@ Trân trọng kính trình.`;
     setSubmissionFormData((prev) => ({
       ...prev,
       content: autoContent,
-      attachments: `Đề xuất ${request.proposalCode}`,
-      submittedBy: proposer?.fullName || "Giảng Thanh Trọn",
+      attachments: `Đề xuất ${proposal.proposalCode}`,
+      submittedBy: proposerName,
     }));
 
     console.log("Setting showSubmissionModal to true");
@@ -337,59 +407,80 @@ Trân trọng kính trình.`;
     console.log("showSubmissionModal should now be:", true);
   };
 
-  const handleSubmitSubmission = () => {
-    if (!request) return;
+  const handleSubmitSubmission = async () => {
+    if (!proposal) return;
 
-    // Simulate submission form creation
-    console.log("Creating submission form:", {
-      requestId: request.id,
-      proposalCode: request.proposalCode,
-      submissionFormData,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      // Update proposal status to ĐÃ_LẬP_TỜ_TRÌNH
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+      });
 
-    // Update request status to ĐÃ_LẬP_TỜ_TRÌNH
-    setCurrentRequestStatus("ĐÃ_LẬP_TỜ_TRÌNH");
-    console.log("Status updated to ĐÃ_LẬP_TỜ_TRÌNH");
+      // Update local status
+      setCurrentRequestStatus("ĐÃ_LẬP_TỜ_TRÌNH");
+      console.log("Status updated to ĐÃ_LẬP_TỜ_TRÌNH");
 
-    // Close modal first
-    setShowSubmissionModal(false);
+      // Close modal first
+      setShowSubmissionModal(false);
 
-    // Redirect immediately
-    console.log("Redirecting to /to-truong-ky-thuat/lap-to-trinh");
-    router.push("/to-truong-ky-thuat/lap-to-trinh");
+      // Redirect immediately
+      console.log("Redirecting to /to-truong-ky-thuat/lap-to-trinh");
+      router.push("/to-truong-ky-thuat/lap-to-trinh");
 
-    // Show success message without blocking redirect
-    Modal.success({
-      title: "Lập tờ trình thành công!",
-      content: `Tờ trình cho đề xuất ${request.proposalCode} đã được tạo và gửi tới Phòng Quản trị.`,
-      centered: true,
-      mask: false,
-      keyboard: false,
-    });
+      // Show success message without blocking redirect
+      Modal.success({
+        title: "Lập tờ trình thành công!",
+        content: `Tờ trình cho đề xuất ${proposal.proposalCode} đã được tạo và gửi tới Phòng Quản trị.`,
+        centered: true,
+        mask: false,
+        keyboard: false,
+      });
+    } catch (err) {
+      console.error("Error creating submission:", err);
+      Modal.error({
+        title: "Lỗi",
+        content: err instanceof Error ? err.message : "Không thể lập tờ trình.",
+        centered: true,
+      });
+    }
   };
 
-  const handleReject = () => {
-    console.log("Rejecting request:", id);
+  const handleReject = async () => {
+    console.log("Rejecting proposal:", id);
     setShowRejectModal(false);
 
-    // Update status to ĐÃ_TỪ_CHỐI
-    setCurrentRequestStatus("ĐÃ_TỪ_CHỐI");
-    console.log("Status updated to ĐÃ_TỪ_CHỐI");
+    try {
+      // CHỜ_TỔ_TRƯỞNG_DUYỆT → ĐÃ_TỪ_CHỐI
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI,
+      });
 
-    // Show success message and redirect
-    Modal.success({
-      title: "Từ chối thành công!",
-      content: "Đề xuất đã được từ chối.",
-      centered: true,
-      onOk: () => {
-        router.push("/to-truong-ky-thuat/duyet-de-xuat");
-      },
-    });
+      // Update local status
+      setCurrentRequestStatus("ĐÃ_TỪ_CHỐI");
+      console.log("Status updated to ĐÃ_TỪ_CHỐI");
+
+      // Show success message and redirect
+      Modal.success({
+        title: "Từ chối thành công!",
+        content: "Đề xuất đã được từ chối.",
+        centered: true,
+        onOk: () => {
+          router.push("/to-truong-ky-thuat/duyet-de-xuat");
+        },
+      });
+    } catch (err) {
+      console.error("Error rejecting proposal:", err);
+      Modal.error({
+        title: "Lỗi",
+        content:
+          err instanceof Error ? err.message : "Không thể từ chối đề xuất.",
+        centered: true,
+      });
+    }
   };
 
-  const canApproveOrReject =
-    displayStatus === "CHỜ_TỔ_TRƯỞNG_DUYỆT" || displayStatus === "CHỜ_XÁC_MINH";
+  // Only show action buttons for CHỜ_TỔ_TRƯỞNG_DUYỆT status
+  const canApproveOrReject = displayStatus === "CHỜ_TỔ_TRƯỞNG_DUYỆT";
 
   // Timeline items
   const timelineItems = [
@@ -399,7 +490,7 @@ Trân trọng kính trình.`;
         <div>
           <p className="font-medium">Tạo đề xuất thay thế</p>
           <p className="text-sm text-gray-500">
-            {new Date(request.createdAt).toLocaleString("vi-VN")}
+            {new Date(proposal.createdAt).toLocaleString("vi-VN")}
           </p>
         </div>
       ),
@@ -480,7 +571,7 @@ Trân trọng kính trình.`;
             ),
           },
           {
-            title: `Chi tiết • ${request.proposalCode}`,
+            title: `Chi tiết • ${proposal.proposalCode}`,
           },
         ]}
       />
@@ -489,7 +580,7 @@ Trân trọng kính trình.`;
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-3 sm:space-y-0">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-            Chi tiết đề xuất • {request.proposalCode}
+            Chi tiết đề xuất • {proposal.proposalCode}
           </h1>
           <p className="mt-2 text-sm sm:text-base text-gray-600">
             Thông tin chi tiết về đề xuất thay thế linh kiện
@@ -498,7 +589,7 @@ Trân trọng kính trình.`;
       </div>
 
       {/* Status Alert */}
-      {request.status === "ĐÃ_TỪ_CHỐI" && (
+      {proposal.status === "ĐÃ_TỪ_CHỐI" && (
         <Alert
           message="Đề xuất đã bị từ chối"
           description="Đề xuất này đã bị từ chối bởi tổ trưởng kỹ thuật"
@@ -508,7 +599,7 @@ Trân trọng kính trình.`;
         />
       )}
 
-      {request.status === "ĐÃ_DUYỆT" && (
+      {proposal.status === "ĐÃ_DUYỆT" && (
         <Alert
           message="Đề xuất đã được phê duyệt"
           description="Đề xuất này đã được phê duyệt và chuyển tiếp để xử lý."
@@ -533,7 +624,7 @@ Trân trọng kính trình.`;
                 label="Mã đề xuất"
                 span={{ xs: 1, sm: 1, md: 1 }}>
                 <span className="font-mono font-medium text-blue-600 text-xs sm:text-sm">
-                  {request.proposalCode}
+                  {proposal.proposalCode}
                 </span>
               </Descriptions.Item>
               <Descriptions.Item
@@ -557,7 +648,7 @@ Trân trọng kính trình.`;
                 label="Ngày tạo"
                 span={{ xs: 1, sm: 1, md: 1 }}>
                 <div className="text-xs sm:text-sm">
-                  {new Date(request.createdAt).toLocaleDateString("vi-VN", {
+                  {new Date(proposal.createdAt).toLocaleDateString("vi-VN", {
                     day: "2-digit",
                     month: "2-digit",
                     year: "numeric",
@@ -599,27 +690,6 @@ Trân trọng kính trình.`;
               )}
             </Descriptions>
           </Card>
-
-          {/* Components List */}
-          <Card
-            title={
-              <span className="text-sm sm:text-base">
-                Danh sách linh kiện cần thay thế ({replacementItems.length})
-              </span>
-            }
-            className="shadow">
-            <div className="overflow-x-auto">
-              <Table
-                dataSource={replacementItems}
-                columns={componentColumns}
-                rowKey="id"
-                pagination={false}
-                size="small"
-                scroll={{ x: "max-content" }}
-                className="responsive-table"
-              />
-            </div>
-          </Card>
         </div>
 
         {/* Timeline */}
@@ -632,6 +702,26 @@ Trân trọng kính trình.`;
             <Timeline items={timelineItems} className="text-xs sm:text-sm" />
           </Card>
         </div>
+      </div>
+
+      <div>
+        {/* Components List */}
+        <Card
+          title={
+            <span className="text-sm sm:text-base">
+              Danh sách linh kiện cần thay thế ({replacementItems.length})
+            </span>
+          }
+          className="shadow">
+          <Table
+            dataSource={tableData}
+            columns={componentColumns}
+            rowKey="id"
+            pagination={false}
+            size="small"
+            className="responsive-table"
+          />
+        </Card>
       </div>
 
       {/* Approve Modal */}

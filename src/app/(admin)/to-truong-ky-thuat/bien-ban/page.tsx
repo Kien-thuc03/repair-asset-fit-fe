@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Clock, XCircle } from "lucide-react";
 import { Modal } from "antd";
@@ -12,10 +12,10 @@ import {
 } from "@/components/leadTechnician/inspection";
 import { SignConfirmModal } from "@/components/modal";
 import {
-  getReplacementRequestsByStatus,
-  mockReplacementRequestItem,
-} from "@/lib/mockData/replacementRequests";
-import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
+  useReplacementProposals,
+  useUpdateReplacementProposalStatus,
+} from "@/hooks/useReplacementProposals";
+import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 
 // Interface cho InspectionReport
 interface InspectionReport {
@@ -25,66 +25,21 @@ interface InspectionReport {
   relatedReportTitle: string;
   createdBy: string;
   inspectionDate: string;
-  status: "pending" | "signed" | "sent_back"; // Giữ để tương thích với component interface
+  status: "pending" | "signed" | "sent_back";
   leaderSignature?: string;
   leaderSignedAt?: string;
 }
 
-// Chuyển đổi ReplacementRequestItem thành InspectionReport
-const convertToInspectionReport = (
-  request: ReplacementRequestItem
-): InspectionReport => {
-  // Lấy tên file từ submissionFormUrl để hiển thị tờ trình liên quan
-  const getRelatedReportTitle = (
-    submissionFormUrl?: string,
-    fallbackTitle?: string
-  ) => {
-    if (submissionFormUrl) {
-      const fileName = submissionFormUrl.split("/").pop() || submissionFormUrl;
-      return `Tờ trình: ${fileName}`;
-    }
-    return fallbackTitle || "Không có tờ trình liên quan";
-  };
-
-  return {
-    id: request.id,
-    reportNumber: request.proposalCode,
-    title: `Biên bản kiểm tra - ${request.title}`,
-    relatedReportTitle: getRelatedReportTitle(
-      request.submissionFormUrl,
-      request.title
-    ),
-    createdBy: request.createdBy || "Unknown",
-    inspectionDate: new Date(request.createdAt).toISOString().split("T")[0],
-    status: "pending", // Mặc định là pending vì đã gửi biên bản
-  };
-};
-
 export default function BienBanPage() {
   const router = useRouter();
 
-  // Chỉ lấy các đề xuất có trạng thái ĐÃ_GỬI_BIÊN_BẢN
-  const sentReports = getReplacementRequestsByStatus(
-    ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN
-  );
+  // API hook for updating status
+  const { updateStatus } = useUpdateReplacementProposalStatus();
 
-  // Chuyển đổi sang InspectionReport format
-  const mockInspectionReports: InspectionReport[] = sentReports.map(
-    (request) => ({
-      ...convertToInspectionReport(request),
-      // Tất cả đều có status "pending" vì chỉ hiển thị ĐÃ_GỬI_BIÊN_BẢN
-      status: "pending",
-    })
-  );
-
-  const [inspectionReports, setInspectionReports] = useState<
-    InspectionReport[]
-  >(mockInspectionReports);
+  // Filter and search states
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<string>("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | "none">(
-    "none"
-  );
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -104,6 +59,57 @@ export default function BienBanPage() {
   const [selectedReportForSign, setSelectedReportForSign] =
     useState<InspectionReport | null>(null);
   const [isSigningInProgress, setIsSigningInProgress] = useState(false);
+
+  // Memoize query params
+  const queryParams = useMemo(() => {
+    const mappedSortBy =
+      sortField === "reportNumber"
+        ? "proposalCode"
+        : sortField === "relatedReportTitle"
+        ? "title"
+        : sortField === "inspectionDate"
+        ? "createdAt"
+        : sortField || "createdAt";
+
+    return {
+      status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
+      search: searchTerm || undefined,
+      page: currentPage,
+      limit: pageSize,
+      sortBy: mappedSortBy as
+        | "createdAt"
+        | "updatedAt"
+        | "proposalCode"
+        | "status",
+      sortOrder: sortDirection.toUpperCase() as "ASC" | "DESC",
+    };
+  }, [searchTerm, currentPage, pageSize, sortField, sortDirection]);
+
+  // Fetch data from API
+  const {
+    data: apiData,
+    loading,
+    error,
+  } = useReplacementProposals(queryParams);
+
+  // Transform API data to InspectionReport format
+  const inspectionReports = useMemo(() => {
+    if (!apiData?.data) return [];
+
+    return apiData.data.map((proposal) => ({
+      id: proposal.id,
+      reportNumber: proposal.proposalCode,
+      title: `Biên bản kiểm tra - ${proposal.title || "Không có tiêu đề"}`,
+      relatedReportTitle: proposal.submissionFormUrl
+        ? `Tờ trình: ${proposal.submissionFormUrl.split("/").pop()}`
+        : proposal.title || "Không có tờ trình liên quan",
+      createdBy: proposal.proposer?.fullName || "Unknown",
+      inspectionDate: new Date(proposal.createdAt).toISOString().split("T")[0],
+      status: "pending" as const, // Tất cả đều pending vì đang ở trạng thái ĐÃ_GỬI_BIÊN_BẢN
+      leaderSignature: proposal.teamLeadApprover?.fullName,
+      leaderSignedAt: proposal.updatedAt,
+    }));
+  }, [apiData]);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -129,71 +135,25 @@ export default function BienBanPage() {
     };
   }, []);
 
-  const filteredReports = inspectionReports.filter((report) => {
-    const matchesSearch =
-      searchTerm === "" ||
-      report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.reportNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.relatedReportTitle
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
+  // Client-side filtering (API already filters by status ĐÃ_GỬI_BIÊN_BẢN)
+  const filteredReports = useMemo(() => {
+    // Data is already filtered by API
+    return inspectionReports;
+  }, [inspectionReports]);
 
-    return matchesSearch;
-  });
-
-  // Hàm xử lý sắp xếp 3 trạng thái
+  // Hàm xử lý sắp xếp
   const handleSort = (field: string) => {
     if (sortField === field) {
-      if (sortDirection === "asc") {
-        setSortDirection("desc");
-      } else if (sortDirection === "desc") {
-        setSortDirection("none");
-        setSortField("");
-      } else {
-        setSortDirection("asc");
-      }
+      // Toggle between asc and desc
+      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
       setSortField(field);
       setSortDirection("asc");
     }
   };
 
-  // Sắp xếp dữ liệu
-  const sortedReports = [...filteredReports].sort((a, b) => {
-    if (sortField === "" || sortDirection === "none") return 0;
-
-    let aValue: string | number | Date;
-    let bValue: string | number | Date;
-
-    switch (sortField) {
-      case "reportNumber":
-        aValue = a.reportNumber;
-        bValue = b.reportNumber;
-        break;
-      case "relatedReportTitle":
-        aValue = a.relatedReportTitle;
-        bValue = b.relatedReportTitle;
-        break;
-      case "createdBy":
-        aValue = a.createdBy;
-        bValue = b.createdBy;
-        break;
-      case "inspectionDate":
-        aValue = new Date(a.inspectionDate);
-        bValue = new Date(b.inspectionDate);
-        break;
-      case "status":
-        aValue = a.status;
-        bValue = b.status;
-        break;
-      default:
-        return 0;
-    }
-
-    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    return 0;
-  });
+  // API handles sorting, so sortedReports = filteredReports
+  const sortedReports = filteredReports;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -249,49 +209,28 @@ export default function BienBanPage() {
     setIsSigningInProgress(true);
 
     try {
-      // TODO: Get current user info (tổ trưởng kỹ thuật)
-      const currentUserName = "Giảng Thanh Trọn"; // Mock user name
-      const signedAt = new Date().toISOString();
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Tìm và cập nhật trạng thái đề xuất trong mock data thành ĐÃ_KÝ_BIÊN_BẢN
-      const requestIndex = mockReplacementRequestItem.findIndex(
-        (request) => request.id === selectedReportForSign.id
-      );
-
-      if (requestIndex !== -1) {
-        mockReplacementRequestItem[requestIndex] = {
-          ...mockReplacementRequestItem[requestIndex],
-          status: ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
-          updatedAt: signedAt,
-        };
-
-        console.log("✅ Updated replacement request status:", {
-          id: selectedReportForSign.id,
-          newStatus: ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
-          updatedAt: signedAt,
-        });
-      }
-
-      // Cập nhật UI - loại bỏ biên bản đã ký khỏi danh sách
-      // vì trang này chỉ hiển thị trạng thái ĐÃ_GỬI_BIÊN_BẢN
-      setInspectionReports((reports) =>
-        reports.filter((report) => report.id !== selectedReportForSign.id)
-      );
+      // Call API to update status to ĐÃ_KÝ_BIÊN_BẢN
+      await updateStatus(selectedReportForSign.id, {
+        status: ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
+      });
 
       console.log("✅ Successfully signed inspection report:", {
         reportId: selectedReportForSign.id,
-        signerName: currentUserName,
-        signedAt,
+        newStatus: ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
       });
 
-      // Đóng modal xác nhận - không cần hiển thị thông báo thành công
+      // Đóng modal - list sẽ tự động refresh do API call
       setShowSignModal(false);
+
+      // Reload data by resetting current page to trigger refetch
+      setCurrentPage((prev) => prev);
     } catch (error) {
       console.error("❌ Error signing report:", error);
-      alert("Có lỗi xảy ra khi ký biên bản. Vui lòng thử lại.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Có lỗi xảy ra khi ký biên bản. Vui lòng thử lại."
+      );
     } finally {
       setIsSigningInProgress(false);
       setSelectedReportForSign(null);
@@ -304,12 +243,12 @@ export default function BienBanPage() {
     console.log("Send back functionality has been removed:", reportId);
   };
 
-  // Pagination logic
+  // Pagination logic - API handles pagination
   const getCurrentData = () => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return sortedReports.slice(startIndex, endIndex);
+    return sortedReports;
   };
+
+  const totalFiltered = apiData?.total || 0;
 
   // Selection handlers
   const handleSelectAll = (checked: boolean) => {
@@ -418,45 +357,67 @@ export default function BienBanPage() {
         onExportExcel={handleExportExcel}
       />
 
-      <InspectionTable
-        reports={getCurrentData()}
-        selectedItems={selectedItems}
-        selectAll={selectAll}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSelectAll={handleSelectAll}
-        onSelectItem={handleSelectItem}
-        onSort={handleSort}
-        onViewDetail={handleViewDetail}
-        onSignReport={handleSignReport}
-        onSendBack={handleSendBack}
-      />
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white shadow rounded-lg p-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Đang tải dữ liệu...</p>
+        </div>
+      )}
 
-      <InspectionMobileView
-        reports={getCurrentData()}
-        selectedItems={selectedItems}
-        onSelectItem={handleSelectItem}
-        onViewDetail={handleViewDetail}
-        onSignReport={handleSignReport}
-        onSendBack={handleSendBack}
-        getStatusBadge={getStatusBadge}
-        getStatusText={getStatusText}
-        getStatusIcon={getStatusIcon}
-      />
+      {/* Error State */}
+      {error && !loading && (
+        <div className="bg-white shadow rounded-lg p-12 text-center">
+          <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-900 font-medium mb-2">Lỗi tải dữ liệu</p>
+          <p className="text-gray-500 text-sm">{error}</p>
+        </div>
+      )}
 
-      {/* Pagination */}
-      <div className="mt-6">
-        <Pagination
-          currentPage={currentPage}
-          total={sortedReports.length}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={(newPageSize) => {
-            setPageSize(newPageSize);
-            setCurrentPage(1);
-          }}
-        />
-      </div>
+      {/* Data Display */}
+      {!loading && !error && (
+        <>
+          <InspectionTable
+            reports={getCurrentData()}
+            selectedItems={selectedItems}
+            selectAll={selectAll}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSelectAll={handleSelectAll}
+            onSelectItem={handleSelectItem}
+            onSort={handleSort}
+            onViewDetail={handleViewDetail}
+            onSignReport={handleSignReport}
+            onSendBack={handleSendBack}
+          />
+
+          <InspectionMobileView
+            reports={getCurrentData()}
+            selectedItems={selectedItems}
+            onSelectItem={handleSelectItem}
+            onViewDetail={handleViewDetail}
+            onSignReport={handleSignReport}
+            onSendBack={handleSendBack}
+            getStatusBadge={getStatusBadge}
+            getStatusText={getStatusText}
+            getStatusIcon={getStatusIcon}
+          />
+
+          {/* Pagination */}
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              total={totalFiltered}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(newPageSize) => {
+                setPageSize(newPageSize);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+        </>
+      )}
 
       {/* Sign Confirmation Modal */}
       <SignConfirmModal

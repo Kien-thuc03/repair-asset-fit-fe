@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -18,26 +18,31 @@ import {
   Download,
   PlaneLanding,
   Eye,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
-import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
-import { ReplacementRequestItem, ReplacementStatus } from "@/types/repair";
 import { SignConfirmModal } from "@/components/modal";
+import {
+  useReplacementProposal,
+  useUpdateReplacementProposalStatus,
+} from "@/hooks";
+import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 
 const { Title } = Typography;
 
 // Status mapping cho hiển thị các trạng thái
 const statusConfig = {
-  [ReplacementStatus.ĐÃ_XÁC_MINH]: {
+  [ReplacementProposalStatus.ĐÃ_XÁC_MINH]: {
     color: "cyan",
     text: "Đã xác minh",
     icon: <CheckCircle className="h-4 w-4" />,
   },
-  [ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN]: {
+  [ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: {
     color: "blue",
     text: "Đã ký biên bản",
     icon: <CheckCircle className="h-4 w-4" />,
   },
-  [ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: {
+  [ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: {
     color: "green",
     text: "Đã hoàn tất mua sắm",
     icon: <CheckCircle className="h-4 w-4" />,
@@ -45,7 +50,7 @@ const statusConfig = {
 };
 
 // Helper function để get status config an toàn
-const getStatusConfig = (status: ReplacementStatus) => {
+const getStatusConfig = (status: ReplacementProposalStatus) => {
   return (
     statusConfig[status as keyof typeof statusConfig] || {
       color: "default",
@@ -58,24 +63,19 @@ const getStatusConfig = (status: ReplacementStatus) => {
 export default function ChiTietDeXuatThayThePage() {
   const params = useParams();
   const router = useRouter();
-  const [proposal, setProposal] = useState<ReplacementRequestItem | null>(null);
+  const proposalId = params.id as string;
+
+  // Fetch proposal data from API
+  const {
+    data: proposal,
+    loading,
+    error,
+    refetch,
+  } = useReplacementProposal(proposalId);
+  const { updateStatus } = useUpdateReplacementProposalStatus();
+
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // Lấy dữ liệu đề xuất theo ID
-  useEffect(() => {
-    const proposalId = params.id as string;
-    const foundProposal = mockReplacementRequestItem.find(
-      (item) => item.id === proposalId
-    );
-
-    if (foundProposal) {
-      setProposal(foundProposal);
-    } else {
-      message.error("Không tìm thấy đề xuất!");
-      router.push("/phong-quan-tri/gui-de-xuat-thay-the");
-    }
-  }, [params.id, router]);
 
   // Xử lý mở modal xác nhận gửi đề xuất
   const handleOpenConfirmModal = () => {
@@ -94,19 +94,17 @@ export default function ChiTietDeXuatThayThePage() {
     try {
       setIsProcessing(true);
 
-      // Trong thực tế sẽ gọi API để cập nhật trạng thái lên ĐÃ_HOÀN_TẤT_MUA_SẮM
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      // Gọi API để cập nhật trạng thái lên ĐÃ_HOÀN_TẤT_MUA_SẮM
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
+      });
 
-      const updatedProposal = {
-        ...proposal,
-        status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
-        updatedAt: new Date().toISOString(),
-      };
-
-      setProposal(updatedProposal);
       message.success(
         `Đã cập nhật trạng thái ${proposal.proposalCode} thành công!`
       );
+
+      // Refetch để lấy dữ liệu mới
+      await refetch();
 
       // Đóng modal và chuyển hướng về trang danh sách
       handleCloseModal();
@@ -136,22 +134,24 @@ export default function ChiTietDeXuatThayThePage() {
             <p className="text-sm text-gray-500">
               {new Date(proposal.createdAt).toLocaleString("vi-VN")}
             </p>
-            <p className="text-sm">Bởi: {proposal.createdBy}</p>
+            <p className="text-sm">
+              Bởi: {proposal.proposer?.fullName || "Không xác định"}
+            </p>
           </div>
         ),
       },
     ];
 
     const statusOrder = [
-      ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
-      ReplacementStatus.ĐÃ_DUYỆT,
-      ReplacementStatus.CHỜ_XÁC_MINH,
-      ReplacementStatus.ĐÃ_XÁC_MINH,
-      ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN,
-      ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
-      ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
-      ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
-      ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
+      ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+      ReplacementProposalStatus.ĐÃ_DUYỆT,
+      ReplacementProposalStatus.CHỜ_XÁC_MINH,
+      ReplacementProposalStatus.ĐÃ_XÁC_MINH,
+      ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
+      ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
+      ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+      ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
     ];
 
     const currentStatusIndex = statusOrder.indexOf(proposal.status);
@@ -162,8 +162,8 @@ export default function ChiTietDeXuatThayThePage() {
       const isPassed = index <= currentStatusIndex;
       const isCurrent = index === currentStatusIndex;
       const isRejected =
-        proposal.status === ReplacementStatus.ĐÃ_TỪ_CHỐI ||
-        proposal.status === ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH;
+        proposal.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ||
+        proposal.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH;
 
       let color = "gray";
       if (isRejected && isCurrent) {
@@ -192,8 +192,39 @@ export default function ChiTietDeXuatThayThePage() {
     return items;
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-900 mb-2">
+            Có lỗi xảy ra
+          </p>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!proposal) {
-    return <div>Đang tải...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-900 mb-2">
+            Không tìm thấy đề xuất
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -246,7 +277,7 @@ export default function ChiTietDeXuatThayThePage() {
           </Tag>
 
           {/* Hiển thị nút xử lý chỉ cho trạng thái ĐÃ_KÝ_BIÊN_BẢN */}
-          {proposal.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN && (
+          {proposal.status === ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN && (
             <Button
               type="primary"
               onClick={handleOpenConfirmModal}
@@ -267,7 +298,7 @@ export default function ChiTietDeXuatThayThePage() {
                 {proposal.proposalCode}
               </Descriptions.Item>
               <Descriptions.Item label="Người tạo">
-                {proposal.createdBy}
+                {proposal.proposer?.fullName || "Không xác định"}
               </Descriptions.Item>
               <Descriptions.Item label="Ngày tạo">
                 {new Date(proposal.createdAt).toLocaleDateString("vi-VN")}
@@ -279,17 +310,21 @@ export default function ChiTietDeXuatThayThePage() {
 
             <div className="mt-4">
               <h4 className="font-medium mb-2">Mô tả:</h4>
-              <p className="text-gray-700">{proposal.description}</p>
+              <p className="text-gray-700">
+                {proposal.description || "Không có mô tả"}
+              </p>
             </div>
           </Card>
 
           {/* Danh sách linh kiện */}
           <Card
-            title={`Danh sách linh kiện cần thay thế (${proposal.components.length})`}>
+            title={`Danh sách linh kiện cần thay thế (${
+              proposal.itemsCount || 0
+            })`}>
             <div className="space-y-4">
-              {proposal.components.map((component, index) => (
+              {proposal.items?.map((item, index) => (
                 <Card
-                  key={component.id}
+                  key={item.id}
                   size="small"
                   className="border-l-4 border-l-blue-500">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -299,22 +334,23 @@ export default function ChiTietDeXuatThayThePage() {
                       </h5>
                       <div className="space-y-1 text-sm">
                         <p>
-                          <strong>Loại:</strong> {component.componentType}
+                          <strong>Loại:</strong>{" "}
+                          {item.oldComponent?.componentType || "Không xác định"}
                         </p>
                         <p>
                           <strong>Linh kiện cũ:</strong>{" "}
-                          {component.componentName}
+                          {item.oldComponent?.name || "Không xác định"}
                         </p>
                         <p>
                           <strong>Linh kiện mới:</strong>{" "}
-                          {component.newItemName}
+                          {item.newItemName || "Không xác định"}
                         </p>
                         <p>
                           <strong>Thông số mới:</strong>{" "}
-                          {component.newItemSpecs}
+                          {item.newItemSpecs || "Không xác định"}
                         </p>
                         <p>
-                          <strong>Số lượng:</strong> {component.quantity}
+                          <strong>Số lượng:</strong> {item.quantity || 1}
                         </p>
                       </div>
                     </div>
@@ -324,25 +360,23 @@ export default function ChiTietDeXuatThayThePage() {
                       </h5>
                       <div className="space-y-1 text-sm">
                         <p>
-                          <strong>Tài sản:</strong> {component.assetName}
+                          <strong>Linh kiện ID:</strong>{" "}
+                          {item.oldComponent?.id || "Không xác định"}
                         </p>
                         <p>
-                          <strong>Mã tài sản:</strong> {component.assetCode}
+                          <strong>Trạng thái:</strong>{" "}
+                          {item.oldComponent?.status || "Không xác định"}
                         </p>
                         <p>
-                          <strong>Vị trí:</strong> {component.buildingName} -{" "}
-                          {component.roomName}
+                          <strong>Vị trí:</strong>{" "}
+                          {item.oldComponent?.roomLocation || "Chưa xác định"}
                         </p>
-                        {component.machineLabel && (
-                          <p>
-                            <strong>Số máy:</strong> {component.machineLabel}
-                          </p>
-                        )}
                       </div>
                     </div>
                     <div className="md:col-span-2">
                       <p>
-                        <strong>Lý do thay thế:</strong> {component.reason}
+                        <strong>Lý do thay thế:</strong>{" "}
+                        {item.reason || "Không có lý do"}
                       </p>
                     </div>
                   </div>

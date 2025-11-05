@@ -1,24 +1,44 @@
 "use client";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ReplacementRequestItem,
-  ReplacementStatus,
-  SubmissionFormData,
-} from "@/types";
-import { mockReplacementRequestItem } from "@/lib/mockData";
+import { SubmissionFormData } from "@/types";
 import { Breadcrumb, Modal, Input, Button } from "antd";
 import { CheckCircle, XCircle, FileText } from "lucide-react";
 import { Pagination } from "@/components/common";
-import { users } from "@/lib/mockData/users";
 import {
   ProposalFilters,
   ProposalTable,
   ProposalCards,
   STATUS_CONFIG,
-  filterProposals,
-  sortProposals,
 } from "@/components/leadTechnician/proposalApproval";
+import {
+  useReplacementProposals,
+  useUpdateReplacementProposalStatus,
+} from "@/hooks/useReplacementProposals";
+import {
+  ReplacementProposal,
+  ReplacementProposalStatus,
+} from "@/lib/api/replacement-proposals";
+
+// Map table field names to API field names - outside component to avoid recreation
+const mapSortFieldToAPI = (
+  field: string
+): "createdAt" | "updatedAt" | "proposalCode" | "status" | null => {
+  const fieldMap: Record<
+    string,
+    "createdAt" | "updatedAt" | "proposalCode" | "status" | null
+  > = {
+    requestCode: "proposalCode",
+    proposalCode: "proposalCode",
+    status: "status",
+    createdAt: "createdAt",
+    updatedAt: "updatedAt",
+    // Fields not supported by API - will ignore
+    title: null,
+    componentsCount: null,
+  };
+  return fieldMap[field] ?? null;
+};
 
 export default function DuyetDeXuatPage() {
   const router = useRouter();
@@ -30,19 +50,7 @@ export default function DuyetDeXuatPage() {
   const [exportFileName, setExportFileName] = useState("");
   const [exportError, setExportError] = useState("");
 
-  // Lấy các đề xuất có trạng thái: CHỜ_TỔ_TRƯỞNG_DUYỆT, ĐÃ_DUYỆT, ĐÃ_TỪ_CHỐI
-  const [requests, setRequests] = useState<ReplacementRequestItem[]>(
-    mockReplacementRequestItem
-      .filter(
-        (proposal) =>
-          proposal.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT ||
-          proposal.status === ReplacementStatus.ĐÃ_DUYỆT ||
-          proposal.status === ReplacementStatus.ĐÃ_TỪ_CHỐI
-      )
-      .map((proposal) => ({
-        ...proposal,
-      }))
-  );
+  // Filter and pagination states
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<string>("");
@@ -54,7 +62,7 @@ export default function DuyetDeXuatPage() {
   // Submission modal state
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const [selectedRequestForSubmission, setSelectedRequestForSubmission] =
-    useState<ReplacementRequestItem | null>(null);
+    useState<ReplacementProposal | null>(null);
   const [submissionFormData, setSubmissionFormData] =
     useState<SubmissionFormData>({
       submittedBy: "Giảng Thanh Trọn",
@@ -68,56 +76,95 @@ export default function DuyetDeXuatPage() {
       rector: "TS. Phan Hồng Hải",
     });
 
-  // Handle actions
-  const handleApprove = (requestId: string) => {
-    setRequests((prev) =>
-      prev.map((req) =>
-        req.id === requestId
-          ? {
-              ...req,
-              status: ReplacementStatus.ĐÃ_DUYỆT,
-            }
-          : req
-      )
-    );
-    console.log("Approved request:", requestId);
-  };
+  // Memoize query params to prevent unnecessary re-renders
+  const queryParams = useMemo(() => {
+    const mappedSortBy =
+      sortField && mapSortFieldToAPI(sortField)
+        ? mapSortFieldToAPI(sortField)!
+        : "createdAt";
 
-  const handleReject = (requestId: string) => {
-    setRequests((prev) =>
-      prev.map((req) =>
-        req.id === requestId
-          ? {
-              ...req,
-              status: ReplacementStatus.ĐÃ_TỪ_CHỐI,
-            }
-          : req
-      )
-    );
-    console.log("Rejected request:", requestId);
-  };
+    return {
+      status: selectedStatus
+        ? (selectedStatus as ReplacementProposalStatus)
+        : undefined,
+      search: searchTerm || undefined,
+      page: currentPage,
+      limit: pageSize,
+      sortBy: mappedSortBy,
+      sortOrder: sortDirection.toUpperCase() as "ASC" | "DESC",
+    };
+  }, [
+    selectedStatus,
+    searchTerm,
+    currentPage,
+    pageSize,
+    sortField,
+    sortDirection,
+  ]);
+
+  // Fetch data from API
+  const { data: apiData, refetch } = useReplacementProposals(queryParams);
+
+  // Update status hook
+  const { updateStatus } = useUpdateReplacementProposalStatus();
+
+  // Transform API data to match component expectations
+  const proposals = useMemo(() => {
+    if (!apiData?.data) return [];
+    return apiData.data;
+  }, [apiData]);
+
+  // Transform to ReplacementRequestItem format for components
+  const transformedData = useMemo(() => {
+    return proposals.map((proposal) => ({
+      id: proposal.id,
+      proposalCode: proposal.proposalCode,
+      title: proposal.title || "Chưa xác định",
+      description: proposal.description || "",
+      createdBy: proposal.proposer?.fullName || "Chưa xác định",
+      components:
+        proposal.items?.map((item) => ({
+          id: item.id,
+          componentName: item.oldComponent?.name || "Chưa xác định",
+          componentType: (item.oldComponent?.componentType || "OTHER") as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+          assetId: "", // Not available in API
+          assetName: "", // Not available in API
+          assetCode: "", // Not available in API
+          buildingName: "", // Not available in API
+          roomName: "", // Not available in API
+          newItemName: item.newItemName || "",
+          newItemSpecs: item.newItemSpecs || "",
+          quantity: item.quantity || 1,
+          reason: item.reason || "",
+          replacementSolution: "", // Not available in API
+          priority: "MEDIUM", // Default value
+          estimatedCost: 0, // Not available in API
+        })) || [],
+      status: proposal.status as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      createdAt: proposal.createdAt,
+      updatedAt: proposal.updatedAt,
+      proposerId: proposal.proposerId,
+    }));
+  }, [proposals]);
 
   const handleCreateSubmission = (requestId: string) => {
-    const request = requests.find((req) => req.id === requestId);
+    const request = proposals.find((req) => req.id === requestId);
     if (request) {
       setSelectedRequestForSubmission(request);
 
       // Auto-generate content based on the request
-      const proposer = users.find((u) => u.id === request.proposerId);
-      const componentsList = request.components
-        .map(
-          (comp) =>
-            `- ${comp.componentName} (${comp.assetCode}) tại ${comp.roomName}: ${comp.reason} → Thay thế bằng ${comp.newItemName} (${comp.newItemSpecs})`
-        )
-        .join("\n");
+      const proposerName = request.proposer?.fullName || "Không xác định";
+      const componentsList =
+        request.items
+          ?.map(
+            (item) =>
+              `- ${item.newItemName}${
+                item.newItemSpecs ? ` (${item.newItemSpecs})` : ""
+              }: ${item.reason || "Cần thay thế"} (Số lượng: ${item.quantity})`
+          )
+          .join("\n") || "";
 
-      const locations = [
-        ...new Set(
-          request.components.map((c) => `${c.buildingName} - ${c.roomName}`)
-        ),
-      ].join(", ");
-
-      const autoContent = `Phòng Lab ${locations} của Khoa CNTT đang cần thay thế thiết bị. Một số linh kiện máy tính đã hư hỏng và cần được thay thế để đảm bảo hoạt động ổn định của hệ thống.
+      const autoContent = `Khoa CNTT đang cần thay thế thiết bị. Một số linh kiện máy tính đã hư hỏng và cần được thay thế để đảm bảo hoạt động ổn định của hệ thống.
 
 Thông tin chi tiết về đề xuất thay thế:
 
@@ -127,12 +174,10 @@ Khoa CNTT kính trình Ban Giám hiệu phê duyệt chi ngân sách cho Phòng 
 
 Thông tin tổng hợp:
 - Mã đề xuất: ${request.proposalCode}
-- Tiêu đề: ${request.title}
-- Người đề xuất: ${proposer?.fullName || "Không xác định"}
-- Tổng số linh kiện cần thay: ${request.components.length}
-- Lý do chung: ${[...new Set(request.components.map((c) => c.reason))].join(
-        "; "
-      )}
+- Tiêu đề: ${request.title || "Đề xuất thay thế linh kiện"}
+- Người đề xuất: ${proposerName}
+- Tổng số linh kiện cần thay: ${request.items?.length || 0}
+- Mô tả: ${request.description || "Không có mô tả"}
 
 Khoa rất mong Ban Giám hiệu xem xét và đồng ý cho thực hiện.
 
@@ -142,64 +187,61 @@ Trân trọng kính trình.`;
         ...prev,
         content: autoContent,
         attachments: `Đề xuất ${request.proposalCode}`,
-        submittedBy: proposer?.fullName || "Giảng Thanh Trọn",
+        submittedBy: proposerName,
       }));
 
       setShowSubmissionModal(true);
     }
   };
 
-  const handleSubmitSubmission = () => {
+  const handleSubmitSubmission = async () => {
     if (!selectedRequestForSubmission) return;
 
-    // Simulate submission form creation
-    console.log("Creating submission form:", {
-      requestId: selectedRequestForSubmission.id,
-      proposalCode: selectedRequestForSubmission.proposalCode,
-      submissionFormData,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      await updateStatus(selectedRequestForSubmission.id, {
+        status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+      });
 
-    // Update request status to ĐÃ_LẬP_TỜ_TRÌNH
-    setRequests((prev) =>
-      prev.map((req) =>
-        req.id === selectedRequestForSubmission.id
-          ? {
-              ...req,
-              status: ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
-            }
-          : req
-      )
-    );
+      // Close modal and reset state
+      setShowSubmissionModal(false);
+      setSelectedRequestForSubmission(null);
 
-    // Close modal and reset state
-    setShowSubmissionModal(false);
-    setSelectedRequestForSubmission(null);
+      // Redirect immediately
+      router.push("/to-truong-ky-thuat/lap-to-trinh");
 
-    // Redirect immediately
-    console.log("Redirecting to /to-truong-ky-thuat/lap-to-trinh");
-    router.push("/to-truong-ky-thuat/lap-to-trinh");
+      // Show success message
+      Modal.success({
+        title: "Lập tờ trình thành công!",
+        content: `Tờ trình cho đề xuất ${selectedRequestForSubmission.proposalCode} đã được tạo và gửi tới Phòng Quản trị.`,
+        centered: true,
+        mask: false,
+        keyboard: false,
+      });
 
-    // Show success message without blocking redirect
-    Modal.success({
-      title: "Lập tờ trình thành công!",
-      content: `Tờ trình cho đề xuất ${selectedRequestForSubmission.proposalCode} đã được tạo và gửi tới Phòng Quản trị.`,
-      centered: true,
-      mask: false,
-      keyboard: false,
-    });
+      refetch();
+    } catch (err) {
+      console.error("Error creating submission:", err);
+      Modal.error({
+        title: "Lỗi",
+        content: err instanceof Error ? err.message : "Không thể lập tờ trình.",
+        centered: true,
+      });
+    }
   };
 
-  // Use helper functions
-  const filteredData = filterProposals(requests, selectedStatus, searchTerm);
-  const sortedData = sortProposals(filteredData, sortField, sortDirection);
-
-  // Pagination
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedData = sortedData.slice(startIndex, endIndex);
+  // Use helper functions - client-side filtering for selected items
+  const paginatedData = transformedData;
+  const totalFiltered = apiData?.total || 0;
 
   const handleSort = (field: string) => {
+    const apiField = mapSortFieldToAPI(field);
+
+    // If field is not supported by API, ignore
+    if (!apiField) {
+      console.warn(`Sort by ${field} is not supported by API`);
+      return;
+    }
+
     if (sortField === field) {
       if (sortDirection === "asc") {
         setSortDirection("desc");
@@ -212,6 +254,7 @@ Trân trọng kính trình.`;
       setSortField(field);
       setSortDirection("asc");
     }
+    setCurrentPage(1); // Reset to first page when sorting
   };
 
   // Xử lý checkbox
@@ -226,7 +269,9 @@ Trân trọng kính trình.`;
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedRowKeys(paginatedData.map((req) => req.id));
+      setSelectedRowKeys(
+        paginatedData.map((req: ReplacementProposal) => req.id)
+      );
     } else {
       setSelectedRowKeys([]);
     }
@@ -234,7 +279,7 @@ Trân trọng kính trình.`;
 
   // Hàm xuất Excel với Modal thông báo
   const handleExportExcel = async () => {
-    const selectedData = sortedData.filter((item) =>
+    const selectedData = proposals.filter((item: ReplacementProposal) =>
       selectedRowKeys.includes(item.id)
     );
 
@@ -249,19 +294,21 @@ Trân trọng kính trình.`;
       const XLSX = await import("xlsx");
 
       // Tạo dữ liệu Excel
-      const excelData = selectedData.map((item, index) => ({
-        STT: index + 1,
-        "Mã đề xuất": item.proposalCode,
-        "Tiêu đề": item.title || "Chưa xác định",
-        "Mô tả": item.description || "",
-        "Người tạo": item.createdBy || "Chưa xác định",
-        "Số linh kiện": item.components?.length || 0,
-        "Trạng thái":
-          STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG]?.text ||
-          item.status,
-        "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
-        "Ngày cập nhật": new Date(item.updatedAt).toLocaleDateString("vi-VN"),
-      }));
+      const excelData = selectedData.map(
+        (item: ReplacementProposal, index: number) => ({
+          STT: index + 1,
+          "Mã đề xuất": item.proposalCode,
+          "Tiêu đề": item.title || "Chưa xác định",
+          "Mô tả": item.description || "",
+          "Người tạo": item.proposer?.fullName || "Chưa xác định",
+          "Số linh kiện": item.items?.length || 0,
+          "Trạng thái":
+            STATUS_CONFIG[item.status as keyof typeof STATUS_CONFIG]?.text ||
+            item.status,
+          "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+          "Ngày cập nhật": new Date(item.updatedAt).toLocaleDateString("vi-VN"),
+        })
+      );
 
       // Tạo workbook và worksheet
       const wb = XLSX.utils.book_new();
@@ -374,9 +421,8 @@ Trân trọng kính trình.`;
               onSelectAll={handleSelectAll}
               onRowSelect={handleRowSelect}
               onSort={handleSort}
-              onApprove={handleApprove}
-              onReject={handleReject}
               onCreateSubmission={handleCreateSubmission}
+              onDataChange={refetch}
             />
 
             {/* Mobile Card View */}
@@ -400,9 +446,8 @@ Trân trọng kính trình.`;
                 const isSelected = selectedRowKeys.includes(id);
                 handleRowSelect(id, !isSelected);
               }}
-              onApprove={handleApprove}
-              onReject={handleReject}
               onCreateSubmission={handleCreateSubmission}
+              onDataChange={refetch}
             />
 
             {/* Spacer để đảm bảo chiều cao tối thiểu */}
@@ -414,7 +459,7 @@ Trân trọng kính trình.`;
             <Pagination
               currentPage={currentPage}
               pageSize={pageSize}
-              total={sortedData.length}
+              total={totalFiltered}
               onPageChange={setCurrentPage}
               onPageSizeChange={setPageSize}
               showSizeChanger={true}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   InspectionDetailHeader,
@@ -13,8 +13,11 @@ import {
   NotFoundState,
 } from "@/components/leadTechnician/inspectionDetail";
 import { SignConfirmModal } from "@/components/modal";
-import { getReplacementRequestsByStatus } from "@/lib/mockData/replacementRequests";
-import { ReplacementStatus, ReplacementRequestItem } from "@/types/repair";
+import {
+  useReplacementProposal,
+  useUpdateReplacementProposalStatus,
+} from "@/hooks/useReplacementProposals";
+import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 
 // Interface cho InspectionReport (sử dụng interface hiện có)
 interface InspectionReport {
@@ -42,100 +45,112 @@ interface InspectionItem {
   proposedSolution: string;
 }
 
-// Chuyển đổi ReplacementRequestItem thành InspectionReport
-const convertToInspectionReport = (
-  request: ReplacementRequestItem
-): InspectionReport => {
-  // Lấy tên file từ submissionFormUrl để hiển thị tờ trình liên quan
-  const getRelatedReportTitle = (
-    submissionFormUrl?: string,
-    fallbackTitle?: string
-  ) => {
-    if (submissionFormUrl) {
-      const fileName = submissionFormUrl.split("/").pop() || submissionFormUrl;
-      return `Tờ trình: ${fileName}`;
-    }
-    return fallbackTitle || "Không có tờ trình liên quan";
-  };
-
-  const items: InspectionItem[] = request.components.map((component) => ({
-    id: component.id,
-    assetCode: component.assetCode,
-    assetName: component.assetName,
-    location: `${component.buildingName} - ${component.roomName}${
-      component.machineLabel ? ` - Máy ${component.machineLabel}` : ""
-    }`,
-    condition: "Hư hỏng - " + component.reason,
-    proposedSolution: `Thay thế bằng ${component.newItemName} (${component.newItemSpecs})`,
-  }));
-
-  return {
-    id: request.id,
-    reportNumber: request.proposalCode,
-    title: `Biên bản kiểm tra - ${request.title}`,
-    relatedReportTitle: getRelatedReportTitle(
-      request.submissionFormUrl,
-      request.title
-    ),
-    inspectionDate: new Date(request.createdAt).toISOString().split("T")[0],
-    department: "Phòng Quản trị Tài sản",
-    createdBy: request.createdBy || "Unknown",
-    createdAt: request.createdAt,
-    status: "pending" as const,
-    items,
-    notes: request.description,
-  };
-};
-
 export default function ChiTietBienBanPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const reportId = searchParams.get("id");
 
-  const [report, setReport] = useState<InspectionReport | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showSignModal, setShowSignModal] = useState(false);
+  const [isSigningInProgress, setIsSigningInProgress] = useState(false);
 
-  useEffect(() => {
-    if (reportId) {
-      // Lấy các đề xuất có trạng thái ĐÃ_GỬI_BIÊN_BẢN
-      const replacementRequests = getReplacementRequestsByStatus(
-        ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN
-      );
+  // Fetch data from API
+  const { data: proposal, loading, error } = useReplacementProposal(reportId);
 
-      // Tìm replacement request theo ID
-      const foundRequest = replacementRequests.find(
-        (req) => req.id === reportId
-      );
+  // API hook for updating status
+  const { updateStatus } = useUpdateReplacementProposalStatus();
 
-      if (foundRequest) {
-        const inspectionReport = convertToInspectionReport(foundRequest);
-        setReport(inspectionReport);
-      } else {
-        setReport(null);
+  // Transform API data to InspectionReport format
+  const report: InspectionReport | null = useMemo(() => {
+    if (!proposal) return null;
+
+    const items: InspectionItem[] = (proposal.items || []).map((item) => {
+      // Format asset code - use component ID as identifier
+      const assetCode = item.oldComponent?.id
+        ? `COMP-${item.oldComponent.id.substring(0, 8).toUpperCase()}`
+        : "N/A";
+
+      // Get room location from API response
+      const location =
+        item.oldComponent?.roomLocation || "Chưa xác định vị trí";
+
+      return {
+        id: item.id,
+        assetCode,
+        assetName: item.oldComponent?.name || "Không xác định",
+        location,
+        condition: `Hư hỏng - ${item.reason || "Không rõ"}`,
+        proposedSolution: `Thay thế bằng ${item.newItemName}${
+          item.newItemSpecs ? ` (${item.newItemSpecs})` : ""
+        }`,
+      };
+    });
+
+    const getRelatedReportTitle = () => {
+      if (proposal.submissionFormUrl) {
+        const fileName =
+          proposal.submissionFormUrl.split("/").pop() ||
+          proposal.submissionFormUrl;
+        return `Tờ trình: ${fileName}`;
       }
-    }
-    setLoading(false);
-  }, [reportId]);
+      return proposal.title || "Không có tờ trình liên quan";
+    };
+
+    return {
+      id: proposal.id,
+      reportNumber: proposal.proposalCode,
+      title: `Biên bản kiểm tra - ${proposal.title || "Không có tiêu đề"}`,
+      relatedReportTitle: getRelatedReportTitle(),
+      inspectionDate: new Date(proposal.createdAt).toISOString().split("T")[0],
+      department: "Phòng Quản trị Tài sản",
+      createdBy: proposal.proposer?.fullName || "Unknown",
+      createdAt: proposal.createdAt,
+      status:
+        proposal.status === ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN
+          ? ("signed" as const)
+          : ("pending" as const),
+      leaderSignature: proposal.teamLeadApprover?.fullName,
+      leaderSignedAt:
+        proposal.status === ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN
+          ? proposal.updatedAt
+          : undefined,
+      items,
+      notes: proposal.description || "",
+    };
+  }, [proposal]);
 
   const handleSignReport = () => {
     setShowSignModal(true);
   };
 
-  const confirmSign = () => {
-    if (report) {
-      const updatedReport = {
-        ...report,
-        status: "signed" as const,
-        leaderSignature: "Nguyễn Thanh Tú",
-        leaderSignedAt: new Date().toISOString(),
-      };
-      setReport(updatedReport);
+  const confirmSign = async () => {
+    if (!report || !reportId) return;
 
-      // TODO: Trong thực tế sẽ gọi API để cập nhật trạng thái thành ĐÃ_KÝ_BIÊN_BẢN
-      console.log("Signed report:", updatedReport);
+    setIsSigningInProgress(true);
+
+    try {
+      // Call API to update status to ĐÃ_KÝ_BIÊN_BẢN
+      await updateStatus(reportId, {
+        status: ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
+      });
+
+      console.log("✅ Successfully signed inspection report:", {
+        reportId,
+        newStatus: ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
+      });
 
       setShowSignModal(false);
+
+      // Redirect back to list after signing
+      router.push("/to-truong-ky-thuat/bien-ban");
+    } catch (error) {
+      console.error("❌ Error signing report:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Có lỗi xảy ra khi ký biên bản. Vui lòng thử lại."
+      );
+    } finally {
+      setIsSigningInProgress(false);
     }
   };
 
@@ -143,10 +158,32 @@ export default function ChiTietBienBanPage() {
     router.back();
   };
 
+  // Loading state
   if (loading) {
     return <LoadingState />;
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <div className="bg-white rounded-lg shadow p-8">
+          <div className="text-red-500 text-xl mb-4">❌</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Lỗi tải dữ liệu
+          </h3>
+          <p className="text-gray-500 mb-4">{error}</p>
+          <button
+            onClick={handleGoBack}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Not found state
   if (!report) {
     return <NotFoundState onGoBack={handleGoBack} />;
   }
@@ -199,6 +236,7 @@ export default function ChiTietBienBanPage() {
         onConfirm={confirmSign}
         reportTitle={report?.title || ""}
         reportNumber={report?.reportNumber || ""}
+        isLoading={isSigningInProgress}
       />
     </div>
   );

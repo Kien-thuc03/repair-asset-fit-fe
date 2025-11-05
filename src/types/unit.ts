@@ -40,6 +40,7 @@ export interface Room {
   status: RoomStatus;
   unitId?: string;
   assignedTechnician?: string; // ID của kỹ thuật viên được phân công
+  roomCode?: string;
 }
 
 // Interface cho khu vực phân công kỹ thuật viên

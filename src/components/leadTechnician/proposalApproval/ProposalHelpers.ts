@@ -3,8 +3,9 @@ import {
   ReplacementRequestItem,
   ComponentFromRequest,
 } from "@/types";
+import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 
-// Status configuration
+// Status configuration - Support both old and new enum
 export const STATUS_CONFIG = {
   [ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: {
     text: "Chờ tổ trưởng duyệt",
@@ -41,6 +42,15 @@ export const STATUS_CONFIG = {
   [ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: {
     text: "Đã hoàn tất mua sắm",
     color: "purple",
+  },
+  // Add missing statuses from new enum
+  [ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: {
+    text: "Đã gửi biên bản",
+    color: "cyan",
+  },
+  [ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: {
+    text: "Đã ký biên bản",
+    color: "geekblue",
   },
 };
 

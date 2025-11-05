@@ -10,10 +10,12 @@ import {
   AlertTriangle,
   CheckCircle,
   FileCheck,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
-import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
-import { ReplacementStatus } from "@/types/repair";
+import { useReplacementProposal } from "@/hooks";
+import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 
 export default function RequestDetailPage() {
   const params = useParams();
@@ -21,30 +23,30 @@ export default function RequestDetailPage() {
   const id = params.id as string;
   const [showInspectionForm, setShowInspectionForm] = useState(false);
 
-  // Tìm replacement request theo ID
-  const request = mockReplacementRequestItem.find((r) => r.id === id);
+  // Fetch proposal data từ API
+  const { data: proposal, loading, error } = useReplacementProposal(id);
 
-  const getStatusColor = (status: ReplacementStatus) => {
+  const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-green-100 text-green-800 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  const getStatusIcon = (status: ReplacementStatus) => {
+  const getStatusIcon = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return <CheckCircle className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
     }
   };
 
-  const getStatusText = (status: ReplacementStatus) => {
+  const getStatusText = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "Đã duyệt - Cần lập biên bản";
       default:
         return status;
@@ -69,7 +71,33 @@ export default function RequestDetailPage() {
     }, 300);
   };
 
-  if (!request) {
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-64 space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+        <p className="text-gray-600">Đang tải dữ liệu...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-64 space-y-4">
+        <AlertCircle className="h-12 w-12 text-red-600" />
+        <h3 className="text-lg font-medium text-gray-900">
+          Không thể tải dữ liệu
+        </h3>
+        <p className="text-gray-500">
+          Đã xảy ra lỗi khi tải thông tin tờ trình. Vui lòng thử lại sau.
+        </p>
+      </div>
+    );
+  }
+
+  // Not found state
+  if (!proposal) {
     return (
       <div className="flex flex-col items-center justify-center min-h-64 space-y-4">
         <AlertTriangle className="h-12 w-12 text-gray-400" />
@@ -117,7 +145,7 @@ export default function RequestDetailPage() {
               {
                 title: (
                   <div className="flex items-center">
-                    <span>Chi tiết biên bản {request.proposalCode}</span>
+                    <span>Chi tiết biên bản {proposal.proposalCode}</span>
                   </div>
                 ),
               },
@@ -134,16 +162,16 @@ export default function RequestDetailPage() {
                   Chi tiết tờ trình thay thế linh kiện
                 </h1>
                 <p className="mt-1 text-xs sm:text-sm text-gray-500 truncate">
-                  Mã tờ trình: {request.proposalCode}
+                  Mã tờ trình: {proposal.proposalCode}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <span
                   className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium border ${getStatusColor(
-                    request.status
+                    proposal.status
                   )}`}>
-                  {getStatusIcon(request.status)}
-                  <span className="ml-2">{getStatusText(request.status)}</span>
+                  {getStatusIcon(proposal.status)}
+                  <span className="ml-2">{getStatusText(proposal.status)}</span>
                 </span>
                 <button
                   onClick={handleCreateInspectionReport}
@@ -169,7 +197,7 @@ export default function RequestDetailPage() {
                       Mã tờ trình
                     </label>
                     <p className="mt-1 text-xs sm:text-sm text-gray-900">
-                      {request.proposalCode}
+                      {proposal.proposalCode}
                     </p>
                   </div>
                   <div>
@@ -177,7 +205,7 @@ export default function RequestDetailPage() {
                       Tiêu đề
                     </label>
                     <p className="mt-1 text-xs sm:text-sm text-gray-900">
-                      {request.title}
+                      {proposal.title || "Không có tiêu đề"}
                     </p>
                   </div>
                   <div>
@@ -186,7 +214,7 @@ export default function RequestDetailPage() {
                     </label>
                     <div className="mt-1 flex items-center text-xs sm:text-sm text-gray-900">
                       <Calendar className="w-3 sm:w-4 h-3 sm:h-4 mr-1.5 sm:mr-2 text-gray-400" />
-                      {new Date(request.createdAt).toLocaleDateString("vi-VN")}
+                      {new Date(proposal.createdAt).toLocaleDateString("vi-VN")}
                     </div>
                   </div>
                   <div>
@@ -195,7 +223,7 @@ export default function RequestDetailPage() {
                     </label>
                     <div className="mt-1 flex items-center text-xs sm:text-sm text-gray-900">
                       <User className="w-3 sm:w-4 h-3 sm:h-4 mr-1.5 sm:mr-2 text-gray-400" />
-                      {request.createdBy}
+                      {proposal.proposer?.fullName || "Chưa xác định"}
                     </div>
                   </div>
                   <div className="col-span-1 md:col-span-2">
@@ -203,7 +231,7 @@ export default function RequestDetailPage() {
                       Mô tả
                     </label>
                     <p className="mt-1 text-xs sm:text-sm text-gray-900">
-                      {request.description}
+                      {proposal.description || "Không có mô tả"}
                     </p>
                   </div>
                 </div>
@@ -213,7 +241,7 @@ export default function RequestDetailPage() {
             {/* Components List */}
             <div>
               <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
-                Danh sách linh kiện cần thay thế ({request.components.length}{" "}
+                Danh sách linh kiện cần thay thế ({proposal.items?.length || 0}{" "}
                 loại)
               </h3>
 
@@ -243,9 +271,9 @@ export default function RequestDetailPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {request.components.map((component, index) => (
+                    {proposal.items?.map((item, index) => (
                       <tr
-                        key={component.id}
+                        key={item.id}
                         className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {index + 1}
@@ -254,10 +282,11 @@ export default function RequestDetailPage() {
                           <div className="text-sm text-gray-900">
                             <div className="flex items-center">
                               <Building className="w-4 h-4 text-gray-400 mr-2" />
-                              {component.buildingName} - {component.roomName}
+                              {item.oldComponent?.roomLocation ||
+                                "Chưa xác định vị trí"}
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
-                              Máy: {component.machineLabel}
+                              {item.oldComponent?.name || "N/A"}
                             </div>
                           </div>
                         </td>
@@ -265,10 +294,11 @@ export default function RequestDetailPage() {
                           <div className="flex items-start space-x-3">
                             <div>
                               <div className="text-sm font-medium text-gray-900">
-                                {component.componentName}
+                                {item.oldComponent?.componentType ||
+                                  "Không xác định"}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {component.assetName} ({component.assetCode})
+                                {item.oldComponent?.componentSpecs || "N/A"}
                               </div>
                             </div>
                           </div>
@@ -276,34 +306,34 @@ export default function RequestDetailPage() {
                         <td className="px-6 py-4">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {component.newItemName}
+                              {item.newItemName || "Không xác định"}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {component.newItemSpecs}
+                              {item.newItemSpecs || "N/A"}
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="text-sm font-medium text-gray-900">
-                            {component.quantity}
+                            {item.quantity}
                           </span>
                         </td>
                         <td className="px-6 py-4">
                           <p className="text-sm text-gray-900">
-                            {component.reason}
+                            {item.reason || "Không có lý do"}
                           </p>
                         </td>
                       </tr>
-                    ))}
+                    )) || []}
                   </tbody>
                 </table>
               </div>
 
               {/* Mobile Card View */}
               <div className="lg:hidden space-y-3">
-                {request.components.map((component, index) => (
+                {proposal.items?.map((item, index) => (
                   <div
-                    key={component.id}
+                    key={item.id}
                     className="bg-white border rounded-lg shadow-sm p-3 space-y-3">
                     {/* Header */}
                     <div className="flex items-start gap-2">
@@ -312,10 +342,10 @@ export default function RequestDetailPage() {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900">
-                          {component.componentName}
+                          {item.oldComponent?.componentType || "Không xác định"}
                         </p>
                         <p className="text-xs text-gray-600 mt-0.5">
-                          {component.assetName} ({component.assetCode})
+                          {item.oldComponent?.name || "N/A"}
                         </p>
                       </div>
                     </div>
@@ -325,10 +355,11 @@ export default function RequestDetailPage() {
                       <Building className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                       <div className="text-xs">
                         <p className="font-medium text-gray-900">
-                          {component.buildingName} - {component.roomName}
+                          {item.oldComponent?.roomLocation ||
+                            "Chưa xác định vị trí"}
                         </p>
                         <p className="text-gray-600 mt-0.5">
-                          Máy: {component.machineLabel}
+                          {item.oldComponent?.componentSpecs || "N/A"}
                         </p>
                       </div>
                     </div>
@@ -338,13 +369,13 @@ export default function RequestDetailPage() {
                       <div>
                         <span className="text-gray-500">Số lượng:</span>
                         <p className="font-medium text-gray-900 mt-0.5">
-                          {component.quantity}
+                          {item.quantity}
                         </p>
                       </div>
                       <div>
                         <span className="text-gray-500">Lý do:</span>
                         <p className="font-medium text-gray-900 mt-0.5 line-clamp-2">
-                          {component.reason}
+                          {item.reason || "Không có lý do"}
                         </p>
                       </div>
                     </div>
@@ -356,15 +387,15 @@ export default function RequestDetailPage() {
                           Linh kiện thay thế:
                         </span>
                         <p className="text-xs font-medium text-green-700 mt-0.5">
-                          {component.newItemName}
+                          {item.newItemName || "Không xác định"}
                         </p>
                         <p className="text-xs text-gray-600 mt-0.5">
-                          {component.newItemSpecs}
+                          {item.newItemSpecs || "N/A"}
                         </p>
                       </div>
                     </div>
                   </div>
-                ))}
+                )) || []}
               </div>
             </div>
 
@@ -374,25 +405,25 @@ export default function RequestDetailPage() {
                 <div>
                   <span className="font-medium">Ngày tạo:</span>
                   <span className="ml-2 block sm:inline mt-1 sm:mt-0">
-                    {new Date(request.createdAt).toLocaleString("vi-VN")}
+                    {new Date(proposal.createdAt).toLocaleString("vi-VN")}
                   </span>
                 </div>
                 <div>
                   <span className="font-medium">Cập nhật lần cuối:</span>
                   <span className="ml-2 block sm:inline mt-1 sm:mt-0">
-                    {new Date(request.updatedAt).toLocaleString("vi-VN")}
+                    {new Date(proposal.updatedAt).toLocaleString("vi-VN")}
                   </span>
                 </div>
                 <div>
                   <span className="font-medium">Người tạo:</span>
                   <span className="ml-2 block sm:inline mt-1 sm:mt-0">
-                    {request.createdBy}
+                    {proposal.proposer?.fullName || "Chưa xác định"}
                   </span>
                 </div>
                 <div>
                   <span className="font-medium">Trạng thái:</span>
                   <span className="ml-2 block sm:inline mt-1 sm:mt-0">
-                    {getStatusText(request.status)}
+                    {getStatusText(proposal.status)}
                   </span>
                 </div>
               </div>
@@ -534,28 +565,29 @@ export default function RequestDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {request.components.map((component, index) => (
-                      <tr key={component.id}>
+                    {proposal.items?.map((item, index) => (
+                      <tr key={item.id}>
                         <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
                           {index + 1}
                         </td>
                         <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
                           <div className="font-medium">
-                            {component.componentName}
+                            {item.oldComponent?.componentType ||
+                              "Không xác định"}
                           </div>
                           <div className="text-xs text-gray-600">
-                            {component.assetName} ({component.assetCode})
+                            {item.oldComponent?.name || "N/A"}
                           </div>
                         </td>
                         <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
-                          {component.quantity}
+                          {item.quantity}
                         </td>
                         <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
                           <div className="text-xs">
-                            {component.buildingName} - {component.roomName}
+                            {item.oldComponent?.roomLocation || "Chưa xác định"}
                           </div>
                           <div className="text-xs text-gray-600">
-                            Máy: {component.machineLabel}
+                            {item.oldComponent?.componentSpecs || "N/A"}
                           </div>
                         </td>
                         <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
@@ -564,14 +596,14 @@ export default function RequestDetailPage() {
                         <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
                           <div className="text-xs">- Đề nghị thay thế:</div>
                           <div className="text-xs font-medium">
-                            1. {component.newItemName}
+                            1. {item.newItemName || "Không xác định"}
                           </div>
                           <div className="text-xs">
-                            2. {component.newItemSpecs}
+                            2. {item.newItemSpecs || "N/A"}
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    )) || []}
                   </tbody>
                 </table>
               </div>

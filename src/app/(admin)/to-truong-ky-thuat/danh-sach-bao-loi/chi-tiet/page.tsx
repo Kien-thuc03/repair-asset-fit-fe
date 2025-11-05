@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Breadcrumb, Steps, Tag, Card, Divider, Spin, Alert } from "antd";
 import {
@@ -17,51 +17,28 @@ import {
   Monitor,
   Info,
 } from "lucide-react";
-import { mockRepairRequests, repairRequestStatusConfig } from "@/lib/mockData";
-import { RepairStatus, RepairRequest } from "@/types";
-import {
-  ActionPanel,
-  HistoryCard,
-} from "@/components/technician/requestDetailKTV";
+import { repairRequestStatusConfig } from "@/lib/mockData/repairRequests";
+import { RepairStatus, RepairRequestWithDetails } from "@/types";
+import { HistoryCard } from "@/components/technician/requestDetailKTV";
 import ImageViewer from "@/components/ui/ImageViewer";
+import { useRepairDetail } from "@/hooks/useRepairs";
 
 export default function ChiTietBaoLoiPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const requestId = searchParams.get("id");
-  const [currentRequest, setCurrentRequest] = useState<RepairRequest | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
+  const [currentRequest, setCurrentRequest] =
+    useState<RepairRequestWithDetails | null>(null);
 
-  const req = useMemo(
-    () => mockRepairRequests.find((r) => r.id === requestId),
-    [requestId]
-  );
+  // Fetch data from API
+  const { data, loading, error } = useRepairDetail(requestId || "");
 
-  // Tự động cập nhật trạng thái khi xem chi tiết
+  // Cập nhật currentRequest khi data thay đổi
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      if (req && req.status === RepairStatus.CHỜ_TIẾP_NHẬN) {
-        // Tự động chuyển trạng thái sang ĐÃ_TIẾP_NHẬN
-        const updatedReq = {
-          ...req,
-          status: RepairStatus.ĐÃ_TIẾP_NHẬN,
-          acceptedAt: new Date().toISOString(),
-        };
-        setCurrentRequest(updatedReq);
-
-        // Trong thực tế, đây sẽ là API call để cập nhật trạng thái
-        // await updateRepairRequestStatus(req.id, RepairStatus.ĐÃ_TIẾP_NHẬN)
-      } else {
-        setCurrentRequest(req || null);
-      }
-      setLoading(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [req]);
+    if (data) {
+      setCurrentRequest(data as RepairRequestWithDetails);
+    }
+  }, [data]);
 
   // Helper function to get status step
   const getStatusStep = (status: RepairStatus) => {
@@ -96,6 +73,55 @@ export default function ChiTietBaoLoiPage() {
           <Spin size="large" />
           <p className="mt-4 text-gray-600">Đang tải thông tin yêu cầu...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error || !requestId) {
+    return (
+      <div className="space-y-6">
+        {/* Breadcrumb for error */}
+        <Breadcrumb
+          items={[
+            {
+              href: "/to-truong-ky-thuat",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              href: "/to-truong-ky-thuat/danh-sach-bao-loi",
+              title: (
+                <div className="flex items-center">
+                  <span>Danh sách báo lỗi</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Chi tiết</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+        <Alert
+          message="Có lỗi xảy ra"
+          description={error || "Không tìm thấy ID yêu cầu sửa chữa."}
+          type="error"
+          action={
+            <button
+              onClick={() =>
+                router.push("/to-truong-ky-thuat/danh-sach-bao-loi")
+              }
+              className="text-blue-600 hover:underline text-sm">
+              Quay lại danh sách
+            </button>
+          }
+        />
       </div>
     );
   }
@@ -278,16 +304,6 @@ export default function ChiTietBaoLoiPage() {
               description="Yêu cầu đang được xử lý thay thế linh kiện. Vui lòng theo dõi tại trang Quản lý thay thế linh kiện."
               type="warning"
               icon={<Package />}
-              showIcon
-            />
-          )}
-          {currentRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN && (
-            <Alert
-              className="mt-4"
-              message="Yêu cầu chưa được tiếp nhận"
-              description="Hệ thống sẽ tự động chuyển trạng thái sang 'Đã tiếp nhận' khi bạn xem chi tiết này."
-              type="info"
-              icon={<Clock />}
               showIcon
             />
           )}
@@ -482,27 +498,13 @@ export default function ChiTietBaoLoiPage() {
               )}
           </Card>
 
-          <ActionPanel
-            initStatus={currentRequest.status}
-            assetId={currentRequest.computerAssetId} // Truyền computerAssetId
-            errorTypeName={currentRequest.errorTypeName} // Truyền errorTypeName để xác định loại lỗi
-            onCreateReplacement={(parts) => {
-              // In a real app, you'd likely pass this data to the replacement request page
-              console.log("Creating replacement request with parts:", parts);
-              router.push("/to-truong-ky-thuat/quan-ly-thay-the-linh-kien");
-            }}
-            onStatusUpdate={(newStatus: RepairStatus, notes: string) => {
-              // Cập nhật trạng thái yêu cầu
-              const updatedReq = {
-                ...currentRequest,
-                status: newStatus,
-                resolutionNotes: notes,
-                ...(newStatus === RepairStatus.ĐÃ_HOÀN_THÀNH && {
-                  completedAt: new Date().toISOString(),
-                }),
-              };
-              setCurrentRequest(updatedReq);
-            }}
+          {/* Read-only note for Team Lead */}
+          <Alert
+            message="Chế độ xem"
+            description="Bạn đang xem thông tin yêu cầu sửa chữa với quyền Tổ trưởng Kỹ thuật. Chỉ Kỹ thuật viên mới có thể thay đổi trạng thái yêu cầu."
+            type="info"
+            showIcon
+            icon={<Info className="w-4 h-4" />}
           />
         </div>
         <div className="xl:col-span-1">

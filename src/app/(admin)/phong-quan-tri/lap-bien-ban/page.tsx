@@ -12,15 +12,19 @@ import {
   CheckCircle,
   Download,
   XCircle,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Breadcrumb, Modal, Button } from "antd";
-import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
-import {
-  ReplacementRequestItem,
-  ReplacementStatus,
-  ComponentFromRequest,
-} from "@/types/repair";
 import { SortableHeader } from "@/components/common";
+import { useReplacementProposals } from "@/hooks";
+import {
+  ReplacementProposal,
+  ReplacementProposalStatus,
+} from "@/lib/api/replacement-proposals";
+
+type SortField = keyof ReplacementProposal;
+type SortDirection = "asc" | "desc" | null;
 
 export default function LapBienBanPage() {
   const router = useRouter();
@@ -28,13 +32,8 @@ export default function LapBienBanPage() {
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("search") || ""
   );
-  // Không còn sử dụng bộ lọc trạng thái, chỉ giữ tìm kiếm
-  const [sortField, setSortField] = useState<
-    keyof ReplacementRequestItem | null
-  >(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
-    null
-  );
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
   // Export modal states
@@ -43,8 +42,19 @@ export default function LapBienBanPage() {
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
 
+  // Fetch proposals với status ĐÃ_DUYỆT_TỜ_TRÌNH
+  const {
+    data: apiData,
+    loading,
+    error,
+  } = useReplacementProposals({
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+    page: 1,
+    limit: 1000,
+  });
+
   // Handle sorting
-  const handleSort = (field: keyof ReplacementRequestItem) => {
+  const handleSort = (field: SortField) => {
     if (sortField === field) {
       // Toggle direction or reset
       if (sortDirection === "asc") {
@@ -61,23 +71,18 @@ export default function LapBienBanPage() {
     }
   };
 
-  // Chỉ lấy các tờ trình đã được duyệt để tạo biên bản kiểm tra
-  const approvedRequests = mockReplacementRequestItem.filter(
-    (request) => request.status === ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-  );
-
-  const getStatusColor = (status: ReplacementStatus) => {
+  const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-green-100 text-green-800 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  const getStatusIcon = (status: ReplacementStatus) => {
+  const getStatusIcon = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return <CheckCircle className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
@@ -86,21 +91,20 @@ export default function LapBienBanPage() {
 
   // Lọc và sắp xếp dữ liệu
   const filteredReports = useMemo(() => {
-    let filtered = approvedRequests;
+    const proposals = apiData?.data || [];
+    let filtered = [...proposals];
 
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(
-        (request) =>
-          request.proposalCode
+        (proposal) =>
+          proposal.proposalCode
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          request.description.toLowerCase().includes(searchTerm.toLowerCase())
+          proposal.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          proposal.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-
-    // Không còn sử dụng bộ lọc trạng thái
 
     // Apply sorting
     if (sortField && sortDirection) {
@@ -118,11 +122,8 @@ export default function LapBienBanPage() {
           case "status":
             compareValue = a.status.localeCompare(b.status);
             break;
-          case "createdBy":
-            compareValue = (a.createdBy || "").localeCompare(b.createdBy || "");
-            break;
           case "title":
-            compareValue = a.title.localeCompare(b.title);
+            compareValue = (a.title || "").localeCompare(b.title || "");
             break;
           default:
             compareValue = 0;
@@ -133,10 +134,33 @@ export default function LapBienBanPage() {
     }
 
     return filtered;
-  }, [approvedRequests, searchTerm, sortField, sortDirection]);
+  }, [apiData?.data, searchTerm, sortField, sortDirection]);
 
-  const handleViewReport = (requestId: string) => {
-    router.push(`/phong-quan-tri/lap-bien-ban/${requestId}`);
+  const handleViewReport = (proposalId: string) => {
+    router.push(`/phong-quan-tri/lap-bien-ban/${proposalId}`);
+  };
+
+  // Tính toán thống kê cho mỗi proposal
+  const getProposalStatistics = (proposal: ReplacementProposal) => {
+    const totalComponents = proposal.itemsCount || 0;
+    const totalQuantity =
+      proposal.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+
+    // Lấy danh sách phòng duy nhất từ items
+    const rooms = [
+      ...new Set(
+        proposal.items
+          ?.map((item) => item.oldComponent?.roomLocation)
+          .filter((location) => location) || []
+      ),
+    ];
+
+    return {
+      totalComponents,
+      totalQuantity,
+      totalRooms: rooms.length,
+      roomsList: rooms as string[],
+    };
   };
 
   // Xử lý xuất Excel
@@ -159,19 +183,19 @@ export default function LapBienBanPage() {
       const XLSX = await import("xlsx");
 
       // Tạo dữ liệu Excel
-      const excelData = dataToExport.map((report, index) => {
-        const stats = getRequestStatistics(report);
+      const excelData = dataToExport.map((proposal, index) => {
+        const stats = getProposalStatistics(proposal);
         return {
           STT: index + 1,
-          "Mã tờ trình": report.proposalCode,
-          "Tiêu đề": report.title,
-          "Người tạo": report.createdBy || "",
+          "Mã tờ trình": proposal.proposalCode,
+          "Tiêu đề": proposal.title || "",
+          "Người tạo": proposal.proposer?.fullName || "Chưa xác định",
           "Tổng số phòng": stats.totalRooms,
           "Tổng loại linh kiện": stats.totalComponents,
           "Tổng số lượng": stats.totalQuantity,
           "Trạng thái": "Đã duyệt",
-          "Ngày tạo": new Date(report.createdAt).toLocaleDateString("vi-VN"),
-          "Ngày cập nhật": new Date(report.updatedAt).toLocaleDateString(
+          "Ngày tạo": new Date(proposal.createdAt).toLocaleDateString("vi-VN"),
+          "Ngày cập nhật": new Date(proposal.updatedAt).toLocaleDateString(
             "vi-VN"
           ),
         };
@@ -233,30 +257,6 @@ export default function LapBienBanPage() {
     } else {
       setSelectedRowKeys(filteredReports.map((report) => report.id));
     }
-  };
-
-  // Tính toán thống kê cho mỗi request
-  const getRequestStatistics = (request: ReplacementRequestItem) => {
-    const totalComponents = request.components.length;
-    const totalQuantity = request.components.reduce(
-      (sum: number, comp: ComponentFromRequest) => sum + comp.quantity,
-      0
-    );
-    const rooms = [
-      ...new Set(
-        request.components.map(
-          (comp: ComponentFromRequest) =>
-            `${comp.buildingName} - ${comp.roomName}`
-        )
-      ),
-    ];
-
-    return {
-      totalComponents,
-      totalQuantity,
-      totalRooms: rooms.length,
-      roomsList: rooms,
-    };
   };
 
   return (
@@ -354,168 +354,182 @@ export default function LapBienBanPage() {
           </h2>
         </div>
 
-        <div className="overflow-x-auto min-h-[500px]">
-          <table className="w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="w-[5%] px-2 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedRowKeys.length === filteredReports.length &&
-                      filteredReports.length > 0
-                    }
-                    onChange={handleSelectAll}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                </th>
-                <SortableHeader<ReplacementRequestItem>
-                  field="proposalCode"
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  className="w-[18%] px-2">
-                  Mã tờ trình
-                </SortableHeader>
-                <SortableHeader<ReplacementRequestItem>
-                  field="updatedAt"
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  className="w-[12%] px-2">
-                  Ngày lập
-                </SortableHeader>
-                <SortableHeader<ReplacementRequestItem>
-                  field="createdBy"
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  className="w-[15%] px-2">
-                  Người tạo
-                </SortableHeader>
-                <th className="w-[25%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Phòng/Linh kiện
-                </th>
-                <SortableHeader<ReplacementRequestItem>
-                  field="status"
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  className="w-[15%] px-2">
-                  Trạng thái
-                </SortableHeader>
-                <th className="w-[10%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredReports.map((request) => {
-                const stats = getRequestStatistics(request);
-                return (
-                  <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-2 py-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedRowKeys.includes(request.id)}
-                        onChange={() => handleSelectItem(request.id)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                    </td>
-                    <td className="px-2 py-4">
-                      <div className="flex items-center">
-                        <FileText className="h-4 w-4 text-blue-500 mr-1 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {request.proposalCode}
-                          </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            {request.title}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-2 py-4">
-                      <div className="text-sm text-gray-900">
-                        {new Date(request.updatedAt).toLocaleDateString(
-                          "vi-VN"
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-2 py-4">
-                      <div className="flex items-center">
-                        <User className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
-                        <div className="text-sm text-gray-900 truncate">
-                          {request.createdBy}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-2 py-4">
-                      <div className="space-y-1">
-                        <div className="flex items-center text-xs text-gray-600">
-                          <Building className="h-3 w-3 text-gray-400 mr-1" />
-                          <span className="font-medium">
-                            {stats.totalRooms} phòng
-                          </span>
-                          <Package className="h-3 w-3 text-gray-400 ml-2 mr-1" />
-                          <span>{stats.totalComponents} loại</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {stats.roomsList
-                            .slice(0, 1)
-                            .map((room: string, index: number) => (
-                              <span
-                                key={index}
-                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-full">
-                                {room.length > 15
-                                  ? `${room.substring(0, 15)}...`
-                                  : room}
-                              </span>
-                            ))}
-                          {stats.roomsList.length > 1 && (
-                            <span className="text-xs text-gray-400">
-                              +{stats.roomsList.length - 1}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-2 py-4">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                          request.status
-                        )}`}>
-                        {getStatusIcon(request.status)}
-                        <span className="ml-1 truncate">Đã duyệt</span>
-                      </span>
-                    </td>
-                    <td className="px-2 py-4">
-                      <button
-                        onClick={() => handleViewReport(request.id)}
-                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <Eye className="w-3 h-3 mr-1" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Empty State */}
-        {filteredReports.length === 0 && (
-          <div className="text-center py-12">
-            <FileText className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              Không có biên bản nào
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm
-                ? "Không tìm thấy biên bản nào phù hợp với từ khóa tìm kiếm."
-                : "Chưa có biên bản nào được tạo."}
-            </p>
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
           </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center justify-center py-12">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+            <span className="ml-2 text-red-600">Lỗi: {error}</span>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            {filteredReports.length > 0 ? (
+              <div className="overflow-x-auto min-h-[500px]">
+                <table className="w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="w-[5%] px-2 py-3 text-left">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedRowKeys.length === filteredReports.length &&
+                            filteredReports.length > 0
+                          }
+                          onChange={handleSelectAll}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                      </th>
+                      <SortableHeader<ReplacementProposal>
+                        field="proposalCode"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                        className="w-[18%] px-2">
+                        Mã tờ trình
+                      </SortableHeader>
+                      <SortableHeader<ReplacementProposal>
+                        field="updatedAt"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                        className="w-[12%] px-2">
+                        Ngày lập
+                      </SortableHeader>
+                      <th className="w-[15%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Người tạo
+                      </th>
+                      <th className="w-[25%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Phòng/Linh kiện
+                      </th>
+                      <SortableHeader<ReplacementProposal>
+                        field="status"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                        className="w-[15%] px-2">
+                        Trạng thái
+                      </SortableHeader>
+                      <th className="w-[10%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Thao tác
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredReports.map((proposal) => {
+                      const stats = getProposalStatistics(proposal);
+                      return (
+                        <tr key={proposal.id} className="hover:bg-gray-50">
+                          <td className="px-2 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedRowKeys.includes(proposal.id)}
+                              onChange={() => handleSelectItem(proposal.id)}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                          </td>
+                          <td className="px-2 py-4">
+                            <div className="flex items-center">
+                              <FileText className="h-4 w-4 text-blue-500 mr-1 flex-shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <div className="text-sm font-medium text-gray-900 truncate">
+                                  {proposal.proposalCode}
+                                </div>
+                                <div className="text-xs text-gray-500 truncate">
+                                  {proposal.title || "Không có tiêu đề"}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-2 py-4">
+                            <div className="text-sm text-gray-900">
+                              {new Date(proposal.updatedAt).toLocaleDateString(
+                                "vi-VN"
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-2 py-4">
+                            <div className="flex items-center">
+                              <User className="h-3 w-3 text-gray-400 mr-1 flex-shrink-0" />
+                              <div className="text-sm text-gray-900 truncate">
+                                {proposal.proposer?.fullName || "Chưa xác định"}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-2 py-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center text-xs text-gray-600">
+                                <Building className="h-3 w-3 text-gray-400 mr-1" />
+                                <span className="font-medium">
+                                  {stats.totalRooms} phòng
+                                </span>
+                                <Package className="h-3 w-3 text-gray-400 ml-2 mr-1" />
+                                <span>{stats.totalComponents} loại</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {stats.roomsList
+                                  .slice(0, 1)
+                                  .map((room: string, index: number) => (
+                                    <span
+                                      key={index}
+                                      className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 truncate max-w-full">
+                                      {room.length > 15
+                                        ? `${room.substring(0, 15)}...`
+                                        : room}
+                                    </span>
+                                  ))}
+                                {stats.roomsList.length > 1 && (
+                                  <span className="text-xs text-gray-400">
+                                    +{stats.roomsList.length - 1}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-2 py-4">
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                                proposal.status
+                              )}`}>
+                              {getStatusIcon(proposal.status)}
+                              <span className="ml-1 truncate">Đã duyệt</span>
+                            </span>
+                          </td>
+                          <td className="px-2 py-4">
+                            <button
+                              onClick={() => handleViewReport(proposal.id)}
+                              className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                              <Eye className="w-3 h-3 mr-1" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  Không có biên bản nào
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {searchTerm
+                    ? "Không tìm thấy biên bản nào phù hợp với từ khóa tìm kiếm."
+                    : "Chưa có biên bản nào được tạo."}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -528,116 +542,137 @@ export default function LapBienBanPage() {
           </h2>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center justify-center py-12 text-red-600">
+            <AlertCircle className="h-8 w-8 mr-2" />
+            <span>Không thể tải dữ liệu. Vui lòng thử lại sau.</span>
+          </div>
+        )}
+
         {/* Mobile Cards */}
-        <div className="p-4 space-y-4">
-          {filteredReports.length > 0 ? (
-            filteredReports.map((request) => {
-              const stats = getRequestStatistics(request);
-              return (
-                <div
-                  key={request.id}
-                  className="bg-white border rounded-lg shadow-sm p-4 space-y-3">
-                  {/* Header Row */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-2 flex-1">
-                      <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 text-sm">
-                          {request.proposalCode}
+        {!loading && !error && (
+          <div className="p-4 space-y-4">
+            {filteredReports.length > 0 ? (
+              filteredReports.map((proposal) => {
+                const stats = getProposalStatistics(proposal);
+                return (
+                  <div
+                    key={proposal.id}
+                    className="bg-white border rounded-lg shadow-sm p-4 space-y-3">
+                    {/* Header Row */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2 flex-1">
+                        <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm">
+                            {proposal.proposalCode}
+                          </p>
+                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                            {proposal.title || "Không có tiêu đề"}
+                          </p>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={selectedRowKeys.includes(proposal.id)}
+                        onChange={() => handleSelectItem(proposal.id)}
+                        className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                      />
+                    </div>
+
+                    {/* Info Grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-500">Ngày lập:</span>
+                        <p className="font-medium text-gray-900 mt-0.5">
+                          {new Date(proposal.updatedAt).toLocaleDateString(
+                            "vi-VN"
+                          )}
                         </p>
-                        <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                          {request.title}
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Người tạo:</span>
+                        <p className="font-medium text-gray-900 mt-0.5">
+                          {proposal.proposer?.fullName || "Chưa xác định"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Phòng:</span>
+                        <p className="font-medium text-gray-900 mt-0.5">
+                          {stats.totalRooms} phòng
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Linh kiện:</span>
+                        <p className="font-medium text-gray-900 mt-0.5">
+                          {stats.totalComponents} loại
                         </p>
                       </div>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={selectedRowKeys.includes(request.id)}
-                      onChange={() => handleSelectItem(request.id)}
-                      className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0"
-                    />
-                  </div>
 
-                  {/* Info Grid */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div>
-                      <span className="text-gray-500">Ngày lập:</span>
-                      <p className="font-medium text-gray-900 mt-0.5">
-                        {new Date(request.updatedAt).toLocaleDateString(
-                          "vi-VN"
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Người tạo:</span>
-                      <p className="font-medium text-gray-900 mt-0.5">
-                        {request.createdBy}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Phòng:</span>
-                      <p className="font-medium text-gray-900 mt-0.5">
-                        {stats.totalRooms} phòng
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Linh kiện:</span>
-                      <p className="font-medium text-gray-900 mt-0.5">
-                        {stats.totalComponents} loại
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Room Info */}
-                  <div className="flex flex-wrap gap-1">
-                    {stats.roomsList
-                      .slice(0, 2)
-                      .map((room: string, index: number) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                          {room.length > 20
-                            ? `${room.substring(0, 20)}...`
-                            : room}
+                    {/* Room Info */}
+                    <div className="flex flex-wrap gap-1">
+                      {stats.roomsList
+                        .slice(0, 2)
+                        .map((room: string, index: number) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            {room.length > 20
+                              ? `${room.substring(0, 20)}...`
+                              : room}
+                          </span>
+                        ))}
+                      {stats.roomsList.length > 2 && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                          +{stats.roomsList.length - 2}
                         </span>
-                      ))}
-                    {stats.roomsList.length > 2 && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                        +{stats.roomsList.length - 2}
-                      </span>
-                    )}
-                  </div>
+                      )}
+                    </div>
 
-                  {/* Footer with Status and Action */}
-                  <div className="flex items-center justify-between gap-2 pt-2 border-t">
-                    <span
-                      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
-                        request.status
-                      )}`}>
-                      {getStatusIcon(request.status)}
-                      <span className="ml-1">Đã duyệt</span>
-                    </span>
-                    <button
-                      onClick={() => handleViewReport(request.id)}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
-                      <Eye className="h-3.5 w-3.5" />
-                      <span>Xem chi tiết</span>
-                    </button>
+                    {/* Footer with Status and Action */}
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(
+                          proposal.status
+                        )}`}>
+                        {getStatusIcon(proposal.status)}
+                        <span className="ml-1">Đã duyệt</span>
+                      </span>
+                      <button
+                        onClick={() => handleViewReport(proposal.id)}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>Xem chi tiết</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">
-                {searchTerm
-                  ? "Không tìm thấy biên bản nào phù hợp"
-                  : "Chưa có biên bản nào được tạo"}
-              </p>
-            </div>
-          )}
-        </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  Không có biên bản nào
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {searchTerm
+                    ? "Không tìm thấy biên bản nào phù hợp với từ khóa tìm kiếm."
+                    : "Chưa có biên bản nào được tạo."}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Export Success Modal */}
