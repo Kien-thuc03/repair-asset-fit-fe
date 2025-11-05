@@ -268,13 +268,19 @@ export default function ChiTietDuyetDeXuatPage() {
           {/* Show replacement item on mobile and tablet */}
           <div className="xl:hidden mt-2 pt-2 border-t border-gray-100">
             <div className="text-xs text-gray-500">Thay thế:</div>
-            <div className="font-medium text-xs sm:text-sm truncate">{record.newItemName}</div>
-            <div className="text-xs text-gray-500 truncate">{record.newItemSpecs}</div>
+            <div className="font-medium text-xs sm:text-sm truncate">
+              {record.newItemName}
+            </div>
+            <div className="text-xs text-gray-500 truncate">
+              {record.newItemSpecs}
+            </div>
           </div>
           {/* Show reason on mobile */}
           <div className="xl:hidden mt-2 pt-2 border-t border-gray-100">
             <div className="text-xs text-gray-500">Lý do:</div>
-            <div className="text-xs whitespace-pre-wrap break-words">{record.reason}</div>
+            <div className="text-xs whitespace-pre-wrap break-words">
+              {record.reason}
+            </div>
           </div>
         </div>
       ),
@@ -286,7 +292,9 @@ export default function ChiTietDuyetDeXuatPage() {
       responsive: ["xl"] as ("xs" | "sm" | "md" | "lg" | "xl" | "xxl")[],
       render: (record: (typeof tableData)[0]) => (
         <div className="min-w-0">
-          <div className="font-medium truncate text-xs sm:text-sm">{record.newItemName}</div>
+          <div className="font-medium truncate text-xs sm:text-sm">
+            {record.newItemName}
+          </div>
           <div className="text-xs text-gray-500 truncate">
             {record.newItemSpecs}
           </div>
@@ -300,7 +308,9 @@ export default function ChiTietDuyetDeXuatPage() {
       align: "center" as const,
       width: 50,
       render: (quantity: number) => (
-        <span className="font-medium text-blue-600 text-xs sm:text-sm">{quantity}</span>
+        <span className="font-medium text-blue-600 text-xs sm:text-sm">
+          {quantity}
+        </span>
       ),
     },
     {
