@@ -9,20 +9,23 @@ import {
   Download,
   CheckCircle,
   XCircle,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb, message, Button, Modal } from "antd";
-import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
-import { ReplacementRequestItem, ReplacementStatus } from "@/types/repair";
 import { Pagination, SortableHeader } from "@/components/common";
 import { SignConfirmModal } from "@/components/modal";
+import {
+  useReplacementProposals,
+  useUpdateReplacementProposalStatus,
+} from "@/hooks";
+import {
+  ReplacementProposal,
+  ReplacementProposalStatus,
+} from "@/lib/api/replacement-proposals";
 
-type SortField =
-  | "proposalCode"
-  | "createdAt"
-  | "title"
-  | "status"
-  | "createdBy";
+type SortField = keyof ReplacementProposal;
 type SortDirection = "asc" | "desc" | null;
 
 export default function GuiDeXuatThayThePage() {
@@ -35,8 +38,9 @@ export default function GuiDeXuatThayThePage() {
 
   // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [selectedItem, setSelectedItem] =
-    useState<ReplacementRequestItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ReplacementProposal | null>(
+    null
+  );
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Export modal states
@@ -44,6 +48,20 @@ export default function GuiDeXuatThayThePage() {
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
+
+  // Fetch proposals với status ĐÃ_KÝ_BIÊN_BẢN và ĐÃ_HOÀN_TẤT_MUA_SẮM
+  const {
+    data: apiData,
+    loading,
+    error,
+    refetch,
+  } = useReplacementProposals({
+    page: 1,
+    limit: 1000,
+  });
+
+  // Hook để cập nhật status
+  const { updateStatus } = useUpdateReplacementProposalStatus();
 
   // Hàm xuất Excel
   const handleExportExcel = async () => {
@@ -64,15 +82,13 @@ export default function GuiDeXuatThayThePage() {
       const excelData = selectedData.map((item, index) => ({
         STT: index + 1,
         "Mã đề xuất": item.proposalCode,
-        "Tiêu đề": item.title,
-        "Mô tả": item.description,
-        "Người tạo": item.createdBy || "Chưa xác định",
-        "Số lượng linh kiện": item.components.length,
+        "Tiêu đề": item.title || "Không có tiêu đề",
+        "Mô tả": item.description || "Không có mô tả",
+        "Người tạo": item.proposer?.fullName || "Chưa xác định",
+        "Số lượng linh kiện": item.itemsCount || 0,
         "Trạng thái": getStatusText(item.status),
         "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
-      }));
-
-      // Tạo workbook và worksheet
+      })); // Tạo workbook và worksheet
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(excelData);
 
@@ -112,11 +128,12 @@ export default function GuiDeXuatThayThePage() {
   };
 
   const filteredData = useMemo(() => {
-    // Lọc dữ liệu: chỉ lấy các đề xuất có trạng thái ĐÃ_KÝ_BIÊN_BẢN và ĐÃ_HOÀN_TẤT_MUA_SẮM
-    let filtered = mockReplacementRequestItem.filter(
+    // Lọc dữ liệu từ API: chỉ lấy các đề xuất có trạng thái ĐÃ_KÝ_BIÊN_BẢN và ĐÃ_HOÀN_TẤT_MUA_SẮM
+    const proposals = apiData?.data || [];
+    let filtered = proposals.filter(
       (item) =>
-        item.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN ||
-        item.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
+        item.status === ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN ||
+        item.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
     );
 
     // Apply search filter
@@ -124,50 +141,40 @@ export default function GuiDeXuatThayThePage() {
       filtered = filtered.filter(
         (item) =>
           item.proposalCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase())
+          item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Apply sorting (only if sortField and sortDirection are set)
     if (sortField && sortDirection) {
       filtered.sort((a, b) => {
-        let aValue: string | Date;
-        let bValue: string | Date;
+        let compareValue = 0;
 
         switch (sortField) {
           case "createdAt":
-            aValue = new Date(a.createdAt);
-            bValue = new Date(b.createdAt);
+            compareValue =
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             break;
           case "proposalCode":
-            aValue = a.proposalCode;
-            bValue = b.proposalCode;
+            compareValue = a.proposalCode.localeCompare(b.proposalCode);
             break;
           case "title":
-            aValue = a.title;
-            bValue = b.title;
+            compareValue = (a.title || "").localeCompare(b.title || "");
             break;
           case "status":
-            aValue = a.status;
-            bValue = b.status;
-            break;
-          case "createdBy":
-            aValue = a.createdBy || "";
-            bValue = b.createdBy || "";
+            compareValue = a.status.localeCompare(b.status);
             break;
           default:
-            return 0;
+            compareValue = 0;
         }
 
-        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-        return 0;
+        return sortDirection === "asc" ? compareValue : -compareValue;
       });
     }
 
     return filtered;
-  }, [searchTerm, sortField, sortDirection]);
+  }, [apiData?.data, searchTerm, sortField, sortDirection]);
 
   // Pagination
   const totalItems = filteredData.length;
@@ -194,22 +201,22 @@ export default function GuiDeXuatThayThePage() {
     }
   };
 
-  const getStatusColor = (status: ReplacementStatus) => {
+  const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN:
+      case ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN:
         return "bg-blue-100 text-blue-800 border-blue-200";
-      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+      case ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
         return "bg-green-100 text-green-800 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  const getStatusText = (status: ReplacementStatus) => {
+  const getStatusText = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN:
+      case ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN:
         return "Đã ký biên bản";
-      case ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+      case ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
         return "Đã hoàn tất mua sắm";
       default:
         return status;
@@ -217,7 +224,7 @@ export default function GuiDeXuatThayThePage() {
   };
 
   // Xử lý mở modal xác nhận
-  const handleOpenConfirmModal = (item: ReplacementRequestItem) => {
+  const handleOpenConfirmModal = (item: ReplacementProposal) => {
     setSelectedItem(item);
     setShowConfirmModal(true);
   };
@@ -235,22 +242,10 @@ export default function GuiDeXuatThayThePage() {
     try {
       setIsProcessing(true);
 
-      // Trong thực tế sẽ gọi API để cập nhật trạng thái thành ĐÃ_HOÀN_TẤT_MUA_SẮM
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
-
-      // Cập nhật trạng thái trong mockData
-      const itemIndex = mockReplacementRequestItem.findIndex(
-        (item) => item.id === selectedItem.id
-      );
-
-      if (itemIndex !== -1) {
-        // Cập nhật trạng thái của item trong mockData
-        mockReplacementRequestItem[itemIndex] = {
-          ...mockReplacementRequestItem[itemIndex],
-          status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
-          updatedAt: new Date().toISOString(),
-        };
-      }
+      // Gọi API để cập nhật trạng thái thành ĐÃ_HOÀN_TẤT_MUA_SẮM
+      await updateStatus(selectedItem.id, {
+        status: ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
+      });
 
       message.success(
         `Đã cập nhật trạng thái ${selectedItem.proposalCode} thành công!`
@@ -259,11 +254,8 @@ export default function GuiDeXuatThayThePage() {
       // Đóng modal và reset state
       handleCloseModal();
 
-      // Cập nhật state để render lại UI thay vì reload trang
-      // Force một re-render bằng cách cập nhật searchTerm và reset lại
-      const currentSearch = searchTerm;
-      setSearchTerm(currentSearch + " ");
-      setTimeout(() => setSearchTerm(currentSearch), 10);
+      // Refetch data để cập nhật UI
+      refetch();
     } catch (error) {
       message.error("Có lỗi xảy ra khi cập nhật trạng thái!");
       console.error(error);
@@ -366,185 +358,202 @@ export default function GuiDeXuatThayThePage() {
           </h2>
         </div>
 
-        <div className="overflow-x-auto min-h-[500px]">
-          <table className="w-full table-fixed divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[5%]">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedRowKeys.length === paginatedData.length &&
-                      paginatedData.length > 0
-                    }
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedRowKeys(
-                          paginatedData.map((item) => item.id)
-                        );
-                      } else {
-                        setSelectedRowKeys([]);
-                      }
-                    }}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </th>
-                <SortableHeader
-                  field="proposalCode"
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  className="w-[14%]">
-                  Mã ĐX
-                </SortableHeader>
-                <SortableHeader
-                  field="title"
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  className="w-[23%]">
-                  Tiêu đề
-                </SortableHeader>
-                <SortableHeader
-                  field="createdBy"
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  className="w-[18%]">
-                  Người tạo
-                </SortableHeader>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
-                  Số lượng
-                </th>
-                <SortableHeader
-                  field="status"
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  className="w-[12%]">
-                  Trạng thái
-                </SortableHeader>
-                <SortableHeader
-                  field="createdAt"
-                  sortField={sortField}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                  className="w-[10%]">
-                  Ngày
-                </SortableHeader>
-                <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
-                  Thao tác
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-2 py-3">
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center justify-center py-12">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+            <span className="ml-2 text-red-600">Lỗi: {error}</span>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="overflow-x-auto min-h-[500px]">
+            <table className="w-full table-fixed divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[5%]">
                     <input
                       type="checkbox"
-                      checked={selectedRowKeys.includes(item.id)}
+                      checked={
+                        selectedRowKeys.length === paginatedData.length &&
+                        paginatedData.length > 0
+                      }
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedRowKeys([...selectedRowKeys, item.id]);
-                        } else {
                           setSelectedRowKeys(
-                            selectedRowKeys.filter((key) => key !== item.id)
+                            paginatedData.map((item) => item.id)
                           );
+                        } else {
+                          setSelectedRowKeys([]);
                         }
                       }}
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                  </td>
-                  <td className="px-2 py-3">
-                    <div className="text-xs font-medium text-gray-900 truncate">
-                      {item.proposalCode}
-                    </div>
-                  </td>
-                  <td className="px-2 py-3">
-                    <div
-                      className="text-xs text-gray-900 font-medium truncate"
-                      title={item.title}>
-                      {item.title}
-                    </div>
-                    <div
-                      className="text-xs text-gray-500 truncate"
-                      title={item.description}>
-                      {item.description}
-                    </div>
-                  </td>
-                  <td className="px-2 py-3">
-                    <div className="text-xs text-gray-900">
+                  </th>
+                  <SortableHeader
+                    field="proposalCode"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    className="w-[14%]">
+                    Mã ĐX
+                  </SortableHeader>
+                  <SortableHeader
+                    field="title"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    className="w-[23%]">
+                    Tiêu đề
+                  </SortableHeader>
+                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[18%]">
+                    Người tạo
+                  </th>
+                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                    Số lượng
+                  </th>
+                  <SortableHeader
+                    field="status"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    className="w-[12%]">
+                    Trạng thái
+                  </SortableHeader>
+                  <SortableHeader
+                    field="createdAt"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    className="w-[10%]">
+                    Ngày
+                  </SortableHeader>
+                  <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
+                    Thao tác
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {paginatedData.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-2 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedRowKeys.includes(item.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedRowKeys([...selectedRowKeys, item.id]);
+                          } else {
+                            setSelectedRowKeys(
+                              selectedRowKeys.filter((key) => key !== item.id)
+                            );
+                          }
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="px-2 py-3">
+                      <div className="text-xs font-medium text-gray-900 truncate">
+                        {item.proposalCode}
+                      </div>
+                    </td>
+                    <td className="px-2 py-3">
+                      <div
+                        className="text-xs text-gray-900 font-medium truncate"
+                        title={item.title || "Không có tiêu đề"}>
+                        {item.title || "Không có tiêu đề"}
+                      </div>
+                      <div
+                        className="text-xs text-gray-500 truncate"
+                        title={item.description || "Không có mô tả"}>
+                        {item.description || "Không có mô tả"}
+                      </div>
+                    </td>
+                    <td className="px-2 py-3">
+                      <div className="text-xs text-gray-900">
+                        <div className="flex items-center space-x-1">
+                          <span className="truncate text-xs font-medium">
+                            {item.proposer?.fullName || "Chưa xác định"}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-2 py-3 text-center">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {item.itemsCount || 0}
+                      </span>
+                    </td>
+                    <td className="px-2 py-3">
+                      <span
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                          item.status
+                        )}`}>
+                        <span className="hidden lg:inline text-xs">
+                          {getStatusText(item.status)}
+                        </span>
+                      </span>
+                    </td>
+                    <td className="px-2 py-3">
                       <div className="flex items-center space-x-1">
-                        <span className="truncate text-xs font-medium">
-                          {item.createdBy || "Chưa xác định"}
+                        <Calendar className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                        <span className="text-xs text-gray-500">
+                          {new Date(item.createdAt).toLocaleDateString(
+                            "vi-VN",
+                            {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                            }
+                          )}
                         </span>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-2 py-3 text-center">
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                      {item.components.length}
-                    </span>
-                  </td>
-                  <td className="px-2 py-3">
-                    <span
-                      className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                        item.status
-                      )}`}>
-                      <span className="hidden lg:inline text-xs">
-                        {getStatusText(item.status)}
-                      </span>
-                    </span>
-                  </td>
-                  <td className="px-2 py-3">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                      <span className="text-xs text-gray-500">
-                        {new Date(item.createdAt).toLocaleDateString("vi-VN", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-2 py-3 text-center">
-                    <div className="flex items-center justify-center space-x-1">
-                      <Link
-                        href={`/phong-quan-tri/gui-de-xuat-thay-the/${item.id}`}
-                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        title="Xem chi tiết">
-                        <Eye className="w-3 h-3" />
-                      </Link>
+                    </td>
+                    <td className="px-2 py-3 text-center">
+                      <div className="flex items-center justify-center space-x-1">
+                        <Link
+                          href={`/phong-quan-tri/gui-de-xuat-thay-the/${item.id}`}
+                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          title="Xem chi tiết">
+                          <Eye className="w-3 h-3" />
+                        </Link>
 
-                      {/* Chỉ hiển thị nút xử lý cho những trạng thái ĐÃ_KÝ_BIÊN_BẢN */}
-                      {item.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN && (
-                        <button
-                          onClick={() => handleOpenConfirmModal(item)}
-                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                          title="Đã hoàn tất mua sắm">
-                          <CheckCircle className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        {/* Chỉ hiển thị nút xử lý cho những trạng thái ĐÃ_KÝ_BIÊN_BẢN */}
+                        {item.status ===
+                          ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN && (
+                          <button
+                            onClick={() => handleOpenConfirmModal(item)}
+                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            title="Đã hoàn tất mua sắm">
+                            <CheckCircle className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-        {/* Empty State */}
-        {paginatedData.length === 0 && (
-          <div className="text-center py-12">
-            <FileText className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              Không có đề xuất nào
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Không tìm thấy đề xuất nào phù hợp với tiêu chí tìm kiếm.
-            </p>
+            {/* Empty State */}
+            {paginatedData.length === 0 && (
+              <div className="text-center py-12">
+                <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  Không có đề xuất nào
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Không tìm thấy đề xuất nào phù hợp với tiêu chí tìm kiếm.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -558,108 +567,127 @@ export default function GuiDeXuatThayThePage() {
           </h2>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center justify-center py-12 text-red-600">
+            <AlertCircle className="h-8 w-8 mr-2" />
+            <span>Không thể tải dữ liệu. Vui lòng thử lại sau.</span>
+          </div>
+        )}
+
         {/* Mobile Cards */}
-        <div className="p-4 space-y-4">
-          {paginatedData.length > 0 ? (
-            paginatedData.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white border rounded-lg shadow-sm p-4 space-y-3">
-                {/* Header Row */}
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-2 flex-1">
-                    <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 text-sm">
-                        {item.proposalCode}
-                      </p>
-                      <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                        {item.title}
+        {!loading && !error && (
+          <div className="p-4 space-y-4">
+            {paginatedData.length > 0 ? (
+              paginatedData.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white border rounded-lg shadow-sm p-4 space-y-3">
+                  {/* Header Row */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 flex-1">
+                      <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm">
+                          {item.proposalCode}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                          {item.title || "Không có tiêu đề"}
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={selectedRowKeys.includes(item.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRowKeys([...selectedRowKeys, item.id]);
+                        } else {
+                          setSelectedRowKeys(
+                            selectedRowKeys.filter((key) => key !== item.id)
+                          );
+                        }
+                      }}
+                      className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-xs text-gray-500 line-clamp-2">
+                    {item.description || "Không có mô tả"}
+                  </p>
+
+                  {/* Info Grid */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-gray-500">Người tạo:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {item.proposer?.fullName || "Chưa xác định"}
                       </p>
                     </div>
+                    <div>
+                      <span className="text-gray-500">Số lượng:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {item.itemsCount || 0} linh kiện
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Ngày tạo:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Trạng thái:</span>
+                      <div className="mt-0.5">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor(
+                            item.status
+                          )}`}>
+                          {getStatusText(item.status)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={selectedRowKeys.includes(item.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedRowKeys([...selectedRowKeys, item.id]);
-                      } else {
-                        setSelectedRowKeys(
-                          selectedRowKeys.filter((key) => key !== item.id)
-                        );
-                      }
-                    }}
-                    className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0"
-                  />
-                </div>
 
-                {/* Description */}
-                <p className="text-xs text-gray-500 line-clamp-2">
-                  {item.description}
+                  {/* Footer with Actions */}
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <Link
+                      href={`/phong-quan-tri/gui-de-xuat-thay-the/${item.id}`}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>Xem chi tiết</span>
+                    </Link>
+                    {item.status ===
+                      ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN && (
+                      <button
+                        onClick={() => handleOpenConfirmModal(item)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        <span>Hoàn tất</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">
+                  Không tìm thấy đề xuất nào
                 </p>
-
-                {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-gray-500">Người tạo:</span>
-                    <p className="font-medium text-gray-900 mt-0.5">
-                      {item.createdBy || "Chưa xác định"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Số lượng:</span>
-                    <p className="font-medium text-gray-900 mt-0.5">
-                      {item.components.length} linh kiện
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Ngày tạo:</span>
-                    <p className="font-medium text-gray-900 mt-0.5">
-                      {new Date(item.createdAt).toLocaleDateString("vi-VN")}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Trạng thái:</span>
-                    <div className="mt-0.5">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor(
-                          item.status
-                        )}`}>
-                        {getStatusText(item.status)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer with Actions */}
-                <div className="flex items-center gap-2 pt-2 border-t">
-                  <Link
-                    href={`/phong-quan-tri/gui-de-xuat-thay-the/${item.id}`}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
-                    <Eye className="h-3.5 w-3.5" />
-                    <span>Xem chi tiết</span>
-                  </Link>
-                  {item.status === ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN && (
-                    <button
-                      onClick={() => handleOpenConfirmModal(item)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      <span>Hoàn tất</span>
-                    </button>
-                  )}
-                </div>
               </div>
-            ))
-          ) : (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">
-                Không tìm thấy đề xuất nào
-              </p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
