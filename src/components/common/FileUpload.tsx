@@ -1,7 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { uploadToCloudinary, uploadMultipleToCloudinary, validateImageFile, validateMultipleFiles } from '@/lib/utils';
+import { 
+  uploadToCloudinary, 
+  uploadMultipleToCloudinary, 
+  validateImageFile, 
+  validateMultipleFiles,
+  getFileNameFromUrl,
+  getExtensionFromUrl,
+  isImageUrl,
+  createDownloadUrl,
+} from '@/lib/utils';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 
@@ -213,37 +222,92 @@ export default function FileUpload({
             Đã upload ({uploadedUrls.length}):
           </p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {uploadedUrls.map((url, idx) => (
-              <div key={idx} className="relative group">
-                {acceptType === 'image' || url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                  <Image
-                    src={url}
-                    alt={`Upload ${idx + 1}`}
-                    width={200}
-                    height={150}
-                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                  />
-                ) : (
-                  <div className="w-full h-32 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center">
-                    <p className="text-xs text-gray-500 text-center px-2">
-                      {url.split('/').pop()?.substring(0, 20)}...
-                    </p>
-                  </div>
-                )}
-                
-                {/* Delete button */}
-                <button
-                  onClick={() => handleRemove(idx)}
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1
-                    opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Xóa"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
+            {uploadedUrls.map((url, idx) => {
+              // Lấy tên file và extension từ URL
+              const fullFileName = getFileNameFromUrl(url);
+              const extension = getExtensionFromUrl(url);
+              const isImage = isImageUrl(url);
+              const downloadUrl = createDownloadUrl(url, fullFileName);
+              
+              return (
+                <div key={idx} className="relative group">
+                  {acceptType === 'image' || isImage ? (
+                    <div>
+                      <Image
+                        src={url}
+                        alt={`Upload ${idx + 1}`}
+                        width={200}
+                        height={150}
+                        className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                      />
+                      <p className="text-xs text-gray-500 mt-1 truncate" title={fullFileName}>
+                        {fullFileName || `image_${idx + 1}.${extension}`}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="w-full h-32 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 flex flex-col items-center justify-center p-2">
+                      {/* Icon based on file type */}
+                      {extension === 'pdf' && (
+                        <svg className="w-10 h-10 text-red-500 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v10H4V5z" />
+                          <path d="M6 7h8v2H6V7zm0 4h8v2H6v-2z" />
+                        </svg>
+                      )}
+                      {(extension === 'doc' || extension === 'docx') && (
+                        <svg className="w-10 h-10 text-blue-500 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v10H4V5z" />
+                        </svg>
+                      )}
+                      {(extension === 'xls' || extension === 'xlsx') && (
+                        <svg className="w-10 h-10 text-green-500 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4z" />
+                        </svg>
+                      )}
+                      {!extension && (
+                        <svg className="w-10 h-10 text-gray-400 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v10H4V5z" />
+                        </svg>
+                      )}
+                      
+                      <p className="text-xs text-gray-700 text-center font-medium break-all px-1" title={fullFileName}>
+                        {fullFileName 
+                          ? (fullFileName.length > 30 
+                              ? `${fullFileName.substring(0, 15)}...${fullFileName.substring(fullFileName.length - 10)}`
+                              : fullFileName)
+                          : `file_${idx + 1}.${extension || 'file'}`
+                        }
+                      </p>
+                      <a 
+                        href={downloadUrl} 
+                        download={fullFileName}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('Download URL:', downloadUrl);
+                          console.log('Filename:', fullFileName);
+                        }}
+                      >
+                        Tải về ({extension || 'file'})
+                      </a>
+                    </div>
+                  )}
+                  
+                  {/* Delete button */}
+                  <button
+                    onClick={() => handleRemove(idx)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1
+                      opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Xóa"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

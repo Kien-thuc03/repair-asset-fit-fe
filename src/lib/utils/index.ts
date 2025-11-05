@@ -34,6 +34,16 @@ export {
   useFileValidation,
 } from './cloudinary.validation';
 
+// Export URL helpers
+export {
+  getFileNameFromUrl,
+  getExtensionFromUrl,
+  isImageUrl,
+  isDocumentUrl,
+  createDownloadUrl,
+  formatFileSize as formatBytes,
+} from './cloudinary.helpers';
+
 // NOTE: cloudinary.ts (server-side SDK) is NOT exported here
 // It should only be used in API routes or server components
 // For client-side uploads, use the functions from cloudinary.client.ts above
