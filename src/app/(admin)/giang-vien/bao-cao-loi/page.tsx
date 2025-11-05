@@ -13,10 +13,15 @@ import {
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
 import { getComponentsByComputerId } from "@/lib/api/components";
+import { getSoftwareByAssetId } from "@/lib/api/asset-software";
 import { createRepair, CreateRepairRequest } from "@/lib/api/repairs";
-import { useProfileDatabase } from "@/hooks";
-import { ERROR_TYPE_MAP } from "@/lib/constants/errorTypes";
-import { mockErrorTypes, getSoftwareByAssetId } from "@/lib/mockData";
+import { useProfile } from "@/hooks";
+import {
+  getHardwareErrorTypes,
+  getErrorTypeByKey,
+  canSelectComponents as canSelectComponentsByErrorType,
+  ErrorType,
+} from "@/lib/constants/errorTypes";
 import {
   Breadcrumb,
   Card,
@@ -51,7 +56,7 @@ interface LecturerReportFormType extends ReportFormType {
 
 export default function BaoCaoLoiPage() {
   const router = useRouter();
-  const { userDetails } = useProfileDatabase();
+  const { userDetails } = useProfile();
 
   const [formData, setFormData] = useState<LecturerReportFormType>({
     building: "",
@@ -86,18 +91,11 @@ export default function BaoCaoLoiPage() {
   >(""); // Phân loại lỗi phần cứng/phần mềm
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
 
-  // Các loại lỗi được phép chọn linh kiện
-  const errorTypesAllowingComponentSelection = [
-    "ET001", // Máy không khởi động
-    "ET005", // Máy không sử dụng được
-    "ET009", // Máy chạy chậm
-  ];
-
   // Kiểm tra xem loại lỗi hiện tại có cho phép chọn linh kiện không
   const canSelectComponents =
     errorCategory === "hardware" &&
     formData.errorTypeId &&
-    errorTypesAllowingComponentSelection.includes(formData.errorTypeId);
+    canSelectComponentsByErrorType(formData.errorTypeId as ErrorType);
 
   // Extract unique buildings from rooms
   const buildings = Array.from(
@@ -341,8 +339,28 @@ export default function BaoCaoLoiPage() {
       setFilteredComponents([]);
     }
 
-    // Fetch software (still using mock data for now)
-    setFilteredSoftware(getSoftwareByAssetId(computerId));
+    // Fetch software using asset ID
+    try {
+      console.log("🔍 Fetching software for asset:", selectedComputer.asset.id);
+      const softwareList = await getSoftwareByAssetId(
+        selectedComputer.asset.id
+      );
+      console.log("✅ Software fetched:", softwareList);
+
+      // Map SoftwareDto to Software interface
+      const mappedSoftware: Software[] = softwareList.map((sw) => ({
+        id: sw.softwareId,
+        name: sw.name,
+        version: sw.version,
+        publisher: sw.publisher,
+        createdAt: sw.installationDate, // Use installationDate as createdAt
+      }));
+      setFilteredSoftware(mappedSoftware);
+    } catch (error) {
+      console.error("❌ Error fetching software:", error);
+      message.error("Không thể tải danh sách phần mềm");
+      setFilteredSoftware([]);
+    }
   };
 
   // Handle media upload
@@ -375,10 +393,8 @@ export default function BaoCaoLoiPage() {
     try {
       // Prepare request data
       const requestData: CreateRepairRequest = {
-        computerAssetId: formData.assetId, // This is now computer.id
-        errorType: formData.errorTypeId
-          ? ERROR_TYPE_MAP[formData.errorTypeId]
-          : undefined,
+        computerAssetId: formData.assetId, // This is now asset.id
+        errorType: formData.errorTypeId as ErrorType, // Direct enum value
         description: formData.description,
         mediaUrls: [], // TODO: Upload images first and get URLs
         componentIds:
@@ -564,8 +580,8 @@ export default function BaoCaoLoiPage() {
               <div>
                 <div className="text-sm text-gray-500">Loại lỗi</div>
                 <div className="font-medium">
-                  {mockErrorTypes.find((et) => et.id === formData.errorTypeId)
-                    ?.name || "N/A"}
+                  {getErrorTypeByKey(formData.errorTypeId as ErrorType)?.name ||
+                    "N/A"}
                 </div>
               </div>
             )}
@@ -649,7 +665,7 @@ export default function BaoCaoLoiPage() {
                     ? "Vui lòng chọn phòng trước"
                     : "Chọn thiết bị"
                 }
-                value={formData.assetId}
+                value={selectedComputerId}
                 onChange={handleAssetChange}
                 disabled={!formData.roomId}>
                 {Array.isArray(filteredComputers) &&
@@ -678,15 +694,10 @@ export default function BaoCaoLoiPage() {
                   // Reset errorTypeId khi thay đổi category
                   if (newCategory === "software") {
                     // Nếu chọn lỗi phần mềm, tự động set errorTypeId
-                    const softwareErrorType = mockErrorTypes.find(
-                      (type) => type.name === "Máy hư phần mềm"
-                    );
-                    if (softwareErrorType) {
-                      setFormData((prev) => ({
-                        ...prev,
-                        errorTypeId: softwareErrorType.id,
-                      }));
-                    }
+                    setFormData((prev) => ({
+                      ...prev,
+                      errorTypeId: ErrorType.MAY_HU_PHAN_MEM,
+                    }));
                   } else {
                     setFormData((prev) => ({ ...prev, errorTypeId: "" }));
                   }
@@ -708,21 +719,17 @@ export default function BaoCaoLoiPage() {
 
                     // Nếu chuyển sang loại lỗi không cho phép chọn linh kiện, reset selection
                     if (
-                      !errorTypesAllowingComponentSelection.includes(
-                        errorTypeId
-                      )
+                      !canSelectComponentsByErrorType(errorTypeId as ErrorType)
                     ) {
                       setSelectedComponentIds([]);
                       setShowComponentSelection(false);
                     }
                   }}>
-                  {mockErrorTypes
-                    .filter((errorType) => errorType.name !== "Máy hư phần mềm")
-                    .map((errorType) => (
-                      <Option key={errorType.id} value={errorType.id}>
-                        {errorType.name}
-                      </Option>
-                    ))}
+                  {getHardwareErrorTypes().map((errorType) => (
+                    <Option key={errorType.key} value={errorType.key}>
+                      {errorType.name}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
             )}
