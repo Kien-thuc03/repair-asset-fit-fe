@@ -147,51 +147,6 @@ export default function DuyetDeXuatPage() {
     }));
   }, [proposals]);
 
-  // Handle actions
-  const handleApprove = async (requestId: string) => {
-    try {
-      await updateStatus(requestId, {
-        status: ReplacementProposalStatus.ĐÃ_DUYỆT,
-      });
-      refetch();
-      Modal.success({
-        title: "Duyệt thành công!",
-        content: "Đề xuất đã được phê duyệt.",
-        centered: true,
-      });
-    } catch (err) {
-      console.error("Error approving proposal:", err);
-      Modal.error({
-        title: "Lỗi",
-        content:
-          err instanceof Error ? err.message : "Không thể duyệt đề xuất.",
-        centered: true,
-      });
-    }
-  };
-
-  const handleReject = async (requestId: string) => {
-    try {
-      await updateStatus(requestId, {
-        status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI,
-      });
-      refetch();
-      Modal.success({
-        title: "Từ chối thành công!",
-        content: "Đề xuất đã bị từ chối.",
-        centered: true,
-      });
-    } catch (err) {
-      console.error("Error rejecting proposal:", err);
-      Modal.error({
-        title: "Lỗi",
-        content:
-          err instanceof Error ? err.message : "Không thể từ chối đề xuất.",
-        centered: true,
-      });
-    }
-  };
-
   const handleCreateSubmission = (requestId: string) => {
     const request = proposals.find((req) => req.id === requestId);
     if (request) {
@@ -466,9 +421,8 @@ Trân trọng kính trình.`;
               onSelectAll={handleSelectAll}
               onRowSelect={handleRowSelect}
               onSort={handleSort}
-              onApprove={handleApprove}
-              onReject={handleReject}
               onCreateSubmission={handleCreateSubmission}
+              onDataChange={refetch}
             />
 
             {/* Mobile Card View */}
@@ -492,9 +446,8 @@ Trân trọng kính trình.`;
                 const isSelected = selectedRowKeys.includes(id);
                 handleRowSelect(id, !isSelected);
               }}
-              onApprove={handleApprove}
-              onReject={handleReject}
               onCreateSubmission={handleCreateSubmission}
+              onDataChange={refetch}
             />
 
             {/* Spacer để đảm bảo chiều cao tối thiểu */}
