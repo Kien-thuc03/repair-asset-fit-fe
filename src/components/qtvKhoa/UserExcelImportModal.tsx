@@ -5,6 +5,8 @@ import { Modal, Upload, Button, Table, Alert, Typography, Divider } from 'antd';
 import { Upload as UploadIcon, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import { ICreateUserRequest, UserStatus } from '@/types';
 import { message } from 'antd';
+import { useRoles } from '@/hooks/useRoles';
+import { useUnits } from '@/hooks/useUnits';
 
 const { Text, Title } = Typography;
 
@@ -19,6 +21,7 @@ interface ImportUser {
   fullName: string;
   username: string;
   email: string;
+  password: string;
   phoneNumber?: string;
   unitId: string;
   roleIds: string[];
@@ -44,6 +47,25 @@ export default function UserExcelImportModal({
   const [currentStep, setCurrentStep] = useState<'upload' | 'preview' | 'result'>('upload');
   const [importing, setImporting] = useState(false);
 
+  // Fetch real data from API
+  const { roles } = useRoles();
+  const { units } = useUnits();
+
+  // Build role code to ID mapping from real data
+  const roleCodeToIdMap: Record<string, string> = {};
+  const validRoleCodes: string[] = [];
+  
+  roles.forEach(role => {
+    // Giả sử role có thuộc tính code hoặc name có thể map
+    // Nếu không có, sẽ cần thêm field code vào RoleResponseDto
+    const code = role.name.toUpperCase().replace(/\s+/g, '_');
+    roleCodeToIdMap[code] = role.id;
+    validRoleCodes.push(code);
+  });
+
+  // Build valid unit IDs from real data
+  const validUnitIds = units.map(unit => unit.id);
+
   // Đặt lại state khi đóng modal
   const handleClose = () => {
     setImportData([]);
@@ -58,16 +80,22 @@ export default function UserExcelImportModal({
     try {
       const XLSX = await import('xlsx');
       
+      // Lấy ví dụ unit ID và role IDs từ dữ liệu thực
+      const exampleUnitId = units.length > 0 ? units[0].id : 'UNIT_UUID_HERE';
+      const exampleRoleId1 = roles.length > 0 ? roles[0].id : 'ROLE_UUID_1';
+      const exampleRoleId2 = roles.length > 1 ? roles[1].id : 'ROLE_UUID_2';
+      
       const templateData = [
         {
           'STT': 1,
           'Họ và tên (*)': 'Nguyễn Văn A',
           'Tên đăng nhập (*)': 'nguyenvana',
           'Email (*)': 'nguyenvana@iuh.edu.vn',
-          'Số điện thoại': '0123456789',
-          'Mã đơn vị (*)': 'CNTT001',
-          'Mã vai trò (*)': 'GIANG_VIEN,KY_THUAT_VIEN',
-          'Ngày sinh (DD/MM/YYYY)': '01/01/1990'
+          'Số điện thoại': '0901234567',
+          'Mã đơn vị (*)': exampleUnitId,
+          'Mã vai trò (*)': exampleRoleId1,
+          'Ngày sinh (YYYY-MM-DD)': '1990-01-15',
+          'Mật khẩu (*)': 'Pass123'
         },
         {
           'STT': 2,
@@ -75,9 +103,10 @@ export default function UserExcelImportModal({
           'Tên đăng nhập (*)': 'tranthib',
           'Email (*)': 'tranthib@iuh.edu.vn',
           'Số điện thoại': '0987654321',
-          'Mã đơn vị (*)': 'QTRI001',
-          'Mã vai trò (*)': 'PHONG_QUAN_TRI',
-          'Ngày sinh (DD/MM/YYYY)': '15/03/1985'
+          'Mã đơn vị (*)': exampleUnitId,
+          'Mã vai trò (*)': `${exampleRoleId1}, ${exampleRoleId2}`,
+          'Ngày sinh (YYYY-MM-DD)': '1985-03-15',
+          'Mật khẩu (*)': 'Pass456'
         }
       ];
 
@@ -91,12 +120,33 @@ export default function UserExcelImportModal({
         { wch: 15 }, // Tên đăng nhập
         { wch: 25 }, // Email
         { wch: 15 }, // Số điện thoại
-        { wch: 12 }, // Mã đơn vị
-        { wch: 20 }, // Mã vai trò
-        { wch: 20 }  // Ngày sinh
+        { wch: 15 }, // Mã đơn vị
+        { wch: 25 }, // Mã vai trò
+        { wch: 20 }, // Ngày sinh
+        { wch: 15 }  // Mật khẩu
       ];
 
       XLSX.utils.book_append_sheet(wb, ws, 'Template');
+      
+      // Thêm sheet hướng dẫn
+      const instructionsData = [
+        { 'Trường': 'Họ và tên (*)', 'Mô tả': 'Từ 2-100 ký tự, chỉ chữ cái và khoảng trắng', 'Ví dụ': 'Nguyễn Văn A' },
+        { 'Trường': 'Tên đăng nhập (*)', 'Mô tả': 'Từ 3-50 ký tự, chỉ chữ cái, số và . _ -', 'Ví dụ': 'nguyenvana' },
+        { 'Trường': 'Email (*)', 'Mô tả': 'Email hợp lệ, tối đa 100 ký tự', 'Ví dụ': 'user@example.com' },
+        { 'Trường': 'Số điện thoại', 'Mô tả': 'Định dạng Việt Nam (10-12 số)', 'Ví dụ': '0901234567' },
+        { 'Trường': 'Mã đơn vị (*)', 'Mô tả': 'UUID của đơn vị trong hệ thống', 'Ví dụ': exampleUnitId },
+        { 'Trường': 'Mã vai trò (*)', 'Mô tả': 'UUID hoặc mã vai trò (có thể nhiều, cách nhau bởi dấu phẩy)', 'Ví dụ': roles.length > 0 ? roles[0].id : 'role-uuid' },
+        { 'Trường': 'Ngày sinh', 'Mô tả': 'Định dạng YYYY-MM-DD, tuổi 16-100', 'Ví dụ': '1990-01-15' },
+        { 'Trường': 'Mật khẩu (*)', 'Mô tả': 'Tối thiểu 6 ký tự, có chữ hoa, thường, số', 'Ví dụ': 'Pass123' },
+      ];
+      const wsInstructions = XLSX.utils.json_to_sheet(instructionsData);
+      wsInstructions['!cols'] = [
+        { wch: 20 },
+        { wch: 50 },
+        { wch: 25 }
+      ];
+      XLSX.utils.book_append_sheet(wb, wsInstructions, 'Hướng dẫn');
+
       XLSX.writeFile(wb, 'template-import-nguoi-dung.xlsx');
       
       message.success('Đã tải file mẫu thành công');
@@ -128,7 +178,7 @@ export default function UserExcelImportModal({
         const rowNumber = index + 2; // +2 vì bỏ qua header và index bắt đầu từ 0
         const errors: string[] = [];
         
-        // Lấy dữ liệu từ các cột
+        // Lấy dữ liệu từ các cột (Excel columns: 0=STT, 1=FullName, 2=Username, etc.)
         const fullName = row[1]?.toString().trim() || '';
         const username = row[2]?.toString().trim() || '';
         const email = row[3]?.toString().trim() || '';
@@ -136,54 +186,173 @@ export default function UserExcelImportModal({
         const unitId = row[5]?.toString().trim() || '';
         const roleCodesStr = row[6]?.toString().trim() || '';
         const birthDateStr = row[7]?.toString().trim() || '';
+        const password = row[8]?.toString().trim() || '';
+
+        console.log(`Row ${rowNumber}:`, {
+          fullName,
+          username,
+          email,
+          phoneNumber,
+          unitId,
+          roleCodesStr,
+          birthDateStr,
+          password
+        });
 
         // Validate required fields
-        if (!fullName) errors.push('Họ và tên không được để trống');
-        if (!username) errors.push('Tên đăng nhập không được để trống');
-        if (!email) errors.push('Email không được để trống');
-        if (!unitId) errors.push('Mã đơn vị không được để trống');
-        if (!roleCodesStr) errors.push('Mã vai trò không được để trống');
-
-        // Validate email format
-        if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          errors.push('Email không đúng định dạng');
+        if (!fullName) {
+          errors.push('Họ và tên không được để trống');
+        } else if (fullName.length < 2) {
+          errors.push('Họ và tên phải có ít nhất 2 ký tự');
+        } else if (fullName.length > 100) {
+          errors.push('Họ và tên không được vượt quá 100 ký tự');
+        } else if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(fullName)) {
+          errors.push('Họ và tên chỉ được chứa chữ cái và khoảng trắng');
         }
 
-        // Parse role IDs
+        // Username validation
+        if (!username) {
+          errors.push('Tên đăng nhập không được để trống');
+        } else if (username.length < 3) {
+          errors.push('Tên đăng nhập phải có ít nhất 3 ký tự');
+        } else if (username.length > 50) {
+          errors.push('Tên đăng nhập không được vượt quá 50 ký tự');
+        } else if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+          errors.push('Tên đăng nhập chỉ được chứa chữ cái, số và . _ -');
+        }
+
+        // Email validation
+        if (!email) {
+          errors.push('Email không được để trống');
+        } else if (email.length > 100) {
+          errors.push('Email không được vượt quá 100 ký tự');
+        } else if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(email)) {
+          errors.push('Email không hợp lệ');
+        }
+
+        // Password validation
+        if (!password) {
+          errors.push('Mật khẩu không được để trống');
+        } else if (password.length < 6) {
+          errors.push('Mật khẩu phải có ít nhất 6 ký tự');
+        } else if (password.length > 50) {
+          errors.push('Mật khẩu không được vượt quá 50 ký tự');
+        } else {
+          const hasUppercase = /[A-Z]/.test(password);
+          const hasLowercase = /[a-z]/.test(password);
+          const hasNumber = /[0-9]/.test(password);
+          const hasWhitespace = /\s/.test(password);
+
+          if (hasWhitespace) {
+            errors.push('Mật khẩu không được chứa khoảng trắng');
+          } else if (!hasUppercase || !hasLowercase || !hasNumber) {
+            errors.push('Mật khẩu phải chứa chữ hoa, chữ thường và số');
+          }
+
+          if (username && password.toLowerCase().includes(username.toLowerCase())) {
+            errors.push('Mật khẩu không được chứa tên đăng nhập');
+          }
+        }
+
+        // Phone number validation (optional)
+        if (phoneNumber) {
+          const cleanedPhone = phoneNumber.replace(/[\s()-]/g, '');
+          if (!/^(\+84|84|0)(3|5|7|8|9)[0-9]{8}$/.test(cleanedPhone)) {
+            errors.push('Số điện thoại không đúng định dạng Việt Nam');
+          }
+        }
+
+        // Birth date validation (optional)
+        if (birthDateStr) {
+          const birthDate = new Date(birthDateStr);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          birthDate.setHours(0, 0, 0, 0);
+
+          if (isNaN(birthDate.getTime())) {
+            errors.push('Ngày sinh không hợp lệ');
+          } else if (birthDate > today) {
+            errors.push('Ngày sinh không được là ngày trong tương lai');
+          } else if (birthDate.getFullYear() < 1900) {
+            errors.push('Năm sinh phải từ 1900 trở đi');
+          } else {
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            const dayDiff = today.getDate() - birthDate.getDate();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+              age--;
+            }
+
+            if (age < 16) {
+              errors.push('Người dùng phải đủ 16 tuổi');
+            } else if (age > 100) {
+              errors.push('Tuổi không được vượt quá 100');
+            }
+          }
+        }
+
+        // Unit ID validation
+        if (!unitId) {
+          errors.push('Mã đơn vị không được để trống');
+        } else if (validUnitIds.length > 0 && !validUnitIds.includes(unitId)) {
+          errors.push('Mã đơn vị không tồn tại trong hệ thống');
+        }
+
+        // Role codes/IDs validation
+        if (!roleCodesStr) {
+          errors.push('Mã vai trò không được để trống');
+        }
+
         const roleCodes = roleCodesStr.split(',').map((code: string) => code.trim()).filter(Boolean);
         if (roleCodes.length === 0) {
           errors.push('Ít nhất một vai trò phải được chỉ định');
         }
         
-        // Validate role codes (convert codes to IDs)
-        const validRoleCodes = ['GIANG_VIEN', 'KY_THUAT_VIEN', 'TO_TRUONG_KY_THUAT', 'PHONG_QUAN_TRI', 'QTV_KHOA'];
-        const invalidRoles = roleCodes.filter(code => !validRoleCodes.includes(code));
+        // Support both UUID and role codes
+        const roleIds: string[] = [];
+        const invalidRoles: string[] = [];
+        
+        roleCodes.forEach(code => {
+          // Check if it's a valid UUID (role ID)
+          const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code);
+          
+          if (isUUID) {
+            // It's a UUID - check if it exists in roles
+            const roleExists = roles.some(role => role.id === code);
+            if (roleExists) {
+              roleIds.push(code);
+            } else {
+              invalidRoles.push(code);
+            }
+          } else {
+            // It's a role code - try to map to ID
+            if (validRoleCodes.includes(code)) {
+              const roleId = roleCodeToIdMap[code];
+              if (roleId) {
+                roleIds.push(roleId);
+              }
+            } else {
+              invalidRoles.push(code);
+            }
+          }
+        });
+        
         if (invalidRoles.length > 0) {
           errors.push(`Mã vai trò không hợp lệ: ${invalidRoles.join(', ')}`);
         }
-        
-        // Map role codes to role IDs
-        const roleCodeToIdMap: Record<string, string> = {
-          'GIANG_VIEN': 'role-1',
-          'KY_THUAT_VIEN': 'role-2', 
-          'TO_TRUONG_KY_THUAT': 'role-3',
-          'PHONG_QUAN_TRI': 'role-4',
-          'QTV_KHOA': 'role-5'
-        };
-        const roleIds = roleCodes
-          .filter(code => validRoleCodes.includes(code))
-          .map(code => roleCodeToIdMap[code]);
 
         return {
           row: rowNumber,
           fullName,
           username,
           email,
+          password,
           phoneNumber: phoneNumber || undefined,
           unitId,
           roleIds,
           birthDate: birthDateStr || undefined,
-          status: UserStatus.ACTIVE, // Mặc định luôn là ACTIVE
+          status: UserStatus.ACTIVE,
           errors
         };
       }).filter(user => 
@@ -222,13 +391,12 @@ export default function UserExcelImportModal({
       const createRequests: ICreateUserRequest[] = validUsers.map(user => ({
         fullName: user.fullName,
         username: user.username,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
+        email: user.email.toLowerCase(), // Normalize email
+        password: user.password,
+        phoneNumber: user.phoneNumber ? user.phoneNumber.replace(/[\s()-]/g, '') : undefined, // Clean phone
         unitId: user.unitId,
         roleIds: user.roleIds,
-        birthDate: user.birthDate,
-        password: '123456' // TODO: Generate secure password
-        // Status mặc định sẽ được xử lý trong backend/mock data
+        birthDate: user.birthDate ? user.birthDate.split('T')[0] : undefined, // Ensure YYYY-MM-DD
       }));
 
       await onImport(createRequests);
@@ -263,9 +431,11 @@ export default function UserExcelImportModal({
                 <div className="space-y-2">
                   <div>1. Tải file mẫu và điền thông tin theo đúng định dạng</div>
                   <div>2. Các trường có dấu (*) là bắt buộc</div>
-                  <div>3. Mã vai trò có thể nhập nhiều, cách nhau bởi dấu phẩy (,)</div>
-                  <div>4. Ngày sinh theo định dạng DD/MM/YYYY</div>
-                  <div>5. Tất cả tài khoản được tạo sẽ có trạng thái HOẠT ĐỘNG</div>
+                  <div>3. <strong>Mã vai trò:</strong> Sử dụng UUID của vai trò (có thể nhiều, cách nhau bởi dấu phẩy)</div>
+                  <div>4. <strong>Mã đơn vị:</strong> Sử dụng UUID của đơn vị</div>
+                  <div>5. Ngày sinh theo định dạng YYYY-MM-DD (VD: 1990-01-15)</div>
+                  <div>6. Mật khẩu tối thiểu 6 ký tự, có chữ hoa, chữ thường và số</div>
+                  <div>7. Số điện thoại định dạng Việt Nam (VD: 0901234567)</div>
                 </div>
               }
               type="info"
