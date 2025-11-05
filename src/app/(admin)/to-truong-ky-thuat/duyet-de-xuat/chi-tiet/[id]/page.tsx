@@ -330,6 +330,7 @@ export default function ChiTietDuyetDeXuatPage() {
     setShowApproveModal(false);
 
     try {
+      // CHỜ_TỔ_TRƯỞNG_DUYỆT → ĐÃ_DUYỆT
       await updateStatus(proposal.id, {
         status: ReplacementProposalStatus.ĐÃ_DUYỆT,
       });
@@ -449,6 +450,7 @@ Trân trọng kính trình.`;
     setShowRejectModal(false);
 
     try {
+      // CHỜ_TỔ_TRƯỞNG_DUYỆT → ĐÃ_TỪ_CHỐI
       await updateStatus(proposal.id, {
         status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI,
       });
@@ -477,8 +479,8 @@ Trân trọng kính trình.`;
     }
   };
 
-  const canApproveOrReject =
-    displayStatus === "CHỜ_TỔ_TRƯỞNG_DUYỆT" || displayStatus === "CHỜ_XÁC_MINH";
+  // Only show action buttons for CHỜ_TỔ_TRƯỞNG_DUYỆT status
+  const canApproveOrReject = displayStatus === "CHỜ_TỔ_TRƯỞNG_DUYỆT";
 
   // Timeline items
   const timelineItems = [
