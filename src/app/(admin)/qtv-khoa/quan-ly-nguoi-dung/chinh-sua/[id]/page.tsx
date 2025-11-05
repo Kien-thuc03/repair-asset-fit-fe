@@ -1,24 +1,26 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Breadcrumb } from 'antd';
-import { IUpdateUserRequest, IUserWithRoles } from "@/types";
+import { IUpdateUserRequest } from "@/types";
 import { useUsersManagement } from "@/hooks/useUsersManagement";
 import { useRoles } from "@/hooks/useRoles";
 import { useUnits } from "@/hooks/useUnits";
+import type { UnitResponseDto } from "@/lib/api/units";
 
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
   
-  const { users, updateUser, loading } = useUsersManagement();
+  const { currentUser, updateUser, loading } = useUsersManagement({ userId });
   const { roles, loading: rolesLoading } = useRoles();
-  const { units, campuses, loading: unitsLoading } = useUnits();
-  const [user, setUser] = useState<IUserWithRoles | null>(null);
+  const { units, campuses, loading: unitsLoading, getUnitById } = useUnits();
   const [selectedCampusId, setSelectedCampusId] = useState<string>("");
+  const [unitDetails, setUnitDetails] = useState<UnitResponseDto | null>(null);
+  const [loadingUnitDetails, setLoadingUnitDetails] = useState(false);
 
   const [formData, setFormData] = useState<IUpdateUserRequest>({
     fullName: "",
@@ -32,16 +34,44 @@ export default function EditUserPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Lấy thông tin chi tiết của đơn vị người dùng để tìm campus
+  useEffect(() => {
+    const fetchUnitDetails = async () => {
+      if (currentUser?.unit?.id) {
+        setLoadingUnitDetails(true);
+        try {
+          // Lấy thông tin đầy đủ của unit
+          const unitData = await getUnitById(currentUser.unit.id);
+          setUnitDetails(unitData);
+          
+          // Nếu unit có parentUnitId, đó chính là campusId
+          if (unitData.parentUnitId) {
+            setSelectedCampusId(unitData.parentUnitId);
+          }
+        } catch (err) {
+          console.error('Error fetching unit details:', err);
+          setUnitDetails(null);
+        } finally {
+          setLoadingUnitDetails(false);
+        }
+      }
+    };
+
+    fetchUnitDetails();
+  }, [currentUser?.unit?.id, getUnitById]);
+
   // Filter units based on selected campus
-  const filteredUnits = selectedCampusId 
-    ? units.filter(unit => {
-        // Find the campus that contains this unit
-        const parentCampus = campuses.find(campus => 
-          campus.childUnits?.some(child => child.id === unit.id)
-        );
-        return parentCampus?.id === selectedCampusId;
-      })
-    : [];
+  const filteredUnits = useMemo(() => {
+    if (!selectedCampusId) return [];
+    
+    return units.filter(unit => {
+      // Find the campus that contains this unit
+      const parentCampus = campuses.find(campus => 
+        campus.childUnits?.some(child => child.id === unit.id)
+      );
+      return parentCampus?.id === selectedCampusId;
+    });
+  }, [selectedCampusId, units, campuses]);
 
   // Handle campus selection - reset unit when campus changes
   const handleCampusChange = (campusId: string) => {
@@ -51,34 +81,20 @@ export default function EditUserPage() {
   };
 
   useEffect(() => {
-    if (users.length > 0 && userId) {
-      const foundUser = users.find(u => u.id === userId);
-      if (foundUser) {
-        setUser(foundUser);
-        setFormData({
-          fullName: foundUser.fullName,
-          email: foundUser.email || "",
-          unitId: foundUser.unitId || "",
-          phoneNumber: foundUser.phoneNumber || "",
-          birthDate: foundUser.birthDate || "",
-          roleIds: foundUser.roles.map(r => r.id),
-        });
-
-        // Auto-select campus if user has a unit
-        if (foundUser.unitId && campuses.length > 0 && units.length > 0) {
-          const userUnit = units.find(u => u.id === foundUser.unitId);
-          if (userUnit) {
-            const parentCampus = campuses.find(campus => 
-              campus.childUnits?.some(child => child.id === userUnit.id)
-            );
-            if (parentCampus) {
-              setSelectedCampusId(parentCampus.id);
-            }
-          }
-        }
-      }
+    if (currentUser) {
+      // Ưu tiên lấy từ currentUser.unit.id nếu có, fallback về unitId
+      const unitIdToUse = currentUser.unit?.id || currentUser.unitId || "";
+      
+      setFormData({
+        fullName: currentUser.fullName,
+        email: currentUser.email || "",
+        unitId: unitIdToUse,
+        phoneNumber: currentUser.phoneNumber || "",
+        birthDate: currentUser.birthDate || "",
+        roleIds: currentUser.roles.map(r => r.id),
+      });
     }
-  }, [users, userId, campuses, units]);
+  }, [currentUser]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -137,8 +153,8 @@ export default function EditUserPage() {
           age--;
         }
 
-        if (age < 16) {
-          newErrors.birthDate = "Người dùng phải đủ 16 tuổi";
+        if (age < 18) {
+          newErrors.birthDate = "Người dùng phải đủ 18 tuổi";
         } else if (age > 100) {
           newErrors.birthDate = "Tuổi không được vượt quá 100";
         }
@@ -210,7 +226,7 @@ export default function EditUserPage() {
     );
   }
 
-  if (!user) {
+  if (!currentUser) {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
@@ -270,7 +286,7 @@ export default function EditUserPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Chỉnh sửa người dùng</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Cập nhật thông tin cho người dùng: {user.fullName} (@{user.username})
+            Cập nhật thông tin cho người dùng: {currentUser.fullName} (@{currentUser.username})
           </p>
         </div>
       </div>
@@ -286,7 +302,7 @@ export default function EditUserPage() {
               </label>
               <input
                 type="text"
-                value={user.username}
+                value={currentUser.username}
                 disabled
                 className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
                 title="Tên đăng nhập không thể thay đổi"
@@ -377,7 +393,7 @@ export default function EditUserPage() {
                 max={new Date().toISOString().split('T')[0]}
                 title="Chọn ngày sinh"
               />
-              <p className="mt-1 text-xs text-gray-500">Tối thiểu 16 tuổi, tối đa 100 tuổi</p>
+              <p className="mt-1 text-xs text-gray-500">Tối thiểu 18 tuổi, tối đa 100 tuổi</p>
               {errors.birthDate && (
                 <p className="mt-1 text-sm text-red-600">{errors.birthDate}</p>
               )}
