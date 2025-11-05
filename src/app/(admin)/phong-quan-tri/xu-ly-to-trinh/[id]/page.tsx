@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -16,11 +16,15 @@ import {
   Cpu,
   MemoryStick,
   Eye,
+  Loader2,
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
-import { mockReplacementRequestItem } from "@/lib/mockData/replacementRequests";
-import { ReplacementStatus, ComponentType } from "@/types/repair";
 import SignConfirmModal from "@/components/modal/SignConfirmModal";
+import {
+  useReplacementProposal,
+  useUpdateReplacementProposalStatus,
+} from "@/hooks";
+import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 
 export default function XuLyToTrinhDetailPage() {
   const params = useParams();
@@ -35,12 +39,35 @@ export default function XuLyToTrinhDetailPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
 
-  // State cho việc theo dõi trạng thái từng component
+  // Fetch proposal data từ API
+  const { data: proposal, loading, error } = useReplacementProposal(id);
+  const { updateStatus } = useUpdateReplacementProposalStatus();
 
-  // Tìm proposal theo ID
-  const proposal = useMemo(() => {
-    return mockReplacementRequestItem.find((item) => item.id === id);
-  }, [id]);
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-64 space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+        <p className="text-gray-600">Đang tải dữ liệu...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-64 space-y-4">
+        <AlertTriangle className="h-12 w-12 text-red-400" />
+        <h3 className="text-lg font-medium text-gray-900">Lỗi tải dữ liệu</h3>
+        <p className="text-gray-500">{error}</p>
+        <Link
+          href="/phong-quan-tri/xu-ly-to-trinh"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+          Quay lại danh sách
+        </Link>
+      </div>
+    );
+  }
 
   if (!proposal) {
     return (
@@ -61,45 +88,48 @@ export default function XuLyToTrinhDetailPage() {
     );
   }
 
-  const getComponentIcon = (type: ComponentType) => {
-    switch (type) {
-      case ComponentType.RAM:
+  const getComponentIcon = (type: string) => {
+    const typeUpper = type.toUpperCase();
+    switch (typeUpper) {
+      case "RAM":
         return <MemoryStick className="h-4 w-4" />;
-      case ComponentType.STORAGE:
+      case "STORAGE":
+      case "SSD":
+      case "HDD":
         return <HardDrive className="h-4 w-4" />;
-      case ComponentType.CPU:
+      case "CPU":
         return <Cpu className="h-4 w-4" />;
-      case ComponentType.PSU:
+      case "PSU":
         return <Package className="h-4 w-4" />;
-      case ComponentType.MAINBOARD:
-      case ComponentType.GPU:
-      case ComponentType.MONITOR:
+      case "MAINBOARD":
+      case "GPU":
+      case "MONITOR":
         return <Monitor className="h-4 w-4" />;
       default:
         return <Package className="h-4 w-4" />;
     }
   };
 
-  const getStatusColor = (status: ReplacementStatus) => {
+  const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH:
         return "bg-blue-100 text-blue-800 border-blue-200";
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-green-100 text-green-800 border-green-200";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
         return "bg-red-100 text-red-800 border-red-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
-  const getStatusText = (status: ReplacementStatus) => {
+  const getStatusText = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH:
         return "Chờ xử lý";
-      case ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "Đã duyệt";
-      case ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
         return "Đã từ chối";
       default:
         return status;
@@ -107,26 +137,18 @@ export default function XuLyToTrinhDetailPage() {
   };
 
   const handleConfirmAction = async () => {
+    if (!proposal) return;
+
     setIsProcessing(true);
     setShowConfirmModal(false);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // In thực tế, sẽ gọi API để cập nhật status
-      console.log(
-        `${actionType === "approve" ? "Duyệt" : "Từ chối"} tờ trình ${
-          proposal.id
-        }`,
-        {
-          adminNotes,
-          newStatus:
-            actionType === "approve"
-              ? ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-              : ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
-        }
-      );
+      await updateStatus(proposal.id, {
+        status:
+          actionType === "approve"
+            ? ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
+            : ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+      });
 
       setIsProcessing(false);
       setActionType(null);
@@ -139,12 +161,10 @@ export default function XuLyToTrinhDetailPage() {
           content: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công.`,
           okText: "Đóng",
           onOk: () => {
-            // Redirect về danh sách sau khi xử lý xong
             router.push("/phong-quan-tri/xu-ly-to-trinh?success=rejected");
           },
         });
       } else {
-        // Redirect về danh sách sau khi xử lý xong
         router.push(
           "/phong-quan-tri/xu-ly-to-trinh?success=" +
             (actionType === "approve" ? "approved" : "rejected")
@@ -163,26 +183,19 @@ export default function XuLyToTrinhDetailPage() {
   };
 
   const handleSignConfirm = async () => {
+    if (!proposal) return;
+
     setIsProcessing(true);
 
     try {
-      // Simulate API call để duyệt tờ trình
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // In thực tế, sẽ gọi API để cập nhật status thành ĐÃ_DUYỆT_TỜ_TRÌNH
-      console.log(`Duyệt tờ trình ${proposal.id}`, {
-        newStatus: ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
-        signedAt: new Date().toISOString(),
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
       });
 
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      // Đóng modal
-      setShowSignConfirmModal(false);
-
       // Chuyển hướng đến trang lập biên bản
-      console.log("Redirecting to lap-bien-ban page...");
       router.push("/phong-quan-tri/lap-bien-ban");
     } catch (error) {
       console.error("Error approving proposal:", error);
@@ -266,7 +279,8 @@ export default function XuLyToTrinhDetailPage() {
               <h3 className="text-lg font-medium text-gray-900">
                 Thông tin cơ bản
               </h3>
-              {proposal.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH && (
+              {proposal.status ===
+                ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH && (
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
@@ -322,124 +336,29 @@ export default function XuLyToTrinhDetailPage() {
               Thông tin vị trí
             </h3>
             <div className="bg-gray-50 p-4 rounded-lg">
-              {(() => {
-                // Lấy danh sách các phòng duy nhất từ tất cả components
-                const uniqueRooms = Array.from(
-                  new Set(
-                    proposal.components.map(
-                      (comp) => `${comp.buildingName}-${comp.roomName}`
-                    )
-                  )
-                ).map((roomKey) => {
-                  const [buildingName, roomName] = roomKey.split("-");
-                  return { buildingName, roomName };
-                });
-
-                // Đếm số lượng linh kiện theo từng phòng
-                const roomCounts = proposal.components.reduce((acc, comp) => {
-                  const roomKey = `${comp.buildingName}-${comp.roomName}`;
-                  acc[roomKey] = (acc[roomKey] || 0) + 1;
-                  return acc;
-                }, {} as Record<string, number>);
-
-                // Nếu chỉ có 1 phòng, hiển thị đơn giản
-                if (uniqueRooms.length === 1) {
-                  const room = uniqueRooms[0];
-                  return (
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <Building className="w-5 h-5 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-700">
-                          Tòa nhà:
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {room.buildingName}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-5 h-5 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-700">
-                          Phòng:
-                        </span>
-                        <span className="text-sm text-gray-900">
-                          {room.roomName}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // Nếu có nhiều phòng, hiển thị danh sách
-                return (
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Building className="w-5 h-5 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">
-                        Tòa nhà:
-                      </span>
-                      <span className="text-sm text-gray-900">
-                        {uniqueRooms[0].buildingName}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-start space-x-2 mb-2">
-                        <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                        <span className="text-sm font-medium text-gray-700">
-                          Các phòng thực hiện:
-                        </span>
-                      </div>
-                      <div className="ml-7 space-y-2">
-                        {uniqueRooms.map((room, index) => {
-                          const roomKey = `${room.buildingName}-${room.roomName}`;
-                          const componentCount = roomCounts[roomKey];
-                          const machineCount = Math.floor(componentCount / 2); // Chia 2 vì mỗi máy có 2 linh kiện (SSD + RAM)
-
-                          return (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-white p-2 rounded ">
-                              <span className="text-sm font-medium text-gray-900">
-                                {room.roomName}
-                              </span>
-                              <div className="text-xs text-gray-500">
-                                {machineCount > 0 && (
-                                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                    {machineCount} máy
-                                  </span>
-                                )}
-                                <span className="ml-2 bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                                  {componentCount} linh kiện
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="font-medium text-gray-700">
-                            Tổng cộng:
-                          </span>
-                          <div className="space-x-2">
-                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                              {uniqueRooms.reduce((total, room) => {
-                                const roomKey = `${room.buildingName}-${room.roomName}`;
-                                return (
-                                  total + Math.floor(roomCounts[roomKey] / 2)
-                                );
-                              }, 0)}{" "}
-                              máy
-                            </span>
-                            <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
-                              {proposal.components.length} linh kiện
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Building className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700">
+                    Tổng số linh kiện cần thay thế:
+                  </span>
+                  <span className="text-sm text-gray-900 font-semibold">
+                    {proposal.itemsCount || proposal.items?.length || 0}
+                  </span>
+                </div>
+                {proposal.items && proposal.items.length > 0 && (
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-5 h-5 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-700">
+                      Vị trí:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {proposal.items[0].oldComponent?.roomLocation ||
+                        "Chưa xác định"}
+                    </span>
                   </div>
-                );
-              })()}
+                )}
+              </div>
             </div>
           </div>
 
@@ -447,8 +366,8 @@ export default function XuLyToTrinhDetailPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-medium text-gray-900">
-                Danh sách linh kiện cần thay thế ({proposal.components.length}{" "}
-                loại linh kiện)
+                Danh sách linh kiện cần thay thế ({proposal.itemsCount || 0}{" "}
+                linh kiện)
               </h3>
             </div>
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -459,7 +378,7 @@ export default function XuLyToTrinhDetailPage() {
                       STT
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Phòng/Vị trí
+                      Vị trí
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Linh kiện hiện tại
@@ -476,9 +395,9 @@ export default function XuLyToTrinhDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {proposal.components.map((component, index) => (
+                  {proposal.items?.map((item, index) => (
                     <tr
-                      key={component.id}
+                      key={item.id}
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {index + 1}
@@ -486,15 +405,10 @@ export default function XuLyToTrinhDetailPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
                           <div className="flex items-center space-x-1">
-                            <Building className="w-3 h-3 text-gray-400" />
-                            <span className="font-medium">
-                              {component.buildingName}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-1 mt-1">
                             <MapPin className="w-3 h-3 text-gray-400" />
-                            <span className="text-xs text-gray-500">
-                              {component.roomName}
+                            <span className="text-xs">
+                              {item.oldComponent?.roomLocation ||
+                                "Chưa xác định"}
                             </span>
                           </div>
                         </div>
@@ -502,37 +416,45 @@ export default function XuLyToTrinhDetailPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-start space-x-3">
                           <div className="flex-shrink-0">
-                            {getComponentIcon(component.componentType)}
+                            {getComponentIcon(
+                              item.oldComponent?.componentType || "UNKNOWN"
+                            )}
                           </div>
                           <div>
                             <div className="text-sm font-medium text-gray-900">
-                              {component.componentName}
+                              {item.oldComponent?.name || "Không xác định"}
                             </div>
                             <div className="text-xs text-gray-500">
-                              Loại: {component.componentType}
+                              {item.oldComponent?.componentType || "N/A"}
                             </div>
+                            {item.oldComponent?.componentSpecs && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {item.oldComponent.componentSpecs}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {component.newItemName}
+                            {item.newItemName}
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {component.newItemSpecs}
-                          </div>
+                          {item.newItemSpecs && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {item.newItemSpecs}
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {component.quantity}{" "}
-                          {component.quantity > 1 ? "cái" : "cái"}
+                          {item.quantity} {item.quantity > 1 ? "cái" : "cái"}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <p className="text-sm text-gray-900 max-w-xs">
-                          {component.reason}
+                          {item.reason || "Không có lý do"}
                         </p>
                       </td>
                     </tr>
@@ -628,7 +550,7 @@ export default function XuLyToTrinhDetailPage() {
         isOpen={showSignConfirmModal}
         onClose={() => setShowSignConfirmModal(false)}
         onConfirm={handleSignConfirm}
-        reportTitle={proposal.title}
+        reportTitle={proposal.title || "Tờ trình thay thế"}
         reportNumber={proposal.proposalCode}
         isLoading={isProcessing}
         actionType="approve"
