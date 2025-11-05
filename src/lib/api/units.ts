@@ -3,22 +3,33 @@ import { apiClient } from '../api';
 // Enums
 export enum UnitType {
   CAMPUS = 'CAMPUS',
-  FACULTY = 'FACULTY',
-  DEPARTMENT = 'DEPARTMENT',
-  ROOM = 'ROOM',
+  USER_DEPT = 'USER_DEPT',
+  ADMIN_DEPT = 'ADMIN_DEPT',
+}
+
+export enum UnitStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
 }
 
 // Response DTOs
 export interface UnitResponseDto {
   id: string;
   name: string;
-  code: string;
+  unitCode: number;
+  phone?: string;
+  email?: string;
   type: UnitType;
-  description: string | null;
-  parentId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  representativeId?: string;
+  parentUnitId?: string;
+  status: UnitStatus;
+  representative?: unknown; // User response DTO
+  parentUnit?: UnitResponseDto; // Parent unit information
   childUnits?: UnitResponseDto[]; // Nested child units
+  users?: unknown[]; // User response DTOs
+  rooms?: unknown[]; // Room response DTOs
+  createdAt: Date;
+  updatedAt?: Date;
 }
 
 /**

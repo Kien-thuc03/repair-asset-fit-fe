@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getUnitsApi, UnitResponseDto, UnitType } from '@/lib/api/units';
+import { getUnitsApi, getUnitByIdApi, UnitResponseDto, UnitType } from '@/lib/api/units';
 
 /**
  * Interface cho unit với display name đã xử lý
@@ -123,5 +123,13 @@ export const useUnits = () => {
     loading,
     error,
     refetch: fetchUnits,
+    getUnitById: useCallback(async (id: string) => {
+      try {
+        return await getUnitByIdApi(id);
+      } catch (err) {
+        console.error('Error fetching unit by ID:', err);
+        throw err;
+      }
+    }, []),
   };
 };
