@@ -158,9 +158,6 @@ export default function InspectionTable({
                           <div className="text-sm font-medium text-gray-900 truncate">
                             {report.reportNumber}
                           </div>
-                          <div className="text-xs text-gray-500 truncate">
-                            #{report.id}
-                          </div>
                         </div>
                       </div>
                     </td>

@@ -36,6 +36,7 @@ export interface OldComponentInfo {
   name: string;
   componentSpecs?: string;
   status: string;
+  roomLocation?: string;
 }
 
 /**
