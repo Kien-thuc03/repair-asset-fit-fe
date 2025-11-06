@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getRepairsByTechnician } from '@/lib/api/repairs';
-import { mapApiResponsesToRepairRequests } from '@/lib/utils/repairMapper';
 import { RepairRequest } from '@/types/repair';
 
 /**
@@ -27,11 +26,10 @@ export const useRepairsByTechnician = (technicianId?: string) => {
       setError(null);
       const apiData = await getRepairsByTechnician(targetId);
       
-      // Map API response sang format của frontend
-      const mappedData = mapApiResponsesToRepairRequests(apiData);
-      setRepairs(mappedData);
+      // API đã transform data rồi, không cần map lại
+      setRepairs(apiData);
       
-      console.log('✅ Fetched and mapped repairs:', mappedData.length, 'items');
+      console.log('✅ Fetched repairs:', apiData.length, 'items');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Lỗi khi tải danh sách yêu cầu sửa chữa';
       setError(message);
