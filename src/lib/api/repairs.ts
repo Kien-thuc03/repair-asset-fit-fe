@@ -306,3 +306,37 @@ export const getRepairsByReporter = async (
     );
   }
 };
+
+/**
+ * Lấy danh sách yêu cầu sửa chữa theo kỹ thuật viên (technician)
+ * @param technicianId ID của kỹ thuật viên
+ * @returns Promise với danh sách yêu cầu sửa chữa được phân công cho kỹ thuật viên
+ */
+export const getRepairsByTechnician = async (
+  technicianId: string
+): Promise<RepairRequest[]> => {
+  try {
+    console.log(
+      `🌐 API Call: GET /api/v1/repairs/repair-requests/technicians/${technicianId}`
+    );
+    const response = await api.get<RepairRequest[]>(
+      `/api/v1/repairs/repair-requests/technicians/${technicianId}`
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Get repairs by technician error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message ||
+        "Lấy danh sách yêu cầu sửa chữa theo kỹ thuật viên thất bại."
+    );
+  }
+};
+

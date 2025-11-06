@@ -66,7 +66,7 @@ export const getUsers = async (
  * ```
  */
 export const getUserById = async (id: string): Promise<IUserWithRoles> => {
-  return apiClient.get<IUserWithRoles>(`/users/${id}`);
+  return apiClient.get<IUserWithRoles>(`api/v1/users/${id}`);
 };
 
 /**
@@ -89,7 +89,7 @@ export const getUserById = async (id: string): Promise<IUserWithRoles> => {
 export const createUser = async (
   userData: ICreateUserRequest
 ): Promise<IUserWithRoles> => {
-  return apiClient.post<IUserWithRoles>('/users', userData);
+  return apiClient.post<IUserWithRoles>('api/v1/users', userData);
 };
 
 /**
@@ -112,7 +112,7 @@ export const updateUser = async (
   id: string,
   updateData: IUpdateUserRequest
 ): Promise<IUserWithRoles> => {
-  return apiClient.put<IUserWithRoles>(`/users/${id}`, updateData);
+  return apiClient.put<IUserWithRoles>(`api/v1/users/${id}`, updateData);
 };
 
 /**
@@ -135,7 +135,7 @@ export const deleteUser = async (
   id: string,
   hard = false
 ): Promise<{ message: string }> => {
-  return apiClient.delete<{ message: string }>(`/users/${id}?hard=${hard}`);
+  return apiClient.delete<{ message: string }>(`api/v1/users/${id}?hard=${hard}`);
 };
 
 /**
