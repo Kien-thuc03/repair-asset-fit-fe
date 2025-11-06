@@ -3,7 +3,8 @@ import {
   RepairRequest,
   RepairRequestWithDetails,
   RepairStatus,
-} from "@/types/repair";
+  ErrorType,
+} from "@/types";
 
 /**
  * Interface cho query parameters khi lấy danh sách yêu cầu sửa chữa
@@ -14,7 +15,7 @@ export interface GetRepairsQueryParams {
   reporterId?: string; // Lọc theo người báo lỗi
   assignedTechnicianId?: string; // Lọc theo kỹ thuật viên
   status?: RepairStatus; // Lọc theo trạng thái
-  errorTypeId?: string; // Lọc theo loại lỗi
+  errorType?: ErrorType; // ✅ Lọc theo loại lỗi (enum thay vì errorTypeId)
   search?: string; // Tìm kiếm theo mã yêu cầu hoặc mô tả
   fromDate?: string; // Lọc từ ngày (ISO string)
   toDate?: string; // Lọc đến ngày (ISO string)
@@ -56,7 +57,7 @@ export type GetRepairDetailResponse = RepairRequestWithDetails;
  */
 export interface CreateRepairRequest {
   computerAssetId: string; // ID tài sản máy tính
-  errorType?: string; // Loại lỗi (ErrorType enum)
+  errorType?: ErrorType; // ✅ Loại lỗi (ErrorType enum thay vì errorTypeId)
   description: string; // Mô tả chi tiết lỗi
   mediaUrls?: string[]; // Mảng URL ảnh/video minh họa (optional)
   componentIds?: string[]; // Danh sách ID linh kiện bị lỗi (optional)
@@ -68,7 +69,7 @@ export interface CreateRepairRequest {
  */
 export interface UpdateRepairRequest {
   assignedTechnicianId?: string; // Phân công kỹ thuật viên
-  errorTypeId?: string; // Cập nhật loại lỗi
+  errorType?: ErrorType; // ✅ Cập nhật loại lỗi (ErrorType enum thay vì errorTypeId)
   description?: string; // Cập nhật mô tả
   mediaUrls?: string[]; // Cập nhật ảnh/video
   status?: RepairStatus; // Cập nhật trạng thái

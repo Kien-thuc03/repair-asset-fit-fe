@@ -1,4 +1,4 @@
-import { RepairRequest } from '@/types/repair';
+import { RepairRequest, ErrorType, getErrorTypeLabel } from '@/types';
 
 /**
  * Interface cho API response (raw data từ backend)
@@ -16,7 +16,7 @@ interface ApiRepairResponse {
   createdAt: string;
   acceptedAt?: string | null;
   completedAt?: string | null;
-  errorType?: string;
+  errorType?: ErrorType; // ✅ Enum ErrorType từ backend
   
   // Nested objects
   computerAsset?: {
@@ -25,6 +25,7 @@ interface ApiRepairResponse {
     name: string;
     type: string;
     status: string;
+    machineLabel?: string; // ✅ Đã có từ BE
   };
   
   room?: {
@@ -33,6 +34,11 @@ interface ApiRepairResponse {
     building: string;
     floor: string;
     roomNumber: string;
+    unit?: {
+      id: string;
+      name: string;
+      code: string; // ✅ Đã có từ BE (unitCode converted to string)
+    };
   };
   
   reporter?: {
@@ -40,7 +46,11 @@ interface ApiRepairResponse {
     fullName: string;
     email: string;
     username: string;
-    roles?: string[];
+    roles?: Array<{
+      id: string;
+      name: string;
+      code: string;
+    }>; // ✅ Đã có từ BE
   };
   
   assignedTechnician?: {
@@ -48,6 +58,11 @@ interface ApiRepairResponse {
     fullName: string;
     email: string;
     username: string;
+    roles?: Array<{
+      id: string;
+      name: string;
+      code: string;
+    }>; // ✅ Đã có từ BE
   };
   
   components?: Array<{
@@ -58,14 +73,12 @@ interface ApiRepairResponse {
     status: string;
   }>;
   
-  // Optional fields (có thể BE chưa implement)
-  machineLabel?: string;
-  unit?: string;
-  errorTypeId?: string;
+  // No longer needed - errorTypeId removed
 }
 
 /**
  * Mapping Error Type enum sang tên hiển thị tiếng Việt
+ * DEPRECATED: Sử dụng getErrorTypeLabel từ @/types/errorType thay thế
  */
 export const ERROR_TYPE_MAPPING: Record<string, string> = {
   'MAY_MAT_CHUOT': 'Máy mất chuột',
@@ -82,10 +95,10 @@ export const ERROR_TYPE_MAPPING: Record<string, string> = {
 
 /**
  * Map error type enum sang tên hiển thị
+ * DEPRECATED: Sử dụng getErrorTypeLabel từ @/types/errorType thay thế
  */
-export const mapErrorTypeToName = (errorType: string | undefined): string => {
-  if (!errorType) return 'Chưa xác định';
-  return ERROR_TYPE_MAPPING[errorType] || errorType;
+export const mapErrorTypeToName = (errorType: ErrorType | undefined): string => {
+  return getErrorTypeLabel(errorType);
 };
 
 /**
@@ -99,6 +112,17 @@ export const mapApiResponseToRepairRequest = (apiData: ApiRepairResponse): Repai
       ? apiData.components[0].name
       : apiData.components.map((c) => c.name).join(', ')
     : 'Chưa xác định';
+
+  // Extract reporter role name (lấy role đầu tiên hoặc default)
+  const reporterRole = apiData.reporter?.roles && apiData.reporter.roles.length > 0
+    ? apiData.reporter.roles[0].name
+    : 'Giảng viên'; // Default fallback
+
+  // Extract unit name
+  const unitName = apiData.room?.unit?.name || 'Chưa xác định';
+
+  // Extract machine label
+  const machineLabel = apiData.computerAsset?.machineLabel || 'N/A';
 
   return {
     // ✅ Direct fields từ API
@@ -133,13 +157,12 @@ export const mapApiResponseToRepairRequest = (apiData: ApiRepairResponse): Repai
     
     // ✅ Error type fields
     errorType: apiData.errorType,
-    errorTypeName: mapErrorTypeToName(apiData.errorType),
-    errorTypeId: apiData.errorTypeId,
+    errorTypeName: getErrorTypeLabel(apiData.errorType),
     
-    // ⚠️ Fields thiếu trong API - Cần BE bổ sung
-    reporterRole: 'Giảng viên', // ⚠️ MISSING - Default là Giảng viên
-    machineLabel: apiData.machineLabel || 'N/A', // ⚠️ MISSING - Backend cần thêm
-    unit: apiData.unit || 'Chưa xác định', // ⚠️ MISSING - Backend cần thêm
+    // ✅ Fields từ nested objects - Đã được BE bổ sung
+    reporterRole,
+    machineLabel,
+    unit: unitName,
   };
 };
 
@@ -148,30 +171,4 @@ export const mapApiResponseToRepairRequest = (apiData: ApiRepairResponse): Repai
  */
 export const mapApiResponsesToRepairRequests = (apiDataArray: ApiRepairResponse[]): RepairRequest[] => {
   return apiDataArray.map(mapApiResponseToRepairRequest);
-};
-
-/**
- * Helper function để kiểm tra field nào còn thiếu trong API response
- * Dùng để debugging và tracking BE progress
- */
-export const checkMissingFields = (apiData: ApiRepairResponse): string[] => {
-  const missingFields: string[] = [];
-  
-  if (!apiData.machineLabel) {
-    missingFields.push('machineLabel');
-  }
-  
-  if (!apiData.unit) {
-    missingFields.push('unit');
-  }
-  
-  if (!apiData.errorTypeId) {
-    missingFields.push('errorTypeId');
-  }
-  
-  if (!apiData.reporter?.roles) {
-    missingFields.push('reporter.roles');
-  }
-  
-  return missingFields;
 };

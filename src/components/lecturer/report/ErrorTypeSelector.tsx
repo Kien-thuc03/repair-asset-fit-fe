@@ -1,39 +1,35 @@
 import React from "react";
-
-interface ErrorType {
-  id: string;
-  name: string;
-}
+import { ErrorType, getErrorTypeOptions } from "@/types";
 
 interface ErrorTypeSelectorProps {
-  errorTypeId: string;
-  errorTypes: ErrorType[];
-  onChange: (errorTypeId: string) => void;
+  errorType?: ErrorType;
+  onChange: (errorType: ErrorType) => void;
 }
 
 const ErrorTypeSelector: React.FC<ErrorTypeSelectorProps> = ({
-  errorTypeId,
-  errorTypes,
+  errorType,
   onChange,
 }) => {
+  const errorTypeOptions = getErrorTypeOptions();
+  
   return (
     <div className="sm:col-span-2">
       <label
-        htmlFor="errorTypeId"
+        htmlFor="errorType"
         className="block text-sm font-medium text-gray-700">
         Bước 3: Chọn loại lỗi từ danh sách{" "}
         <span className="text-red-500">*</span>
       </label>
       <select
-        id="errorTypeId"
+        id="errorType"
         required
-        value={errorTypeId}
-        onChange={(e) => onChange(e.target.value)}
+        value={errorType || ""}
+        onChange={(e) => onChange(e.target.value as ErrorType)}
         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
         <option value="">Chọn loại lỗi phổ biến</option>
-        {errorTypes.map((errorType) => (
-          <option key={errorType.id} value={errorType.id}>
-            {errorType.name}
+        {errorTypeOptions.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>

@@ -1,5 +1,7 @@
-// Interface cho ErrorTypes - Khớp với database schema
-export interface ErrorType {
+import { ErrorType } from './errorType';
+
+// Interface cho ErrorTypes - DEPRECATED - Sử dụng ErrorType enum thay thế
+export interface ErrorTypeOld {
   id: string; // UUID primary key
   name: string; // Tên loại lỗi (required)
   description?: string; // Mô tả chi tiết (optional)
@@ -39,7 +41,7 @@ export interface RepairRequest {
   computerAssetId: string; // FK to assets.id
   reporterId: string;
   assignedTechnicianId?: string;
-  errorType?: string; // Enum string từ ErrorType
+  errorType?: ErrorType; // ✅ Enum ErrorType thay vì errorTypeId
   description: string; // Mô tả chi tiết lỗi
   mediaUrls?: string[]; // Mảng URL ảnh/video minh họa
   status: RepairStatus;
@@ -97,8 +99,7 @@ export interface RepairRequest {
   roomName?: string; // Tên phòng máy
   machineLabel?: string; // Số máy từ bảng computers
   buildingName?: string; // Tên tòa nhà
-  errorTypeId?: string;
-  errorTypeName?: string; // Tên loại lỗi
+  errorTypeName?: string; // Tên loại lỗi (computed từ errorType enum)
   unit?: string; // Đơn vị/Khoa
 }
 
@@ -121,7 +122,7 @@ export interface RepairRequestWithDetails extends RepairRequest {
   reporterRole: string;
   assignedTechnicianName?: string;
 
-  // Thông tin từ bảng errorTypes
+  // Thông tin từ bảng errorTypes - DEPRECATED, sử dụng errorType enum
   errorTypeName?: string;
 
   // Đơn vị từ bảng units (qua rooms.unitId)
@@ -473,7 +474,7 @@ export interface ReportForm {
   assetId: string;
   componentId: string;
   roomId: string;
-  errorTypeId: string;
+  errorType: ErrorType; // ✅ Thay đổi từ errorTypeId sang errorType enum
   description: string;
   mediaFiles: File[];
 }
