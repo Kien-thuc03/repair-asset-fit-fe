@@ -68,6 +68,15 @@ export interface CreateRepairRequest {
 }
 
 /**
+ * Interface cho request ghi nhận và xử lý lỗi trực tiếp tại hiện trường
+ * Extends từ CreateRepairRequest và thêm các trường cho xử lý
+ */
+export interface CreateAndProcessRepairRequest extends CreateRepairRequest {
+  resolutionNotes?: string; // Ghi chú chi tiết quá trình xử lý lỗi (BẮT BUỘC khi có finalStatus)
+  finalStatus?: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ; // Trạng thái cuối cùng sau xử lý
+}
+
+/**
  * Interface cho API response (raw data từ backend)
  * Chứa nested objects và các quan hệ
  */
@@ -307,6 +316,87 @@ export const createRepair = async (
     };
     throw new Error(
       err.response?.data?.message || "Tạo yêu cầu sửa chữa thất bại."
+    );
+  }
+};
+
+/**
+ * Ghi nhận và xử lý lỗi trực tiếp tại hiện trường
+ * Endpoint dành cho kỹ thuật viên để ghi nhận lỗi VÀ xử lý ngay tại chỗ trong một lần submit
+ * 
+ * @param data Dữ liệu yêu cầu sửa chữa và xử lý
+ * @returns Promise với thông tin yêu cầu sửa chữa đã tạo và xử lý
+ * 
+ * @example
+ * // Lỗi phần mềm - đã sửa được
+ * await createAndProcessRepair({
+ *   computerAssetId: "asset-123",
+ *   errorType: ErrorType.MAY_HU_PHAN_MEM,
+ *   description: "Máy bị lỗi phần mềm Office",
+ *   softwareIds: ["software-1", "software-2"],
+ *   resolutionNotes: "Đã cài đặt lại Office 2021",
+ *   finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH
+ * });
+ * 
+ * @example
+ * // Lỗi phần cứng - cần thay thế
+ * await createAndProcessRepair({
+ *   computerAssetId: "asset-123",
+ *   errorType: ErrorType.MAY_KHONG_KHOI_DONG,
+ *   description: "Nguồn điện bị cháy",
+ *   componentIds: ["component-1"],
+ *   resolutionNotes: "Nguồn 500W cháy hoàn toàn, cần thay thế",
+ *   finalStatus: RepairStatus.CHỜ_THAY_THẾ
+ * });
+ */
+export const createAndProcessRepair = async (
+  data: CreateAndProcessRepairRequest
+): Promise<GetRepairDetailResponse> => {
+  try {
+    // ✅ Step 1: Upload files lên Cloudinary nếu có
+    let uploadedUrls: string[] = [];
+    if (data.mediaFiles && data.mediaFiles.length > 0) {
+      const uploadResponse = await uploadMultipleFiles(
+        data.mediaFiles,
+        "repair-requests"
+      );
+
+      if (uploadResponse.success && uploadResponse.urls) {
+        uploadedUrls = uploadResponse.urls;
+      } else {
+        throw new Error(uploadResponse.error || "Upload files thất bại");
+      }
+    }
+
+    // ✅ Step 2: Merge uploaded URLs với existing mediaUrls (nếu có)
+    const allMediaUrls = [...(data.mediaUrls || []), ...uploadedUrls];
+
+    // ✅ Step 3: Tạo request body cho API
+    const requestData = {
+      computerAssetId: data.computerAssetId,
+      errorType: data.errorType,
+      description: data.description,
+      mediaUrls: allMediaUrls.length > 0 ? allMediaUrls : undefined,
+      componentIds: data.componentIds,
+      softwareIds: data.softwareIds,
+      resolutionNotes: data.resolutionNotes,
+      finalStatus: data.finalStatus,
+    };
+
+    // ✅ Step 4: Call API endpoint process-onsite
+    const response = await api.post<ApiRepairResponse>(
+      "/api/v1/repairs/process-onsite",
+      requestData
+    );
+
+    // Transform response
+    return transformApiResponse(response.data) as RepairRequestWithDetails;
+  } catch (error: unknown) {
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    throw new Error(
+      err.response?.data?.message || "Ghi nhận và xử lý lỗi thất bại."
     );
   }
 };
