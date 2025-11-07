@@ -2,9 +2,14 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SubmissionFormData } from "@/types";
-import { Breadcrumb, Modal, Input, Button } from "antd";
-import { CheckCircle, XCircle, FileText, Download } from "lucide-react";
+import { Breadcrumb, Modal } from "antd";
 import { Pagination } from "@/components/common";
+import {
+  ExportExcelSuccessModal,
+  ExportExcelErrorModal,
+  SubmissionFormModal,
+  SubmissionPreviewModal,
+} from "@/components/modal";
 import {
   ProposalFilters,
   ProposalTable,
@@ -654,453 +659,40 @@ Trân trọng kính trình.`;
         </div>
       </div>
 
-      {/* Modal thông báo xuất Excel thành công */}
-      <Modal
-        title={null}
-        open={showExportSuccessModal}
-        onCancel={() => setShowExportSuccessModal(false)}
-        footer={[
-          <button
-            key="close"
-            onClick={() => setShowExportSuccessModal(false)}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            style={{
-              border: "none",
-              borderRadius: "6px",
-              fontWeight: "500",
-            }}>
-            Đóng
-          </button>,
-        ]}
-        centered
-        width="90%"
-        style={{ maxWidth: "500px" }}>
-        <div className="text-center py-4">
-          <CheckCircle className="w-12 h-12 sm:w-16 sm:h-16 text-green-500 mx-auto mb-4" />
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-            Xuất Excel thành công!
-          </h3>
-          <p className="text-sm sm:text-base text-gray-600 mb-1">
-            File{" "}
-            <span className="font-medium">&ldquo;{exportFileName}&rdquo;</span>{" "}
-            đã được tải xuống
-          </p>
-          <p className="text-sm sm:text-base text-gray-600">
-            <span className="font-medium">({exportCount} bản ghi)</span>
-          </p>
-        </div>
-      </Modal>
+      {/* Modal thông báo xuất Excel */}
+      <ExportExcelSuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        fileName={exportFileName}
+        recordCount={exportCount}
+      />
 
-      {/* Modal thông báo lỗi xuất Excel */}
-      <Modal
-        title={null}
-        open={showExportErrorModal}
-        onCancel={() => setShowExportErrorModal(false)}
-        footer={[
-          <button
-            key="close"
-            onClick={() => setShowExportErrorModal(false)}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            style={{
-              border: "none",
-              borderRadius: "6px",
-              fontWeight: "500",
-            }}>
-            Đóng
-          </button>,
-        ]}
-        centered
-        width="90%"
-        style={{ maxWidth: "500px" }}>
-        <div className="text-center py-4">
-          <XCircle className="w-12 h-12 sm:w-16 sm:h-16 text-red-500 mx-auto mb-4" />
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2">
-            Lỗi xuất Excel
-          </h3>
-          <p className="text-sm sm:text-base text-gray-600">{exportError}</p>
-        </div>
-      </Modal>
+      <ExportExcelErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
+        errorMessage={exportError}
+      />
 
       {/* Modal lập tờ trình */}
-      <Modal
-        title={
-          <div className="flex items-center space-x-2">
-            <FileText className="w-5 h-5 text-purple-600" />
-            <span>Lập tờ trình đề xuất</span>
-          </div>
-        }
-        open={showSubmissionModal}
-        onCancel={() => setShowSubmissionModal(false)}
-        width="90%"
-        style={{ maxWidth: "800px" }}
-        footer={[
-          <Button key="cancel" onClick={() => setShowSubmissionModal(false)}>
-            Hủy
-          </Button>,
-          <Button
-            key="export"
-            icon={<Download className="w-4 h-4" />}
-            onClick={handleExportSubmissionDocx}>
-            Xuất file
-          </Button>,
-          <Button
-            key="preview"
-            onClick={() => setShowSubmissionPreview(true)}
-            className="bg-green-600 hover:bg-green-700 text-white">
-            Xem trước
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleSubmitSubmission}
-            className="bg-purple-600 hover:bg-purple-700">
-            Gửi tờ trình
-          </Button>,
-        ]}>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Người đề nghị
-              </label>
-              <Input
-                value={submissionFormData.submittedBy}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    submittedBy: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Chức vụ
-              </label>
-              <Input
-                value={submissionFormData.position}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    position: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Đơn vị đề nghị
-              </label>
-              <Input
-                value={submissionFormData.department}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    department: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Đơn vị tiếp nhận
-              </label>
-              <Input
-                value={submissionFormData.recipientDepartment}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    recipientDepartment: e.target.value,
-                  }))
-                }
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Đề nghị
-            </label>
-            <Input
-              value={submissionFormData.subject}
-              onChange={(e) =>
-                setSubmissionFormData((prev) => ({
-                  ...prev,
-                  subject: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nội dung tờ trình
-            </label>
-            <Input.TextArea
-              rows={8}
-              value={submissionFormData.content}
-              onChange={(e) =>
-                setSubmissionFormData((prev) => ({
-                  ...prev,
-                  content: e.target.value,
-                }))
-              }
-              placeholder="Nội dung chi tiết của tờ trình..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Văn bản kèm theo
-            </label>
-            <Input
-              value={submissionFormData.attachments}
-              onChange={(e) =>
-                setSubmissionFormData((prev) => ({
-                  ...prev,
-                  attachments: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Giám đốc
-              </label>
-              <Input
-                value={submissionFormData.director}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    director: e.target.value,
-                  }))
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Hiệu trưởng
-              </label>
-              <Input
-                value={submissionFormData.rector}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    rector: e.target.value,
-                  }))
-                }
-              />
-            </div>
-          </div>
-        </div>
-      </Modal>
+      <SubmissionFormModal
+        isOpen={showSubmissionModal}
+        onClose={() => setShowSubmissionModal(false)}
+        formData={submissionFormData}
+        onFormDataChange={setSubmissionFormData}
+        onExport={handleExportSubmissionDocx}
+        onPreview={() => setShowSubmissionPreview(true)}
+        onSubmit={handleSubmitSubmission}
+      />
 
       {/* Modal xem trước tờ trình */}
-      <Modal
-        title={null}
-        open={showSubmissionPreview}
-        onCancel={() => setShowSubmissionPreview(false)}
-        footer={
-          <div className="flex flex-row justify-end gap-2 sm:gap-3">
-            <button
-              onClick={() => setShowSubmissionPreview(false)}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-              Đóng
-            </button>
-            <button
-              type="button"
-              onClick={handleExportSubmissionDocx}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Xuất file
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowSubmissionPreview(false);
-                handleSubmitSubmission();
-              }}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
-              Gửi tờ trình
-            </button>
-          </div>
-        }
-        width="90%"
-        style={{ maxWidth: 1000 }}
-        centered>
-        <div className="space-y-4 sm:space-y-6 max-h-[80vh] overflow-y-auto px-2 sm:px-4">
-          {/* Header */}
-          <div className="text-center">
-            <div className="text-xs sm:text-sm text-gray-600 mb-2">
-              TRƯỜNG ĐẠI HỌC CÔNG
-              NGHIỆP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CỘNG
-              HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM
-            </div>
-            <div className="text-xs sm:text-sm text-gray-600 mb-2">
-              THÀNH PHỐ HỒ CHÍ
-              MINH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Độc
-              lập - Tự do - Hạnh phúc
-            </div>
-            <div className="text-xs sm:text-sm text-gray-600 mb-4">
-              {submissionFormData.department.toUpperCase()}
-            </div>
-            <div className="text-right text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
-              Thành phố Hồ Chí Minh, ngày ___ tháng ___ năm 2025
-            </div>
-            <div className="text-lg sm:text-xl font-bold text-center mb-2">
-              PHIẾU ĐỀ NGHỊ GIẢI QUYẾT CÔNG VIỆC
-            </div>
-            <div className="text-sm sm:text-base font-semibold text-center mb-4 sm:mb-6">
-              {submissionFormData.subject}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="space-y-4 sm:space-y-6">
-            {/* Thông tin chung */}
-            <div className="space-y-2 text-xs sm:text-sm">
-              <div>
-                <span className="font-medium">Kính gửi: </span>
-                <span>{submissionFormData.recipientDepartment}</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div>
-                  <span className="font-medium">Người đề nghị: </span>
-                  <span>{submissionFormData.submittedBy}</span>
-                </div>
-                <div>
-                  <span className="font-medium">Chức vụ: </span>
-                  <span>{submissionFormData.position}</span>
-                </div>
-              </div>
-              <div>
-                <span className="font-medium">Đơn vị: </span>
-                <span>{submissionFormData.department}</span>
-              </div>
-              <div>
-                <span className="font-medium">Đề nghị: </span>
-                <span>{submissionFormData.subject}</span>
-              </div>
-              <div>
-                <span className="font-medium">Văn bản kèm theo: </span>
-                <span>{submissionFormData.attachments}</span>
-              </div>
-            </div>
-
-            {/* Nội dung */}
-            <div className="space-y-3 text-xs sm:text-sm">
-              <div className="font-medium text-center">NỘI DUNG</div>
-              <div className="whitespace-pre-wrap text-justify">
-                {submissionFormData.content}
-              </div>
-            </div>
-
-            {/* Bảng linh kiện */}
-            {selectedRequestForSubmission?.items &&
-              selectedRequestForSubmission.items.length > 0 && (
-                <div className="overflow-x-auto -mx-2 sm:mx-0">
-                  <div className="font-medium text-xs sm:text-sm mb-2">
-                    Danh sách linh kiện đề xuất thay thế:
-                  </div>
-                  <table className="w-full border-collapse border border-gray-400 text-xs sm:text-sm">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                          STT
-                        </th>
-                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                          Linh kiện cũ
-                        </th>
-                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                          Linh kiện mới đề xuất
-                        </th>
-                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                          SL
-                        </th>
-                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                          Lý do
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedRequestForSubmission.items.map((item, index) => (
-                        <tr key={item.id}>
-                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
-                            {index + 1}
-                          </td>
-                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
-                            <div className="font-medium">
-                              {item.oldComponent?.name || "Không xác định"}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {item.oldComponent?.componentSpecs || ""}
-                            </div>
-                          </td>
-                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
-                            <div className="font-medium">
-                              {item.newItemName || "Không xác định"}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              {item.newItemSpecs || ""}
-                            </div>
-                          </td>
-                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
-                            {item.quantity}
-                          </td>
-                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
-                            {item.reason || "Cần thay thế"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-            {/* Kết luận và chữ ký */}
-            <div className="space-y-4 sm:space-y-6 mt-6">
-              <div className="text-xs sm:text-sm">
-                <span className="font-medium">
-                  {submissionFormData.department} kính trình Ban Giám hiệu xem
-                  xét và phê duyệt.
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 mt-8">
-                <div className="text-center">
-                  <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
-                    Trưởng phòng
-                  </div>
-                  <div className="font-medium text-xs sm:text-sm">
-                    {submissionFormData.director}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
-                    Hiệu trưởng
-                  </div>
-                  <div className="font-medium text-xs sm:text-sm">
-                    {submissionFormData.rector}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="font-medium mb-2 text-xs sm:text-sm">
-                    {submissionFormData.position}
-                  </div>
-                  <div className="text-xs text-gray-600 mb-10 sm:mb-12">
-                    (Ký và ghi rõ họ tên)
-                  </div>
-                  <div className="font-medium text-xs sm:text-sm">
-                    {submissionFormData.submittedBy}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Modal>
+      <SubmissionPreviewModal
+        isOpen={showSubmissionPreview}
+        onClose={() => setShowSubmissionPreview(false)}
+        formData={submissionFormData}
+        proposal={selectedRequestForSubmission}
+        onExport={handleExportSubmissionDocx}
+        onSubmit={handleSubmitSubmission}
+      />
     </>
   );
 }
