@@ -22,7 +22,7 @@ export interface RoleResponseDto {
  * @returns Promise<RoleResponseDto[]>
  */
 export const getRolesApi = async (): Promise<RoleResponseDto[]> => {
-  return await apiClient.get<RoleResponseDto[]>('api/v1/roles');
+  return await apiClient.get<RoleResponseDto[]>('/api/v1/roles');
 };
 
 /**

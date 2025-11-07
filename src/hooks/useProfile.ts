@@ -172,7 +172,7 @@ export function useProfile(): UseProfileReturn {
     setIsLoading(true);
     try {
       // TODO: Thay thế bằng API call thực tế khi backend có endpoint
-      // const response = await fetch(`/api/users/${user.id}/change-password`, {
+      // const response = await fetch(`/api/v1/users/${user.id}/change-password`, {
       //   method: 'POST',
       //   headers: {
       //     'Content-Type': 'application/json',
