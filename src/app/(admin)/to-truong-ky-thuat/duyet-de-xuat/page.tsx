@@ -24,6 +24,7 @@ import {
   ReplacementProposal,
   ReplacementProposalStatus,
 } from "@/lib/api/replacement-proposals";
+import { uploadFile } from "@/lib/api/upload";
 
 // Map table field names to API field names - outside component to avoid recreation
 const mapSortFieldToAPI = (
@@ -228,12 +229,42 @@ Trân trọng kính trình.`;
     if (!selectedRequestForSubmission) return;
 
     try {
+      // 1. Tạo file DOCX từ HTML content
+      const htmlContent = generateSubmissionHTML(
+        submissionFormData,
+        selectedRequestForSubmission
+      );
+
+      const blob = new Blob([htmlContent], { type: "application/vnd.ms-word" });
+      const fileName = `To_trinh_${selectedRequestForSubmission.proposalCode}_${
+        new Date().toISOString().split("T")[0]
+      }.doc`;
+      const file = new File([blob], fileName, {
+        type: "application/vnd.ms-word",
+      });
+
+      // 2. Upload file lên Cloudinary
+      Modal.info({
+        title: "Đang xử lý...",
+        content: "Đang tải file tờ trình lên server...",
+        centered: true,
+      });
+
+      const uploadResult = await uploadFile(file, "submissions");
+
+      if (!uploadResult.success || !uploadResult.url) {
+        throw new Error(uploadResult.error || "Upload file thất bại");
+      }
+
+      // 3. Cập nhật trạng thái với URL file
       await updateStatus(selectedRequestForSubmission.id, {
         status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+        submissionFormUrl: uploadResult.url,
       });
 
       // Close modal and reset state
       setShowSubmissionModal(false);
+      setShowSubmissionPreview(false);
       setSelectedRequestForSubmission(null);
 
       // Redirect immediately
@@ -259,13 +290,12 @@ Trân trọng kính trình.`;
     }
   };
 
-  // Hàm xuất file DOCX cho tờ trình (sử dụng HTML)
-  const handleExportSubmissionDocx = async () => {
-    if (!selectedRequestForSubmission) return;
-
-    try {
-      // Tạo nội dung HTML cho tờ trình
-      const htmlContent = `
+  // Hàm helper để generate HTML content cho tờ trình
+  const generateSubmissionHTML = (
+    formData: SubmissionFormData,
+    proposal: ReplacementProposal
+  ): string => {
+    return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -298,7 +328,7 @@ Trân trọng kính trình.`;
                 <p>BỘ CÔNG THƯƠNG</p>
                 <p class="bold">TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP</p>
                 <p class="bold">THÀNH PHỐ HỒ CHÍ MINH</p>
-                <p class="bold underline">${submissionFormData.department.toUpperCase()}</p>
+                <p class="bold underline">${formData.department.toUpperCase()}</p>
               </td>
               <td class="header-right">
                 <p class="bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
@@ -309,24 +339,18 @@ Trân trọng kính trình.`;
           </table>
           
           <h2>PHIẾU ĐỀ NGHỊ GIẢI QUYẾT CÔNG VIỆC</h2>
-          <h3>${submissionFormData.subject}</h3>
+          <h3>${formData.subject}</h3>
           
-          <p><strong>Kính gửi:</strong> ${
-            submissionFormData.recipientDepartment
-          }</p>
-          <p><strong>Người đề nghị:</strong> ${
-            submissionFormData.submittedBy
-          }</p>
-          <p><strong>Chức vụ:</strong> ${submissionFormData.position}</p>
-          <p><strong>Đơn vị:</strong> ${submissionFormData.department}</p>
-          <p><strong>Đề nghị:</strong> ${submissionFormData.subject}</p>
-          <p><strong>Văn bản kèm theo:</strong> ${
-            submissionFormData.attachments
-          }</p>
+          <p><strong>Kính gửi:</strong> ${formData.recipientDepartment}</p>
+          <p><strong>Người đề nghị:</strong> ${formData.submittedBy}</p>
+          <p><strong>Chức vụ:</strong> ${formData.position}</p>
+          <p><strong>Đơn vị:</strong> ${formData.department}</p>
+          <p><strong>Đề nghị:</strong> ${formData.subject}</p>
+          <p><strong>Văn bản kèm theo:</strong> ${formData.attachments}</p>
           
           <h4>NỘI DUNG</h4>
           <p style="text-align: justify; white-space: pre-wrap;">${
-            submissionFormData.content
+            formData.content
           }</p>
           
           <p><strong>Danh sách linh kiện đề xuất thay thế:</strong></p>
@@ -342,7 +366,7 @@ Trân trọng kính trình.`;
             </thead>
             <tbody>
               ${
-                selectedRequestForSubmission.items
+                proposal.items
                   ?.map(
                     (item, index) => `
                 <tr>
@@ -368,7 +392,7 @@ Trân trọng kính trình.`;
           </table>
           
           <p><strong>${
-            submissionFormData.department
+            formData.department
           } kính trình Ban Giám hiệu xem xét và phê duyệt.</strong></p>
           
           <table class="signature-table">
@@ -376,24 +400,36 @@ Trân trọng kính trình.`;
               <td width="33%">
                 <p><strong>Trưởng phòng</strong></p>
                 <br><br><br>
-                <p>${submissionFormData.director}</p>
+                <p>${formData.director}</p>
               </td>
               <td width="33%">
                 <p><strong>Hiệu trưởng</strong></p>
                 <br><br><br>
-                <p>${submissionFormData.rector}</p>
+                <p>${formData.rector}</p>
               </td>
               <td width="33%">
-                <p><strong>${submissionFormData.position}</strong></p>
+                <p><strong>${formData.position}</strong></p>
                 <p><em>(Ký và ghi rõ họ tên)</em></p>
                 <br><br>
-                <p>${submissionFormData.submittedBy}</p>
+                <p>${formData.submittedBy}</p>
               </td>
             </tr>
           </table>
         </body>
         </html>
       `;
+  };
+
+  // Hàm xuất file DOCX cho tờ trình (sử dụng HTML)
+  const handleExportSubmissionDocx = async () => {
+    if (!selectedRequestForSubmission) return;
+
+    try {
+      // Tạo nội dung HTML cho tờ trình
+      const htmlContent = generateSubmissionHTML(
+        submissionFormData,
+        selectedRequestForSubmission
+      );
 
       // Tạo Blob và download
       const blob = new Blob([htmlContent], { type: "application/vnd.ms-word" });
