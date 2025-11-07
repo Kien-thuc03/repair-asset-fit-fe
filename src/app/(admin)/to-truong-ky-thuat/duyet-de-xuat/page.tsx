@@ -84,23 +84,16 @@ export default function DuyetDeXuatPage() {
         : "createdAt";
 
     return {
-      status: selectedStatus
-        ? (selectedStatus as ReplacementProposalStatus)
-        : undefined,
+      // Không filter theo status ở API, sẽ filter ở frontend
+      status: undefined,
       search: searchTerm || undefined,
-      page: currentPage,
-      limit: pageSize,
+      // Lấy ALL data để filter ở frontend
+      page: 1,
+      limit: 1000, // Lấy tối đa 1000 records
       sortBy: mappedSortBy,
       sortOrder: sortDirection.toUpperCase() as "ASC" | "DESC",
     };
-  }, [
-    selectedStatus,
-    searchTerm,
-    currentPage,
-    pageSize,
-    sortField,
-    sortDirection,
-  ]);
+  }, [searchTerm, sortField, sortDirection]);
 
   // Fetch data from API
   const { data: apiData, refetch } = useReplacementProposals(queryParams);
@@ -109,10 +102,31 @@ export default function DuyetDeXuatPage() {
   const { updateStatus } = useUpdateReplacementProposalStatus();
 
   // Transform API data to match component expectations
+  // Filter chỉ lấy 3 trạng thái: CHỜ_TỔ_TRƯỞNG_DUYỆT, ĐÃ_DUYỆT, ĐÃ_TỪ_CHỐI
   const proposals = useMemo(() => {
     if (!apiData?.data) return [];
-    return apiData.data;
-  }, [apiData]);
+
+    // Allowed statuses for this page
+    const ALLOWED_STATUSES = [
+      ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+      ReplacementProposalStatus.ĐÃ_DUYỆT,
+      ReplacementProposalStatus.ĐÃ_TỪ_CHỐI,
+    ];
+
+    // Filter theo trạng thái cho phép
+    const filteredByStatus = apiData.data.filter((proposal) =>
+      ALLOWED_STATUSES.includes(proposal.status)
+    );
+
+    // Nếu user chọn filter status, áp dụng thêm
+    if (selectedStatus) {
+      return filteredByStatus.filter(
+        (proposal) => proposal.status === selectedStatus
+      );
+    }
+
+    return filteredByStatus;
+  }, [apiData, selectedStatus]);
 
   // Transform to ReplacementRequestItem format for components
   const transformedData = useMemo(() => {
@@ -146,6 +160,16 @@ export default function DuyetDeXuatPage() {
       proposerId: proposal.proposerId,
     }));
   }, [proposals]);
+
+  // Phân trang ở frontend
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return transformedData.slice(startIndex, endIndex);
+  }, [transformedData, currentPage, pageSize]);
+
+  // totalFiltered phải dùng số lượng đã filter
+  const totalFiltered = transformedData.length;
 
   const handleCreateSubmission = (requestId: string) => {
     const request = proposals.find((req) => req.id === requestId);
@@ -228,10 +252,6 @@ Trân trọng kính trình.`;
       });
     }
   };
-
-  // Use helper functions - client-side filtering for selected items
-  const paginatedData = transformedData;
-  const totalFiltered = apiData?.total || 0;
 
   const handleSort = (field: string) => {
     const apiField = mapSortFieldToAPI(field);

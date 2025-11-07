@@ -261,7 +261,7 @@ export default function DanhSachBaoLoiPage() {
             {
               title: (
                 <div className="flex items-center">
-                  <span>Danh sách báo lỗi</span>
+                  <span>Quản lý báo lỗi</span>
                 </div>
               ),
             },
@@ -272,7 +272,7 @@ export default function DanhSachBaoLoiPage() {
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-4 sm:p-6">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-          Danh sách báo lỗi
+          Quản lý báo lỗi
         </h1>
         <p className="mt-2 text-sm sm:text-base text-gray-600">
           Theo dõi và quản lý các báo cáo lỗi từ giảng viên và kỹ thuật viên.
@@ -343,7 +343,7 @@ export default function DanhSachBaoLoiPage() {
       <div className="bg-white shadow rounded-lg hidden lg:block">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách báo lỗi ({meta.total})
+            Quản lý báo lỗi ({meta.total})
           </h2>
         </div>
         <div className="min-h-[500px]">
