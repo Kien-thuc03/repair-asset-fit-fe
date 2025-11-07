@@ -64,7 +64,7 @@ export default function BaoCaoLoiPage() {
     assetId: "",
     componentId: "",
     roomId: "",
-    errorTypeId: "",
+    errorType: "" as ErrorType, // ✅ Use errorType instead of errorTypeId
     description: "",
     mediaFiles: [],
   });
@@ -94,37 +94,21 @@ export default function BaoCaoLoiPage() {
   // Kiểm tra xem loại lỗi hiện tại có cho phép chọn linh kiện không
   const canSelectComponents =
     errorCategory === "hardware" &&
-    formData.errorTypeId &&
-    canSelectComponentsByErrorType(formData.errorTypeId as ErrorType);
+    formData.errorType &&
+    canSelectComponentsByErrorType(formData.errorType as ErrorType);
 
   // Extract unique buildings from rooms
   const buildings = Array.from(
     new Set(rooms.map((room) => room.building).filter(Boolean))
   );
 
-  // Debug: Log buildings whenever rooms change
-  useEffect(() => {
-    console.log("🏢 Buildings computed:", buildings);
-    console.log("📍 Total rooms available:", rooms.length);
-  }, [rooms, buildings]);
-
   // Fetch rooms from API
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        console.log("🔍 Starting to fetch rooms...");
         const roomsData = await getRoomsApi();
-        console.log("✅ Rooms fetched successfully:", roomsData);
-        console.log("📊 Total rooms:", roomsData.length);
         setRooms(roomsData);
-
-        // Log unique buildings and floors
-        const uniqueBuildings = Array.from(
-          new Set(roomsData.map((room) => room.building).filter(Boolean))
-        );
-        console.log("🏢 Unique buildings:", uniqueBuildings);
-      } catch (error) {
-        console.error("❌ Error fetching rooms:", error);
+      } catch {
         message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
       }
     };
@@ -142,7 +126,7 @@ export default function BaoCaoLoiPage() {
     if (!errorCategory) {
       return 2; // Bước 3: Chọn loại lỗi (phần cứng/phần mềm)
     }
-    if (errorCategory === "hardware" && !formData.errorTypeId) {
+    if (errorCategory === "hardware" && !formData.errorType) {
       return 2; // Bước 3: Vẫn cần chọn loại lỗi cụ thể cho phần cứng
     }
     // Bước 4 luôn available sau khi chọn loại lỗi (optional step)
@@ -166,7 +150,6 @@ export default function BaoCaoLoiPage() {
 
   // Handle building change
   const handleBuildingChange = (building: string) => {
-    console.log("🏢 Building selected:", building);
     setFormData((prev) => ({
       ...prev,
       building,
@@ -189,7 +172,6 @@ export default function BaoCaoLoiPage() {
           .filter(Boolean)
       )
     );
-    console.log("🏢 Floors in building:", floorsInBuilding);
     setFilteredFloors(floorsInBuilding);
     setFilteredRooms([]);
     setFilteredComputers([]);
@@ -199,7 +181,6 @@ export default function BaoCaoLoiPage() {
 
   // Handle floor change
   const handleFloorChange = (floor: string) => {
-    console.log("🏢 Floor selected:", floor);
     setFormData((prev) => ({
       ...prev,
       floor,
@@ -216,7 +197,7 @@ export default function BaoCaoLoiPage() {
     const roomsOnFloor = rooms.filter(
       (room) => room.building === formData.building && room.floor === floor
     );
-    console.log("🏢 Rooms on floor:", roomsOnFloor);
+
     setFilteredRooms(roomsOnFloor);
     setFilteredComputers([]);
     setFilteredComponents([]);
@@ -239,20 +220,15 @@ export default function BaoCaoLoiPage() {
 
     // Fetch computers for the selected room
     try {
-      console.log("🔍 Fetching computers for room:", roomId);
       const computers = await getComputersByRoomId(roomId);
-      console.log("✅ Computers fetched:", computers);
-
       // Ensure it's an array
       if (Array.isArray(computers)) {
         setFilteredComputers(computers);
       } else {
-        console.error("❌ Response is not an array:", computers);
         setFilteredComputers([]);
         message.error("Dữ liệu máy tính không đúng định dạng");
       }
-    } catch (error) {
-      console.error("❌ Error fetching computers:", error);
+    } catch {
       message.error("Không thể tải danh sách máy tính");
       setFilteredComputers([]);
     }
@@ -275,26 +251,15 @@ export default function BaoCaoLoiPage() {
     );
 
     if (!selectedComputer) {
-      console.error("❌ Selected computer not found", {
-        computerId,
-        availableComputers: filteredComputers.map((c) => ({
-          id: c.id,
-          machineLabel: c.machineLabel,
-        })),
-      });
       message.error("Không tìm thấy máy tính được chọn");
       return;
     }
 
     // Check if computer has asset
     if (!selectedComputer.asset?.id) {
-      console.error("❌ Computer has no asset", selectedComputer);
       message.error("Máy tính này chưa được gán tài sản");
       return;
     }
-
-    console.log("✅ Selected computer:", selectedComputer);
-    console.log("📍 Asset ID:", selectedComputer.asset.id);
 
     // Store asset.id instead of computer.id
     setFormData((prev) => ({
@@ -308,10 +273,7 @@ export default function BaoCaoLoiPage() {
 
     // Fetch components for the selected computer using computer ID
     try {
-      console.log("🔍 Fetching components for computer:", computerId);
       const components = await getComponentsByComputerId(computerId);
-      console.log("✅ Components fetched:", components);
-
       // Ensure it's an array
       if (Array.isArray(components)) {
         // Map ComponentResponseDto to Component interface
@@ -329,23 +291,19 @@ export default function BaoCaoLoiPage() {
         }));
         setFilteredComponents(mappedComponents);
       } else {
-        console.error("❌ Response is not an array:", components);
         setFilteredComponents([]);
         message.error("Dữ liệu linh kiện không đúng định dạng");
       }
-    } catch (error) {
-      console.error("❌ Error fetching components:", error);
+    } catch {
       message.error("Không thể tải danh sách linh kiện");
       setFilteredComponents([]);
     }
 
     // Fetch software using asset ID
     try {
-      console.log("🔍 Fetching software for asset:", selectedComputer.asset.id);
       const softwareList = await getSoftwareByAssetId(
         selectedComputer.asset.id
       );
-      console.log("✅ Software fetched:", softwareList);
 
       // Map SoftwareDto to Software interface
       const mappedSoftware: Software[] = softwareList.map((sw) => ({
@@ -356,8 +314,7 @@ export default function BaoCaoLoiPage() {
         createdAt: sw.installationDate, // Use installationDate as createdAt
       }));
       setFilteredSoftware(mappedSoftware);
-    } catch (error) {
-      console.error("❌ Error fetching software:", error);
+    } catch {
       message.error("Không thể tải danh sách phần mềm");
       setFilteredSoftware([]);
     }
@@ -394,21 +351,18 @@ export default function BaoCaoLoiPage() {
       // Prepare request data
       const requestData: CreateRepairRequest = {
         computerAssetId: formData.assetId, // This is now asset.id
-        errorType: formData.errorTypeId as ErrorType, // Direct enum value
+        errorType: formData.errorType as ErrorType, // Direct enum value
         description: formData.description,
-        mediaUrls: [], // TODO: Upload images first and get URLs
+        mediaFiles:
+          formData.mediaFiles.length > 0 ? formData.mediaFiles : undefined, // ✅ Use mediaFiles instead of mediaUrls
         componentIds:
           selectedComponentIds.length > 0 ? selectedComponentIds : undefined,
         softwareIds:
           selectedSoftwareIds.length > 0 ? selectedSoftwareIds : undefined,
       };
 
-      console.log("📤 Submitting repair request:", requestData);
-
       // Call API to create repair request
-      const result = await createRepair(requestData);
-
-      console.log("✅ Repair request created:", result);
+      await createRepair(requestData);
 
       setIsSubmitting(false);
       setShowSuccessModal(true);
@@ -420,7 +374,7 @@ export default function BaoCaoLoiPage() {
         assetId: "",
         componentId: "",
         roomId: "",
-        errorTypeId: "",
+        errorType: "" as ErrorType, // ✅ Use errorType
         description: "",
         mediaFiles: [],
       });
@@ -435,7 +389,6 @@ export default function BaoCaoLoiPage() {
       setFilteredComponents([]);
       setFilteredSoftware([]);
     } catch (error) {
-      console.error("❌ Error creating repair request:", error);
       setIsSubmitting(false);
       message.error(
         error instanceof Error
@@ -538,8 +491,8 @@ export default function BaoCaoLoiPage() {
         </Card>
       )}
 
-      {/* Summary Card - Hiển thị thông tin đã điền */}
-      {(formData.building || formData.assetId || formData.errorTypeId) && (
+      {/* Summary Card - Hiển thị thông tin đã chọn */}
+      {(formData.building || formData.assetId || formData.errorType) && (
         <Card title="Thông tin đã chọn" size="small" className="bg-gray-50">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {formData.building && (
@@ -576,11 +529,11 @@ export default function BaoCaoLoiPage() {
                 </div>
               </div>
             )}
-            {formData.errorTypeId && (
+            {formData.errorType && (
               <div>
                 <div className="text-sm text-gray-500">Loại lỗi</div>
                 <div className="font-medium">
-                  {getErrorTypeByKey(formData.errorTypeId as ErrorType)?.name ||
+                  {getErrorTypeByKey(formData.errorType as ErrorType)?.name ||
                     "N/A"}
                 </div>
               </div>
@@ -691,15 +644,18 @@ export default function BaoCaoLoiPage() {
                 onChange={(e) => {
                   const newCategory = e.target.value;
                   setErrorCategory(newCategory);
-                  // Reset errorTypeId khi thay đổi category
+                  // Reset errorType khi thay đổi category
                   if (newCategory === "software") {
-                    // Nếu chọn lỗi phần mềm, tự động set errorTypeId
+                    // Nếu chọn lỗi phần mềm, tự động set errorType
                     setFormData((prev) => ({
                       ...prev,
-                      errorTypeId: ErrorType.MAY_HU_PHAN_MEM,
+                      errorType: ErrorType.MAY_HU_PHAN_MEM,
                     }));
                   } else {
-                    setFormData((prev) => ({ ...prev, errorTypeId: "" }));
+                    setFormData((prev) => ({
+                      ...prev,
+                      errorType: "" as ErrorType,
+                    }));
                   }
                 }}
                 disabled={!formData.assetId}>
@@ -713,13 +669,13 @@ export default function BaoCaoLoiPage() {
               <Form.Item label="Loại lỗi cụ thể" required>
                 <Select
                   placeholder="Chọn loại lỗi phần cứng"
-                  value={formData.errorTypeId}
-                  onChange={(errorTypeId) => {
-                    setFormData((prev) => ({ ...prev, errorTypeId }));
+                  value={formData.errorType}
+                  onChange={(errorType) => {
+                    setFormData((prev) => ({ ...prev, errorType }));
 
                     // Nếu chuyển sang loại lỗi không cho phép chọn linh kiện, reset selection
                     if (
-                      !canSelectComponentsByErrorType(errorTypeId as ErrorType)
+                      !canSelectComponentsByErrorType(errorType as ErrorType)
                     ) {
                       setSelectedComponentIds([]);
                       setShowComponentSelection(false);
@@ -759,7 +715,7 @@ export default function BaoCaoLoiPage() {
           <div
             className={`mb-6 ${
               !errorCategory ||
-              (errorCategory === "hardware" && !formData.errorTypeId)
+              (errorCategory === "hardware" && !formData.errorType)
                 ? "opacity-50"
                 : ""
             }`}>
@@ -805,7 +761,7 @@ export default function BaoCaoLoiPage() {
               <div>
                 {!canSelectComponents &&
                   errorCategory === "hardware" &&
-                  formData.errorTypeId && (
+                  formData.errorType && (
                     <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                       <p className="text-sm text-blue-800">
                         <strong>Lưu ý:</strong> Chỉ có thể chọn linh kiện cụ thể
@@ -925,7 +881,7 @@ export default function BaoCaoLoiPage() {
                 !formData.roomId ||
                 !formData.assetId ||
                 !errorCategory ||
-                (errorCategory === "hardware" && !formData.errorTypeId) ||
+                (errorCategory === "hardware" && !formData.errorType) ||
                 !formData.description
               }>
               {isSubmitting ? "Đang xử lý..." : "Gửi báo cáo lỗi"}

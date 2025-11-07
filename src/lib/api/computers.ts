@@ -65,19 +65,15 @@ export const getComputersByRoomId = async (
   roomId: string
 ): Promise<ComputerResponseDto[]> => {
   try {
-    console.log(`🌐 API Call: GET /computer/room/${roomId}`);
     const response = await api.get<ApiResponse<GetComputersByRoomData>>(
       `/computer/room/${roomId}`
     );
-    console.log("✅ API Response:", response.data);
 
     // Extract computers array from nested structure
     const computers = response.data.data.computers;
-    console.log("✅ Computers extracted:", computers);
 
     return computers;
   } catch (error: unknown) {
-    console.error("❌ Get computers by room error:", error);
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
       err.response?.data?.message || "Lấy danh sách máy tính thất bại."

@@ -6,6 +6,7 @@ import {
   ErrorType,
   getErrorTypeLabel,
 } from "@/types";
+import { uploadMultipleFiles } from "./upload";
 
 /**
  * Interface cho query parameters khi lấy danh sách yêu cầu sửa chữa
@@ -61,6 +62,7 @@ export interface CreateRepairRequest {
   errorType?: ErrorType; // ✅ Loại lỗi (ErrorType enum thay vì errorTypeId)
   description: string; // Mô tả chi tiết lỗi
   mediaUrls?: string[]; // Mảng URL ảnh/video minh họa (optional)
+  mediaFiles?: File[]; // ✅ Mảng files cần upload (optional)
   componentIds?: string[]; // Danh sách ID linh kiện bị lỗi (optional)
   softwareIds?: string[]; // Danh sách ID phần mềm bị lỗi (optional)
 }
@@ -83,7 +85,7 @@ interface ApiRepairResponse {
   acceptedAt?: string | null;
   completedAt?: string | null;
   errorType?: ErrorType;
-  
+
   // Nested objects
   computerAsset?: {
     id: string;
@@ -93,7 +95,7 @@ interface ApiRepairResponse {
     status: string;
     machineLabel?: string;
   };
-  
+
   room?: {
     id: string;
     name: string;
@@ -106,7 +108,7 @@ interface ApiRepairResponse {
       code: string;
     };
   };
-  
+
   reporter?: {
     id: string;
     fullName: string;
@@ -118,7 +120,7 @@ interface ApiRepairResponse {
       code: string;
     }>;
   };
-  
+
   assignedTechnician?: {
     id: string;
     fullName: string;
@@ -130,7 +132,7 @@ interface ApiRepairResponse {
       code: string;
     }>;
   };
-  
+
   components?: Array<{
     id: string;
     name: string;
@@ -146,22 +148,24 @@ interface ApiRepairResponse {
  */
 const transformApiResponse = (apiData: ApiRepairResponse): RepairRequest => {
   // Component name: join tất cả components hoặc lấy phần tử đầu
-  const componentName = apiData.components && apiData.components.length > 0
-    ? apiData.components.length === 1
-      ? apiData.components[0].name
-      : apiData.components.map((c) => c.name).join(', ')
-    : 'Chưa xác định';
+  const componentName =
+    apiData.components && apiData.components.length > 0
+      ? apiData.components.length === 1
+        ? apiData.components[0].name
+        : apiData.components.map((c) => c.name).join(", ")
+      : "Chưa xác định";
 
   // Extract reporter role (lấy role đầu tiên hoặc default)
-  const reporterRole = apiData.reporter?.roles && apiData.reporter.roles.length > 0
-    ? apiData.reporter.roles[0].name
-    : 'Giảng viên';
+  const reporterRole =
+    apiData.reporter?.roles && apiData.reporter.roles.length > 0
+      ? apiData.reporter.roles[0].name
+      : "Giảng viên";
 
   // Extract unit name
-  const unitName = apiData.room?.unit?.name || 'Chưa xác định';
+  const unitName = apiData.room?.unit?.name || "Chưa xác định";
 
   // Extract machine label
-  const machineLabel = apiData.computerAsset?.machineLabel || 'N/A';
+  const machineLabel = apiData.computerAsset?.machineLabel || "N/A";
 
   return {
     // Direct fields từ API
@@ -172,32 +176,32 @@ const transformApiResponse = (apiData: ApiRepairResponse): RepairRequest => {
     assignedTechnicianId: apiData.assignedTechnicianId,
     description: apiData.description,
     mediaUrls: apiData.mediaUrls || undefined,
-    status: apiData.status as RepairRequest['status'],
+    status: apiData.status as RepairRequest["status"],
     resolutionNotes: apiData.resolutionNotes || undefined,
     createdAt: apiData.createdAt,
     acceptedAt: apiData.acceptedAt || undefined,
     completedAt: apiData.completedAt || undefined,
-    
+
     // Nested objects (giữ nguyên)
     computerAsset: apiData.computerAsset,
     room: apiData.room,
     reporter: apiData.reporter,
     assignedTechnician: apiData.assignedTechnician,
     components: apiData.components,
-    
+
     // Computed fields từ nested objects
-    assetCode: apiData.computerAsset?.ktCode || 'Chưa xác định',
-    assetName: apiData.computerAsset?.name || 'Chưa xác định',
-    reporterName: apiData.reporter?.fullName || 'Chưa xác định',
+    assetCode: apiData.computerAsset?.ktCode || "Chưa xác định",
+    assetName: apiData.computerAsset?.name || "Chưa xác định",
+    reporterName: apiData.reporter?.fullName || "Chưa xác định",
     assignedTechnicianName: apiData.assignedTechnician?.fullName,
-    roomName: apiData.room?.name || 'Chưa xác định',
-    buildingName: apiData.room?.building || 'Chưa xác định',
+    roomName: apiData.room?.name || "Chưa xác định",
+    buildingName: apiData.room?.building || "Chưa xác định",
     componentName,
-    
+
     // Error type fields
     errorType: apiData.errorType,
     errorTypeName: getErrorTypeLabel(apiData.errorType),
-    
+
     // New fields từ nested objects
     reporterRole,
     machineLabel,
@@ -213,6 +217,7 @@ export interface UpdateRepairRequest {
   errorType?: ErrorType; // ✅ Cập nhật loại lỗi (ErrorType enum thay vì errorTypeId)
   description?: string; // Cập nhật mô tả
   mediaUrls?: string[]; // Cập nhật ảnh/video
+  mediaFiles?: File[]; // ✅ Files mới cần upload (optional)
   status?: RepairStatus; // Cập nhật trạng thái
   resolutionNotes?: string; // Ghi chú xử lý
 }
@@ -226,14 +231,17 @@ export const getRepairs = async (
   params?: GetRepairsQueryParams
 ): Promise<GetRepairsResponse> => {
   try {
-    const response = await api.get<{ data: ApiRepairResponse[]; total: number; page: number; limit: number; totalPages: number }>(
-      "/api/v1/repairs",
-      { params }
-    );
-    
+    const response = await api.get<{
+      data: ApiRepairResponse[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>("/api/v1/repairs", { params });
+
     // Transform API responses
     const transformedData = response.data.data.map(transformApiResponse);
-    
+
     return {
       data: transformedData,
       total: response.data.total,
@@ -242,7 +250,6 @@ export const getRepairs = async (
       totalPages: response.data.totalPages,
     };
   } catch (error: unknown) {
-    console.error("❌ Get repairs error:", error);
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
       err.response?.data?.message || "Lấy danh sách yêu cầu sửa chữa thất bại."
@@ -259,21 +266,45 @@ export const createRepair = async (
   data: CreateRepairRequest
 ): Promise<GetRepairDetailResponse> => {
   try {
-    console.log("🌐 API Call: POST /api/v1/repairs", data);
-    const response = await api.post<ApiRepairResponse>("/api/v1/repairs", data);
-    console.log("✅ API Response:", response.data);
-    
+    // ✅ Step 1: Upload files lên Cloudinary nếu có
+    let uploadedUrls: string[] = [];
+    if (data.mediaFiles && data.mediaFiles.length > 0) {
+      const uploadResponse = await uploadMultipleFiles(
+        data.mediaFiles,
+        "repair-requests"
+      );
+
+      if (uploadResponse.success && uploadResponse.urls) {
+        uploadedUrls = uploadResponse.urls;
+      } else {
+        throw new Error(uploadResponse.error || "Upload files thất bại");
+      }
+    }
+
+    // ✅ Step 2: Merge uploaded URLs với existing mediaUrls (nếu có)
+    const allMediaUrls = [...(data.mediaUrls || []), ...uploadedUrls];
+
+    // ✅ Step 3: Tạo repair request với URLs từ Cloudinary
+    const requestData = {
+      computerAssetId: data.computerAssetId,
+      errorType: data.errorType,
+      description: data.description,
+      mediaUrls: allMediaUrls.length > 0 ? allMediaUrls : undefined,
+      componentIds: data.componentIds,
+      softwareIds: data.softwareIds,
+    };
+
+    const response = await api.post<ApiRepairResponse>(
+      "/api/v1/repairs",
+      requestData
+    );
+
     // Transform response - cast to correct type
     return transformApiResponse(response.data) as RepairRequestWithDetails;
   } catch (error: unknown) {
-    console.error("❌ Create repair error:", error);
     const err = error as {
       response?: { data?: { message?: string }; status?: number };
     };
-    console.error("❌ Error details:", {
-      status: err.response?.status,
-      message: err.response?.data?.message,
-    });
     throw new Error(
       err.response?.data?.message || "Tạo yêu cầu sửa chữa thất bại."
     );
@@ -289,21 +320,14 @@ export const getRepairById = async (
   id: string
 ): Promise<GetRepairDetailResponse> => {
   try {
-    console.log("🌐 API Call: GET /api/v1/repairs/" + id);
     const response = await api.get<ApiRepairResponse>(`/api/v1/repairs/${id}`);
-    console.log("✅ API Response:", response.data);
-    
+
     // Transform response
     return transformApiResponse(response.data) as RepairRequestWithDetails;
   } catch (error: unknown) {
-    console.error("❌ Get repair detail error:", error);
     const err = error as {
       response?: { data?: { message?: string }; status?: number };
     };
-    console.error("❌ Error details:", {
-      status: err.response?.status,
-      message: err.response?.data?.message,
-    });
     throw new Error(
       err.response?.data?.message || "Lấy chi tiết yêu cầu sửa chữa thất bại."
     );
@@ -321,21 +345,45 @@ export const updateRepair = async (
   data: UpdateRepairRequest
 ): Promise<GetRepairDetailResponse> => {
   try {
-    console.log("🌐 API Call: PUT /api/v1/repairs/" + id, data);
-    const response = await api.put<ApiRepairResponse>(`/api/v1/repairs/${id}`, data);
-    console.log("✅ API Response:", response.data);
-    
+    // ✅ Step 1: Upload files lên Cloudinary nếu có
+    let uploadedUrls: string[] = [];
+    if (data.mediaFiles && data.mediaFiles.length > 0) {
+      const uploadResponse = await uploadMultipleFiles(
+        data.mediaFiles,
+        "repair-requests"
+      );
+
+      if (uploadResponse.success && uploadResponse.urls) {
+        uploadedUrls = uploadResponse.urls;
+      } else {
+        throw new Error(uploadResponse.error || "Upload files thất bại");
+      }
+    }
+
+    // ✅ Step 2: Merge uploaded URLs với existing mediaUrls (nếu có)
+    const allMediaUrls = [...(data.mediaUrls || []), ...uploadedUrls];
+
+    // ✅ Step 3: Cập nhật repair request với URLs từ Cloudinary
+    const requestData = {
+      assignedTechnicianId: data.assignedTechnicianId,
+      errorType: data.errorType,
+      description: data.description,
+      mediaUrls: allMediaUrls.length > 0 ? allMediaUrls : data.mediaUrls,
+      status: data.status,
+      resolutionNotes: data.resolutionNotes,
+    };
+
+    const response = await api.put<ApiRepairResponse>(
+      `/api/v1/repairs/${id}`,
+      requestData
+    );
+
     // Transform response
     return transformApiResponse(response.data) as RepairRequestWithDetails;
   } catch (error: unknown) {
-    console.error("❌ Update repair error:", error);
     const err = error as {
       response?: { data?: { message?: string }; status?: number };
     };
-    console.error("❌ Error details:", {
-      status: err.response?.status,
-      message: err.response?.data?.message,
-    });
     throw new Error(
       err.response?.data?.message || "Cập nhật yêu cầu sửa chữa thất bại."
     );
@@ -434,32 +482,21 @@ export const getRepairsByReporter = async (
   reporterId: string
 ): Promise<RepairRequest[]> => {
   try {
-    console.log(
-      `🌐 API Call: GET /api/v1/repairs/repair-requests/reporters/${reporterId}`
-    );
     const response = await api.get<ApiRepairResponse[]>(
       `/api/v1/repairs/repair-requests/reporters/${reporterId}`
     );
-    console.log("✅ API Response:", response.data);
-    
     // Transform responses
     return response.data.map(transformApiResponse);
   } catch (error: unknown) {
-    console.error("❌ Get repairs by reporter error:", error);
     const err = error as {
       response?: { data?: { message?: string }; status?: number };
     };
-    console.error("❌ Error details:", {
-      status: err.response?.status,
-      message: err.response?.data?.message,
-    });
     throw new Error(
       err.response?.data?.message ||
         "Lấy danh sách yêu cầu sửa chữa theo người báo lỗi thất bại."
     );
   }
 };
-
 /**
  * Lấy danh sách yêu cầu sửa chữa theo kỹ thuật viên (technician)
  * @param technicianId ID của kỹ thuật viên
@@ -469,29 +506,18 @@ export const getRepairsByTechnician = async (
   technicianId: string
 ): Promise<RepairRequest[]> => {
   try {
-    console.log(
-      `🌐 API Call: GET /api/v1/repairs/repair-requests/technicians/${technicianId}`
-    );
     const response = await api.get<ApiRepairResponse[]>(
       `/api/v1/repairs/repair-requests/technicians/${technicianId}`
     );
-    console.log("✅ API Response:", response.data);
-    
     // Transform responses
     return response.data.map(transformApiResponse);
   } catch (error: unknown) {
-    console.error("❌ Get repairs by technician error:", error);
     const err = error as {
       response?: { data?: { message?: string }; status?: number };
     };
-    console.error("❌ Error details:", {
-      status: err.response?.status,
-      message: err.response?.data?.message,
-    });
     throw new Error(
       err.response?.data?.message ||
         "Lấy danh sách yêu cầu sửa chữa theo kỹ thuật viên thất bại."
     );
   }
 };
-
