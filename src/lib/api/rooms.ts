@@ -42,12 +42,9 @@ export interface RoomResponseDto {
  */
 export const getRoomsApi = async (): Promise<RoomResponseDto[]> => {
   try {
-    console.log("🌐 API Call: GET /api/v1/rooms");
     const response = await api.get<RoomResponseDto[]>("/api/v1/rooms");
-    console.log("✅ API Response:", response.data);
     return response.data;
   } catch (error: unknown) {
-    console.error("❌ Get rooms error:", error);
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
       err.response?.data?.message || "Lấy danh sách phòng thất bại."
@@ -62,12 +59,9 @@ export const getRoomsApi = async (): Promise<RoomResponseDto[]> => {
  */
 export const getRoomByIdApi = async (id: string): Promise<RoomResponseDto> => {
   try {
-    console.log(`🌐 API Call: GET /api/v1/rooms/${id}`);
     const response = await api.get<RoomResponseDto>(`/api/v1/rooms/${id}`);
-    console.log("✅ API Response:", response.data);
     return response.data;
   } catch (error: unknown) {
-    console.error("❌ Get room by ID error:", error);
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
       err.response?.data?.message || "Lấy thông tin phòng thất bại."

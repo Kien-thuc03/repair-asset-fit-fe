@@ -98,19 +98,15 @@ export const getComponentsByComputerId = async (
   computerId: string
 ): Promise<ComponentResponseDto[]> => {
   try {
-    console.log(`🌐 API Call: GET /computer/${computerId}/components`);
     const response = await api.get<ApiResponse<GetComponentsByComputerData>>(
       `/computer/${computerId}/components`
     );
-    console.log("✅ API Response:", response.data);
 
     // Extract components array from nested structure
     const components = response.data.data.components;
-    console.log("✅ Components extracted:", components);
 
     return components;
   } catch (error: unknown) {
-    console.error("❌ Get components by computer error:", error);
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
       err.response?.data?.message || "Lấy danh sách linh kiện thất bại."
@@ -127,18 +123,15 @@ export const getComponentStatsByComputerId = async (
   computerId: string
 ): Promise<{ computer: ComputerInfo; stats: Record<string, number> }> => {
   try {
-    console.log(`🌐 API Call: GET /computer/${computerId}/components (stats)`);
     const response = await api.get<ApiResponse<GetComponentsByComputerData>>(
       `/computer/${computerId}/components`
     );
-    console.log("✅ API Response:", response.data);
 
     return {
       computer: response.data.data.computer,
       stats: response.data.data.componentStats,
     };
   } catch (error: unknown) {
-    console.error("❌ Get component stats error:", error);
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
       err.response?.data?.message || "Lấy thống kê linh kiện thất bại."
