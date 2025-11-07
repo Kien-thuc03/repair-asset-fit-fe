@@ -10,3 +10,4 @@ export * from "./useStatistics";
 export * from "./useProfile";
 export * from "./useRepairs";
 export * from "./useReplacementProposals";
+export * from "./useAvailableComponents";
