@@ -1,4 +1,4 @@
-import { ErrorType } from './errorType';
+import { ErrorType } from '@/lib/constants/errorTypes';
 
 // Interface cho ErrorTypes - DEPRECATED - Sử dụng ErrorType enum thay thế
 export interface ErrorTypeOld {

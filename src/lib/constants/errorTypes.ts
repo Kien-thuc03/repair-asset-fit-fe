@@ -15,6 +15,22 @@ export enum ErrorType {
 }
 
 /**
+ * Mapping Error Type enum sang tên hiển thị tiếng Việt
+ */
+export const ERROR_TYPE_LABELS: Record<ErrorType, string> = {
+  [ErrorType.MAY_MAT_CHUOT]: 'Máy mất chuột',
+  [ErrorType.MAY_HU_CHUOT]: 'Máy hư chuột',
+  [ErrorType.MAY_MAT_BAN_PHIM]: 'Máy mất bàn phím',
+  [ErrorType.MAY_HU_BAN_PHIM]: 'Máy hư bàn phím',
+  [ErrorType.MAY_HU_MAN_HINH]: 'Máy hư màn hình',
+  [ErrorType.MAY_KHONG_KHOI_DONG]: 'Máy không khởi động',
+  [ErrorType.MAY_KHONG_KET_NOI_MANG]: 'Máy không kết nối mạng',
+  [ErrorType.MAY_HU_PHAN_MEM]: 'Máy hư phần mềm',
+  [ErrorType.MAY_KHONG_SU_DUNG_DUOC]: 'Máy không sử dụng được',
+  [ErrorType.LOI_KHAC]: 'Lỗi khác',
+};
+
+/**
  * Error Type Display Info for UI
  */
 export interface ErrorTypeInfo {
@@ -132,4 +148,31 @@ export const getErrorTypeByKey = (
 export const canSelectComponents = (key: ErrorType): boolean => {
   const errorType = getErrorTypeByKey(key);
   return errorType?.allowComponentSelection || false;
+};
+
+/**
+ * Helper function để lấy label từ ErrorType enum
+ * Compatible with old getErrorTypeLabel from @/types/errorType
+ */
+export const getErrorTypeLabel = (errorType: ErrorType | string | undefined): string => {
+  if (!errorType) return 'Chưa xác định';
+  
+  // If it's already a valid ErrorType enum value
+  if (Object.values(ErrorType).includes(errorType as ErrorType)) {
+    return ERROR_TYPE_LABELS[errorType as ErrorType];
+  }
+  
+  // Fallback for unknown values
+  return errorType;
+};
+
+/**
+ * Get all error types as options for select dropdown
+ * Compatible with old getErrorTypeOptions from @/types/errorType
+ */
+export const getErrorTypeOptions = () => {
+  return Object.values(ErrorType).map((type) => ({
+    value: type,
+    label: ERROR_TYPE_LABELS[type],
+  }));
 };
