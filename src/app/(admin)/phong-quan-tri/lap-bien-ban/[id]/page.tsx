@@ -14,14 +14,35 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
+import {
+  InspectionFormModal,
+  InspectionPreviewModal,
+} from "@/components/modal";
 import { useReplacementProposal } from "@/hooks";
+import { InspectionFormData } from "@/types";
 import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { uploadFile } from "@/lib/api/upload";
 
 export default function RequestDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
   const [showInspectionForm, setShowInspectionForm] = useState(false);
+  const [showInspectionPreview, setShowInspectionPreview] = useState(false);
+  const [inspectionFormData, setInspectionFormData] =
+    useState<InspectionFormData>({
+      requestedBy: "Khoa CNTT",
+      year: "2025",
+      inspectionDay: "",
+      inspectionMonth: "",
+      inspectionYear: "2025",
+      location: "",
+      departmentRep: "Giang Thanh Trọn",
+      departmentName: "Khoa CNTT",
+      adminRep: "Nguyễn Văn Ngã",
+      adminDepartment: "Phòng Quản trị",
+      notes: "",
+    });
 
   // Fetch proposal data từ API
   const { data: proposal, loading, error } = useReplacementProposal(id);
@@ -61,14 +82,266 @@ export default function RequestDetailPage() {
     setShowInspectionForm(false);
   };
 
-  const handleSubmitInspectionReport = () => {
-    // Đóng modal biên bản trước
-    setShowInspectionForm(false);
+  const handleSubmitInspectionReport = async () => {
+    if (!proposal) return;
 
-    // Tăng thời gian chờ để đảm bảo modal đã được đóng hoàn toàn trước khi chuyển trang
-    setTimeout(() => {
-      router.push("/phong-quan-tri/lap-bien-ban");
-    }, 300);
+    try {
+      // 1. Tạo file DOCX từ HTML content
+      const htmlContent = generateInspectionHTML(inspectionFormData, proposal);
+
+      const blob = new Blob([htmlContent], { type: "application/vnd.ms-word" });
+      const fileName = `Bien_ban_kiem_tra_${proposal.proposalCode}_${
+        new Date().toISOString().split("T")[0]
+      }.doc`;
+      const file = new File([blob], fileName, {
+        type: "application/vnd.ms-word",
+      });
+
+      // 2. Upload file lên Cloudinary
+      Modal.info({
+        title: "Đang xử lý...",
+        content: "Đang tải file biên bản lên server...",
+        centered: true,
+      });
+
+      const uploadResult = await uploadFile(file, "inspection-reports");
+
+      if (!uploadResult.success || !uploadResult.url) {
+        throw new Error(uploadResult.error || "Upload file thất bại");
+      }
+
+      // 3. Cập nhật trạng thái với URL file (có thể thêm API call ở đây)
+      // await updateStatus(proposal.id, {
+      //   status: ReplacementProposalStatus.ĐÃ_LẬP_BIÊN_BẢN,
+      //   inspectionReportUrl: uploadResult.url,
+      // });
+
+      // Close modals
+      setShowInspectionForm(false);
+      setShowInspectionPreview(false);
+
+      // Redirect
+      setTimeout(() => {
+        router.push("/phong-quan-tri/lap-bien-ban");
+      }, 300);
+
+      Modal.success({
+        title: "Gửi biên bản thành công!",
+        content: `Biên bản kiểm tra cho đề xuất ${proposal.proposalCode} đã được tạo và gửi.`,
+        centered: true,
+        mask: false,
+        keyboard: false,
+      });
+    } catch (err) {
+      console.error("Error creating inspection report:", err);
+      Modal.error({
+        title: "Lỗi",
+        content: err instanceof Error ? err.message : "Không thể lập biên bản.",
+        centered: true,
+      });
+    }
+  };
+
+  // Hàm helper để generate HTML content cho biên bản kiểm tra
+  const generateInspectionHTML = (
+    formData: InspectionFormData,
+    proposalData: typeof proposal
+  ): string => {
+    if (!proposalData) return "";
+
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: 'Times New Roman', Times, serif; font-size: 13pt; line-height: 1.5; margin: 40px; }
+            .header-table { width: 100%; border: none; margin-bottom: 10px; }
+            .header-table td { border: none; padding: 0; vertical-align: top; font-size: 11pt; text-align: center; }
+            .header-left { width: 50%; }
+            .header-right { width: 50%; }
+            .bold { font-weight: bold; }
+            .underline { text-decoration: underline; }
+            table.data-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            table.data-table th, table.data-table td { border: 1px solid black; padding: 8px; }
+            table.data-table th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+            h2 { font-size: 14pt; font-weight: bold; text-align: center; margin: 20px 0 10px 0; }
+            h3 { font-size: 13pt; font-weight: bold; text-align: center; margin: 5px 0 20px 0; }
+            p { margin: 5px 0; }
+            .right-text { text-align: right; margin-bottom: 20px; }
+            .signature-section { margin-top: 40px; }
+            .signature-table { width: 100%; border: none; }
+            .signature-table td { border: none; text-align: center; padding: 10px; vertical-align: top; }
+          </style>
+        </head>
+        <body>
+          <table class="header-table">
+            <tr>
+              <td class="header-left">
+                <p>TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP</p>
+                <p>THÀNH PHỐ HỒ CHÍ MINH</p>
+                <p class="bold">PHÒNG QUẢN TRỊ</p>
+              </td>
+              <td class="header-right">
+                <p class="bold">CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                <p class="bold underline">Độc lập - Tự do - Hạnh phúc</p>
+              </td>
+            </tr>
+          </table>
+          
+          <p class="right-text">
+            <em>Thành phố Hồ Chí Minh, ngày ${
+              formData.inspectionDay || "___"
+            } tháng ${formData.inspectionMonth || "___"} năm ${
+      formData.inspectionYear || "2025"
+    }</em>
+          </p>
+          
+          <h2>BIÊN BẢN</h2>
+          <h3>Kiểm tra tình trạng kỹ thuật cơ sở vật chất hư hỏng hoặc cần cải tạo<br>để đề xuất giải pháp khắc phục</h3>
+          
+          <p><strong>Căn cứ đề nghị của:</strong> ${
+            formData.requestedBy
+          } &nbsp;&nbsp;&nbsp;&nbsp; <strong>Năm:</strong> ${formData.year}</p>
+          <p><strong>Hôm nay, Ngày:</strong> ${
+            formData.inspectionDay || "___"
+          } <strong>Tháng:</strong> ${
+      formData.inspectionMonth || "___"
+    } <strong>Năm:</strong> ${formData.inspectionYear || "2025"}</p>
+          <p><strong>Tại vị trí:</strong> ${formData.location}</p>
+          
+          <p><strong>Chúng tôi gồm có:</strong></p>
+          <p style="margin-left: 20px;">
+            <strong>1. Ông:</strong> ${
+              formData.departmentRep
+            } &nbsp;&nbsp;&nbsp;&nbsp; <strong>đại diện:</strong> ${
+      formData.departmentName
+    }
+          </p>
+          <p style="margin-left: 20px;">
+            <strong>2. Ông:</strong> ${
+              formData.adminRep
+            } &nbsp;&nbsp;&nbsp;&nbsp; <strong>đại diện:</strong> ${
+      formData.adminDepartment
+    }
+          </p>
+          
+          <p><strong>Cùng lập biên bản kiểm tra tình trạng kỹ thuật của cơ sở vật chất hư hỏng cần thay thế:</strong></p>
+          
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th width="5%">TT</th>
+                <th width="25%">Nội dung kiểm tra</th>
+                <th width="8%">SL</th>
+                <th width="20%">Vị trí</th>
+                <th width="12%">Tình trạng</th>
+                <th width="30%">Giải pháp</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${
+                proposalData.items
+                  ?.map(
+                    (item, index) => `
+                <tr>
+                  <td style="text-align: center;">${index + 1}</td>
+                  <td>
+                    <strong>${
+                      item.oldComponent?.componentType || "Không xác định"
+                    }</strong><br>
+                    <small>${item.oldComponent?.name || "N/A"}</small>
+                  </td>
+                  <td style="text-align: center;">${item.quantity}</td>
+                  <td>
+                    ${item.oldComponent?.roomLocation || "Chưa xác định"}<br>
+                    <small>${item.oldComponent?.componentSpecs || "N/A"}</small>
+                  </td>
+                  <td>Hỏng</td>
+                  <td>
+                    - Đề nghị thay thế:<br>
+                    1. ${item.newItemName || "Không xác định"}<br>
+                    2. ${item.newItemSpecs || "N/A"}
+                  </td>
+                </tr>
+              `
+                  )
+                  .join("") || ""
+              }
+            </tbody>
+          </table>
+          
+          <p><strong>Đại diện các đơn vị tham gia công tác kiểm tra tình trạng kỹ thuật của cơ sở vật chất hư hỏng cùng đồng ý với nội dung trên; Đồng ý với kỹ sư.</strong></p>
+          
+          ${
+            formData.notes
+              ? `<p><strong>Ghi chú:</strong> ${formData.notes}</p>`
+              : ""
+          }
+          
+          <div class="signature-section">
+            <table class="signature-table">
+              <tr>
+                <td width="50%">
+                  <p><strong>${formData.departmentName}</strong></p>
+                  <br><br><br>
+                  <p><strong>Nhân viên Kỹ thuật</strong></p>
+                  <br><br>
+                  <p>${formData.departmentRep}</p>
+                </td>
+                <td width="50%">
+                  <p><strong>${formData.adminDepartment}</strong></p>
+                  <br><br><br>
+                  <p><strong>Người thực hiện</strong></p>
+                  <br><br>
+                  <p>${formData.adminRep}</p>
+                </td>
+              </tr>
+            </table>
+          </div>
+          
+          <div style="text-align: center; margin-top: 40px;">
+            <p><strong>Ý kiến của Lãnh đạo Phòng Quản trị:</strong></p>
+            <br><br><br>
+            <p>_______________________________</p>
+          </div>
+        </body>
+        </html>
+      `;
+  };
+
+  // Hàm xuất file DOCX cho biên bản kiểm tra
+  const handleExportInspectionDocx = async () => {
+    if (!proposal) return;
+
+    try {
+      // Tạo nội dung HTML cho biên bản
+      const htmlContent = generateInspectionHTML(inspectionFormData, proposal);
+
+      // Tạo Blob và download
+      const blob = new Blob([htmlContent], { type: "application/vnd.ms-word" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Bien_ban_kiem_tra_${proposal.proposalCode}_${
+        new Date().toISOString().split("T")[0]
+      }.doc`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      Modal.success({
+        title: "Xuất file thành công!",
+        content: `File biên bản kiểm tra đã được tải xuống.`,
+        centered: true,
+      });
+    } catch (error) {
+      console.error("Lỗi xuất file:", error);
+      Modal.error({
+        title: "Lỗi",
+        content: "Không thể xuất file. Vui lòng thử lại.",
+        centered: true,
+      });
+    }
   };
 
   // Loading state
@@ -431,233 +704,26 @@ export default function RequestDetailPage() {
           </div>
         </div>
 
-        {/* Modal biên bản kiểm tra */}
-        <Modal
-          title={null}
-          open={showInspectionForm}
-          onCancel={handleCloseInspectionForm}
-          footer={[
-            <button
-              key="cancel"
-              onClick={handleCloseInspectionForm}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mr-2 sm:mr-3">
-              Hủy
-            </button>,
-            <button
-              key="submit"
-              type="button"
-              onClick={() => {
-                console.log("Clicked: Gửi biên bản");
-                handleSubmitInspectionReport();
-              }}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-              Gửi biên bản
-            </button>,
-          ]}
-          width="90%"
-          style={{ maxWidth: 1000 }}
-          centered
-          className="inspection-report-modal">
-          <div className="space-y-4 sm:space-y-6 max-h-[80vh] overflow-y-auto px-2 sm:px-4">
-            {/* Header */}
-            <div className="text-center">
-              <div className="text-xs sm:text-sm text-gray-600 mb-2">
-                TRƯỜNG ĐẠI HỌC CÔNG
-                NGHIỆP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CỘNG
-                HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600 mb-2">
-                THÀNH PHỐ HỒ CHÍ
-                MINH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Độc
-                lập - Tự do - Hạnh phúc
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600 mb-4">
-                PHÒNG QUẢN TRỊ
-              </div>
-              <div className="text-right text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
-                Thành phố Hồ Chí Minh, ngày ___ tháng ___ năm 2025
-              </div>
-              <div className="text-lg sm:text-xl font-bold text-center mb-2">
-                BIÊN BẢN
-              </div>
-              <div className="text-sm sm:text-base font-semibold text-center mb-2 sm:mb-4">
-                Kiểm tra tình trạng kỹ thuật cơ sở vật chất hư hỏng hoặc cần cải
-                tạo
-              </div>
-              <div className="text-sm sm:text-base font-semibold text-center mb-4 sm:mb-6">
-                để đề xuất giải pháp khắc phục
-              </div>
-            </div>
+        {/* Modal lập biên bản */}
+        <InspectionFormModal
+          isOpen={showInspectionForm}
+          onClose={handleCloseInspectionForm}
+          formData={inspectionFormData}
+          onFormDataChange={setInspectionFormData}
+          onExport={handleExportInspectionDocx}
+          onPreview={() => setShowInspectionPreview(true)}
+          onSubmit={handleSubmitInspectionReport}
+        />
 
-            {/* Content */}
-            <div className="space-y-4 sm:space-y-6">
-              {/* Thông tin chung */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
-                <div className="col-span-1 sm:col-span-2">
-                  <span className="font-medium">Căn cứ đề nghị của: </span>
-                  <span className="underline">Khoa CNTT Nam Thăng</span>
-                  <span className="ml-2 sm:ml-4 font-medium">Năm: </span>
-                  <span className="underline">2025</span>
-                </div>
-                <div className="col-span-1 sm:col-span-2">
-                  <span className="font-medium">Hôm nay, </span>
-                  <span className="font-medium">Ngày: </span>
-                  <span className="underline">___</span>
-                  <span className="font-medium ml-2">Tháng: </span>
-                  <span className="underline">___</span>
-                  <span className="font-medium ml-2">Năm: </span>
-                  <span className="underline">2025</span>
-                </div>
-                <div className="col-span-1 sm:col-span-2">
-                  <span className="font-medium">Tại vị trí: </span>
-                  <span className="underline">
-                    _________________________________
-                  </span>
-                </div>
-                <div className="col-span-1 sm:col-span-2">
-                  <span className="font-medium">Chúng tôi gồm có: </span>
-                </div>
-                <div className="col-span-1 sm:col-span-2 ml-2 sm:ml-4">
-                  <div className="mb-2">
-                    <span className="font-medium">1. Ông: </span>
-                    <span className="underline">Giang Thanh Trọn</span>
-                    <span className="ml-4 sm:ml-8 font-medium">đại diện: </span>
-                    <span className="underline">Khoa CNTT</span>
-                  </div>
-                  <div className="mb-2">
-                    <span className="font-medium">2. Ông: </span>
-                    <span className="underline">Nguyễn Văn Ngã</span>
-                    <span className="ml-4 sm:ml-8 font-medium">đại diện: </span>
-                    <span className="underline">Phòng Quản trị</span>
-                  </div>
-                </div>
-                <div className="col-span-1 sm:col-span-2">
-                  <span className="font-medium">
-                    Cùng lập biên bản kiểm tra tình trạng kỹ thuật của cơ sở vật
-                    chất hư hỏng cần thay thế:{" "}
-                  </span>
-                </div>
-              </div>
-
-              {/* Bảng linh kiện */}
-              <div className="overflow-x-auto -mx-2 sm:mx-0">
-                <table className="w-full border-collapse border border-gray-400 text-xs sm:text-sm">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                        TT
-                      </th>
-                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                        Nội dung kiểm tra
-                      </th>
-                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                        SL
-                      </th>
-                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                        Vị trí
-                      </th>
-                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                        Tình trạng
-                      </th>
-                      <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                        Giải pháp
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {proposal.items?.map((item, index) => (
-                      <tr key={item.id}>
-                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
-                          {index + 1}
-                        </td>
-                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
-                          <div className="font-medium">
-                            {item.oldComponent?.componentType ||
-                              "Không xác định"}
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            {item.oldComponent?.name || "N/A"}
-                          </div>
-                        </td>
-                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
-                          {item.quantity}
-                        </td>
-                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
-                          <div className="text-xs">
-                            {item.oldComponent?.roomLocation || "Chưa xác định"}
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            {item.oldComponent?.componentSpecs || "N/A"}
-                          </div>
-                        </td>
-                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
-                          Hỏng
-                        </td>
-                        <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
-                          <div className="text-xs">- Đề nghị thay thế:</div>
-                          <div className="text-xs font-medium">
-                            1. {item.newItemName || "Không xác định"}
-                          </div>
-                          <div className="text-xs">
-                            2. {item.newItemSpecs || "N/A"}
-                          </div>
-                        </td>
-                      </tr>
-                    )) || []}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Kết luận */}
-              <div className="space-y-3 sm:space-y-4">
-                <div className="text-xs sm:text-sm">
-                  <span className="font-medium">
-                    Đại diện các đơn vị tham gia công tác kiểm tra tình trạng kỹ
-                    thuật của cơ sở vật chất hư hỏng cùng đồng ý với nội dung
-                    trên;{" "}
-                  </span>
-                  <span className="font-medium">Đồng ý với kỹ sư. </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 mt-6 sm:mt-8">
-                  <div className="text-center">
-                    <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
-                      Khoa CNTT
-                    </div>
-                    <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
-                      Nhân viên Kỹ thuật
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-xs sm:text-sm">
-                        Giang Thanh Trọn
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
-                      Phòng Quản trị
-                    </div>
-                    <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
-                      Người thực hiện
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-xs sm:text-sm">
-                        Nguyễn Ngã
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-center mt-6 sm:mt-8">
-                  <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
-                    Ý kiến của Lãnh đạo Phòng Quản trị:
-                  </div>
-                  <div className="h-12 sm:h-16 border-b border-gray-300 mb-4"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Modal>
+        {/* Modal xem trước biên bản */}
+        <InspectionPreviewModal
+          isOpen={showInspectionPreview}
+          onClose={() => setShowInspectionPreview(false)}
+          formData={inspectionFormData}
+          proposal={proposal}
+          onExport={handleExportInspectionDocx}
+          onSubmit={handleSubmitInspectionReport}
+        />
       </div>
     </div>
   );

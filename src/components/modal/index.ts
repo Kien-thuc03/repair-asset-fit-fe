@@ -10,3 +10,5 @@ export { default as ExportExcelSuccessModal } from "./ExportExcelSuccessModal";
 export { default as ExportExcelErrorModal } from "./ExportExcelErrorModal";
 export { default as SubmissionFormModal } from "./SubmissionFormModal";
 export { default as SubmissionPreviewModal } from "./SubmissionPreviewModal";
+export { default as InspectionFormModal } from "./InspectionFormModal";
+export { default as InspectionPreviewModal } from "./InspectionPreviewModal";
