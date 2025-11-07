@@ -48,8 +48,12 @@ export default function RequestDetailPage() {
     });
 
   // Fetch proposal data từ API
-  const { data: proposal, loading, error, refetch } =
-    useReplacementProposal(id);
+  const {
+    data: proposal,
+    loading,
+    error,
+    refetch,
+  } = useReplacementProposal(id);
 
   // Update status hook
   const { updateStatus } = useUpdateReplacementProposalStatus();
@@ -119,7 +123,7 @@ export default function RequestDetailPage() {
 
       // 3. Cập nhật trạng thái theo workflow
       // Workflow: ĐÃ_DUYỆT_TỜ_TRÌNH → CHỜ_XÁC_MINH → ĐÃ_XÁC_MINH → ĐÃ_GỬI_BIÊN_BẢN
-      
+
       // Bước 1: Chuyển sang CHỜ_XÁC_MINH
       if (proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH) {
         await updateStatus(proposal.id, {
