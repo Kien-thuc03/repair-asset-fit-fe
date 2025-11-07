@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SubmissionFormData } from "@/types";
 import { Breadcrumb, Modal, Input, Button } from "antd";
-import { CheckCircle, XCircle, FileText } from "lucide-react";
+import { CheckCircle, XCircle, FileText, Download } from "lucide-react";
 import { Pagination } from "@/components/common";
 import {
   ProposalFilters,
@@ -61,6 +61,7 @@ export default function DuyetDeXuatPage() {
 
   // Submission modal state
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+  const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
   const [selectedRequestForSubmission, setSelectedRequestForSubmission] =
     useState<ReplacementProposal | null>(null);
   const [submissionFormData, setSubmissionFormData] =
@@ -248,6 +249,168 @@ Trân trọng kính trình.`;
       Modal.error({
         title: "Lỗi",
         content: err instanceof Error ? err.message : "Không thể lập tờ trình.",
+        centered: true,
+      });
+    }
+  };
+
+  // Hàm xuất file DOCX cho tờ trình (sử dụng HTML)
+  const handleExportSubmissionDocx = async () => {
+    if (!selectedRequestForSubmission) return;
+
+    try {
+      // Tạo nội dung HTML cho tờ trình
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: 'Times New Roman', Times, serif; font-size: 13pt; line-height: 1.5; margin: 40px; }
+            .header-table { width: 100%; border: none; margin-bottom: 10px; }
+            .header-table td { border: none; padding: 0; vertical-align: top; font-size: 11pt; }
+            .header-left { text-align: center; width: 50%; }
+            .header-right { text-align: center; width: 50%; }
+            .center { text-align: center; }
+            .right { text-align: right; }
+            .bold { font-weight: bold; }
+            .underline { text-decoration: underline; }
+            table.data-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            table.data-table th, table.data-table td { border: 1px solid black; padding: 8px; }
+            table.data-table th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+            .signature-table { width: 100%; border: none; margin-top: 40px; }
+            .signature-table td { border: none; text-align: center; padding: 10px; vertical-align: top; }
+            h2 { font-size: 14pt; font-weight: bold; text-align: center; margin: 20px 0 10px 0; }
+            h3 { font-size: 13pt; font-weight: normal; text-align: center; margin: 5px 0 20px 0; }
+            h4 { font-size: 13pt; font-weight: bold; text-align: center; margin: 15px 0; }
+            p { margin: 5px 0; }
+          </style>
+        </head>
+        <body>
+          <table class="header-table">
+            <tr>
+              <td class="header-left">
+                <p>BỘ CÔNG THƯƠNG</p>
+                <p class="bold">TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP</p>
+                <p class="bold">THÀNH PHỐ HỒ CHÍ MINH</p>
+                <p class="bold underline">${submissionFormData.department.toUpperCase()}</p>
+              </td>
+              <td class="header-right">
+                <p class="bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                <p class="bold underline">Độc lập – Tự do – Hạnh phúc</p>
+                <p><em>Tp. Hồ Chí Minh, ngày ___ tháng ___ năm 2025</em></p>
+              </td>
+            </tr>
+          </table>
+          
+          <h2>PHIẾU ĐỀ NGHỊ GIẢI QUYẾT CÔNG VIỆC</h2>
+          <h3>${submissionFormData.subject}</h3>
+          
+          <p><strong>Kính gửi:</strong> ${
+            submissionFormData.recipientDepartment
+          }</p>
+          <p><strong>Người đề nghị:</strong> ${
+            submissionFormData.submittedBy
+          }</p>
+          <p><strong>Chức vụ:</strong> ${submissionFormData.position}</p>
+          <p><strong>Đơn vị:</strong> ${submissionFormData.department}</p>
+          <p><strong>Đề nghị:</strong> ${submissionFormData.subject}</p>
+          <p><strong>Văn bản kèm theo:</strong> ${
+            submissionFormData.attachments
+          }</p>
+          
+          <h4>NỘI DUNG</h4>
+          <p style="text-align: justify; white-space: pre-wrap;">${
+            submissionFormData.content
+          }</p>
+          
+          <p><strong>Danh sách linh kiện đề xuất thay thế:</strong></p>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th width="5%">STT</th>
+                <th width="25%">Linh kiện cũ</th>
+                <th width="30%">Linh kiện mới đề xuất</th>
+                <th width="10%">SL</th>
+                <th width="30%">Lý do</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${
+                selectedRequestForSubmission.items
+                  ?.map(
+                    (item, index) => `
+                <tr>
+                  <td style="text-align: center;">${index + 1}</td>
+                  <td>
+                    <strong>${
+                      item.oldComponent?.name || "Không xác định"
+                    }</strong><br>
+                    <small>${item.oldComponent?.componentSpecs || ""}</small>
+                  </td>
+                  <td>
+                    <strong>${item.newItemName || "Không xác định"}</strong><br>
+                    <small>${item.newItemSpecs || ""}</small>
+                  </td>
+                  <td style="text-align: center;">${item.quantity}</td>
+                  <td>${item.reason || "Cần thay thế"}</td>
+                </tr>
+              `
+                  )
+                  .join("") || ""
+              }
+            </tbody>
+          </table>
+          
+          <p><strong>${
+            submissionFormData.department
+          } kính trình Ban Giám hiệu xem xét và phê duyệt.</strong></p>
+          
+          <table class="signature-table">
+            <tr>
+              <td width="33%">
+                <p><strong>Trưởng phòng</strong></p>
+                <br><br><br>
+                <p>${submissionFormData.director}</p>
+              </td>
+              <td width="33%">
+                <p><strong>Hiệu trưởng</strong></p>
+                <br><br><br>
+                <p>${submissionFormData.rector}</p>
+              </td>
+              <td width="33%">
+                <p><strong>${submissionFormData.position}</strong></p>
+                <p><em>(Ký và ghi rõ họ tên)</em></p>
+                <br><br>
+                <p>${submissionFormData.submittedBy}</p>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+
+      // Tạo Blob và download
+      const blob = new Blob([htmlContent], { type: "application/vnd.ms-word" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `To_trinh_${selectedRequestForSubmission.proposalCode}_${
+        new Date().toISOString().split("T")[0]
+      }.doc`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      Modal.success({
+        title: "Xuất file thành công!",
+        content: `File tờ trình đã được tải xuống.`,
+        centered: true,
+      });
+    } catch (error) {
+      console.error("Lỗi xuất file:", error);
+      Modal.error({
+        title: "Lỗi",
+        content: "Không thể xuất file. Vui lòng thử lại.",
         centered: true,
       });
     }
@@ -575,6 +738,18 @@ Trân trọng kính trình.`;
             Hủy
           </Button>,
           <Button
+            key="export"
+            icon={<Download className="w-4 h-4" />}
+            onClick={handleExportSubmissionDocx}>
+            Xuất file
+          </Button>,
+          <Button
+            key="preview"
+            onClick={() => setShowSubmissionPreview(true)}
+            className="bg-green-600 hover:bg-green-700 text-white">
+            Xem trước
+          </Button>,
+          <Button
             key="submit"
             type="primary"
             onClick={handleSubmitSubmission}
@@ -717,6 +892,211 @@ Trân trọng kính trình.`;
                   }))
                 }
               />
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal xem trước tờ trình */}
+      <Modal
+        title={null}
+        open={showSubmissionPreview}
+        onCancel={() => setShowSubmissionPreview(false)}
+        footer={
+          <div className="flex flex-row justify-end gap-2 sm:gap-3">
+            <button
+              onClick={() => setShowSubmissionPreview(false)}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+              Đóng
+            </button>
+            <button
+              type="button"
+              onClick={handleExportSubmissionDocx}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Xuất file
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowSubmissionPreview(false);
+                handleSubmitSubmission();
+              }}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
+              Gửi tờ trình
+            </button>
+          </div>
+        }
+        width="90%"
+        style={{ maxWidth: 1000 }}
+        centered>
+        <div className="space-y-4 sm:space-y-6 max-h-[80vh] overflow-y-auto px-2 sm:px-4">
+          {/* Header */}
+          <div className="text-center">
+            <div className="text-xs sm:text-sm text-gray-600 mb-2">
+              TRƯỜNG ĐẠI HỌC CÔNG
+              NGHIỆP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CỘNG
+              HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM
+            </div>
+            <div className="text-xs sm:text-sm text-gray-600 mb-2">
+              THÀNH PHỐ HỒ CHÍ
+              MINH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Độc
+              lập - Tự do - Hạnh phúc
+            </div>
+            <div className="text-xs sm:text-sm text-gray-600 mb-4">
+              {submissionFormData.department.toUpperCase()}
+            </div>
+            <div className="text-right text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
+              Thành phố Hồ Chí Minh, ngày ___ tháng ___ năm 2025
+            </div>
+            <div className="text-lg sm:text-xl font-bold text-center mb-2">
+              PHIẾU ĐỀ NGHỊ GIẢI QUYẾT CÔNG VIỆC
+            </div>
+            <div className="text-sm sm:text-base font-semibold text-center mb-4 sm:mb-6">
+              {submissionFormData.subject}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="space-y-4 sm:space-y-6">
+            {/* Thông tin chung */}
+            <div className="space-y-2 text-xs sm:text-sm">
+              <div>
+                <span className="font-medium">Kính gửi: </span>
+                <span>{submissionFormData.recipientDepartment}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <span className="font-medium">Người đề nghị: </span>
+                  <span>{submissionFormData.submittedBy}</span>
+                </div>
+                <div>
+                  <span className="font-medium">Chức vụ: </span>
+                  <span>{submissionFormData.position}</span>
+                </div>
+              </div>
+              <div>
+                <span className="font-medium">Đơn vị: </span>
+                <span>{submissionFormData.department}</span>
+              </div>
+              <div>
+                <span className="font-medium">Đề nghị: </span>
+                <span>{submissionFormData.subject}</span>
+              </div>
+              <div>
+                <span className="font-medium">Văn bản kèm theo: </span>
+                <span>{submissionFormData.attachments}</span>
+              </div>
+            </div>
+
+            {/* Nội dung */}
+            <div className="space-y-3 text-xs sm:text-sm">
+              <div className="font-medium text-center">NỘI DUNG</div>
+              <div className="whitespace-pre-wrap text-justify">
+                {submissionFormData.content}
+              </div>
+            </div>
+
+            {/* Bảng linh kiện */}
+            {selectedRequestForSubmission?.items &&
+              selectedRequestForSubmission.items.length > 0 && (
+                <div className="overflow-x-auto -mx-2 sm:mx-0">
+                  <div className="font-medium text-xs sm:text-sm mb-2">
+                    Danh sách linh kiện đề xuất thay thế:
+                  </div>
+                  <table className="w-full border-collapse border border-gray-400 text-xs sm:text-sm">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
+                          STT
+                        </th>
+                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
+                          Linh kiện cũ
+                        </th>
+                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
+                          Linh kiện mới đề xuất
+                        </th>
+                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
+                          SL
+                        </th>
+                        <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
+                          Lý do
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedRequestForSubmission.items.map((item, index) => (
+                        <tr key={item.id}>
+                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
+                            {index + 1}
+                          </td>
+                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
+                            <div className="font-medium">
+                              {item.oldComponent?.name || "Không xác định"}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              {item.oldComponent?.componentSpecs || ""}
+                            </div>
+                          </td>
+                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
+                            <div className="font-medium">
+                              {item.newItemName || "Không xác định"}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              {item.newItemSpecs || ""}
+                            </div>
+                          </td>
+                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
+                            {item.quantity}
+                          </td>
+                          <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
+                            {item.reason || "Cần thay thế"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+            {/* Kết luận và chữ ký */}
+            <div className="space-y-4 sm:space-y-6 mt-6">
+              <div className="text-xs sm:text-sm">
+                <span className="font-medium">
+                  {submissionFormData.department} kính trình Ban Giám hiệu xem
+                  xét và phê duyệt.
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 mt-8">
+                <div className="text-center">
+                  <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
+                    Trưởng phòng
+                  </div>
+                  <div className="font-medium text-xs sm:text-sm">
+                    {submissionFormData.director}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
+                    Hiệu trưởng
+                  </div>
+                  <div className="font-medium text-xs sm:text-sm">
+                    {submissionFormData.rector}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="font-medium mb-2 text-xs sm:text-sm">
+                    {submissionFormData.position}
+                  </div>
+                  <div className="text-xs text-gray-600 mb-10 sm:mb-12">
+                    (Ký và ghi rõ họ tên)
+                  </div>
+                  <div className="font-medium text-xs sm:text-sm">
+                    {submissionFormData.submittedBy}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
