@@ -317,7 +317,9 @@ export interface GetAvailableComponentsQueryParams {
   repairStatus?: string[];
   componentType?: string[];
   search?: string;
+  requestCode?: string;
   building?: string;
+  floor?: string;
   roomName?: string;
   excludeInProposal?: boolean;
 

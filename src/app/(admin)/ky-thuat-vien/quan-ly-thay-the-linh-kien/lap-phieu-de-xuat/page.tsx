@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Input, Modal, Form, message, Breadcrumb, Select, Tag } from "antd";
-import { PlusOutlined, FilterOutlined } from "@ant-design/icons";
-import { Search, ChevronUp, ChevronDown, Loader2, X } from "lucide-react";
+import { Button, Input, Modal, Form, message, Breadcrumb, Select, Card, Row, Col, Tag } from "antd";
+import { PlusOutlined, SearchOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import { Pagination } from "@/components/ui";
 import { useAvailableComponents } from "@/hooks";
 import { createReplacementProposal, ComponentFromRepair } from "@/lib/api/replacement-proposals";
+import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { ComponentType } from "@/types/repair";
 
 type SortField = "componentName" | "assetName" | "location" | "quantity" | "reason" | "requestCode";
@@ -26,11 +27,35 @@ export default function CreateProposalPage() {
   // Filter states
   const [componentTypeFilter, setComponentTypeFilter] = useState<string[]>([]);
   const [buildingFilter, setBuildingFilter] = useState<string>('');
+  const [floorFilter, setFloorFilter] = useState<string>('');
   const [roomFilter, setRoomFilter] = useState<string>('');
-  const [showFilters, setShowFilters] = useState(false);
+
+  // State for rooms data and cascade filtering
+  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
+  const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
 
   // Sử dụng custom hook để fetch data
   const { components, pagination, loading, error, fetchComponents } = useAvailableComponents();
+
+  // Extract unique buildings from rooms
+  const buildings = Array.from(
+    new Set(rooms.map((room) => room.building).filter(Boolean))
+  );
+
+  // Fetch rooms from API
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const roomsData = await getRoomsApi();
+        console.log("📍 Rooms data fetched:", roomsData.slice(0, 3)); // Log first 3 rooms
+        setRooms(roomsData);
+      } catch {
+        message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
+      }
+    };
+    fetchRooms();
+  }, []);
 
   // Fetch data khi component mount hoặc filters thay đổi
   useEffect(() => {
@@ -40,15 +65,22 @@ export default function CreateProposalPage() {
       search: searchText || undefined,
       componentType: componentTypeFilter.length > 0 ? componentTypeFilter : undefined,
       building: buildingFilter || undefined,
+      floor: floorFilter || undefined,
       roomName: roomFilter || undefined,
       excludeInProposal: true,
       sortBy: (sortField === "location" ? "createdAt" : sortField || "createdAt") as "createdAt" | "componentName" | "assetName" | "requestCode",
       sortOrder: (sortDirection === "none" ? "DESC" : sortDirection.toUpperCase()) as "ASC" | "DESC",
     };
     
+    console.log("🔍 Fetching components with filters:", {
+      building: buildingFilter,
+      floor: floorFilter,
+      roomName: roomFilter,
+    });
+    
     fetchComponents(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize, searchText, componentTypeFilter, buildingFilter, roomFilter, sortField, sortDirection]);
+  }, [currentPage, pageSize, searchText, componentTypeFilter, buildingFilter, floorFilter, roomFilter, sortField, sortDirection]);
 
   // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: SortField) => {
@@ -166,15 +198,69 @@ export default function CreateProposalPage() {
   const activeFiltersCount = [
     componentTypeFilter.length > 0,
     buildingFilter,
+    floorFilter,
     roomFilter,
+    searchText,
   ].filter(Boolean).length;
 
   // Clear all filters
   const clearAllFilters = () => {
     setComponentTypeFilter([]);
     setBuildingFilter('');
+    setFloorFilter('');
     setRoomFilter('');
     setSearchText('');
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+    setCurrentPage(1);
+  };
+
+  // Handle building change - cascade filter
+  const handleBuildingChange = (building: string) => {
+    setBuildingFilter(building);
+    setFloorFilter('');
+    setRoomFilter('');
+    setCurrentPage(1);
+    
+    if (building) {
+      // Filter floors by building
+      const floorsInBuilding = Array.from(
+        new Set(
+          rooms
+            .filter((room) => room.building === building)
+            .map((room) => room.floor)
+            .filter(Boolean)
+        )
+      );
+      setFilteredFloors(floorsInBuilding);
+    } else {
+      setFilteredFloors([]);
+    }
+    setFilteredRooms([]);
+  };
+
+  // Handle floor change - cascade filter
+  const handleFloorChange = (floor: string) => {
+    setFloorFilter(floor);
+    setRoomFilter('');
+    setCurrentPage(1);
+    
+    if (floor && buildingFilter) {
+      // Filter rooms by building and floor
+      const roomsInFloor = rooms.filter(
+        (room) => room.building === buildingFilter && room.floor === floor
+      );
+      setFilteredRooms(roomsInFloor);
+    } else {
+      setFilteredRooms([]);
+    }
+  };
+
+  // Handle room change
+  const handleRoomChange = (roomName: string) => {
+    console.log("🏢 Room selected:", roomName);
+    console.log("📋 Available rooms:", filteredRooms.map(r => ({ id: r.id, name: r.name, roomCode: r.roomCode })));
+    setRoomFilter(roomName);
     setCurrentPage(1);
   };
 
@@ -254,150 +340,116 @@ export default function CreateProposalPage() {
         </Button>
       </div>
 
-      {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-700">Bộ lọc và tìm kiếm</h3>
-          <div className="flex items-center gap-2">
-            {activeFiltersCount > 0 && (
-              <Button 
-                size="small" 
-                onClick={clearAllFilters}
-                icon={<X className="w-3 h-3" />}
-              >
-                Xóa bộ lọc ({activeFiltersCount})
-              </Button>
-            )}
-            <Button
-              size="small"
-              type={showFilters ? "primary" : "default"}
-              onClick={() => setShowFilters(!showFilters)}
-              icon={<FilterOutlined />}
+      {/* Filters */}
+      <Card>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={6}>
+            <Input
+              placeholder="Tìm kiếm theo tên linh kiện, tài sản, mã tài sản..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setCurrentPage(1);
+              }}
+              allowClear
+            />
+          </Col>
+
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="Tất cả loại linh kiện"
+              value={componentTypeFilter}
+              onChange={(value) => {
+                setComponentTypeFilter(value);
+                setCurrentPage(1);
+              }}
+              style={{ width: '100%' }}
+              maxTagCount="responsive"
             >
-              {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
+              {Object.entries(ComponentType).map(([key, value]) => (
+                <Select.Option key={value} value={value}>
+                  {key}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
+
+          <Col xs={24} sm={12} md={3}>
+            <Select
+              placeholder="Tất cả tòa nhà"
+              value={buildingFilter || undefined}
+              onChange={handleBuildingChange}
+              allowClear
+              style={{ width: '100%' }}
+            >
+              {buildings.map((building) => (
+                <Select.Option key={building} value={building}>
+                  Tòa {building}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
+
+          <Col xs={24} sm={12} md={3}>
+            <Select
+              placeholder={!buildingFilter ? "Chọn tòa trước" : "Tất cả tầng"}
+              value={floorFilter || undefined}
+              onChange={handleFloorChange}
+              allowClear
+              disabled={!buildingFilter}
+              style={{ width: '100%' }}
+              notFoundContent={
+                !buildingFilter
+                  ? "Vui lòng chọn tòa nhà trước"
+                  : "Không có dữ liệu"
+              }
+            >
+              {filteredFloors.map((floor) => (
+                <Select.Option key={floor} value={floor}>
+                  Tầng {floor}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
+
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              placeholder={!floorFilter ? "Chọn tầng trước" : "Tất cả phòng"}
+              value={roomFilter || undefined}
+              onChange={handleRoomChange}
+              allowClear
+              disabled={!floorFilter}
+              style={{ width: '100%' }}
+              notFoundContent={
+                !floorFilter
+                  ? "Vui lòng chọn tầng trước"
+                  : "Không có dữ liệu"
+              }
+            >
+              {filteredRooms.map((room) => (
+                <Select.Option key={room.id} value={room.name || room.roomCode}>
+                  {room.name || room.roomCode || `Phòng ${room.roomNumber}`}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
+
+          <Col xs={24} sm={12} md={4}>
+            <Button
+              type="default"
+              onClick={clearAllFilters}
+              disabled={activeFiltersCount === 0}
+              icon={<CloseCircleOutlined />}
+              block
+            >
+              Xóa bộ lọc
             </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Input
-            className='col-span-1 md:col-span-2'
-            placeholder="Tìm kiếm theo tên linh kiện, tài sản, mã tài sản..."
-            prefix={<Search className="w-4 h-4" />}
-            value={searchText}
-            onChange={(e) => {
-              setSearchText(e.target.value);
-              setCurrentPage(1);
-            }}
-            allowClear
-          />
-        </div>
-
-        {/* Advanced Filters */}
-        {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-            {/* Component Type Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Loại linh kiện
-              </label>
-              <Select
-                mode="multiple"
-                allowClear
-                placeholder="Chọn loại linh kiện"
-                value={componentTypeFilter}
-                onChange={(value) => {
-                  setComponentTypeFilter(value);
-                  setCurrentPage(1);
-                }}
-                style={{ width: '100%' }}
-                maxTagCount="responsive"
-              >
-                {Object.entries(ComponentType).map(([key, value]) => (
-                  <Select.Option key={value} value={value}>
-                    {key}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-
-            {/* Building Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tòa nhà
-              </label>
-              <Input
-                placeholder="Nhập tên tòa nhà (VD: A, B, C...)"
-                value={buildingFilter}
-                onChange={(e) => {
-                  setBuildingFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                allowClear
-              />
-            </div>
-
-            {/* Room Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phòng
-              </label>
-              <Input
-                placeholder="Nhập tên phòng (VD: A01.03)"
-                value={roomFilter}
-                onChange={(e) => {
-                  setRoomFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                allowClear
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Active Filters Display */}
-        {activeFiltersCount > 0 && (
-          <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-            <span className="text-xs text-gray-500 self-center">Đang lọc:</span>
-            {componentTypeFilter.length > 0 && (
-              <Tag 
-                closable 
-                onClose={() => {
-                  setComponentTypeFilter([]);
-                  setCurrentPage(1);
-                }}
-                color="blue"
-              >
-                Loại: {componentTypeFilter.join(', ')}
-              </Tag>
-            )}
-            {buildingFilter && (
-              <Tag 
-                closable 
-                onClose={() => {
-                  setBuildingFilter('');
-                  setCurrentPage(1);
-                }}
-                color="green"
-              >
-                Tòa: {buildingFilter}
-              </Tag>
-            )}
-            {roomFilter && (
-              <Tag 
-                closable 
-                onClose={() => {
-                  setRoomFilter('');
-                  setCurrentPage(1);
-                }}
-                color="orange"
-              >
-                Phòng: {roomFilter}
-              </Tag>
-            )}
-          </div>
-        )}
-      </div>
+          </Col>
+        </Row>
+      </Card>
 
       {/* Table */}
       <div className="overflow-x-auto bg-white shadow rounded-lg">
