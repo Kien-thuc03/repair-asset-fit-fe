@@ -1,13 +1,15 @@
 "use client"
 
 import { useState, useMemo } from 'react'
-import { Breadcrumb, Input, Select, DatePicker, Button, message } from 'antd'
+import { Breadcrumb, Input, Select, DatePicker, Button, message, Spin, Alert } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { Search, ChevronUp, ChevronDown, Eye, Download } from 'lucide-react'
 import Link from 'next/link'
-import { mockRepairRequests, repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
+import { repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
 import { RepairStatus, RepairRequest } from '@/types'
 import { Pagination } from '@/components/ui'
+import { useProfile } from '@/hooks/useProfile'
+import { useRepairsByTechnician } from '@/hooks/useRepairsByTechnician'
 
 const { RangePicker } = DatePicker
 const { Option } = Select
@@ -17,6 +19,11 @@ type SortDirection = "asc" | "desc" | "none"
 type RangeValue = [Dayjs | null, Dayjs | null] | null
 
 export default function DanhSachBaoLoiPage() {
+	// Hooks để lấy dữ liệu từ API
+	const { userDetails, isLoading: profileLoading } = useProfile()
+	const { repairs, loading: repairsLoading, error: repairsError } = useRepairsByTechnician(userDetails?.id)
+
+	// State cho filters và UI
 	const [searchText, setSearchText] = useState('')
 	const [statusFilter, setStatusFilter] = useState<RepairStatus | ''>('')
 	const [dateRange, setDateRange] = useState<RangeValue>(null)
@@ -25,6 +32,9 @@ export default function DanhSachBaoLoiPage() {
 	const [currentPage, setCurrentPage] = useState(1)
 	const [pageSize, setPageSize] = useState(10)
 	const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([])
+
+	// Tổng trạng thái loading
+	const isLoading = profileLoading || repairsLoading
 
 	// Hàm xử lý sắp xếp 3 trạng thái
 	const handleSort = (field: SortField) => {
@@ -141,8 +151,8 @@ export default function DanhSachBaoLoiPage() {
 		// Reset về trang 1 khi filter thay đổi
 		setCurrentPage(1)
 
-		// Lọc dữ liệu
-		const filtered = mockRepairRequests.filter((item: RepairRequest) => {
+		// Lọc dữ liệu từ API
+		const filtered = repairs.filter((item: RepairRequest) => {
 			const matchesSearch = searchText ? 
 				[item.requestCode, item.assetName, item.assetCode, item.componentName, item.errorTypeName, item.roomName, item.buildingName]
 					.filter(Boolean)
@@ -203,7 +213,7 @@ export default function DanhSachBaoLoiPage() {
 			if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
 			return 0
 		})
-	}, [searchText, statusFilter, dateRange, sortField, sortDirection])
+	}, [repairs, searchText, statusFilter, dateRange, sortField, sortDirection])
 
 	// Dữ liệu phân trang
 	const paginatedData = useMemo(() => {
@@ -214,26 +224,47 @@ export default function DanhSachBaoLoiPage() {
 
 	return (
 		<div className="space-y-6">
-			{/* Breadcrumb */}
-			<Breadcrumb
-				items={[
-					{
-						href: '/ky-thuat-vien',
-						title: (
-							<div className="flex items-center">
-								<span>Trang chủ</span>
-							</div>
-						),
-					},
-					{
-						title: (
-							<div className="flex items-center">
-								<span>Quản lý báo lỗi</span>
-							</div>
-						),
-					},
-				]}
-			/>
+			{/* Loading State */}
+			{isLoading && (
+				<div className="flex justify-center items-center py-12">
+					<Spin size="large" tip="Đang tải dữ liệu..." />
+				</div>
+			)}
+
+			{/* Error State */}
+			{repairsError && !isLoading && (
+				<Alert
+					message="Lỗi tải dữ liệu"
+					description={repairsError}
+					type="error"
+					showIcon
+					closable
+				/>
+			)}
+
+			{/* Main Content - Only show when not loading and no error */}
+			{!isLoading && !repairsError && (
+				<>
+					{/* Breadcrumb */}
+					<Breadcrumb
+						items={[
+							{
+								href: '/ky-thuat-vien',
+								title: (
+									<div className="flex items-center">
+										<span>Trang chủ</span>
+									</div>
+								),
+							},
+							{
+								title: (
+									<div className="flex items-center">
+										<span>Quản lý báo lỗi</span>
+									</div>
+								),
+							},
+						]}
+					/>
 
 			{/* Header */}
 			<div>
@@ -472,6 +503,8 @@ export default function DanhSachBaoLoiPage() {
 					showTotal={true}
 				/>
 			</div>
+				</>
+			)}
 		</div>
 	)
 }

@@ -245,7 +245,7 @@ export default function FileUpload({
                       </p>
                     </div>
                   ) : (
-                    <div className="w-full h-32 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 flex flex-col items-center justify-center p-2">
+                    <div className="w-full h-32 bg-linear-to-br from-gray-50 to-gray-100 rounded-lg border border-gray-200 flex flex-col items-center justify-center p-2">
                       {/* Icon based on file type */}
                       {extension === 'pdf' && (
                         <svg className="w-10 h-10 text-red-500 mb-2" fill="currentColor" viewBox="0 0 20 20">

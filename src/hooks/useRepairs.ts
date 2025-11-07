@@ -8,44 +8,6 @@ import {
 import { RepairRequest, RepairRequestWithDetails } from "@/types/repair";
 
 /**
- * Mapping errorType enum to Vietnamese display names
- */
-const errorTypeMap: Record<string, string> = {
-  MAY_KHONG_KHOI_DONG: "Máy không khởi động",
-  MAY_HU_PHAN_MEM: "Máy hư phần mềm",
-  MAY_HU_BAN_PHIM: "Máy hư bàn phím",
-  MAY_HU_CHUOT: "Máy hư chuột",
-  MAY_KHONG_SU_DUNG_DUOC: "Máy không sử dụng được",
-  MAY_KHONG_KET_NOI_MANG: "Máy không kết nối mạng",
-  MAY_HU_MAN_HINH: "Máy hư màn hình",
-  MAY_MAT_CHUOT: "Máy mất chuột",
-  MAY_MAT_BAN_PHIM: "Máy mất bàn phím",
-  LOI_KHAC: "Lỗi khác",
-};
-
-/**
- * Transform backend response to include computed fields for backward compatibility
- */
-const transformRepairRequest = (request: RepairRequest): RepairRequest => {
-  return {
-    ...request,
-    // Computed fields from nested objects
-    assetCode: request.computerAsset?.ktCode,
-    assetName: request.computerAsset?.name,
-    roomName: request.room?.name,
-    buildingName: request.room?.building,
-    reporterName: request.reporter?.fullName,
-    reporterRole: "Giảng viên", // Default role, should come from backend if available
-    assignedTechnicianName: request.assignedTechnician?.fullName,
-    errorTypeName: request.errorType
-      ? errorTypeMap[request.errorType] || request.errorType
-      : undefined,
-    unit: request.room?.building, // Using building as unit for now
-    machineLabel: request.room?.roomNumber, // Can be enhanced if backend provides machine label
-  };
-};
-
-/**
  * Custom hook để quản lý danh sách yêu cầu sửa chữa
  * @param initialParams Query parameters ban đầu
  * @returns Object chứa data, loading state, error, và các hàm CRUD
@@ -79,11 +41,8 @@ export const useRepairs = (initialParams?: GetRepairsQueryParams) => {
       const response = await getRepairs(params);
       console.log("📊 API Response:", response);
 
-      // Backend trả về flat structure: { data, total, page, limit, totalPages }
-      // Transform data to include computed fields
-      const transformedData = response.data.map(transformRepairRequest);
-
-      setData(transformedData);
+      // API đã transform data rồi, không cần transform lại
+      setData(response.data);
       setMeta({
         total: response.total,
         page: response.page,
@@ -158,11 +117,8 @@ export const useRepairDetail = (id: string) => {
       const response = await getRepairById(id);
       console.log("✅ useRepairDetail: Raw API Response:", response);
 
-      // Apply transform to map nested objects to computed fields
-      const transformedData = transformRepairRequest(response as RepairRequest);
-      console.log("✅ useRepairDetail: Transformed Data:", transformedData);
-
-      setData(transformedData as RepairRequestWithDetails);
+      // API đã transform data rồi
+      setData(response as RepairRequestWithDetails);
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -224,14 +180,8 @@ export const useRepairsByReporter = (reporterId: string | undefined) => {
       const response = await getRepairsByReporter(reporterId);
       console.log("✅ useRepairsByReporter: Raw API Response:", response);
 
-      // Transform data to include computed fields
-      const transformedData = response.map(transformRepairRequest);
-      console.log(
-        "✅ useRepairsByReporter: Transformed Data:",
-        transformedData
-      );
-
-      setData(transformedData);
+      // API đã transform data rồi
+      setData(response);
     } catch (err) {
       const errorMessage =
         err instanceof Error

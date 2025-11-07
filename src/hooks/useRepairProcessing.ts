@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { RepairRequest, RepairStatus } from '@/types';
+import { RepairRequest, RepairStatus, ErrorType } from '@/types';
 
 /**
  * Hook for handling repair processing functionality
@@ -14,7 +14,7 @@ export interface RepairProcessingFormData {
   
   // Asset and error info
   computerAssetId: string; // FK to assets.id (matches database schema)
-  errorTypeId?: string; // FK to ErrorTypes.id
+  errorType?: ErrorType; // ✅ ErrorType enum thay vì errorTypeId
   errorCategory: 'hardware' | 'software';
   
   // Problem description
@@ -58,7 +58,7 @@ const initialFormData: RepairProcessingFormData = {
   floor: '',
   roomId: '',
   computerAssetId: '',
-  errorTypeId: '',
+  errorType: undefined, // ✅ ErrorType enum thay vì errorTypeId
   errorCategory: 'software',
   description: '',
   mediaFiles: [],
@@ -93,7 +93,7 @@ export const useRepairProcessing = (): RepairProcessingHookReturn => {
 
     // Hardware-specific validation
     if (data.errorCategory === 'hardware') {
-      if (!data.errorTypeId) {
+      if (!data.errorType) {
         errors.push('Vui lòng chọn loại lỗi cụ thể cho lỗi phần cứng');
       }
       
@@ -170,7 +170,7 @@ export const useRepairProcessing = (): RepairProcessingHookReturn => {
         computerAssetId: data.computerAssetId, // FK to assets.id
         reporterId: 'current-user-id', // Should come from auth context in real app
         assignedTechnicianId: 'current-technician-id', // Current technician ID
-        errorTypeId: data.errorCategory === 'hardware' ? data.errorTypeId : undefined,
+        errorType: data.errorCategory === 'hardware' ? data.errorType : undefined, // ✅ ErrorType enum
         description: data.description.trim(),
         mediaUrls: mediaUrls,
         status: finalStatus,
