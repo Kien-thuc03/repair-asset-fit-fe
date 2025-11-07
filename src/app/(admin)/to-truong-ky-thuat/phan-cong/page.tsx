@@ -27,6 +27,7 @@ interface RoomWithAssignment extends Room {
 export default function PhanCongPage() {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [rooms, setRooms] = useState<RoomWithAssignment[]>([]);
+  const [allRooms, setAllRooms] = useState<RoomWithAssignment[]>([]); // Lưu ALL data không filter
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState<"areas" | "technicians">("areas");
@@ -55,16 +56,13 @@ export default function PhanCongPage() {
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
 
-  // Fetch data from API
+  // Fetch data from API - LUÔN lấy ALL data, không filter ở API
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const [roomsApiData, techniciansData] = await Promise.all([
-          getRoomsWithTechnicians(
-            buildingFilter || undefined,
-            floorFilter || undefined
-          ),
+          getRoomsWithTechnicians(), // Không truyền building/floor = lấy tất cả
           getTechniciansWithRooms(),
         ]);
 
@@ -74,7 +72,7 @@ export default function PhanCongPage() {
             id: room.id,
             roomNumber: room.roomCode,
             building: room.building,
-            floor: `Tầng ${room.floor}`,
+            floor: room.floor,
             status: room.status as RoomStatus,
             assignedTechnician: room.assignedTechnician?.id,
             assignmentId: room.assignmentId,
@@ -85,8 +83,7 @@ export default function PhanCongPage() {
         const convertedTechnicians: Technician[] = techniciansData.map(
           (tech) => {
             const assignedAreas = tech.assignments.map(
-              (assignment) =>
-                `${assignment.building} - Tầng ${assignment.floor}`
+              (assignment) => `${assignment.building} -  ${assignment.floor}`
             );
 
             const currentTask =
@@ -106,7 +103,8 @@ export default function PhanCongPage() {
           }
         );
 
-        setRooms(convertedRooms);
+        setAllRooms(convertedRooms); // Lưu ALL data
+        setRooms(convertedRooms); // Cũng set vào rooms để hiển thị ban đầu
         setTechnicians(convertedTechnicians);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -116,7 +114,7 @@ export default function PhanCongPage() {
     };
 
     fetchData();
-  }, [buildingFilter, floorFilter]);
+  }, []); // Chỉ fetch 1 lần khi component mount
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -161,12 +159,6 @@ export default function PhanCongPage() {
       // Tìm room để lấy building và floor
       const room = rooms.find((r) => r.id === roomId);
 
-      console.log("Assigning technician:", {
-        roomId,
-        room,
-        technicianId,
-      });
-
       if (!room) {
         message.error("Không tìm thấy thông tin phòng");
         return;
@@ -184,32 +176,18 @@ export default function PhanCongPage() {
 
       setUpdating(true);
 
-      // Gọi API PATCH với building, floor, technicianId
       // Xóa "Tầng " prefix từ floor string
       const floorNumber = room.floor.replace("Tầng ", "");
 
-      console.log("Calling API with:", {
-        building: room.building,
-        floor: floorNumber,
-        technicianId: technicianId,
-      });
-
-      const result = await assignTechnicianToFloor(
-        room.building,
-        floorNumber,
-        technicianId
-      );
-
-      console.log("API result:", result);
+      // LUÔN dùng API /assign vì backend logic giống nhau
+      // API sẽ tự động xóa assignment cũ và tạo mới
+      await assignTechnicianToFloor(room.building, floorNumber, technicianId);
 
       message.success("Cập nhật kỹ thuật viên thành công!");
 
-      // Refresh data sau khi update
+      // Refresh data sau khi update - lấy ALL data
       const [roomsApiData, techniciansData] = await Promise.all([
-        getRoomsWithTechnicians(
-          buildingFilter || undefined,
-          floorFilter || undefined
-        ),
+        getRoomsWithTechnicians(), // Không filter, lấy tất cả
         getTechniciansWithRooms(),
       ]);
 
@@ -217,7 +195,7 @@ export default function PhanCongPage() {
         id: room.id,
         roomNumber: room.roomCode,
         building: room.building,
-        floor: `Tầng ${room.floor}`,
+        floor: room.floor,
         status: room.status as RoomStatus,
         assignedTechnician: room.assignedTechnician?.id,
         assignmentId: room.assignmentId,
@@ -225,7 +203,7 @@ export default function PhanCongPage() {
 
       const convertedTechnicians: Technician[] = techniciansData.map((tech) => {
         const assignedAreas = tech.assignments.map(
-          (assignment) => `${assignment.building} - Tầng ${assignment.floor}`
+          (assignment) => `${assignment.building} - ${assignment.floor}`
         );
 
         const currentTask =
@@ -244,7 +222,8 @@ export default function PhanCongPage() {
         };
       });
 
-      setRooms(convertedRooms);
+      setAllRooms(convertedRooms); // Cập nhật ALL data
+      setRooms(convertedRooms); // Cập nhật rooms hiển thị
       setTechnicians(convertedTechnicians);
 
       // Reset editing state
@@ -287,10 +266,10 @@ export default function PhanCongPage() {
     return matchesSearch && matchesBuilding && matchesFloor;
   });
 
-  // Get unique buildings and floors for filter options
+  // Get unique buildings and floors for filter options - DÙNG allRooms để có đầy đủ options
   const availableBuildings = Array.from(
     new Set(
-      rooms
+      allRooms
         .map((room) => room.building)
         .filter((building): building is string => !!building)
     )
@@ -298,7 +277,7 @@ export default function PhanCongPage() {
 
   const availableFloors = Array.from(
     new Set(
-      rooms
+      allRooms
         .map((room) => room.floor)
         .filter((floor): floor is string => !!floor)
     )
@@ -479,8 +458,8 @@ export default function PhanCongPage() {
         onSearchChange={setSearchTerm}
         buildingFilter={buildingFilter}
         floorFilter={floorFilter}
-        onBuildingChange={setBuildingFilter}
-        onFloorChange={setFloorFilter}
+        onBuildingChange={(value) => setBuildingFilter(value || "")}
+        onFloorChange={(value) => setFloorFilter(value || "")}
         onExportExcel={handleExportExcel}
         selectedItemsCount={selectedItems.length}
         buildings={availableBuildings}

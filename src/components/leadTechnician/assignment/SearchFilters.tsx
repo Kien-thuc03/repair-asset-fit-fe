@@ -12,8 +12,8 @@ interface SearchFiltersProps {
   onSearchChange: (value: string) => void;
   buildingFilter?: string;
   floorFilter?: string;
-  onBuildingChange?: (value: string) => void;
-  onFloorChange?: (value: string) => void;
+  onBuildingChange?: (value: string | undefined) => void;
+  onFloorChange?: (value: string | undefined) => void;
   onExportExcel?: () => void;
   selectedItemsCount?: number;
   buildings?: string[];
