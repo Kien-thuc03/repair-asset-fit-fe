@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Input, Modal, Form, message, Breadcrumb } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
-import { Search, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
+import { Button, Input, Modal, Form, message, Breadcrumb, Select, Tag } from "antd";
+import { PlusOutlined, FilterOutlined } from "@ant-design/icons";
+import { Search, ChevronUp, ChevronDown, Loader2, X } from "lucide-react";
 import { Pagination } from "@/components/ui";
 import { useAvailableComponents } from "@/hooks";
 import { createReplacementProposal, ComponentFromRepair } from "@/lib/api/replacement-proposals";
+import { ComponentType } from "@/types/repair";
 
-type SortField = "componentName" | "assetName" | "location" | "quantity" | "reason";
+type SortField = "componentName" | "assetName" | "location" | "quantity" | "reason" | "requestCode";
 type SortDirection = "asc" | "desc" | "none";
 
 export default function CreateProposalPage() {
@@ -22,6 +23,12 @@ export default function CreateProposalPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form] = Form.useForm();
 
+  // Filter states
+  const [componentTypeFilter, setComponentTypeFilter] = useState<string[]>([]);
+  const [buildingFilter, setBuildingFilter] = useState<string>('');
+  const [roomFilter, setRoomFilter] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
+
   // Sử dụng custom hook để fetch data
   const { components, pagination, loading, error, fetchComponents } = useAvailableComponents();
 
@@ -31,6 +38,9 @@ export default function CreateProposalPage() {
       page: currentPage,
       limit: pageSize,
       search: searchText || undefined,
+      componentType: componentTypeFilter.length > 0 ? componentTypeFilter : undefined,
+      building: buildingFilter || undefined,
+      roomName: roomFilter || undefined,
       excludeInProposal: true,
       sortBy: (sortField === "location" ? "createdAt" : sortField || "createdAt") as "createdAt" | "componentName" | "assetName" | "requestCode",
       sortOrder: (sortDirection === "none" ? "DESC" : sortDirection.toUpperCase()) as "ASC" | "DESC",
@@ -38,7 +48,7 @@ export default function CreateProposalPage() {
     
     fetchComponents(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize, searchText, sortField, sortDirection]);
+  }, [currentPage, pageSize, searchText, componentTypeFilter, buildingFilter, roomFilter, sortField, sortDirection]);
 
   // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: SortField) => {
@@ -147,10 +157,26 @@ export default function CreateProposalPage() {
     form.resetFields();
   };
 
-  // Lấy danh sách component đã chọn
+  // Hàm lấy danh sách component đã chọn
   const selectedComponents = components.filter(
     (component) => selectedRowKeys.includes(component.componentId)
   );
+
+  // Đếm số lượng filters đang active
+  const activeFiltersCount = [
+    componentTypeFilter.length > 0,
+    buildingFilter,
+    roomFilter,
+  ].filter(Boolean).length;
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setComponentTypeFilter([]);
+    setBuildingFilter('');
+    setRoomFilter('');
+    setSearchText('');
+    setCurrentPage(1);
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -230,15 +256,147 @@ export default function CreateProposalPage() {
 
       {/* Filters & Search */}
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-gray-700">Bộ lọc và tìm kiếm</h3>
+          <div className="flex items-center gap-2">
+            {activeFiltersCount > 0 && (
+              <Button 
+                size="small" 
+                onClick={clearAllFilters}
+                icon={<X className="w-3 h-3" />}
+              >
+                Xóa bộ lọc ({activeFiltersCount})
+              </Button>
+            )}
+            <Button
+              size="small"
+              type={showFilters ? "primary" : "default"}
+              onClick={() => setShowFilters(!showFilters)}
+              icon={<FilterOutlined />}
+            >
+              {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
+            </Button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Input
             className='col-span-1 md:col-span-2'
-            placeholder="Tìm kiếm theo tên linh kiện, tài sản, vị trí..."
+            placeholder="Tìm kiếm theo tên linh kiện, tài sản, mã tài sản..."
             prefix={<Search className="w-4 h-4" />}
             value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              setCurrentPage(1);
+            }}
+            allowClear
           />
         </div>
+
+        {/* Advanced Filters */}
+        {showFilters && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+            {/* Component Type Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Loại linh kiện
+              </label>
+              <Select
+                mode="multiple"
+                allowClear
+                placeholder="Chọn loại linh kiện"
+                value={componentTypeFilter}
+                onChange={(value) => {
+                  setComponentTypeFilter(value);
+                  setCurrentPage(1);
+                }}
+                style={{ width: '100%' }}
+                maxTagCount="responsive"
+              >
+                {Object.entries(ComponentType).map(([key, value]) => (
+                  <Select.Option key={value} value={value}>
+                    {key}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+
+            {/* Building Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tòa nhà
+              </label>
+              <Input
+                placeholder="Nhập tên tòa nhà (VD: A, B, C...)"
+                value={buildingFilter}
+                onChange={(e) => {
+                  setBuildingFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                allowClear
+              />
+            </div>
+
+            {/* Room Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Phòng
+              </label>
+              <Input
+                placeholder="Nhập tên phòng (VD: A01.03)"
+                value={roomFilter}
+                onChange={(e) => {
+                  setRoomFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                allowClear
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Active Filters Display */}
+        {activeFiltersCount > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+            <span className="text-xs text-gray-500 self-center">Đang lọc:</span>
+            {componentTypeFilter.length > 0 && (
+              <Tag 
+                closable 
+                onClose={() => {
+                  setComponentTypeFilter([]);
+                  setCurrentPage(1);
+                }}
+                color="blue"
+              >
+                Loại: {componentTypeFilter.join(', ')}
+              </Tag>
+            )}
+            {buildingFilter && (
+              <Tag 
+                closable 
+                onClose={() => {
+                  setBuildingFilter('');
+                  setCurrentPage(1);
+                }}
+                color="green"
+              >
+                Tòa: {buildingFilter}
+              </Tag>
+            )}
+            {roomFilter && (
+              <Tag 
+                closable 
+                onClose={() => {
+                  setRoomFilter('');
+                  setCurrentPage(1);
+                }}
+                color="orange"
+              >
+                Phòng: {roomFilter}
+              </Tag>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Table */}
@@ -276,6 +434,15 @@ export default function CreateProposalPage() {
                         aria-label="Chọn tất cả linh kiện"
                       />
                       <span>STT</span>
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                    onClick={() => handleSort("requestCode")}
+                  >
+                    <div className="flex items-center uppercase space-x-1">
+                      <span>Mã YCSC</span>
+                      {getSortIcon("requestCode")}
                     </div>
                   </th>
                   <th 
@@ -340,11 +507,21 @@ export default function CreateProposalPage() {
                         <span>{(currentPage - 1) * pageSize + index + 1}</span>
                       </div>
                     </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      <span className="font-mono text-blue-600 font-medium">
+                        {record.requestCode}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <div>
                         <div className="font-medium">{record.componentName}</div>
+                        {record.componentType && (
+                          <Tag color="cyan" className="text-xs mt-1">
+                            {record.componentType}
+                          </Tag>
+                        )}
                         {record.componentSpecs && (
-                          <div className="text-sm text-gray-500">{record.componentSpecs}</div>
+                          <div className="text-sm text-gray-500 mt-1">{record.componentSpecs}</div>
                         )}
                       </div>
                     </td>
@@ -371,7 +548,7 @@ export default function CreateProposalPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      <div className="text-sm text-gray-700">
+                      <div className="text-sm text-gray-700 line-clamp-2">
                         {record.reason}
                       </div>
                     </td>

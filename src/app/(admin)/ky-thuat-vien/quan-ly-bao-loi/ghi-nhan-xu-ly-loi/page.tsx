@@ -342,14 +342,16 @@ export default function GhiNhanXuLyLoiPage() {
     setIsSubmitting(true);
 
     try {
-      // Determine finalStatus based on repairMethod
-      let finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ | undefined;
+      // ⚠️ LOGIC MỚI: Determine finalStatus based on repairMethod
+      // - Chỉ set finalStatus = ĐÃ_HOÀN_THÀNH khi sửa xong
+      // - Nếu cần thay thế: KHÔNG set finalStatus (để backend tự set ĐANG_XỬ_LÝ)
+      //   → Sau khi lập phiếu đề xuất và được duyệt → Backend tự chuyển sang CHỜ_THAY_THẾ
+      let finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH | undefined;
       
       if (formData.repairMethod === 'software_fixed' || formData.repairMethod === 'hardware_fixed') {
         finalStatus = RepairStatus.ĐÃ_HOÀN_THÀNH;
-      } else if (formData.repairMethod === 'need_replacement') {
-        finalStatus = RepairStatus.CHỜ_THAY_THẾ;
       }
+      // Nếu need_replacement: KHÔNG set finalStatus (để undefined)
 
       // Prepare request data
       const requestData: CreateAndProcessRepairRequest = {
@@ -366,7 +368,7 @@ export default function GhiNhanXuLyLoiPage() {
           ? selectedSoftwareIds 
           : undefined,
         resolutionNotes: formData.repairNotes || undefined,
-        finalStatus: finalStatus,
+        finalStatus: finalStatus, // undefined nếu need_replacement
       };
 
       // Call API to create and process repair request

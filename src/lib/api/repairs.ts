@@ -70,10 +70,16 @@ export interface CreateRepairRequest {
 /**
  * Interface cho request ghi nhận và xử lý lỗi trực tiếp tại hiện trường
  * Extends từ CreateRepairRequest và thêm các trường cho xử lý
+ * 
+ * ⚠️ LOGIC MỚI:
+ * - finalStatus chỉ cho phép ĐÃ_HOÀN_THÀNH (hoặc undefined)
+ * - Nếu cần thay thế linh kiện: KHÔNG set finalStatus
+ *   → Backend tự động set ĐANG_XỬ_LÝ
+ *   → Sau khi lập phiếu đề xuất và được duyệt → Tự động chuyển sang CHỜ_THAY_THẾ
  */
 export interface CreateAndProcessRepairRequest extends CreateRepairRequest {
-  resolutionNotes?: string; // Ghi chú chi tiết quá trình xử lý lỗi (BẮT BUỘC khi có finalStatus)
-  finalStatus?: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ; // Trạng thái cuối cùng sau xử lý
+  resolutionNotes?: string; // Ghi chú chi tiết quá trình xử lý lỗi (BẮT BUỘC khi finalStatus = ĐÃ_HOÀN_THÀNH)
+  finalStatus?: RepairStatus.ĐÃ_HOÀN_THÀNH; // Chỉ cho phép ĐÃ_HOÀN_THÀNH
 }
 
 /**
