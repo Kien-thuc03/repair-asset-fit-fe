@@ -48,7 +48,6 @@ export default function CreateProposalPage() {
     const fetchRooms = async () => {
       try {
         const roomsData = await getRoomsApi();
-        console.log("📍 Rooms data fetched:", roomsData.slice(0, 3)); // Log first 3 rooms
         setRooms(roomsData);
       } catch {
         message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
@@ -71,12 +70,6 @@ export default function CreateProposalPage() {
       sortBy: (sortField === "location" ? "createdAt" : sortField || "createdAt") as "createdAt" | "componentName" | "assetName" | "requestCode",
       sortOrder: (sortDirection === "none" ? "DESC" : sortDirection.toUpperCase()) as "ASC" | "DESC",
     };
-    
-    console.log("🔍 Fetching components with filters:", {
-      building: buildingFilter,
-      floor: floorFilter,
-      roomName: roomFilter,
-    });
     
     fetchComponents(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -155,13 +148,10 @@ export default function CreateProposalPage() {
           reason: component.reason,
         })),
       };
-
-      console.log("📤 Creating proposal:", proposalData);
       
       // Gọi API tạo đề xuất
       const result = await createReplacementProposal(proposalData);
       
-      console.log("✅ Proposal created:", result);
       message.success(`Tạo đề xuất thay thế thành công! Mã: ${result.proposalCode}`);
       
       // Reset và đóng modal
@@ -177,7 +167,6 @@ export default function CreateProposalPage() {
         excludeInProposal: true,
       });
     } catch (err) {
-      console.error("❌ Create proposal error:", err);
       message.error(err instanceof Error ? err.message : "Tạo đề xuất thất bại");
     } finally {
       setIsSubmitting(false);
@@ -258,8 +247,6 @@ export default function CreateProposalPage() {
 
   // Handle room change
   const handleRoomChange = (roomName: string) => {
-    console.log("🏢 Room selected:", roomName);
-    console.log("📋 Available rooms:", filteredRooms.map(r => ({ id: r.id, name: r.name, roomCode: r.roomCode })));
     setRoomFilter(roomName);
     setCurrentPage(1);
   };
