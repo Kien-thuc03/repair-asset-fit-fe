@@ -18,7 +18,10 @@ import {
   InspectionFormModal,
   InspectionPreviewModal,
 } from "@/components/modal";
-import { useReplacementProposal } from "@/hooks";
+import {
+  useReplacementProposal,
+  useUpdateReplacementProposalStatus,
+} from "@/hooks";
 import { InspectionFormData } from "@/types";
 import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 import { uploadFile } from "@/lib/api/upload";
@@ -45,7 +48,11 @@ export default function RequestDetailPage() {
     });
 
   // Fetch proposal data từ API
-  const { data: proposal, loading, error } = useReplacementProposal(id);
+  const { data: proposal, loading, error, refetch } =
+    useReplacementProposal(id);
+
+  // Update status hook
+  const { updateStatus } = useUpdateReplacementProposalStatus();
 
   const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
@@ -110,15 +117,38 @@ export default function RequestDetailPage() {
         throw new Error(uploadResult.error || "Upload file thất bại");
       }
 
-      // 3. Cập nhật trạng thái với URL file (có thể thêm API call ở đây)
-      // await updateStatus(proposal.id, {
-      //   status: ReplacementProposalStatus.ĐÃ_LẬP_BIÊN_BẢN,
-      //   inspectionReportUrl: uploadResult.url,
-      // });
+      // 3. Cập nhật trạng thái theo workflow
+      // Workflow: ĐÃ_DUYỆT_TỜ_TRÌNH → CHỜ_XÁC_MINH → ĐÃ_XÁC_MINH → ĐÃ_GỬI_BIÊN_BẢN
+      
+      // Bước 1: Chuyển sang CHỜ_XÁC_MINH
+      if (proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH) {
+        await updateStatus(proposal.id, {
+          status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
+        });
+      }
+
+      // Bước 2: Chuyển sang ĐÃ_XÁC_MINH
+      if (
+        proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH ||
+        proposal.status === ReplacementProposalStatus.CHỜ_XÁC_MINH
+      ) {
+        await updateStatus(proposal.id, {
+          status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
+        });
+      }
+
+      // Bước 3: Chuyển sang ĐÃ_GỬI_BIÊN_BẢN và lưu URL
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
+        verificationReportUrl: uploadResult.url,
+      });
 
       // Close modals
       setShowInspectionForm(false);
       setShowInspectionPreview(false);
+
+      // Refetch data
+      refetch();
 
       // Redirect
       setTimeout(() => {
@@ -285,7 +315,7 @@ export default function RequestDetailPage() {
                 <td width="50%">
                   <p><strong>${formData.departmentName}</strong></p>
                   <br><br><br>
-                  <p><strong>Nhân viên Kỹ thuật</strong></p>
+                  <p><strong>Tổ trưởng Kỹ thuật</strong></p>
                   <br><br>
                   <p>${formData.departmentRep}</p>
                 </td>
