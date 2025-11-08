@@ -1,21 +1,59 @@
 "use client"
 
-import { useMemo } from 'react'
 import { useParams } from 'next/navigation'
-import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table } from 'antd'
-import { Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
-import { mockReplacementRequestItem } from '@/lib/mockData'
-import { ReplacementStatus, ComponentFromRequest } from '@/types'
+import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table, Button } from 'antd'
+import { Clock, CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react'
+import { useReplacementProposal } from '@/hooks/useReplacementProposals'
+import { ReplacementProposalStatus, ReplacementItem } from '@/lib/api/replacement-proposals'
 
 export default function ChiTietThayThePage() {
 	const params = useParams()
 	const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string)
 
-	const request = useMemo(() => 
-		mockReplacementRequestItem.find((item) => item.id === id), 
-		[id]
-	)
+	// Fetch dữ liệu từ API
+	const { data: request, loading, error, refetch } = useReplacementProposal(id)
 
+	// Loading State
+	if (loading) {
+		return (
+			<div className="space-y-4">
+				<Breadcrumb
+					items={[
+						{ href: '/ky-thuat-vien', title: 'Trang chủ' },
+						{ href: '/ky-thuat-vien/quan-ly-thay-the-linh-kien', title: 'Quản lý thay thế linh kiện' },
+						{ title: 'Chi tiết' },
+					]}
+				/>
+				<div className="flex justify-center items-center py-12">
+					<Loader2 className="w-8 h-8 animate-spin text-blue-600 mr-2" />
+					<span className="text-gray-600">Đang tải thông tin đề xuất...</span>
+				</div>
+			</div>
+		)
+	}
+
+	// Error State
+	if (error) {
+		return (
+			<div className="space-y-4">
+				<Breadcrumb
+					items={[
+						{ href: '/ky-thuat-vien', title: 'Trang chủ' },
+						{ href: '/ky-thuat-vien/quan-ly-thay-the-linh-kien', title: 'Quản lý thay thế linh kiện' },
+						{ title: 'Chi tiết' },
+					]}
+				/>
+				<div className="flex flex-col justify-center items-center py-12">
+					<p className="text-red-600 mb-4">❌ {error}</p>
+					<Button type="primary" onClick={() => refetch()}>
+						Thử lại
+					</Button>
+				</div>
+			</div>
+		)
+	}
+
+	// Not Found State
 	if (!request) {
 		return (
 			<div className="space-y-4">
@@ -32,48 +70,58 @@ export default function ChiTietThayThePage() {
 	}
 
 	// Cấu hình trạng thái
-	const statusConfig = {
-		[ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
+	const statusConfig: Record<ReplacementProposalStatus, { color: string; text: string; icon: React.ElementType }> = {
+		[ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
 			color: 'orange', 
 			text: 'Chờ Tổ trưởng duyệt',
 			icon: Clock
 		},
-		[ReplacementStatus.CHỜ_XÁC_MINH]: { 
+		[ReplacementProposalStatus.CHỜ_XÁC_MINH]: { 
 			color: 'blue', 
 			text: 'Chờ xác minh',
 			icon: AlertTriangle
 		},
-		[ReplacementStatus.ĐÃ_DUYỆT]: { 
+		[ReplacementProposalStatus.ĐÃ_DUYỆT]: { 
 			color: 'green', 
 			text: 'Đã duyệt',
 			icon: CheckCircle
 		},
-		[ReplacementStatus.ĐÃ_TỪ_CHỐI]: { 
+		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: { 
 			color: 'red', 
 			text: 'Đã từ chối',
 			icon: XCircle
 		},
-		[ReplacementStatus.ĐÃ_XÁC_MINH]: { 
+		[ReplacementProposalStatus.ĐÃ_XÁC_MINH]: { 
 			color: 'purple', 
 			text: 'Đã xác minh',
 			icon: CheckCircle
 		},
-		[ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
 			color: 'geekblue', 
 			text: 'Đã lập tờ trình',
 			icon: CheckCircle
 		},
-		[ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
 			color: 'lime', 
 			text: 'Đã duyệt tờ trình',
 			icon: CheckCircle
 		},
-		[ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
 			color: 'volcano', 
 			text: 'Đã từ chối tờ trình',
 			icon: XCircle
 		},
-		[ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
+		[ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: { 
+			color: 'purple', 
+			text: 'Đã gửi biên bản',
+			icon: CheckCircle
+		},
+		[ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: { 
+			color: 'geekblue', 
+			text: 'Đã ký biên bản',
+			icon: CheckCircle
+		},
+		[ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
 			color: 'cyan', 
 			text: 'Đã hoàn tất mua sắm',
 			icon: CheckCircle
@@ -95,10 +143,10 @@ export default function ChiTietThayThePage() {
 			render: (_: unknown, __: unknown, index: number) => index + 1,
 		},
 		{
-			title: 'Tên linh kiện',
-			dataIndex: 'componentName',
-			key: 'componentName',
-			render: (text: string, record: ComponentFromRequest) => (
+			title: 'Tên linh kiện mới',
+			dataIndex: 'newItemName',
+			key: 'newItemName',
+			render: (text: string, record: ReplacementItem) => (
 				<div>
 					<div className="font-medium">{text}</div>
 					{record.newItemSpecs && (
@@ -108,23 +156,22 @@ export default function ChiTietThayThePage() {
 			),
 		},
 		{
-			title: 'Tài sản',
-			key: 'asset',
-			render: (record: ComponentFromRequest) => (
+			title: 'Linh kiện cũ',
+			key: 'oldComponent',
+			render: (record: ReplacementItem) => (
 				<div>
-					<div className="font-medium">{record.assetName}</div>
-					<div className="text-sm text-gray-500">Mã: {record.assetCode}</div>
-				</div>
-			),
-		},
-		{
-			title: 'Vị trí',
-			key: 'location',
-			render: (record: ComponentFromRequest) => (
-				<div>
-					<div className="font-medium">{record.buildingName} - {record.roomName}</div>
-					{record.machineLabel && (
-						<div className="text-xs text-gray-500">Máy {record.machineLabel}</div>
+					{record.oldComponent ? (
+						<>
+							<div className="font-medium">{record.oldComponent.name}</div>
+							<div className="text-sm text-gray-500">
+								{record.oldComponent.componentType}
+							</div>
+							{record.oldComponent.roomLocation && (
+								<div className="text-xs text-gray-500">{record.oldComponent.roomLocation}</div>
+							)}
+						</>
+					) : (
+						<span className="text-gray-400">N/A</span>
 					)}
 				</div>
 			),
@@ -145,9 +192,9 @@ export default function ChiTietThayThePage() {
 			title: 'Lý do thay thế',
 			dataIndex: 'reason',
 			key: 'reason',
-			render: (reason: string) => (
+			render: (reason: string | undefined) => (
 				<div className="text-sm text-gray-700">
-					{reason}
+					{reason || 'N/A'}
 				</div>
 			),
 		},
@@ -161,28 +208,47 @@ export default function ChiTietThayThePage() {
 				<div>
 					<p className="font-medium">Tạo đề xuất thay thế</p>
 					<p className="text-sm text-gray-500">
+						Người tạo: {request.proposer?.fullName || 'N/A'}
+					</p>
+					<p className="text-sm text-gray-500">
 						{new Date(request.createdAt).toLocaleString('vi-VN')}
 					</p>
 				</div>
 			),
 		},
-		...(request.status !== ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT ? [{
-			color: request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI ? 'red' : 'green',
+		...(request.status !== ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT ? [{
+			color: request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ? 'red' : 'green',
 			children: (
 				<div>
 					<p className="font-medium">
-						{request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI ? 'Từ chối đề xuất' : 'Chấp thuận đề xuất'}
+						{request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ? 'Từ chối đề xuất' : 'Chấp thuận đề xuất'}
 					</p>
+					{request.teamLeadApprover && (
+						<p className="text-sm text-gray-500">
+							Người duyệt: {request.teamLeadApprover.fullName}
+						</p>
+					)}
 					<p className="text-sm text-gray-500">
-						{request.createdBy && `Người duyệt: ${request.createdBy}`}
-					</p>
-					<p className="text-sm text-gray-500">
-						{new Date(request.createdAt).toLocaleString('vi-VN')}
+						{new Date(request.updatedAt).toLocaleString('vi-VN')}
 					</p>
 				</div>
 			),
 		}] : []),
-		...(request.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM ? [{
+		...(request.status === ReplacementProposalStatus.ĐÃ_XÁC_MINH && request.adminVerifier ? [{
+			color: 'purple',
+			children: (
+				<div>
+					<p className="font-medium">Đã xác minh</p>
+					<p className="text-sm text-gray-500">
+						Người xác minh: {request.adminVerifier.fullName}
+					</p>
+					<p className="text-sm text-gray-500">
+						{new Date(request.updatedAt).toLocaleString('vi-VN')}
+					</p>
+				</div>
+			),
+		}] : []),
+		...(request.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM ? [{
 			color: 'green',
 			children: (
 				<div>
@@ -229,16 +295,25 @@ export default function ChiTietThayThePage() {
 			</div>
 
 			{/* Status Alert */}
-			{request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI && (
+			{request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI && (
 				<Alert
 					message="Đề xuất đã bị từ chối"
-					description="Đề xuất này đã bị từ chối bởi cấp trên"
+					description="Đề xuất này đã bị từ chối bởi tổ trưởng"
 					type="error"
 					showIcon
 				/>
 			)}
 
-			{request.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
+			{request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH && (
+				<Alert
+					message="Tờ trình đã bị từ chối"
+					description="Tờ trình đề xuất này đã bị từ chối"
+					type="error"
+					showIcon
+				/>
+			)}
+
+			{request.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
 				<Alert
 					message="Linh kiện đã sẵn sàng"
 					description="Linh kiện đã được mua sắm và sẵn sàng để thay thế. Vui lòng liên hệ để lấy linh kiện và tiến hành thay thế."
@@ -259,34 +334,44 @@ export default function ChiTietThayThePage() {
 								</span>
 							</Descriptions.Item>
 							<Descriptions.Item label="Trạng thái">
-								<Tag 
-									color={currentStatus.color} 
-									icon={<currentStatus.icon className="w-3 h-3" />}
-								>
-									{currentStatus.text}
+								<Tag color={currentStatus.color}>
+									<div className="flex items-center gap-1">
+										<currentStatus.icon className="w-3 h-3" />
+										<span>{currentStatus.text}</span>
+									</div>
 								</Tag>
 							</Descriptions.Item>
 							<Descriptions.Item label="Tiêu đề đề xuất" span={2}>
-								<div className="font-medium">{request.title}</div>
+								<div className="font-medium">{request.title || 'N/A'}</div>
 							</Descriptions.Item>
 							<Descriptions.Item label="Người tạo" span={2}>
-								<div className="font-medium">{request.createdBy || 'N/A'}</div>
+								<div className="font-medium">{request.proposer?.fullName || 'N/A'}</div>
 							</Descriptions.Item>
 							<Descriptions.Item label="Số lượng linh kiện" span={2}>
 								<span className="font-medium text-blue-600">
-									{request.components.length} linh kiện
+									{request.items?.length || request.itemsCount || 0} linh kiện
 								</span>
 							</Descriptions.Item>
+							{request.teamLeadApprover && (
+								<Descriptions.Item label="Tổ trưởng duyệt" span={2}>
+									<div className="font-medium">{request.teamLeadApprover.fullName}</div>
+								</Descriptions.Item>
+							)}
+							{request.adminVerifier && (
+								<Descriptions.Item label="Người xác minh" span={2}>
+									<div className="font-medium">{request.adminVerifier.fullName}</div>
+								</Descriptions.Item>
+							)}
 						</Descriptions>
 					</Card>
 
 					{/* Components List */}
 					<Card 
-						title={`Danh sách linh kiện cần thay thế (${request.components.length})`} 
+						title={`Danh sách linh kiện cần thay thế (${request.items?.length || 0})`} 
 						className="shadow"
 					>
 						<Table
-							dataSource={request.components}
+							dataSource={request.items || []}
 							columns={componentColumns}
 							rowKey="id"
 							pagination={false}
@@ -296,20 +381,59 @@ export default function ChiTietThayThePage() {
 
 					{/* Description */}
 					<Card title="Mô tả chi tiết" className="shadow">
-						<p className="text-gray-700 leading-relaxed">{request.description}</p>
+						<p className="text-gray-700 leading-relaxed">{request.description || 'Không có mô tả'}</p>
 					</Card>
 
 					{/* Component Details */}
-					<Card title="Lý do thay thế từng linh kiện" className="shadow">
-						<div className="space-y-3">
-							{request.components.map((component) => (
-								<div key={component.id} className="border-l-4 border-blue-200 pl-4">
-									<div className="font-medium text-gray-900">{component.componentName}</div>
-									<div className="text-gray-600 text-sm mt-1">{component.reason}</div>
-								</div>
-							))}
-						</div>
-					</Card>
+					{request.items && request.items.length > 0 && (
+						<Card title="Lý do thay thế từng linh kiện" className="shadow">
+							<div className="space-y-3">
+								{request.items.map((item) => (
+									<div key={item.id} className="border-l-4 border-blue-200 pl-4">
+										<div className="font-medium text-gray-900">{item.newItemName}</div>
+										<div className="text-gray-600 text-sm mt-1">{item.reason || 'N/A'}</div>
+										{item.oldComponent && (
+											<div className="text-xs text-gray-500 mt-1">
+												Thay thế cho: {item.oldComponent.name} ({item.oldComponent.componentType})
+											</div>
+										)}
+									</div>
+								))}
+							</div>
+						</Card>
+					)}
+
+					{/* Files */}
+					{(request.submissionFormUrl || request.verificationReportUrl) && (
+						<Card title="Tài liệu đính kèm" className="shadow">
+							<div className="space-y-2">
+								{request.submissionFormUrl && (
+									<div>
+										<a 
+											href={request.submissionFormUrl} 
+											target="_blank" 
+											rel="noopener noreferrer"
+											className="text-blue-600 hover:text-blue-800 underline"
+										>
+											📄 Tờ trình đề xuất
+										</a>
+									</div>
+								)}
+								{request.verificationReportUrl && (
+									<div>
+										<a 
+											href={request.verificationReportUrl} 
+											target="_blank" 
+											rel="noopener noreferrer"
+											className="text-blue-600 hover:text-blue-800 underline"
+										>
+											📋 Biên bản xác minh
+										</a>
+									</div>
+								)}
+							</div>
+						</Card>
+					)}
 				</div>
 
 				{/* Timeline */}
