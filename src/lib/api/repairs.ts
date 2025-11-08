@@ -343,17 +343,6 @@ export const createRepair = async (
  *   resolutionNotes: "Đã cài đặt lại Office 2021",
  *   finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH
  * });
- * 
- * @example
- * // Lỗi phần cứng - cần thay thế
- * await createAndProcessRepair({
- *   computerAssetId: "asset-123",
- *   errorType: ErrorType.MAY_KHONG_KHOI_DONG,
- *   description: "Nguồn điện bị cháy",
- *   componentIds: ["component-1"],
- *   resolutionNotes: "Nguồn 500W cháy hoàn toàn, cần thay thế",
- *   finalStatus: RepairStatus.CHỜ_THAY_THẾ
- * });
  */
 export const createAndProcessRepair = async (
   data: CreateAndProcessRepairRequest

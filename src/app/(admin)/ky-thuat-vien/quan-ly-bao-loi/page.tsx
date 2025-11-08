@@ -5,7 +5,7 @@ import { Breadcrumb, Input, Select, DatePicker, Button, message, Spin, Alert } f
 import type { Dayjs } from 'dayjs'
 import { Search, ChevronUp, ChevronDown, Eye, Download } from 'lucide-react'
 import Link from 'next/link'
-import { repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
+import { repairRequestStatusConfig } from '@/lib/constants/repairStatus'
 import { RepairStatus, RepairRequest } from '@/types'
 import { Pagination } from '@/components/ui'
 import { useProfile } from '@/hooks/useProfile'

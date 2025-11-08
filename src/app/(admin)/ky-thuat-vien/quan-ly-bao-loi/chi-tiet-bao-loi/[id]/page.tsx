@@ -1,74 +1,27 @@
 "use client"
 
-import { useMemo, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Breadcrumb, Steps, Tag, Card, Divider, Spin, Alert } from 'antd'
+import { Breadcrumb, Steps, Tag, Card, Divider, Spin, Alert, message } from 'antd'
 import { Clock, User, MapPin, Wrench, Calendar, FileText, AlertCircle, CheckCircle, Settings, Package, Monitor, Info } from 'lucide-react'
-import { mockRepairRequests, repairRequestStatusConfig } from '@/lib/mockData'
-import { RepairStatus, RepairRequest } from '@/types'
+import { repairRequestStatusConfig, calculateProcessingTime, getStatusStep } from '@/lib/constants/repairStatus'
+import { RepairStatus } from '@/types'
 import { ActionPanel, HistoryCard } from '@/components/technician/requestDetailKTV'
 import ImageViewer from '@/components/ui/ImageViewer'
+import { useRepairDetailPage } from '@/hooks/useRepairs'
 
 
 export default function RepairDetailPage() {
 	const params = useParams()
 	const router = useRouter()
 	const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string)
-	const [currentRequest, setCurrentRequest] = useState<RepairRequest | null>(null)
-	const [loading, setLoading] = useState(true)
 
-	const req = useMemo(() => mockRepairRequests.find((r) => r.id === id), [id])
-
-	// Tự động cập nhật trạng thái khi xem chi tiết
-	useEffect(() => {
-		// Simulate loading
-		const timer = setTimeout(() => {
-			if (req && req.status === RepairStatus.CHỜ_TIẾP_NHẬN) {
-				// Tự động chuyển trạng thái sang ĐÃ_TIẾP_NHẬN
-				const updatedReq = {
-					...req,
-					status: RepairStatus.ĐÃ_TIẾP_NHẬN,
-					acceptedAt: new Date().toISOString()
-				}
-				setCurrentRequest(updatedReq)
-				
-				
-				// Trong thực tế, đây sẽ là API call để cập nhật trạng thái
-				// await updateRepairRequestStatus(req.id, RepairStatus.ĐÃ_TIẾP_NHẬN)
-			} else {
-				setCurrentRequest(req || null)
-			}
-			setLoading(false)
-		}, 500)
-
-		return () => clearTimeout(timer)
-	}, [req])
-
-	// Helper function to get status step
-	const getStatusStep = (status: RepairStatus) => {
-		const steps = [
-			RepairStatus.CHỜ_TIẾP_NHẬN,
-			RepairStatus.ĐÃ_TIẾP_NHẬN,
-			RepairStatus.ĐANG_XỬ_LÝ,
-			RepairStatus.ĐÃ_HOÀN_THÀNH
-		]
-		const currentIndex = steps.indexOf(status)
-		return currentIndex >= 0 ? currentIndex : 0
-	}
-
-	// Helper function to calculate processing time
-	const getProcessingTime = (createdAt: string, completedAt?: string) => {
-		const start = new Date(createdAt)
-		const end = completedAt ? new Date(completedAt) : new Date()
-		const diffMs = end.getTime() - start.getTime()
-		const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-		const diffDays = Math.floor(diffHours / 24)
-		
-		if (diffDays > 0) {
-			return `${diffDays} ngày ${diffHours % 24} giờ`
-		}
-		return `${diffHours} giờ`
-	}
+	// Sử dụng custom hook để quản lý repair detail với auto-accept
+	const {
+		data: currentRequest,
+		loading,
+		error,
+		updateStatus
+	} = useRepairDetailPage(id, true)
 
 	if (loading) {
 		return (
@@ -81,7 +34,7 @@ export default function RepairDetailPage() {
 		)
 	}
 
-	if (!currentRequest) {
+	if (error || !currentRequest) {
 		return (
 			<div className="space-y-6">
 				{/* Breadcrumb for not found */}
@@ -114,8 +67,9 @@ export default function RepairDetailPage() {
 				/>
 				<Alert
 					message="Không tìm thấy yêu cầu"
-					description="Yêu cầu sửa chữa không tồn tại hoặc đã bị xóa."
+					description={error || "Yêu cầu sửa chữa không tồn tại hoặc đã bị xóa."}
 					type="error"
+					showIcon
 					action={
 						<button onClick={() => router.back()} className="text-blue-600 hover:underline text-sm">
 							Quay lại
@@ -245,7 +199,7 @@ export default function RepairDetailPage() {
 						<Alert
 							className="mt-4"
 							message="Yêu cầu đã hoàn thành"
-							description={`Yêu cầu được hoàn thành lúc ${new Date(currentRequest.completedAt || '').toLocaleString('vi-VN')}. Thời gian xử lý: ${getProcessingTime(currentRequest.createdAt, currentRequest.completedAt)}`}
+							description={`Yêu cầu được hoàn thành lúc ${new Date(currentRequest.completedAt || '').toLocaleString('vi-VN')}. Thời gian xử lý: ${calculateProcessingTime(currentRequest.createdAt, currentRequest.completedAt)}`}
 							type="success"
 							icon={<CheckCircle />}
 							showIcon
@@ -384,20 +338,21 @@ export default function RepairDetailPage() {
 						errorTypeName={currentRequest.errorTypeName} // Truyền errorTypeName để xác định loại lỗi
 						requestCode={currentRequest.requestCode} // Truyền requestCode
 						assetName={currentRequest.assetName} // Truyền assetName
-						onCreateReplacement={(parts) => {
+						onCreateReplacement={() => {
 							// Xử lý tạo yêu cầu thay thế ở đây
 							router.push('/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat')
 						}}
-						onStatusUpdate={(newStatus: RepairStatus, notes: string) => {
-							// Cập nhật trạng thái yêu cầu
-							const updatedReq = {
-								...currentRequest,
-								status: newStatus,
-								resolutionNotes: notes,
-								...(newStatus === RepairStatus.ĐÃ_HOÀN_THÀNH && { completedAt: new Date().toISOString() })
+						onStatusUpdate={async (newStatus: RepairStatus, notes: string) => {
+							try {
+								// Sử dụng hook để cập nhật trạng thái
+								await updateStatus(newStatus, notes)
+								
+								// Hiển thị thông báo thành công
+								message.success('Cập nhật trạng thái thành công!')
+							} catch (err) {
+								console.error('Update status error:', err)
+								message.error(err instanceof Error ? err.message : 'Cập nhật trạng thái thất bại')
 							}
-							setCurrentRequest(updatedReq)
-							
 						}}
 					/>
 				</div>

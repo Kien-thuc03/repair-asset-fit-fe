@@ -3,9 +3,11 @@ import {
   getRepairs,
   getRepairById,
   getRepairsByReporter,
+  acceptRepair,
+  updateRepairStatus,
   GetRepairsQueryParams,
 } from "@/lib/api/repairs";
-import { RepairRequest, RepairRequestWithDetails } from "@/types/repair";
+import { RepairRequest, RepairRequestWithDetails, RepairStatus } from "@/types/repair";
 
 /**
  * Custom hook để quản lý danh sách yêu cầu sửa chữa
@@ -119,6 +121,8 @@ export const useRepairDetail = (id: string) => {
 
       // API đã transform data rồi
       setData(response as RepairRequestWithDetails);
+      
+      return response as RepairRequestWithDetails;
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -126,6 +130,7 @@ export const useRepairDetail = (id: string) => {
           : "Có lỗi xảy ra khi lấy chi tiết yêu cầu sửa chữa.";
       setError(errorMessage);
       console.error("❌ useRepairDetail: Error fetching repair detail:", err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -135,7 +140,7 @@ export const useRepairDetail = (id: string) => {
    * Refetch chi tiết
    */
   const refetch = useCallback(() => {
-    fetchRepairDetail();
+    return fetchRepairDetail();
   }, [fetchRepairDetail]);
 
   useEffect(() => {
@@ -147,6 +152,7 @@ export const useRepairDetail = (id: string) => {
     loading,
     error,
     refetch,
+    setData, // Expose setData để component có thể update local state
   };
 };
 
@@ -211,5 +217,128 @@ export const useRepairsByReporter = (reporterId: string | undefined) => {
     loading,
     error,
     refetch,
+  };
+};
+
+/**
+ * Custom hook để xử lý các actions cho yêu cầu sửa chữa
+ * @param repairId ID của yêu cầu sửa chữa
+ * @returns Object chứa các hàm actions và loading states
+ */
+export const useRepairActions = (repairId: string) => {
+  const [accepting, setAccepting] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  /**
+   * Tiếp nhận yêu cầu sửa chữa
+   */
+  const accept = useCallback(async () => {
+    setAccepting(true);
+    try {
+      const result = await acceptRepair(repairId);
+      return result;
+    } catch (err) {
+      console.error("Error accepting repair:", err);
+      throw err;
+    } finally {
+      setAccepting(false);
+    }
+  }, [repairId]);
+
+  /**
+   * Cập nhật trạng thái yêu cầu sửa chữa
+   */
+  const updateStatus = useCallback(
+    async (status: RepairStatus, resolutionNotes?: string) => {
+      setUpdating(true);
+      try {
+        const result = await updateRepairStatus(repairId, status, resolutionNotes);
+        return result;
+      } catch (err) {
+        console.error("Error updating repair status:", err);
+        throw err;
+      } finally {
+        setUpdating(false);
+      }
+    },
+    [repairId]
+  );
+
+  return {
+    accept,
+    updateStatus,
+    accepting,
+    updating,
+    isLoading: accepting || updating,
+  };
+};
+
+/**
+ * Custom hook tổng hợp cho trang chi tiết yêu cầu sửa chữa
+ * Kết hợp fetch detail và auto-accept
+ * @param id ID của yêu cầu sửa chữa
+ * @param autoAccept Tự động tiếp nhận nếu là CHỜ_TIẾP_NHẬN
+ * @returns Object chứa data, actions, và states
+ */
+export const useRepairDetailPage = (id: string, autoAccept = true) => {
+  const {
+    data,
+    loading: fetchLoading,
+    error,
+    refetch,
+    setData,
+  } = useRepairDetail(id);
+  const { accept, updateStatus, accepting, updating } = useRepairActions(id);
+  const [autoAccepting, setAutoAccepting] = useState(false);
+
+  /**
+   * Auto-accept khi vào trang nếu status là CHỜ_TIẾP_NHẬN
+   */
+  useEffect(() => {
+    const handleAutoAccept = async () => {
+      if (!data || !autoAccept || data.status !== RepairStatus.CHỜ_TIẾP_NHẬN) {
+        return;
+      }
+
+      try {
+        setAutoAccepting(true);
+        const acceptedData = await accept();
+        setData(acceptedData);
+      } catch (err) {
+        console.error("Auto accept error:", err);
+        // Không throw error, giữ nguyên data gốc
+      } finally {
+        setAutoAccepting(false);
+      }
+    };
+
+    handleAutoAccept();
+  }, [data, autoAccept, accept, setData]);
+
+  /**
+   * Wrapper cho updateStatus để tự động update local state
+   */
+  const handleUpdateStatus = useCallback(
+    async (status: RepairStatus, resolutionNotes?: string) => {
+      try {
+        const updatedData = await updateStatus(status, resolutionNotes);
+        setData(updatedData);
+        return updatedData;
+      } catch (err) {
+        throw err;
+      }
+    },
+    [updateStatus, setData]
+  );
+
+  return {
+    data,
+    loading: fetchLoading || autoAccepting,
+    error,
+    refetch,
+    updateStatus: handleUpdateStatus,
+    accepting,
+    updating,
+    isUpdating: accepting || updating || autoAccepting,
   };
 };
