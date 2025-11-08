@@ -15,6 +15,7 @@ type SortDirection = "asc" | "desc" | "none";
 
 export default function CreateProposalPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [selectedComponentsData, setSelectedComponentsData] = useState<ComponentFromRepair[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -72,8 +73,7 @@ export default function CreateProposalPage() {
     };
     
     fetchComponents(params);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize, searchText, componentTypeFilter, buildingFilter, floorFilter, roomFilter, sortField, sortDirection]);
+  }, [currentPage, pageSize, searchText, componentTypeFilter, buildingFilter, floorFilter, roomFilter, sortField, sortDirection, fetchComponents]);
 
   // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: SortField) => {
@@ -131,10 +131,9 @@ export default function CreateProposalPage() {
       const values = await form.validateFields();
       setIsSubmitting(true);
 
-      // Lấy thông tin các linh kiện được chọn
-      const selectedComponents = components.filter(
-        (component) => selectedRowKeys.includes(component.componentId)
-      );
+      // Sử dụng selectedComponentsData thay vì filter từ components hiện tại
+      // Điều này đảm bảo lấy được tất cả items đã chọn từ mọi trang
+      const selectedComponents = selectedComponentsData;
 
       // Tạo payload theo format API
       const proposalData = {
@@ -158,6 +157,7 @@ export default function CreateProposalPage() {
       setIsModalVisible(false);
       form.resetFields();
       setSelectedRowKeys([]);
+      setSelectedComponentsData([]);
       
       // Refresh danh sách
       fetchComponents({
@@ -177,11 +177,6 @@ export default function CreateProposalPage() {
     setIsModalVisible(false);
     form.resetFields();
   };
-
-  // Hàm lấy danh sách component đã chọn
-  const selectedComponents = components.filter(
-    (component) => selectedRowKeys.includes(component.componentId)
-  );
 
   // Đếm số lượng filters đang active
   const activeFiltersCount = [
@@ -262,18 +257,56 @@ export default function CreateProposalPage() {
 
   const handleRowSelect = (id: string, selected: boolean) => {
     if (selected) {
-      setSelectedRowKeys(prev => [...prev, id]);
+      // Chỉ thêm nếu chưa tồn tại
+      setSelectedRowKeys(prev => {
+        if (prev.includes(id)) return prev;
+        return [...prev, id];
+      });
+      
+      // Lưu trữ thông tin đầy đủ của component được chọn
+      const component = components.find(c => c.componentId === id);
+      if (component) {
+        setSelectedComponentsData(prev => {
+          // Kiểm tra xem đã tồn tại chưa
+          if (prev.find(c => c.componentId === id)) return prev;
+          return [...prev, component];
+        });
+      }
     } else {
       setSelectedRowKeys(prev => prev.filter(key => key !== id));
+      setSelectedComponentsData(prev => prev.filter(c => c.componentId !== id));
     }
   };
 
   const handleSelectAll = (selected: boolean) => {
     if (selected) {
-      const newKeys = components.map(row => row.componentId);
-      setSelectedRowKeys(newKeys);
+      // Merge với các items đã chọn từ trang trước, không thay thế
+      const currentPageKeys = components.map(row => row.componentId);
+      setSelectedRowKeys(prev => {
+        const newKeys = [...prev];
+        currentPageKeys.forEach(key => {
+          if (!newKeys.includes(key)) {
+            newKeys.push(key);
+          }
+        });
+        return newKeys;
+      });
+      
+      // Lưu trữ thông tin đầy đủ của các components được chọn
+      setSelectedComponentsData(prev => {
+        const newData = [...prev];
+        components.forEach(component => {
+          if (!newData.find(c => c.componentId === component.componentId)) {
+            newData.push(component);
+          }
+        });
+        return newData;
+      });
     } else {
-      setSelectedRowKeys([]);
+      // Chỉ bỏ chọn các items của trang hiện tại, giữ lại items từ trang khác
+      const currentPageKeys = components.map(row => row.componentId);
+      setSelectedRowKeys(prev => prev.filter(key => !currentPageKeys.includes(key)));
+      setSelectedComponentsData(prev => prev.filter(c => !currentPageKeys.includes(c.componentId)));
     }
   };
 
@@ -653,8 +686,8 @@ export default function CreateProposalPage() {
             <h4 className="font-medium text-gray-900 mb-2">
               Linh kiện được chọn ({selectedRowKeys.length})
             </h4>
-            <div className="space-y-2">
-              {selectedComponents.map((component: ComponentFromRepair) => (
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {selectedComponentsData.map((component: ComponentFromRepair) => (
                 <div key={component.componentId} className="text-sm">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
