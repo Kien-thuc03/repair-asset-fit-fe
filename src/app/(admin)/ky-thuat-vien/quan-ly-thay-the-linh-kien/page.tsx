@@ -2,11 +2,12 @@
 
 import { useState, useMemo } from 'react'
 import { Breadcrumb, Input, Select, DatePicker, Tag, Button, message } from 'antd'
-import { Search, Eye, ChevronUp, ChevronDown, Download } from 'lucide-react'
+import { Search, Eye, ChevronUp, ChevronDown, Download, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { mockReplacementRequestItem } from '@/lib/mockData'
-import { ReplacementStatus, ReplacementRequestItem, ComponentFromRequest } from '@/types'
 import { Pagination } from '@/components/ui'
+import { useProfile } from '@/hooks/useProfile'
+import { useReplacementProposalsByProposer } from '@/hooks/useReplacementProposals'
+import { ReplacementProposal, ReplacementProposalStatus } from '@/lib/api/replacement-proposals'
 import type { Dayjs } from 'dayjs'
 
 const { RangePicker } = DatePicker
@@ -16,8 +17,14 @@ type SortField = "proposalCode" | "title" | "componentsCount" | "status" | "crea
 type SortDirection = "asc" | "desc" | "none"
 
 export default function QuanLyThayTheLinhKienPage() {
+	// Lấy thông tin user hiện tại
+	const { userDetails } = useProfile()
+	
+	// Fetch danh sách đề xuất theo user ID
+	const { data: proposals, loading, error, refetch } = useReplacementProposalsByProposer(userDetails?.id || null)
+	
 	const [searchText, setSearchText] = useState('')
-	const [statusFilter, setStatusFilter] = useState<ReplacementStatus | ''>('')
+	const [statusFilter, setStatusFilter] = useState<ReplacementProposalStatus | ''>('')
 	const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
 	const [sortField, setSortField] = useState<SortField | "">("")
 	const [sortDirection, setSortDirection] = useState<SortDirection>("none")
@@ -99,15 +106,15 @@ export default function QuanLyThayTheLinhKienPage() {
 			const XLSX = await import('xlsx')
 			
 			// Tạo dữ liệu Excel
-			const excelData = selectedData.map((item: ReplacementRequestItem, index: number) => ({
+			const excelData = selectedData.map((item: ReplacementProposal, index: number) => ({
 				'STT': index + 1,
 				'Mã đề xuất': item.proposalCode,
-				'Tiêu đề đề xuất': item.title,
-				'Mô tả': item.description,
-				'Số linh kiện': item.components.length,
-				'Trạng thái': statusConfig[item.status as ReplacementStatus]?.text || item.status,
+				'Tiêu đề đề xuất': item.title || 'N/A',
+				'Mô tả': item.description || 'N/A',
+				'Số linh kiện': item.items?.length || item.itemsCount || 0,
+				'Trạng thái': statusConfig[item.status]?.text || item.status,
 				'Ngày tạo': new Date(item.createdAt).toLocaleDateString('vi-VN'),
-				'Người tạo': item.createdBy || 'N/A'
+				'Người tạo': item.proposer?.fullName || 'N/A'
 			}))
 
 			// Tạo workbook và worksheet
@@ -133,24 +140,28 @@ export default function QuanLyThayTheLinhKienPage() {
 
 	// Lọc và sắp xếp dữ liệu
 	const filteredAndSortedData = useMemo(() => {
-		// Reset về trang 1 khi filter thay đổi
-		setCurrentPage(1)
+		// Nếu chưa có dữ liệu, return empty array
+		if (!proposals || proposals.length === 0) return []
 
 		// Lọc dữ liệu
-		const filtered = mockReplacementRequestItem.filter((item: ReplacementRequestItem) => {
-			const componentNames = item.components.map((c: ComponentFromRequest) => c.componentName).join(' ')
-			const assetNames = item.components.map((c: ComponentFromRequest) => c.assetName).join(' ')
-			const assetCodes = item.components.map((c: ComponentFromRequest) => c.assetCode).join(' ')
-			
+		const filtered = proposals.filter((item: ReplacementProposal) => {
+			// Lọc theo tìm kiếm
 			const matchesSearch = searchText ? 
-				[assetCodes, assetNames, componentNames, item.proposalCode, item.title]
+				[
+					item.proposalCode,
+					item.title,
+					item.description,
+					item.proposer?.fullName
+				]
 					.filter(Boolean)
 					.join(' ')
 					.toLowerCase()
 					.includes(searchText.toLowerCase()) : true
 
+			// Lọc theo trạng thái
 			const matchesStatus = statusFilter ? item.status === statusFilter : true
 
+			// Lọc theo khoảng thời gian
 			const createdAt = new Date(item.createdAt)
 			const matchesDateRange = dateRange && dateRange[0] && dateRange[1] ? 
 				createdAt >= dateRange[0].toDate() && createdAt <= dateRange[1].toDate() : true
@@ -171,12 +182,12 @@ export default function QuanLyThayTheLinhKienPage() {
 					bValue = b.proposalCode
 					break
 				case "title":
-					aValue = a.title
-					bValue = b.title
+					aValue = a.title || ""
+					bValue = b.title || ""
 					break
 				case "componentsCount":
-					aValue = a.components.length
-					bValue = b.components.length
+					aValue = a.items?.length || a.itemsCount || 0
+					bValue = b.items?.length || b.itemsCount || 0
 					break
 				case "status":
 					aValue = a.status
@@ -194,7 +205,7 @@ export default function QuanLyThayTheLinhKienPage() {
 			if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
 			return 0
 		})
-	}, [searchText, statusFilter, dateRange, sortField, sortDirection])
+	}, [proposals, searchText, statusFilter, dateRange, sortField, sortDirection])
 
 	// Dữ liệu phân trang
 	const paginatedData = useMemo(() => {
@@ -204,40 +215,48 @@ export default function QuanLyThayTheLinhKienPage() {
 	}, [filteredAndSortedData, currentPage, pageSize])
 
 	// Cấu hình trạng thái
-	const statusConfig = {
-		[ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
+	const statusConfig: Record<ReplacementProposalStatus, { color: string; text: string }> = {
+		[ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
 			color: 'orange', 
 			text: 'Chờ Tổ trưởng duyệt' 
 		},
-		[ReplacementStatus.CHỜ_XÁC_MINH]: { 
+		[ReplacementProposalStatus.CHỜ_XÁC_MINH]: { 
 			color: 'blue', 
 			text: 'Chờ xác minh' 
 		},
-		[ReplacementStatus.ĐÃ_DUYỆT]: { 
+		[ReplacementProposalStatus.ĐÃ_DUYỆT]: { 
 			color: 'green', 
 			text: 'Đã duyệt' 
 		},
-		[ReplacementStatus.ĐÃ_TỪ_CHỐI]: { 
+		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: { 
 			color: 'red', 
 			text: 'Đã từ chối' 
 		},
-		[ReplacementStatus.ĐÃ_XÁC_MINH]: { 
+		[ReplacementProposalStatus.ĐÃ_XÁC_MINH]: { 
 			color: 'purple', 
 			text: 'Đã xác minh' 
 		},
-		[ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
 			color: 'geekblue', 
 			text: 'Đã lập tờ trình' 
 		},
-		[ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
 			color: 'lime', 
 			text: 'Đã duyệt tờ trình' 
 		},
-		[ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
 			color: 'volcano', 
 			text: 'Đã từ chối tờ trình' 
 		},
-		[ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
+		[ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: { 
+			color: 'purple', 
+			text: 'Đã gửi biên bản' 
+		},
+		[ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: { 
+			color: 'geekblue', 
+			text: 'Đã ký biên bản' 
+		},
+		[ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
 			color: 'cyan', 
 			text: 'Đã hoàn tất mua sắm' 
 		},
@@ -304,19 +323,25 @@ export default function QuanLyThayTheLinhKienPage() {
 						allowClear
 					>
 						<Option value="">Tất cả trạng thái</Option>
-						<Option value={ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT}>
+						<Option value={ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT}>
 							Chờ Tổ trưởng duyệt
 						</Option>
-						<Option value={ReplacementStatus.CHỜ_XÁC_MINH}>
+						<Option value={ReplacementProposalStatus.CHỜ_XÁC_MINH}>
 							Chờ xác minh
 						</Option>
-						<Option value={ReplacementStatus.ĐÃ_DUYỆT}>
+						<Option value={ReplacementProposalStatus.ĐÃ_DUYỆT}>
 							Đã duyệt
 						</Option>
-						<Option value={ReplacementStatus.ĐÃ_TỪ_CHỐI}>
+						<Option value={ReplacementProposalStatus.ĐÃ_TỪ_CHỐI}>
 							Đã từ chối
 						</Option>
-						<Option value={ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM}>
+						<Option value={ReplacementProposalStatus.ĐÃ_XÁC_MINH}>
+							Đã xác minh
+						</Option>
+						<Option value={ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH}>
+							Đã lập tờ trình
+						</Option>
+						<Option value={ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM}>
 							Đã hoàn tất mua sắm
 						</Option>
 					</Select>
@@ -341,6 +366,34 @@ export default function QuanLyThayTheLinhKienPage() {
 
 			{/* Table */}
 			<div className="overflow-x-auto bg-white shadow rounded-lg">
+				{/* Loading State */}
+				{loading && (
+					<div className="flex justify-center items-center py-12">
+						<Loader2 className="w-8 h-8 animate-spin text-blue-600 mr-2" />
+						<span className="text-gray-600">Đang tải danh sách đề xuất...</span>
+					</div>
+				)}
+
+				{/* Error State */}
+				{error && !loading && (
+					<div className="flex flex-col justify-center items-center py-12">
+						<p className="text-red-600 mb-4">❌ {error}</p>
+						<Button type="primary" onClick={() => refetch()}>
+							Thử lại
+						</Button>
+					</div>
+				)}
+
+				{/* Empty State */}
+				{!loading && !error && filteredAndSortedData.length === 0 && (
+					<div className="flex justify-center items-center py-12">
+						<p className="text-gray-500">Không có đề xuất nào</p>
+					</div>
+				)}
+
+				{/* Table Content */}
+				{!loading && !error && filteredAndSortedData.length > 0 && (
+					<>
 				<table className="min-w-full divide-y divide-gray-200">
 					<thead className="bg-gray-50">
 						<tr>
@@ -349,7 +402,7 @@ export default function QuanLyThayTheLinhKienPage() {
 									<input
 										type="checkbox"
 										className="rounded border-gray-300"
-										checked={paginatedData.length > 0 && paginatedData.every((row: ReplacementRequestItem) => selectedRowKeys.includes(row.id))}
+										checked={paginatedData.length > 0 && paginatedData.every((row: ReplacementProposal) => selectedRowKeys.includes(row.id))}
 										onChange={(e) => handleSelectAll(e.target.checked)}
 										aria-label="Chọn tất cả đề xuất"
 									/>
@@ -407,8 +460,8 @@ export default function QuanLyThayTheLinhKienPage() {
 						</tr>
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
-						{paginatedData.map((record: ReplacementRequestItem, index: number) => {
-							const config = statusConfig[record.status as ReplacementStatus] || { 
+						{paginatedData.map((record: ReplacementProposal, index: number) => {
+							const config = statusConfig[record.status] || { 
 								color: 'default', 
 								text: record.status 
 							}
@@ -431,13 +484,13 @@ export default function QuanLyThayTheLinhKienPage() {
 									</td>
 									<td className="px-4 py-3 text-sm text-gray-700">
 										<div>
-											<div className="font-medium">{record.title}</div>
-											<div className="text-xs text-gray-500 line-clamp-2 mt-1">{record.description}</div>
+											<div className="font-medium">{record.title || 'N/A'}</div>
+											<div className="text-xs text-gray-500 line-clamp-2 mt-1">{record.description || ''}</div>
 										</div>
 									</td>
 									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 text-center">
 										<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-											{record.components.length} linh kiện
+											{record.items?.length || record.itemsCount || 0} linh kiện
 										</span>
 									</td>
 									<td className="px-4 py-3 whitespace-nowrap">
@@ -472,6 +525,8 @@ export default function QuanLyThayTheLinhKienPage() {
 					showQuickJumper={true}
 					showTotal={true}
 				/>
+					</>
+				)}
 			</div>
 		</div>
 	)
