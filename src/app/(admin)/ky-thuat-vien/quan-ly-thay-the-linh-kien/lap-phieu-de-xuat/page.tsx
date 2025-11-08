@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button, Input, Modal, Form, message, Breadcrumb, Select, Card, Row, Col, Tag } from "antd";
-import { PlusOutlined, SearchOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import { Pagination } from "@/components/ui";
 import { useAvailableComponents } from "@/hooks";
@@ -377,7 +377,7 @@ export default function CreateProposalPage() {
             />
           </Col>
 
-          <Col xs={24} sm={12} md={4}>
+          <Col xs={24} sm={12} md={5}>
             <Select
               mode="multiple"
               allowClear
@@ -398,7 +398,7 @@ export default function CreateProposalPage() {
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={3}>
+          <Col xs={24} sm={12} md={4}>
             <Select
               placeholder="Tất cả tòa nhà"
               value={buildingFilter || undefined}
@@ -414,7 +414,7 @@ export default function CreateProposalPage() {
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={3}>
+          <Col xs={24} sm={12} md={4}>
             <Select
               placeholder={!buildingFilter ? "Chọn tòa trước" : "Tất cả tầng"}
               value={floorFilter || undefined}
@@ -458,15 +458,14 @@ export default function CreateProposalPage() {
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={4}>
+          <Col xs={24} sm={12} md={1}>
             <Button
               type="default"
               onClick={clearAllFilters}
               disabled={activeFiltersCount === 0}
-              icon={<CloseCircleOutlined />}
+              icon={<SyncOutlined />}
               block
             >
-              Xóa bộ lọc
             </Button>
           </Col>
         </Row>
