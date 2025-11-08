@@ -73,7 +73,8 @@ export default function CreateProposalPage() {
     };
     
     fetchComponents(params);
-  }, [currentPage, pageSize, searchText, componentTypeFilter, buildingFilter, floorFilter, roomFilter, sortField, sortDirection, fetchComponents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize, searchText, componentTypeFilter, buildingFilter, floorFilter, roomFilter, sortField, sortDirection]);
 
   // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: SortField) => {
