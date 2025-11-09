@@ -23,38 +23,35 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 	const [inspectionResult, setInspectionResult] = useState<'software' | 'hardware' | 'replacement' | ''>('')
 	const [showReplacementParts, setShowReplacementParts] = useState(false)
 
-	// Xác định loại lỗi dựa trên errorTypeName - tuân thủ database schema
 	const getErrorCategory = () => {
 		if (!errorTypeName) return 'unknown'
 		
-		// Chỉ có ET002 "Máy hư phần mềm" mới là lỗi phần mềm duy nhất trong database
 		if (errorTypeName === "Máy hư phần mềm") {
 			return 'software'
 		}
 		
 		// Tất cả các loại lỗi khác đều là lỗi phần cứng
 		const hardwareErrors = [
-			"Máy không khởi động",      // ET001
-			"Máy hư bàn phím",         // ET003  
-			"Máy hư chuột",            // ET004
-			"Máy không sử dụng được",   // ET005
-			"Máy hư loa",              // ET006
-			"Máy hư màn hình",         // ET007
-			"Máy hư ổ cứng",           // ET008
-			"Máy chạy chậm",           // ET009
-			"Máy nhiễm virus",         // ET010
-			"Máy không kết nối mạng",   // ET011
-			"Máy hư RAM",              // ET012
-			"Máy hư nguồn",            // ET013
-			"Máy mất bàn phím",        // ET014
-			"Máy mất chuột"            // ET015
+			"Máy không khởi động",      
+			"Máy hư bàn phím",        
+			"Máy hư chuột",            
+			"Máy không sử dụng được",   
+			"Máy hư loa",              
+			"Máy hư màn hình",        		
+			"Máy hư ổ cứng",           
+			"Máy chạy chậm",           
+			"Máy nhiễm virus",         
+			"Máy không kết nối mạng",   
+			"Máy hư RAM",              
+			"Máy hư nguồn",            
+			"Máy mất bàn phím",        
+			"Máy mất chuột"            
 		]
 		
 		if (hardwareErrors.includes(errorTypeName)) {
 			return 'hardware'
 		}
 		
-		// Mặc định là hardware nếu không xác định được
 		return 'hardware'
 	}
 
