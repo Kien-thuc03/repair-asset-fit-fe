@@ -606,3 +606,85 @@ export const getRepairsByTechnician = async (
     );
   }
 };
+
+/**
+ * Interface for available components query params
+ */
+export interface GetAvailableComponentsQueryParams {
+  requestCode?: string;
+  componentType?: string[];
+  search?: string;
+  building?: string;
+  floor?: string;
+  roomName?: string;
+  excludeInProposal?: boolean;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "ASC" | "DESC";
+}
+
+/**
+ * Interface for available component data
+ */
+export interface AvailableComponentDto {
+  repairRequestId: string;
+  requestCode: string;
+  repairStatus: string;
+  repairDescription: string;
+  componentId: string;
+  componentName: string;
+  componentType?: string;
+  componentSpecs?: string;
+  assetId: string;
+  assetName: string;
+  assetCode?: string;
+  roomName?: string;
+  buildingName?: string;
+  floor?: string;
+  machineLabel?: string;
+  createdAt: Date;
+}
+
+/**
+ * Interface for available components response
+ */
+export interface GetAvailableComponentsResponse {
+  data: AvailableComponentDto[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/**
+ * Get available components from repair requests for creating replacement proposals
+ * @param params - Query parameters for filtering and pagination
+ * @returns Promise with available components data
+ */
+export const getAvailableComponents = async (
+  params?: GetAvailableComponentsQueryParams
+): Promise<GetAvailableComponentsResponse> => {
+  try {
+    console.log("🌐 API Call: GET /computer/current-user/available-components", params);
+    const response = await api.get<GetAvailableComponentsResponse>(
+      "/computer/current-user/available-components",
+      { params }
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Get available components error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message ||
+        "Lấy danh sách linh kiện khả dụng thất bại."
+    );
+  }
+};
