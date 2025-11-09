@@ -336,16 +336,14 @@ export default function RepairDetailPage() {
 						initStatus={currentRequest.status}
 						assetId={currentRequest.computerAssetId} // Truyền computerAssetId
 						errorTypeName={currentRequest.errorTypeName} // Truyền errorTypeName để xác định loại lỗi
-						requestCode={currentRequest.requestCode} // Truyền requestCode
-						assetName={currentRequest.assetName} // Truyền assetName
 						onCreateReplacement={() => {
 							// Xử lý tạo yêu cầu thay thế ở đây
 							router.push('/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat')
 						}}
-						onStatusUpdate={async (newStatus: RepairStatus, notes: string) => {
+						onStatusUpdate={async (newStatus: RepairStatus, notes: string, componentIds?: string[]) => {
 							try {
-								// Sử dụng hook để cập nhật trạng thái
-								await updateStatus(newStatus, notes)
+								// Sử dụng hook để cập nhật trạng thái (kèm componentIds nếu có)
+								await updateStatus(newStatus, notes, componentIds)
 								
 								// Hiển thị thông báo thành công
 								message.success('Cập nhật trạng thái thành công!')

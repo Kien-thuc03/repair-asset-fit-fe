@@ -235,6 +235,7 @@ export interface UpdateRepairRequest {
   mediaFiles?: File[]; // ✅ Files mới cần upload (optional)
   status?: RepairStatus; // Cập nhật trạng thái
   resolutionNotes?: string; // Ghi chú xử lý
+  componentIds?: string[]; // Danh sách ID component bị lỗi (khi chuyển sang CHỜ_THAY_THẾ)
 }
 
 /**
@@ -456,6 +457,7 @@ export const updateRepair = async (
       mediaUrls: allMediaUrls.length > 0 ? allMediaUrls : data.mediaUrls,
       status: data.status,
       resolutionNotes: data.resolutionNotes,
+      componentIds: data.componentIds,
     };
 
     const response = await api.put<ApiRepairResponse>(
@@ -480,14 +482,16 @@ export const updateRepair = async (
  * @param id ID của yêu cầu sửa chữa
  * @param status Trạng thái mới
  * @param resolutionNotes Ghi chú xử lý (optional)
+ * @param componentIds Danh sách ID component bị lỗi (optional, khi chuyển sang CHỜ_THAY_THẾ)
  * @returns Promise với thông tin yêu cầu sửa chữa đã cập nhật
  */
 export const updateRepairStatus = async (
   id: string,
   status: RepairStatus,
-  resolutionNotes?: string
+  resolutionNotes?: string,
+  componentIds?: string[]
 ): Promise<GetRepairDetailResponse> => {
-  return updateRepair(id, { status, resolutionNotes });
+  return updateRepair(id, { status, resolutionNotes, componentIds });
 };
 
 /**

@@ -249,10 +249,10 @@ export const useRepairActions = (repairId: string) => {
    * Cập nhật trạng thái yêu cầu sửa chữa
    */
   const updateStatus = useCallback(
-    async (status: RepairStatus, resolutionNotes?: string) => {
+    async (status: RepairStatus, resolutionNotes?: string, componentIds?: string[]) => {
       setUpdating(true);
       try {
-        const result = await updateRepairStatus(repairId, status, resolutionNotes);
+        const result = await updateRepairStatus(repairId, status, resolutionNotes, componentIds);
         return result;
       } catch (err) {
         console.error("Error updating repair status:", err);
@@ -319,9 +319,9 @@ export const useRepairDetailPage = (id: string, autoAccept = true) => {
    * Wrapper cho updateStatus để tự động update local state
    */
   const handleUpdateStatus = useCallback(
-    async (status: RepairStatus, resolutionNotes?: string) => {
+    async (status: RepairStatus, resolutionNotes?: string, componentIds?: string[]) => {
       try {
-        const updatedData = await updateStatus(status, resolutionNotes);
+        const updatedData = await updateStatus(status, resolutionNotes, componentIds);
         setData(updatedData);
         return updatedData;
       } catch (err) {
