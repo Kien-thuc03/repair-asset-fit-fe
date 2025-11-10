@@ -342,16 +342,17 @@ export default function GhiNhanXuLyLoiPage() {
     setIsSubmitting(true);
 
     try {
-      // ⚠️ LOGIC MỚI: Determine finalStatus based on repairMethod
-      // - Chỉ set finalStatus = ĐÃ_HOÀN_THÀNH khi sửa xong
-      // - Nếu cần thay thế: KHÔNG set finalStatus (để backend tự set ĐANG_XỬ_LÝ)
-      //   → Sau khi lập phiếu đề xuất và được duyệt → Backend tự chuyển sang CHỜ_THAY_THẾ
-      let finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH | undefined;
+      // ⚠️ LOGIC: Determine finalStatus based on repairMethod
+      // - ĐÃ_HOÀN_THÀNH: khi sửa xong (software_fixed hoặc hardware_fixed)
+      // - CHỜ_THAY_THẾ: khi cần thay thế linh kiện (need_replacement)
+      let finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ | undefined;
       
       if (formData.repairMethod === 'software_fixed' || formData.repairMethod === 'hardware_fixed') {
         finalStatus = RepairStatus.ĐÃ_HOÀN_THÀNH;
+      } else if (formData.repairMethod === 'need_replacement') {
+        // 🔥 Chuyển sang CHỜ_THAY_THẾ ngay khi ghi nhận cần thay thế
+        finalStatus = RepairStatus.CHỜ_THAY_THẾ;
       }
-      // Nếu need_replacement: KHÔNG set finalStatus (để undefined)
 
       // Prepare request data
       const requestData: CreateAndProcessRepairRequest = {
@@ -798,8 +799,15 @@ export default function GhiNhanXuLyLoiPage() {
                       </div>
                     ) : formData.repairMethod === 'need_replacement' ? (
                       <div>
-                        <span className="text-orange-600 font-medium">→ Chờ thay thế linh kiện</span>
-                        <div className="text-xs text-gray-600 mt-1">Yêu cầu sẽ chuyển sang quy trình thay thế linh kiện</div>
+                        <span className="text-orange-600 font-medium">→ Chờ thay thế</span>
+                        <div className="text-xs text-gray-600 mt-1 space-y-1">
+                          <div>✅ Repair Request: Status = <strong>&quot;CHỜ_THAY_THẾ&quot;</strong></div>
+                          <div>✅ Linh kiện: Status vẫn giữ <strong>&quot;FAULTY&quot;</strong></div>
+                          <div className="pt-1 text-blue-600">
+                            📋 <strong>Bước tiếp theo:</strong> Vào mục &quot;Lập phiếu đề xuất&quot; để tạo đề xuất thay thế chính thức.
+                            Khi đó, linh kiện sẽ chuyển sang trạng thái <strong>&quot;PENDING_REPLACEMENT&quot;</strong>.
+                          </div>
+                        </div>
                       </div>
                     ) : null}
                   </div>

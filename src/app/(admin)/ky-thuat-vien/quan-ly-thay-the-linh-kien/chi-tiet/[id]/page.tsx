@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table, Button } from 'antd'
 import { Clock, CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react'
 import { useReplacementProposal } from '@/hooks/useReplacementProposals'
-import { ReplacementProposalStatus, ReplacementItem } from '@/lib/api/replacement-proposals'
+import { ReplacementProposalStatus, ReplacementItem, RepairRequestInfo } from '@/lib/api/replacement-proposals'
 
 export default function ChiTietThayThePage() {
 	const params = useParams()
@@ -364,6 +364,47 @@ export default function ChiTietThayThePage() {
 							)}
 						</Descriptions>
 					</Card>
+
+					{/* Repair Requests Info */}
+					{request.repairRequests && request.repairRequests.length > 0 && (
+						<Card 
+							title={
+								<div className="flex items-center gap-2">
+									<span>Yêu cầu sửa chữa liên quan</span>
+									<Tag color="blue">{request.repairRequests.length}</Tag>
+								</div>
+							}
+							className="shadow"
+						>
+							<div className="space-y-2">
+								{request.repairRequests.map((rr) => (
+									<div 
+										key={rr.id} 
+										className="border-l-4 border-blue-400 bg-blue-50 p-3 rounded-r-lg hover:bg-blue-100 transition-colors"
+									>
+										<div className="flex items-start justify-between">
+											<div className="flex-1">
+												<div className="flex items-center gap-2 mb-1">
+													<span className="font-mono text-blue-700 font-semibold">
+														{rr.requestCode}
+													</span>
+													<Tag color="blue">{rr.status}</Tag>
+												</div>
+												{rr.description && (
+													<div className="text-sm text-gray-700 mt-1">
+														{rr.description}
+													</div>
+												)}
+												<div className="text-xs text-gray-500 mt-1">
+													Tạo lúc: {new Date(rr.createdAt).toLocaleString('vi-VN')}
+												</div>
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
+						</Card>
+					)}
 
 					{/* Components List */}
 					<Card 

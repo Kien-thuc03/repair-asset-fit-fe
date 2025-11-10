@@ -10,7 +10,7 @@ import { createReplacementProposal, ComponentFromRepair } from "@/lib/api/replac
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { ComponentType } from "@/types";
 
-type SortField = "componentName" | "assetName" | "location" | "quantity" | "reason" | "requestCode";
+type SortField = "componentName" | "assetName" | "location" | "requestCode" | "componentStatus" | "repairStatus";
 type SortDirection = "asc" | "desc" | "none";
 
 export default function CreateProposalPage() {
@@ -59,6 +59,23 @@ export default function CreateProposalPage() {
 
   // Fetch data khi component mount hoặc filters thay đổi
   useEffect(() => {
+    // Map sortField to backend field names
+    const getSortByField = (field: SortField | ""): "createdAt" | "componentName" | "assetName" | "requestCode" => {
+      switch (field) {
+        case "componentName":
+          return "componentName";
+        case "assetName":
+          return "assetName";
+        case "requestCode":
+          return "requestCode";
+        case "componentStatus":
+        case "repairStatus":
+        case "location":
+        default:
+          return "createdAt"; // Fallback to createdAt for unsupported fields
+      }
+    };
+
     const params = {
       page: currentPage,
       limit: pageSize,
@@ -68,7 +85,7 @@ export default function CreateProposalPage() {
       floor: floorFilter || undefined,
       roomName: roomFilter || undefined,
       excludeInProposal: true,
-      sortBy: (sortField === "location" ? "createdAt" : sortField || "createdAt") as "createdAt" | "componentName" | "assetName" | "requestCode",
+      sortBy: getSortByField(sortField),
       sortOrder: (sortDirection === "none" ? "DESC" : sortDirection.toUpperCase()) as "ASC" | "DESC",
     };
     
@@ -136,6 +153,15 @@ export default function CreateProposalPage() {
       // Điều này đảm bảo lấy được tất cả items đã chọn từ mọi trang
       const selectedComponents = selectedComponentsData;
 
+      // 🔥 MỚI: Thu thập repair request IDs từ các components được chọn
+      const repairRequestIds = Array.from(
+        new Set(
+          selectedComponents
+            .map(c => c.repairRequestId)
+            .filter((id): id is string => !!id)
+        )
+      );
+
       // Tạo payload theo format API
       const proposalData = {
         title: values.title,
@@ -144,15 +170,22 @@ export default function CreateProposalPage() {
           oldComponentId: component.componentId,
           newItemName: component.componentName,
           newItemSpecs: component.componentSpecs || "",
-          quantity: component.quantity,
-          reason: component.reason,
+          quantity: component.quantity || 1, // Đảm bảo có quantity
+          reason: component.reason || component.repairDescription || "", // Dùng reason hoặc repairDescription
         })),
+        // 🔥 MỚI: Thêm repair request IDs (nếu có)
+        ...(repairRequestIds.length > 0 && { repairRequestIds }),
       };
+      
+      console.log('📤 Sending proposal data:', proposalData);
       
       // Gọi API tạo đề xuất
       const result = await createReplacementProposal(proposalData);
       
-      message.success(`Tạo đề xuất thay thế thành công! Mã: ${result.proposalCode}`);
+      message.success({
+        content: `Tạo đề xuất thay thế thành công! Mã: ${result.proposalCode}`,
+        duration: 5,
+      });
       
       // Reset và đóng modal
       setIsModalVisible(false);
@@ -270,7 +303,12 @@ export default function CreateProposalPage() {
         setSelectedComponentsData(prev => {
           // Kiểm tra xem đã tồn tại chưa
           if (prev.find(c => c.componentId === id)) return prev;
-          return [...prev, component];
+          // Thêm quantity và reason mặc định
+          return [...prev, {
+            ...component,
+            quantity: 1, // Mặc định 1
+            reason: component.repairDescription || '', // Dùng description từ repair request
+          }];
         });
       }
     } else {
@@ -298,7 +336,11 @@ export default function CreateProposalPage() {
         const newData = [...prev];
         components.forEach(component => {
           if (!newData.find(c => c.componentId === component.componentId)) {
-            newData.push(component);
+            newData.push({
+              ...component,
+              quantity: 1, // Mặc định 1
+              reason: component.repairDescription || '', // Dùng description từ repair request
+            });
           }
         });
         return newData;
@@ -546,21 +588,24 @@ export default function CreateProposalPage() {
                   </th>
                   <th 
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("quantity")}
+                    onClick={() => handleSort("componentStatus")}
                   >
                     <div className="flex items-center uppercase space-x-1">
-                      <span>Số lượng</span>
-                      {getSortIcon("quantity")}
+                      <span>Trạng thái LK</span>
+                      {getSortIcon("componentStatus")}
                     </div>
                   </th>
                   <th 
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("reason")}
+                    onClick={() => handleSort("repairStatus")}
                   >
                     <div className="flex items-center uppercase space-x-1">
-                      <span>Lý do thay thế</span>
-                      {getSortIcon("reason")}
+                      <span>Trạng thái YCSC</span>
+                      {getSortIcon("repairStatus")}
                     </div>
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Mô tả lỗi
                   </th>
                 </tr>
               </thead>
@@ -614,14 +659,40 @@ export default function CreateProposalPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                      <span className="font-medium text-blue-600">
-                        {record.quantity}
-                      </span>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      {record.componentStatus && (
+                        <Tag 
+                          color={
+                            record.componentStatus === 'FAULTY' ? 'red' : 
+                            record.componentStatus === 'PENDING_REPLACEMENT' ? 'orange' : 
+                            'green'
+                          }
+                          className="text-xs"
+                        >
+                          {record.componentStatus === 'FAULTY' ? 'Hỏng' : 
+                           record.componentStatus === 'PENDING_REPLACEMENT' ? 'Chờ thay' : 
+                           record.componentStatus}
+                        </Tag>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      {record.repairStatus && (
+                        <Tag 
+                          color={
+                            record.repairStatus === 'ĐANG_XỬ_LÝ' ? 'processing' :
+                            record.repairStatus === 'CHỜ_THAY_THẾ' ? 'warning' :
+                            record.repairStatus === 'ĐÃ_TIẾP_NHẬN' ? 'blue' :
+                            'default'
+                          }
+                          className="text-xs"
+                        >
+                          {record.repairStatus}
+                        </Tag>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      <div className="text-sm text-gray-700 line-clamp-2">
-                        {record.reason}
+                      <div className="text-sm text-gray-700 line-clamp-2" title={record.repairDescription}>
+                        {record.repairDescription || 'N/A'}
                       </div>
                     </td>
                   </tr>
@@ -646,14 +717,20 @@ export default function CreateProposalPage() {
 
       {/* Create Proposal Modal */}
       <Modal
-        title="Tạo đề xuất thay thế"
+        title={
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-semibold">Tạo đề xuất thay thế</span>
+            <Tag color="blue">{selectedRowKeys.length} linh kiện</Tag>
+          </div>
+        }
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        width={600}
+        width={720}
         okText={isSubmitting ? "Đang tạo..." : "Tạo đề xuất"}
         cancelText="Hủy"
         confirmLoading={isSubmitting}
+        maskClosable={false}
       >
         <Form
           form={form}
@@ -664,55 +741,162 @@ export default function CreateProposalPage() {
           }}
         >
           <Form.Item
-            label="Tiêu đề đề xuất"
+            label={<span className="font-medium">Tiêu đề đề xuất</span>}
             name="title"
-            rules={[{ required: true, message: "Vui lòng nhập tiêu đề!" }]}
+            rules={[
+              { required: true, message: "Vui lòng nhập tiêu đề!" },
+              { min: 10, message: "Tiêu đề phải có ít nhất 10 ký tự" },
+              { max: 200, message: "Tiêu đề không quá 200 ký tự" },
+            ]}
           >
-            <Input placeholder="Nhập tiêu đề đề xuất" />
-          </Form.Item>
-
-          <Form.Item
-            label="Mô tả chi tiết"
-            name="description"
-            rules={[{ required: true, message: "Vui lòng nhập mô tả!" }]}
-          >
-            <Input.TextArea
-              rows={4}
-              placeholder="Nhập mô tả chi tiết về đề xuất thay thế"
+            <Input 
+              placeholder="Ví dụ: Đề xuất thay thế RAM và SSD cho phòng H.03"
+              showCount
+              maxLength={200}
             />
           </Form.Item>
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">
-              Linh kiện được chọn ({selectedRowKeys.length})
-            </h4>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {selectedComponentsData.map((component: ComponentFromRepair) => (
-                <div key={component.componentId} className="text-sm">
-                  <div className="flex justify-between items-start">
+          <Form.Item
+            label={<span className="font-medium">Mô tả chi tiết</span>}
+            name="description"
+            rules={[
+              { required: true, message: "Vui lòng nhập mô tả!" },
+              { min: 20, message: "Mô tả phải có ít nhất 20 ký tự" },
+            ]}
+          >
+            <Input.TextArea
+              rows={4}
+              placeholder="Mô tả lý do cần thay thế, tình trạng hiện tại, yêu cầu cụ thể..."
+              showCount
+              maxLength={1000}
+            />
+          </Form.Item>
+
+          {/* Repair Requests Info */}
+          {(() => {
+            const repairRequestIds = Array.from(
+              new Set(
+                selectedComponentsData
+                  .map(c => c.repairRequestId)
+                  .filter((id): id is string => !!id)
+              )
+            );
+            const requestCodes = Array.from(
+              new Set(
+                selectedComponentsData
+                  .map(c => c.requestCode)
+                  .filter(code => !!code)
+              )
+            );
+            
+            if (repairRequestIds.length > 0) {
+              return (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <div className="text-blue-600 mt-0.5">🔗</div>
                     <div className="flex-1">
-                      <span className="font-medium text-gray-900">
-                        {component.componentName}
-                      </span>
-                      {component.componentSpecs && (
-                        <div className="text-gray-500 text-xs">
-                          {component.componentSpecs}
-                        </div>
-                      )}
-                      <div className="text-gray-600 text-xs">
-                        {component.assetName} ({component.ktCode})
+                      <div className="font-medium text-blue-900 text-sm">
+                        Liên kết với {repairRequestIds.length} yêu cầu sửa chữa
                       </div>
-                      <div className="text-gray-500 text-xs">
-                        {component.buildingName} - {component.roomName}
-                        {component.machineLabel && ` - Máy ${component.machineLabel}`}
+                      <div className="text-xs text-blue-700 mt-1 flex flex-wrap gap-1">
+                        {requestCodes.map((code, idx) => (
+                          <Tag key={idx} color="blue" className="text-xs m-0">
+                            {code}
+                          </Tag>
+                        ))}
+                      </div>
+                      <div className="text-xs text-blue-600 mt-1">
+                        Đề xuất này sẽ được liên kết tự động với các yêu cầu sửa chữa trên
                       </div>
                     </div>
-                    <span className="text-blue-600 font-medium ml-2">
-                      x{component.quantity}
-                    </span>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Components List */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-gray-100 px-4 py-2 border-b border-gray-200">
+              <h4 className="font-medium text-gray-900 text-sm flex items-center justify-between">
+                <span>Danh sách linh kiện được chọn</span>
+                <Tag color="green">{selectedRowKeys.length} linh kiện</Tag>
+              </h4>
+            </div>
+            <div className="p-4 space-y-3 max-h-80 overflow-y-auto bg-white">
+              {selectedComponentsData.map((component: ComponentFromRepair, index) => (
+                <div 
+                  key={component.componentId} 
+                  className="border-l-4 border-blue-400 bg-gray-50 p-3 rounded-r-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex justify-between items-start gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium text-gray-500">#{index + 1}</span>
+                        <span className="font-semibold text-gray-900 text-sm">
+                          {component.componentName}
+                        </span>
+                        {component.componentType && (
+                          <Tag color="cyan" className="text-xs m-0">
+                            {component.componentType}
+                          </Tag>
+                        )}
+                      </div>
+                      
+                      {component.componentSpecs && (
+                        <div className="text-xs text-gray-600 mt-1">
+                          📋 {component.componentSpecs}
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-gray-700 mt-1">
+                        💻 {component.assetName} 
+                        <span className="text-gray-500 ml-1">({component.ktCode})</span>
+                      </div>
+                      
+                      <div className="text-xs text-gray-600 mt-1">
+                        📍 {component.buildingName} - {component.roomName}
+                        {component.machineLabel && ` - Máy ${component.machineLabel}`}
+                      </div>
+
+                      <div className="text-xs text-blue-600 mt-1 font-mono">
+                        🔖 {component.requestCode}
+                      </div>
+                      
+                      {component.reason && (
+                        <div className="text-xs text-gray-700 mt-2 bg-yellow-50 p-2 rounded">
+                          <span className="font-medium">Lý do:</span> {component.reason}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="shrink-0">
+                      <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold text-sm">
+                        x{component.quantity || 1}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Summary Info */}
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600">Tổng số linh kiện:</span>
+                <span className="ml-2 font-semibold text-gray-900">
+                  {selectedRowKeys.length}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Tổng số lượng:</span>
+                <span className="ml-2 font-semibold text-gray-900">
+                  {selectedComponentsData.reduce((sum, c) => sum + (c.quantity || 1), 0)}
+                </span>
+              </div>
             </div>
           </div>
         </Form>

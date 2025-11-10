@@ -72,15 +72,20 @@ export interface CreateRepairRequest {
  * Interface cho request ghi nhận và xử lý lỗi trực tiếp tại hiện trường
  * Extends từ CreateRepairRequest và thêm các trường cho xử lý
  * 
- * ⚠️ LOGIC MỚI:
- * - finalStatus chỉ cho phép ĐÃ_HOÀN_THÀNH (hoặc undefined)
- * - Nếu cần thay thế linh kiện: KHÔNG set finalStatus
- *   → Backend tự động set ĐANG_XỬ_LÝ
- *   → Sau khi lập phiếu đề xuất và được duyệt → Tự động chuyển sang CHỜ_THAY_THẾ
+ * ✅ Các trạng thái finalStatus:
+ * - ĐÃ_HOÀN_THÀNH: Lỗi đã được sửa chữa thành công tại chỗ
+ * - CHỜ_THAY_THẾ: Linh kiện không thể sửa, cần thay thế (status chuyển ngay lập tức)
+ * - undefined: Chỉ ghi nhận lỗi, chưa xử lý (status = ĐANG_XỬ_LÝ)
+ * 
+ * 🔥 Flow khi cần thay thế:
+ * 1. Set finalStatus = CHỜ_THAY_THẾ → Status ngay lập tức = CHỜ_THAY_THẾ
+ * 2. Component status: FAULTY → PENDING_REPLACEMENT
+ * 3. Lập phiếu đề xuất thay thế
+ * 4. Sau khi thay thế xong → Update status sang ĐÃ_HOÀN_THÀN
  */
 export interface CreateAndProcessRepairRequest extends CreateRepairRequest {
-  resolutionNotes?: string; // Ghi chú chi tiết quá trình xử lý lỗi (BẮT BUỘC khi finalStatus = ĐÃ_HOÀN_THÀNH)
-  finalStatus?: RepairStatus.ĐÃ_HOÀN_THÀNH; // Chỉ cho phép ĐÃ_HOÀN_THÀNH
+  resolutionNotes?: string; // Ghi chú chi tiết quá trình xử lý lỗi (BẮT BUỘC khi có finalStatus)
+  finalStatus?: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ; // Cho phép ĐÃ_HOÀN_THÀNH hoặc CHỜ_THAY_THẾ
 }
 
 /**
@@ -637,10 +642,13 @@ export interface AvailableComponentDto {
   requestCode: string;
   repairStatus: string;
   repairDescription: string;
+  repairCreatedAt?: string;
   componentId: string;
   componentName: string;
   componentType?: string;
   componentSpecs?: string;
+  componentStatus?: string; // 🔥 MỚI: Trạng thái component (FAULTY, PENDING_REPLACEMENT, etc)
+  installedAt?: string;
   assetId: string;
   assetName: string;
   ktCode?: string;
