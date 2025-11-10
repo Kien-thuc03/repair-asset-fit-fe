@@ -1,4 +1,5 @@
 import { ErrorType } from '@/lib/constants/errorTypes';
+import { ComponentStatus, ComponentType } from './computer';
 
 // Interface cho ErrorTypes - DEPRECATED - Sử dụng ErrorType enum thay thế
 export interface ErrorTypeOld {
@@ -17,16 +18,6 @@ export enum UserRole {
   PHONG_QUAN_TRI = "PHONG_QUAN_TRI", // Nhân viên Phòng Quản trị
   QTV_KHOA = "QTV_KHOA", // Quản trị viên Khoa
 }
-
-// Interface cho bảng Computers - liên kết với assets
-export interface Computer {
-  id: string; // UUID primary key
-  assetId: string; // FK to assets.id (unique, not null)
-  roomId: string; // FK to rooms.id
-  machineLabel: string; // Số máy (e.g., "01", "02", "03")
-  notes?: string; // Ghi chú
-}
-
 // Interface cho bảng trung gian RepairRequestComponents (quan hệ nhiều-nhiều)
 export interface RepairRequestComponent {
   repairRequestId: string; // FK to repairRequests.id
@@ -313,37 +304,6 @@ export interface Asset {
   assignedTo?: string;
   specifications?: Record<string, string>;
   qrCode: string;
-}
-
-// Component Type enum
-export enum ComponentType {
-  CPU = "CPU",
-  RAM = "RAM",
-  MAINBOARD = "MAINBOARD", // Updated to match database
-  STORAGE = "STORAGE",
-  GPU = "GPU",
-  PSU = "PSU",
-  CASE = "CASE",
-  MONITOR = "MONITOR",
-  KEYBOARD = "KEYBOARD",
-  MOUSE = "MOUSE",
-  NETWORK = "NETWORK", // Updated to match database
-  OPTICAL_DRIVE = "OPTICAL_DRIVE",
-  COOLER = "COOLER", // Updated to match database
-  UPS = "UPS", // Added from database
-  OTHER = "OTHER",
-  NETWORK_CARD = "NETWORK_CARD", // Added from database
-  SOUND_CARD = "SOUND_CARD", // Added from database
-  SPEAKER = "SPEAKER", // Added from database
-  WEBCAM = "WEBCAM", // Added from database
-}
-
-// Component Status enum
-export enum ComponentStatus {
-  INSTALLED = "INSTALLED", // Đang được lắp đặt và hoạt động
-  FAULTY = "FAULTY", // Hỏng hóc
-  REMOVED = "REMOVED", // Đã gỡ ra
-  IN_STOCK = "IN_STOCK", // linh kiện mới chờ lắp đặt
 }
 
 // Component interface for computer assets (updated to match database schema)

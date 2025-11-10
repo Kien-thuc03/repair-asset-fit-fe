@@ -1,4 +1,5 @@
-import { ComponentFromReport, ComponentType, ReplacementStatus } from '@/types/repair';
+import { ComponentFromReport, ReplacementStatus } from '@/types/repair';
+import { ComponentType } from '@/types/computer';
 
 // Mock data cho ComponentFromReport - dùng cho trang lập phiếu đề xuất
 // Dữ liệu này mô phỏng các linh kiện từ báo cáo lỗi có thể được chọn để tạo đề xuất thay thế

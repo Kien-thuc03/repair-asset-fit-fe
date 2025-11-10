@@ -2,6 +2,7 @@ export * from "./repair";
 export * from "./user";
 export * from "./unit";
 export * from "./software";
+export * from "./computer";
 // ErrorType exports moved to @/lib/constants/errorTypes
 export { 
   ErrorType, 
