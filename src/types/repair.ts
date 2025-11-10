@@ -512,13 +512,14 @@ export enum AssetShape {
 
 // Asset Status enum - Synchronized with database-sync.json
 export enum AssetStatus {
-  DANG_SU_DUNG = "đang_sử_dụng",
-  CHO_BAN_GIAO = "chờ_bàn_giao",
-  CHO_TIEP_NHAN = "chờ_tiếp_nhận",
-  HU_HONG = "hư_hỏng",
-  DA_MAT = "đã_mất", // Updated from MAT_TICH
-  DE_XUAT_THANH_LY = "đề_xuất_thanh_lý",
-  DA_THANH_LY = "đã_thanh_lý",
+    IN_USE = 'IN_USE', // đang sử dụng
+    WAITING_HANDOVER = 'WAITING_HANDOVER', // chờ bàn giao
+    WAITING_RECEIVE = 'WAITING_RECEIVE', // chờ tiếp nhận
+    DAMAGED = 'DAMAGED', // hư hỏng
+    LOST = 'LOST', // đã mất
+    PROPOSED_LIQUIDATION = 'PROPOSED_LIQUIDATION', // đề xuất thanh lý
+    LIQUIDATED = 'LIQUIDATED', // đã thanh lý
+    WAITING_ALLOCATION = 'WAITING_ALLOCATION', // chờ phân bổ
 }
 
 // Comprehensive Asset interface based on database schema

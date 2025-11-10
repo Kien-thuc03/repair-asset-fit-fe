@@ -46,7 +46,7 @@ export default function TechnicianDeviceBasicInfo({ asset }: TechnicianDeviceBas
           <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
             <div className="flex items-center space-x-2">
               <Hash className="w-4 h-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-500">Mã tài sản:</span>
+              <span className="text-sm font-medium text-gray-500">Mã kế toán:</span>
             </div>
             <span className="text-sm text-gray-900 font-mono bg-white px-2 py-1 rounded">
               {asset.assetCode}

@@ -1,12 +1,41 @@
 "use client";
 import { Monitor, Eye, Wrench, Calendar } from "lucide-react";
-import { Asset } from "@/types";
-import { assetStatusConfig } from "@/lib/mockData";
-
+import { Asset, AssetStatus } from "@/types";
 interface DeviceCardProps {
   asset: Asset;
   onViewDetail: (assetId: string) => void;
 }
+
+export const assetStatusConfig = {
+  [AssetStatus.WAITING_HANDOVER]: {
+    label: "Chờ bàn giao",
+    color: "blue"
+  },
+  [AssetStatus.WAITING_RECEIVE]: {
+    label: "Chờ tiếp nhận",
+    color: "orange"
+  },
+  [AssetStatus.IN_USE]: {
+    label: "Đang sử dụng",
+    color: "green"
+  },
+  [AssetStatus.LOST]: {
+    label: "Đã mất",
+    color: "gray"
+  },
+  [AssetStatus.PROPOSED_LIQUIDATION]: {
+    label: "Đề xuất thanh lý",
+    color: "purple"
+  },
+  [AssetStatus.LIQUIDATED]: {
+    label: "Đã thanh lý",
+    color: "black"
+  },
+  [AssetStatus.DAMAGED]: {
+    label: "Hư hỏng",
+    color: "red"
+  }
+};
 
 export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
   const getStatusConfig = (status: string) => {
@@ -59,7 +88,7 @@ export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
   };
 
   const statusConfig = getStatusConfig(asset.status);
-  const warrantyStatus = getWarrantyStatus(asset.warrantyExpiry);
+  const warrantyStatus = getWarrantyStatus(asset.origin);
 
   return (
     <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow border border-gray-200">
