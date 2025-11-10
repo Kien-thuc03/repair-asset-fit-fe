@@ -374,17 +374,26 @@ export interface RepairHistory {
   }[]; // Optional component changes
 }
 
-// Interface for individual repair log entries (matches RepairLogs table)
+// Interface for individual repair log entries (matches RepairLogs table and API response)
 export interface RepairLog {
   id: string; // UUID
-  repairRequestId: string; // FK to RepairRequests
-  actorId: string; // FK to users - person who performed the action
-  actorName: string; // Name of the person who performed the action
-  action: string; // Action performed, e.g., "Tạo yêu cầu", "Tiếp nhận xử lý", "Hoàn tất"
-  fromStatus: RepairStatus | null; // Status before change
-  toStatus: RepairStatus; // Status after change
-  comment: string; // Notes for this action
+  action: string; // Action performed, e.g., "Tạo yêu cầu sửa chữa", "Tiếp nhận yêu cầu sửa chữa"
+  fromStatus?: RepairStatus | null; // Status before change (optional)
+  toStatus?: RepairStatus | null; // Status after change (optional)
+  comment?: string | null; // Notes for this action
   createdAt: string; // ISO timestamp when action was performed
+  actor: {
+    id: string; // Actor ID
+    fullName: string; // Actor full name
+    email: string; // Actor email
+  };
+}
+
+// Interface for API response when fetching repair logs
+export interface GetRepairLogsResponse {
+  success: boolean;
+  message: string;
+  data: RepairLog[];
 }
 
 // Interface for repair history items used in HistoryCard component
@@ -400,7 +409,17 @@ export interface RepairHistoryItem {
   completedDate?: string;
   technicianName: string;
   reporterName: string;
-  logs?: RepairLog[]; // Optional logs for detailed history
+  // Steps là danh sách các log entries (history timeline)
+  steps: Array<{
+    id: string;
+    action: string;
+    fromStatus: string | null;
+    toStatus: string | null;
+    comment?: string | null;
+    createdAt: string;
+    actorName: string;
+    actorEmail?: string;
+  }>;
 }
 
 // Interface for replacement requests displayed in technician pages - Khớp với database ReplacementProposals

@@ -5,6 +5,7 @@ import {
   RepairStatus,
   ErrorType,
   getErrorTypeLabel,
+  GetRepairLogsResponse,
 } from "@/types";
 import { uploadMultipleFiles } from "./upload";
 
@@ -689,6 +690,47 @@ export const getAvailableComponents = async (
     throw new Error(
       err.response?.data?.message ||
         "Lấy danh sách linh kiện khả dụng thất bại."
+    );
+  }
+};
+
+/**
+ * Get repair logs (history) for a specific repair request
+ * Endpoint: GET /api/v1/repairs/:id/logs
+ *
+ * @param repairRequestId - ID của yêu cầu sửa chữa
+ * @returns Promise with repair logs
+ *
+ * @example
+ * ```typescript
+ * const logs = await getRepairLogs('uuid-repair-request-id');
+ * console.log(logs.data); // Array of RepairLog
+ * ```
+ */
+export const getRepairLogs = async (
+  repairRequestId: string
+): Promise<GetRepairLogsResponse> => {
+  try {
+    console.log(`🔍 Fetching repair logs for request: ${repairRequestId}`);
+    
+    const response = await api.get<GetRepairLogsResponse>(
+      `/api/v1/repairs/${repairRequestId}/logs`
+    );
+    
+    console.log(`✅ Fetched ${response.data.data.length} repair logs successfully`);
+    
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Get repair logs error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message || "Lấy lịch sử repair logs thất bại."
     );
   }
 };

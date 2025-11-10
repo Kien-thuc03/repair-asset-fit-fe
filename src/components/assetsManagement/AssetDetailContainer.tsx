@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Asset } from "@/types";
+import { Asset, RepairHistoryItem } from "@/types";
 import { getComputerDetail } from "@/lib/api/computers";
+import { getRepairs, getRepairLogs } from "@/lib/api/repairs";
 import type { ComputerDetail } from "@/types/computer";
 import TechnicianDeviceDetailHeader from "./AssetDetailHeader";
 import DeviceNotFound from "./AssetNotFound";
@@ -58,6 +59,8 @@ export default function TechnicianDeviceDetailContainer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [asset, setAsset] = useState<Asset | null>(null);
+  const [repairHistory, setRepairHistory] = useState<RepairHistoryItem[]>([]);
+  const [loadingRepairHistory, setLoadingRepairHistory] = useState(false);
 
   // Fetch computer detail from API
   useEffect(() => {
@@ -83,6 +86,89 @@ export default function TechnicianDeviceDetailContainer() {
 
     fetchComputerDetail();
   }, [id]);
+
+  // Fetch repair history with logs when asset is loaded
+  useEffect(() => {
+    if (!asset) return;
+
+    const fetchRepairHistory = async () => {
+      try {
+        setLoadingRepairHistory(true);
+        console.log("🔍 Fetching repair history for asset:", asset.id);
+
+        // Lấy tất cả repair requests cho asset này
+        const repairsResponse = await getRepairs({
+          computerAssetId: asset.id,
+          sortBy: "createdAt",
+          sortOrder: "DESC",
+        });
+
+        console.log(`✅ Found ${repairsResponse.data.length} repair requests`);
+
+        // Với mỗi repair request, fetch logs
+        const historyWithLogs = await Promise.all(
+          repairsResponse.data.map(async (repair) => {
+            try {
+              const logsResponse = await getRepairLogs(repair.id);
+              
+              return {
+                id: repair.id,
+                assetId: asset.id,
+                requestCode: repair.requestCode,
+                errorType: repair.errorType || "Không xác định",
+                description: repair.description,
+                solution: repair.resolutionNotes,
+                status: repair.status,
+                reportDate: repair.createdAt,
+                completedDate: repair.completedAt,
+                technicianName: repair.assignedTechnicianName || "Chưa phân công",
+                reporterName: repair.reporterName || "Không xác định",
+                // Transform logs để match với RepairHistoryItem.steps format
+                steps: logsResponse.data.map((log) => ({
+                  id: log.id,
+                  action: log.action,
+                  fromStatus: log.fromStatus || null,
+                  toStatus: log.toStatus || null,
+                  comment: log.comment,
+                  createdAt: log.createdAt,
+                  actorName: log.actor.fullName,
+                  actorEmail: log.actor.email,
+                })),
+              } as RepairHistoryItem;
+            } catch (logError) {
+              console.warn(`⚠️ Could not fetch logs for repair ${repair.id}:`, logError);
+              // Return repair without logs if logs fetch fails
+              return {
+                id: repair.id,
+                assetId: asset.id,
+                requestCode: repair.requestCode,
+                errorType: repair.errorType || "Không xác định",
+                description: repair.description,
+                solution: repair.resolutionNotes,
+                status: repair.status,
+                reportDate: repair.createdAt,
+                completedDate: repair.completedAt,
+                technicianName: repair.assignedTechnicianName || "Chưa phân công",
+                reporterName: repair.reporterName || "Không xác định",
+                steps: [],
+              } as RepairHistoryItem;
+            }
+          })
+        );
+
+        setRepairHistory(historyWithLogs);
+        console.log(`✅ Loaded ${historyWithLogs.length} repair history items with logs`);
+      } catch (err) {
+        console.error("❌ Error fetching repair history:", err);
+        // Don't set error state, just show empty history
+        setRepairHistory([]);
+      } finally {
+        setLoadingRepairHistory(false);
+      }
+    };
+
+    fetchRepairHistory();
+  }, [asset]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN");
@@ -131,28 +217,6 @@ export default function TechnicianDeviceDetailContainer() {
   const warrantyStatus = asset.warrantyExpiry 
     ? getWarrantyStatus(asset.warrantyExpiry) 
     : { label: "Không xác định", color: "text-gray-600" };
-  
-  // Get repair history từ repairSummary - format theo RepairHistoryItem interface
-  const repairHistory = computer.repairSummary && computer.repairSummary.total > 0
-    ? Array.from({ length: computer.repairSummary.total }, (_, i) => ({
-        id: `repair-${i + 1}`,
-        assetId: computer.asset.id,
-        assetCode: computer.asset.ktCode,
-        requestCode: `YCSC-${new Date().getFullYear()}-${String(i + 1).padStart(4, '0')}`,
-        errorType: "Lỗi hệ thống",
-        description: "Yêu cầu sửa chữa thiết bị",
-        status: i < computer.repairSummary!.inProgress ? "ĐANG_XỬ_LÝ" : "ĐÃ_HOÀN_THÀNH",
-        reportDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-        completedDate: i >= computer.repairSummary!.inProgress 
-          ? new Date(Date.now() - (i - 1) * 24 * 60 * 60 * 1000).toISOString()
-          : undefined,
-        technicianId: "",
-        technicianName: "Kỹ thuật viên",
-        reporterId: "",
-        reporterName: "Người báo cáo",
-        steps: [],
-      }))
-    : [];
 
   return (
     <div className="space-y-6">
@@ -188,10 +252,21 @@ export default function TechnicianDeviceDetailContainer() {
             </div>
           ) : (
             // Repair History Tab
-            <TechnicianRepairHistoryTab
-              repairHistory={repairHistory}
-              formatDate={formatDate}
-            />
+            <>
+              {loadingRepairHistory ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                    <p className="mt-4 text-gray-600">Đang tải lịch sử sửa chữa...</p>
+                  </div>
+                </div>
+              ) : (
+                <TechnicianRepairHistoryTab
+                  repairHistory={repairHistory}
+                  formatDate={formatDate}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
