@@ -4,12 +4,54 @@
  */
 
 /**
+ * Asset Status enum - Synced with database
+ * Enum: assets_status_enum
+ */
+export enum AssetStatus {
+  IN_USE = "IN_USE",
+  WAITING_HANDOVER = "WAITING_HANDOVER",
+  WAITING_RECEIVE = "WAITING_RECEIVE",
+  DAMAGED = "DAMAGED",
+  LOST = "LOST",
+  PROPOSED_LIQUIDATION = "PROPOSED_LIQUIDATION",
+  LIQUIDATED = "LIQUIDATED",
+  WAITING_ALLOCATION = "WAITING_ALLOCATION",
+}
+
+/**
+ * Asset Status Labels - Vietnamese
+ */
+export const ASSET_STATUS_LABELS: Record<AssetStatus, string> = {
+  [AssetStatus.IN_USE]: "Đang sử dụng",
+  [AssetStatus.WAITING_HANDOVER]: "Chờ bàn giao",
+  [AssetStatus.WAITING_RECEIVE]: "Chờ tiếp nhận",
+  [AssetStatus.DAMAGED]: "Hư hỏng",
+  [AssetStatus.LOST]: "Đã mất",
+  [AssetStatus.PROPOSED_LIQUIDATION]: "Đề xuất thanh lý",
+  [AssetStatus.LIQUIDATED]: "Đã thanh lý",
+  [AssetStatus.WAITING_ALLOCATION]: "Chờ phân bổ",
+};
+
+/**
+ * Get asset status label
+ */
+export const getAssetStatusLabel = (status: AssetStatus | string): string => {
+  return ASSET_STATUS_LABELS[status as AssetStatus] || status;
+};
+
+/**
+ * Get asset status options for select/dropdown
+ */
+export const getAssetStatusOptions = () => {
+  return Object.entries(ASSET_STATUS_LABELS).map(([value, label]) => ({
+    value,
+    label,
+  }));
+};
+
+/**
  * Component Type enum - Synced with database
  * Enum: computer_components_componenttype_enum
- * 
- * Lưu ý:
- * - MAINBOARD (không phải MOTHERBOARD)
- * - STORAGE (thay vì HDD/SSD riêng)
  */
 export enum ComponentType {
   CPU = "CPU",

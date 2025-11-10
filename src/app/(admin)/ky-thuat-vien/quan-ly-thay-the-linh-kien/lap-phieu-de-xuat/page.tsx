@@ -8,7 +8,7 @@ import { Pagination } from "@/components/ui";
 import { useAvailableComponents } from "@/hooks";
 import { createReplacementProposal, ComponentFromRepair } from "@/lib/api/replacement-proposals";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
-import { ComponentType } from "@/types/repair";
+import { ComponentType } from "@/types";
 
 type SortField = "componentName" | "assetName" | "location" | "quantity" | "reason" | "requestCode";
 type SortDirection = "asc" | "desc" | "none";

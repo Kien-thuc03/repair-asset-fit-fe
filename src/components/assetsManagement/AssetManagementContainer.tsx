@@ -10,6 +10,7 @@ import {
   DeviceGrid,
 } from "@/components/assetsManagement";
 import { useComputers } from "@/hooks";
+import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import type { Computer, DeviceAsset } from "@/types/computer";
 
 /**
@@ -56,14 +57,20 @@ export default function TechnicianDeviceManagementContainer() {
 
   // Local state for filters
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [floorFilter, setFloorFilter] = useState<string>("all");
-  const [buildingFilter, setBuildingFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [buildingFilter, setBuildingFilter] = useState<string>("");
+  const [floorFilter, setFloorFilter] = useState<string>("");
+  const [roomFilter, setRoomFilter] = useState<string>("");
   const [isMobile, setIsMobile] = useState(false);
 
   // Pagination state (managed by API)
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12); // 12 items per page for grid layout
+
+  // State for rooms data and cascade filtering
+  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
+  const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
 
   // Convert computers to device assets for display
   const deviceAssets: DeviceAsset[] = computers.map(convertComputerToDeviceAsset);
@@ -102,17 +109,39 @@ export default function TechnicianDeviceManagementContainer() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Fetch rooms from API for cascade filtering
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const roomsData = await getRoomsApi();
+        setRooms(roomsData);
+      } catch {
+        message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
+      }
+    };
+    fetchRooms();
+  }, []);
+
   // Fetch computers from API on mount
   useEffect(() => {
     fetchComputers({
       page: currentPage,
       limit: pageSize,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency - only fetch on mount
 
   // Fetch computers when filters or pagination change
   useEffect(() => {
-    const params: any = {
+    const params: {
+      page: number;
+      limit: number;
+      search?: string;
+      status?: string[];
+      building?: string;
+      floor?: string;
+      roomName?: string;
+    } = {
       page: currentPage,
       limit: pageSize,
     };
@@ -123,25 +152,31 @@ export default function TechnicianDeviceManagementContainer() {
     }
 
     // Add status filter
-    if (statusFilter !== "all") {
+    if (statusFilter) {
       params.status = [statusFilter];
     }
 
-    // Add floor filter
-    if (floorFilter !== "all") {
-      params.floor = floorFilter;
-    }
-
     // Add building filter
-    if (buildingFilter !== "all") {
+    if (buildingFilter) {
       params.building = buildingFilter;
     }
 
+    // Add floor filter
+    if (floorFilter) {
+      params.floor = floorFilter;
+    }
+
+    // Add room filter
+    if (roomFilter) {
+      params.roomName = roomFilter;
+    }
+
     // Only fetch if not initial render
-    if (currentPage !== 1 || searchTerm || statusFilter !== "all" || floorFilter !== "all" || buildingFilter !== "all") {
+    if (currentPage !== 1 || searchTerm || statusFilter || floorFilter || buildingFilter || roomFilter) {
       fetchComputers(params);
     }
-  }, [searchTerm, statusFilter, floorFilter, buildingFilter, currentPage, pageSize, fetchComputers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, floorFilter, buildingFilter, roomFilter, currentPage, pageSize]);
 
   // Show error message if API call fails
   useEffect(() => {
@@ -186,18 +221,73 @@ export default function TechnicianDeviceManagementContainer() {
     setCurrentPage(1);
   };
 
+  // Handle building change - cascade filter
+  const handleBuildingChange = (value: string) => {
+    setBuildingFilter(value);
+    setFloorFilter("");
+    setRoomFilter("");
+    setCurrentPage(1);
+
+    if (value) {
+      // Filter floors by building
+      const floorsInBuilding = Array.from(
+        new Set(
+          rooms
+            .filter((room) => room.building === value)
+            .map((room) => room.floor)
+            .filter(Boolean)
+        )
+      ).sort();
+      setFilteredFloors(floorsInBuilding);
+    } else {
+      setFilteredFloors([]);
+    }
+    setFilteredRooms([]);
+  };
+
+  // Handle floor change - cascade filter
   const handleFloorChange = (value: string) => {
     setFloorFilter(value);
+    setRoomFilter("");
+    setCurrentPage(1);
+
+    if (value && buildingFilter) {
+      // Filter rooms by building and floor
+      const roomsInFloor = rooms.filter(
+        (room) => room.building === buildingFilter && room.floor === value
+      );
+      setFilteredRooms(roomsInFloor);
+    } else {
+      setFilteredRooms([]);
+    }
+  };
+
+  // Handle room change
+  const handleRoomChange = (value: string) => {
+    setRoomFilter(value);
     setCurrentPage(1);
   };
 
-  // Generate unique floors from summary or current data
-  const floors = Array.from(
-    new Set(
-      deviceAssets
-        .map((asset) => asset.floor)
-        .filter((floor) => floor) // Remove empty floors
-    )
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setBuildingFilter("");
+    setFloorFilter("");
+    setRoomFilter("");
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+    setCurrentPage(1);
+  };
+
+  // Extract unique buildings from rooms
+  const buildings = Array.from(
+    new Set(rooms.map((room) => room.building).filter(Boolean))
+  ).sort();
+
+  // Use filteredFloors if building is selected, otherwise show all unique floors
+  const floors = filteredFloors.length > 0 ? filteredFloors : Array.from(
+    new Set(rooms.map((room) => room.floor).filter(Boolean))
   ).sort();
 
   return (
@@ -238,11 +328,18 @@ export default function TechnicianDeviceManagementContainer() {
       <DeviceFilters
         searchTerm={searchTerm}
         statusFilter={statusFilter}
+        buildingFilter={buildingFilter}
         floorFilter={floorFilter}
+        roomFilter={roomFilter}
         onSearchChange={handleSearchChange}
         onStatusChange={handleStatusChange}
+        onBuildingChange={handleBuildingChange}
         onFloorChange={handleFloorChange}
+        onRoomChange={handleRoomChange}
+        onClearAll={clearAllFilters}
+        buildings={buildings}
         floors={floors}
+        rooms={filteredRooms}
       />
 
       {/* Loading State */}

@@ -1,76 +1,163 @@
 "use client";
-import { Search, Filter } from "lucide-react";
+import { Input, Select, Button, Card, Row, Col } from "antd";
+import { SearchOutlined, SyncOutlined } from "@ant-design/icons";
+import { getAssetStatusOptions } from "@/types/computer";
 
 interface DeviceFiltersProps {
   searchTerm: string;
   statusFilter: string;
+  buildingFilter: string;
   floorFilter: string;
+  roomFilter?: string;
   onSearchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
+  onBuildingChange: (value: string) => void;
   onFloorChange: (value: string) => void;
+  onRoomChange?: (value: string) => void;
+  onClearAll: () => void;
+  buildings: string[];
   floors: string[];
+  rooms?: Array<{ id: string; name: string; roomCode: string; roomNumber: string }>;
 }
 
 export default function DeviceFilters({
   searchTerm,
   statusFilter,
+  buildingFilter,
   floorFilter,
+  roomFilter = "",
   onSearchChange,
   onStatusChange,
+  onBuildingChange,
   onFloorChange,
+  onRoomChange,
+  onClearAll,
+  buildings,
   floors,
+  rooms = [],
 }: DeviceFiltersProps) {
+  // Get status options from enum
+  const statusOptions = getAssetStatusOptions();
+
+  // Count active filters
+  const activeFiltersCount = [
+    searchTerm,
+    statusFilter,
+    buildingFilter,
+    floorFilter,
+    roomFilter,
+  ].filter((val) => val && val !== "all").length;
+
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <Card>
+      <Row gutter={[16, 16]}>
         {/* Search */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo mã, tên, model, phòng..."
+        <Col xs={24} sm={12} md={6}>
+          <Input
+            placeholder="Tìm kiếm theo tên, mã, model, phòng..."
+            prefix={<SearchOutlined />}
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            allowClear
           />
-        </div>
+        </Col>
 
         {/* Status Filter */}
-        <div>
-          <select
-            value={statusFilter}
-            onChange={(e) => onStatusChange(e.target.value)}
-            title="Chọn trạng thái thiết bị"
-            className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-            <option value="all">Tất cả trạng thái</option>
-            <option value="đang_sử_dụng">Đang sử dụng</option>
-            <option value="chờ_bàn_giao">Chờ bàn giao</option>
-            <option value="chờ_tiếp_nhận">Chờ tiếp nhận</option>
-            <option value="hư_hỏng">Hư hỏng</option>
-            <option value="đã_mất">Đã mất</option>
-            <option value="đề_xuất_thanh_lý">Đề xuất thanh lý</option>
-            <option value="đã_thanh_lý">Đã thanh lý</option>
-          </select>
-        </div>
+        <Col xs={24} sm={12} md={5}>
+          <Select
+            placeholder="Tất cả trạng thái"
+            value={statusFilter || undefined}
+            onChange={(value) => onStatusChange(value || "all")}
+            allowClear
+            style={{ width: "100%" }}
+            options={statusOptions}
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? "")
+                .toString()
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            }
+          />
+        </Col>
+
+        {/* Building Filter */}
+        <Col xs={24} sm={12} md={4}>
+          <Select
+            placeholder="Tất cả tòa nhà"
+            value={buildingFilter || undefined}
+            onChange={(value) => onBuildingChange(value || "")}
+            allowClear
+            style={{ width: "100%" }}
+          >
+            {buildings.map((building) => (
+              <Select.Option key={building} value={building}>
+                Tòa {building}
+              </Select.Option>
+            ))}
+          </Select>
+        </Col>
 
         {/* Floor Filter */}
-        <div>
-          <select
-            value={floorFilter}
-            onChange={(e) => onFloorChange(e.target.value)}
-            title="Chọn tầng làm việc"
-            className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-            <option value="all">Tất cả tầng</option>
+        <Col xs={24} sm={12} md={4}>
+          <Select
+            placeholder={!buildingFilter ? "Chọn tòa trước" : "Tất cả tầng"}
+            value={floorFilter || undefined}
+            onChange={(value) => onFloorChange(value || "")}
+            allowClear
+            disabled={!buildingFilter}
+            style={{ width: "100%" }}
+            notFoundContent={
+              !buildingFilter
+                ? "Vui lòng chọn tòa nhà trước"
+                : "Không có dữ liệu"
+            }
+          >
             {floors.map((floor) => (
-              <option key={floor} value={floor}>
-                {floor}
-              </option>
+              <Select.Option key={floor} value={floor}>
+                Tầng {floor}
+              </Select.Option>
             ))}
-          </select>
-        </div>
-      </div>
-    </div>
+          </Select>
+        </Col>
+
+        {/* Room Filter */}
+        {onRoomChange && (
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              placeholder={!floorFilter ? "Chọn tầng trước" : "Tất cả phòng"}
+              value={roomFilter || undefined}
+              onChange={(value) => onRoomChange(value || "")}
+              allowClear
+              disabled={!floorFilter}
+              style={{ width: "100%" }}
+              notFoundContent={
+                !floorFilter
+                  ? "Vui lòng chọn tầng trước"
+                  : "Không có dữ liệu"
+              }
+            >
+              {rooms.map((room) => (
+                <Select.Option key={room.id} value={room.name || room.roomCode}>
+                  {room.name || room.roomCode || `Phòng ${room.roomNumber}`}
+                </Select.Option>
+              ))}
+            </Select>
+          </Col>
+        )}
+
+        {/* Clear All Button */}
+        <Col xs={24} sm={12} md={1}>
+          <Button
+            type="default"
+            onClick={onClearAll}
+            disabled={activeFiltersCount === 0}
+            icon={<SyncOutlined />}
+            block
+            title="Xóa tất cả bộ lọc"
+          />
+        </Col>
+      </Row>
+    </Card>
   );
 }

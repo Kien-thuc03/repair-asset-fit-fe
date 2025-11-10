@@ -2,7 +2,7 @@ import {
   ReplacementRequestItem,
   ReplacementStatus,
   ComponentType,
-} from "@/types/repair";
+} from "@/types";
 
 // Interface for Report List (Tờ trình) containing multiple replacement requests
 export interface ReportList {

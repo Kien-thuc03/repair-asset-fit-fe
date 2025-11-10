@@ -1,7 +1,8 @@
 "use client";
 import { Monitor, CheckCircle, AlertTriangle, Clock, Loader2 } from "lucide-react";
+import { Card, Statistic, Row, Col, Skeleton } from "antd";
 import type { DeviceAsset } from "@/types/computer";
-import type { ComputerSummary } from "@/types/computer";
+import type { ComputerSummary, AssetStatus } from "@/types/computer";
 
 interface DeviceStatsCardsProps {
   assets: DeviceAsset[];
@@ -38,6 +39,7 @@ export default function DeviceStatsCards({
       icon: CheckCircle,
       color: "text-green-600",
       bgColor: "bg-green-50",
+      valueStyle: { color: "#52c41a" },
     },
     {
       title: "Chờ xử lý",
@@ -45,6 +47,7 @@ export default function DeviceStatsCards({
       icon: Clock,
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
+      valueStyle: { color: "#faad14" },
     },
     {
       title: "Hư hỏng",
@@ -52,6 +55,7 @@ export default function DeviceStatsCards({
       icon: AlertTriangle,
       color: "text-red-600",
       bgColor: "bg-red-50",
+      valueStyle: { color: "#ff4d4f" },
     },
     {
       title: "Tổng số",
@@ -59,47 +63,35 @@ export default function DeviceStatsCards({
       icon: Monitor,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
+      valueStyle: { color: "#1890ff" },
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <Row gutter={[16, 16]}>
       {statsData.map((stat, index) => {
         const IconComponent = stat.icon;
         return (
-          <div
-            key={index}
-            className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className={`w-10 h-10 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
-                    {loading ? (
-                      <Loader2 className={`h-6 w-6 ${stat.color} animate-spin`} />
-                    ) : (
-                      <IconComponent className={`h-6 w-6 ${stat.color}`} />
-                    )}
+          <Col key={index} xs={24} sm={12} lg={6}>
+            <Card bordered={false} className="hover:shadow-md transition-shadow">
+              {loading ? (
+                <Skeleton active paragraph={{ rows: 1 }} />
+              ) : (
+                <div className="flex items-center">
+                  <div className={`w-12 h-12 ${stat.bgColor} rounded-lg flex items-center justify-center mr-4`}>
+                    <IconComponent className={`h-7 w-7 ${stat.color}`} />
                   </div>
+                  <Statistic
+                    title={stat.title}
+                    value={stat.value}
+                    valueStyle={stat.valueStyle}
+                  />
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      {stat.title}
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {loading ? (
-                        <span className="inline-block animate-pulse bg-gray-200 rounded w-12 h-6"></span>
-                      ) : (
-                        stat.value
-                      )}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+              )}
+            </Card>
+          </Col>
         );
       })}
-    </div>
+    </Row>
   );
 }

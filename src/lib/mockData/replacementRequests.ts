@@ -2,8 +2,8 @@ import {
   ReplacementRequestItem,
   ComponentFromRequest,
   ReplacementStatus,
-  ComponentType,
 } from "@/types/repair";
+import { ComponentType } from "@/types/computer";
 
 export const mockReplacementRequestItem: ReplacementRequestItem[] = [
   // Đề xuất có trạng thái CHỜ_TỔ_TRƯỞNG_DUYỆT - Kỹ thuật viên đã lập, chờ tổ trưởng duyệt
