@@ -137,7 +137,7 @@ export default function RequestTable({
                   <div className="max-w-[150px]">
                     <div
                       className="text-sm font-medium text-gray-900 truncate"
-                      title={`${request.assetName} (${request.assetCode})${
+                      title={`${request.assetName} (${request.ktCode})${
                         request.componentName
                           ? ` - ${request.componentName}`
                           : ""

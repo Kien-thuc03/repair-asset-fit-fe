@@ -9,7 +9,7 @@ import {
   Clock,
   ArrowRight,
 } from "lucide-react";
-import { RepairHistoryItem } from "@/lib/mockData/repairHistory";
+import { RepairHistoryItem } from "@/types";
 
 interface TechnicianRepairHistoryTabProps {
   repairHistory: RepairHistoryItem[];

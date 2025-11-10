@@ -73,10 +73,10 @@ export default function QtvKhoaQuanLyThayTheLinhKienPage() {
 		const filtered = mockReplacementRequestItem.filter((item: ReplacementRequestItem) => {
 			const componentNames = item.components.map((c: ComponentFromRequest) => c.componentName).join(' ')
 			const assetNames = item.components.map((c: ComponentFromRequest) => c.assetName).join(' ')
-			const assetCodes = item.components.map((c: ComponentFromRequest) => c.assetCode).join(' ')
+			const ktCodes = item.components.map((c: ComponentFromRequest) => c.ktCode).join(' ')
 			
 			const matchesSearch = searchText ? 
-				[assetCodes, assetNames, componentNames, item.proposalCode, item.title]
+				[ktCodes, assetNames, componentNames, item.proposalCode, item.title]
 					.filter(Boolean)
 					.join(' ')
 					.toLowerCase()

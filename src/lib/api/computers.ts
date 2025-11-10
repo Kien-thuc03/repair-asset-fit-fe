@@ -1,7 +1,12 @@
 import { api } from "../api";
+import type {
+  GetComputersResponse,
+  GetComputersParams,
+  Computer,
+} from "@/types/computer";
 
 /**
- * Computer response DTO
+ * Computer response DTO (legacy - for backward compatibility)
  */
 export interface ComputerResponseDto {
   id: string;
@@ -80,3 +85,86 @@ export const getComputersByRoomId = async (
     );
   }
 };
+
+/**
+ * Get computers with filters and pagination
+ * Endpoint: GET /computer
+ * 
+ * @param params Query parameters for filtering, pagination, and sorting
+ * @returns Promise with computers list, pagination, and summary
+ * 
+ * @example
+ * ```typescript
+ * // Get all computers (first page)
+ * const result = await getComputers();
+ * 
+ * // Search and filter
+ * const result = await getComputers({
+ *   search: "Dell",
+ *   status: ["IN_USE"],
+ *   building: "H",
+ *   page: 1,
+ *   limit: 12
+ * });
+ * ```
+ */
+export const getComputers = async (
+  params?: GetComputersParams
+): Promise<GetComputersResponse> => {
+  try {
+    // Destructure to separate status from other params
+    const { status, ...otherParams } = params || {};
+    
+    const response = await api.get<GetComputersResponse>("/computer", {
+      params: {
+        ...otherParams,
+        // Only include status if array has items
+        ...(status && status.length > 0 ? { status } : {}),
+      },
+    });
+
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy danh sách máy tính thất bại."
+    );
+  }
+};
+
+/**
+ * Get computer detail by ID
+ * Endpoint: GET /computer/:id
+ * 
+ * @param computerId Computer ID hoặc Asset ID (UUID)
+ * @returns Promise with full computer details
+ * 
+ * @example
+ * ```typescript
+ * // Get by computer ID
+ * const computer = await getComputerDetail('uuid-computer-id');
+ * 
+ * // Get by asset ID (also works)
+ * const computer = await getComputerDetail('uuid-asset-id');
+ * ```
+ */
+export const getComputerDetail = async (
+  computerId: string
+): Promise<import("@/types/computer").ComputerDetail> => {
+  try {
+    const response = await api.get<ApiResponse<import("@/types/computer").ComputerDetail>>(
+      `/computer/${computerId}`
+    );
+    return response.data.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy thông tin máy tính thất bại."
+    );
+  }
+};
+
+/**
+ * @deprecated Use getComputerDetail instead
+ */
+export const getComputerById = getComputerDetail;

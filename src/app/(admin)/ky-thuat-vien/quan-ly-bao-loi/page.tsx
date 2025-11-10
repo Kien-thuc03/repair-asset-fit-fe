@@ -5,7 +5,7 @@ import { Breadcrumb, Input, Select, DatePicker, Button, message, Spin, Alert } f
 import type { Dayjs } from 'dayjs'
 import { Search, ChevronUp, ChevronDown, Eye, Download } from 'lucide-react'
 import Link from 'next/link'
-import { repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
+import { repairRequestStatusConfig } from '@/lib/constants/repairStatus'
 import { RepairStatus, RepairRequest } from '@/types'
 import { Pagination } from '@/components/ui'
 import { useProfile } from '@/hooks/useProfile'
@@ -114,7 +114,7 @@ export default function DanhSachBaoLoiPage() {
 				'STT': index + 1,
 				'Mã yêu cầu': item.requestCode,
 				'Tên tài sản': item.assetName || 'Chưa xác định',
-				'Mã tài sản': item.assetCode || 'Chưa xác định',
+				'Mã tài sản': item.ktCode || 'Chưa xác định',
 				'Linh kiện': item.componentName || 'Chưa xác định',
 				'Vị trí': `${item.buildingName || 'Chưa xác định'} - ${item.roomName || 'Chưa xác định'}`,
 				'Máy': `Máy ${item.machineLabel || 'Chưa xác định'}`,
@@ -154,7 +154,7 @@ export default function DanhSachBaoLoiPage() {
 		// Lọc dữ liệu từ API
 		const filtered = repairs.filter((item: RepairRequest) => {
 			const matchesSearch = searchText ? 
-				[item.requestCode, item.assetName, item.assetCode, item.componentName, item.errorTypeName, item.roomName, item.buildingName]
+				[item.requestCode, item.assetName, item.ktCode, item.componentName, item.errorTypeName, item.roomName, item.buildingName]
 					.filter(Boolean)
 					.join(' ')
 					.toLowerCase()
@@ -337,8 +337,8 @@ export default function DanhSachBaoLoiPage() {
 				<table className="min-w-full divide-y divide-gray-200">
 					<thead className="bg-gray-50">
 						<tr>
-							<th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-								<div className="flex items-center space-x-2">
+							<th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+								<div className="flex items-center space-x-1">
 									<input
 										type="checkbox"
 										className="rounded border-gray-300"
@@ -346,74 +346,65 @@ export default function DanhSachBaoLoiPage() {
 										onChange={(e) => handleSelectAll(e.target.checked)}
 										aria-label="Chọn tất cả báo lỗi"
 									/>
-									<span>STT</span>
+									<span className="hidden sm:inline">STT</span>
 								</div>
 							</th>
 							<th 
-								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-24"
+								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("requestCode")}
 							>
-								<div className="flex items-center uppercase space-x-1">
+								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
 									<span>Mã YC</span>
 									{getSortIcon("requestCode")}
 								</div>
 							</th>
 							<th 
-								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-40"
+								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("assetName")}
 							>
-								<div className="flex items-center uppercase space-x-1">
-									<span>Tài sản</span>
+								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
+									<span>Tài sản & Linh kiện</span>
 									{getSortIcon("assetName")}
 								</div>
 							</th>
 							<th 
-								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-32"
+								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("location")}
 							>
-								<div className="flex items-center uppercase space-x-1">
+								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
 									<span>Vị trí</span>
 									{getSortIcon("location")}
 								</div>
 							</th>
 							<th 
-								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-28"
-								onClick={() => handleSort("reporterName")}
-							>
-								<div className="flex items-center uppercase space-x-1">
-									<span>Người báo</span>
-									{getSortIcon("reporterName")}
-								</div>
-							</th>
-							<th 
-								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-32"
+								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group hidden xl:table-cell"
 								onClick={() => handleSort("errorTypeName")}
 							>
-								<div className="flex items-center uppercase space-x-1">
+								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
 									<span>Loại lỗi</span>
 									{getSortIcon("errorTypeName")}
 								</div>
 							</th>
 							<th 
-								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-28"
+								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("status")}
 							>
-								<div className="flex items-center uppercase space-x-1">
+								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
 									<span>Trạng thái</span>
 									{getSortIcon("status")}
 								</div>
 							</th>
 							<th 
-								className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-24"
+								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group hidden lg:table-cell"
 								onClick={() => handleSort("createdAt")}
 							>
-								<div className="flex items-center uppercase space-x-1">
+								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
 									<span>Ngày báo</span>
 									{getSortIcon("createdAt")}
 								</div>
 							</th>
-							<th className="px-2 py-3 text-left text-xs uppercase font-medium text-gray-500 tracking-wider w-16">
-								Thao tác
+							<th className="px-1 py-2 text-center text-xs uppercase font-medium text-gray-500 tracking-wider w-10">
+								
 							</th>
 						</tr>
 					</thead>
@@ -422,8 +413,8 @@ export default function DanhSachBaoLoiPage() {
 							const config = repairRequestStatusConfig[record.status]
 							return (
 								<tr key={record.id} className="hover:bg-gray-50">
-									<td className="px-2 py-3 text-sm text-gray-700 w-20">
-										<div className="flex items-center space-x-2">
+									<td className="px-2 py-2 text-sm text-gray-700">
+										<div className="flex items-center space-x-1">
 											<input
 												type="checkbox"
 												className="rounded border-gray-300"
@@ -431,56 +422,58 @@ export default function DanhSachBaoLoiPage() {
 												onChange={(e) => handleRowSelect(record.id, e.target.checked)}
 												aria-label={`Chọn báo lỗi ${record.requestCode}`}
 											/>
-											<span>{(currentPage - 1) * pageSize + index + 1}</span>
+											<span className="hidden sm:inline whitespace-nowrap">{(currentPage - 1) * pageSize + index + 1}</span>
 										</div>
 									</td>
-									<td className="px-2 py-3 text-sm font-medium text-blue-600 w-24">
-										<div className="truncate" title={record.requestCode}>
+									<td className="px-2 py-2 text-sm font-medium text-blue-600">
+										<div className="whitespace-nowrap" title={record.requestCode}>
 											{record.requestCode}
 										</div>
 									</td>
-									<td className="px-2 py-3 text-sm text-gray-700 w-40">
-										<div>
+									<td className="px-2 py-2 text-sm text-gray-700">
+										<div className="min-w-[180px] max-w-[250px]">
 											<div className="font-medium truncate" title={record.assetName || 'Chưa xác định'}>
 												{record.assetName || 'Chưa xác định'}
 											</div>
-										</div>
-									</td>
-									<td className="px-2 py-3 text-sm text-gray-700 w-32">
-										<div>
-											<div className="font-medium truncate" title={record.buildingName || 'Chưa xác định'}>
-												{record.buildingName || 'Chưa xác định'}
-											</div>
-											<div className="text-xs text-gray-500 truncate" title={`${record.roomName || 'Chưa xác định'} - Máy ${record.machineLabel || 'N/A'}`}>
-												{record.roomName || 'Chưa xác định'} - M{record.machineLabel || 'N/A'}
+											<div className="text-xs text-gray-500 truncate" title={record.componentName || 'Chưa xác định'}>
+												{record.componentName || 'Chưa xác định'}
 											</div>
 										</div>
 									</td>
-									<td className="px-2 py-3 text-sm text-gray-700 w-28">
-										<div className="truncate" title={record.reporterName || 'Chưa xác định'}>
-											{record.reporterName || 'Chưa xác định'}
+									<td className="px-2 py-2 text-sm text-gray-700">
+										<div className="min-w-[100px] max-w-[140px]">
+											<div className="font-medium truncate" title={`${record.buildingName || 'N/A'} - ${record.roomName || 'N/A'}`}>
+												{record.buildingName || 'N/A'} - {record.roomName || 'N/A'}
+											</div>
+											<div className="text-xs text-gray-500 truncate" title={`Máy ${record.machineLabel || 'N/A'}`}>
+												Máy {record.machineLabel || 'N/A'}
+											</div>
 										</div>
 									</td>
-									<td className="px-2 py-3 text-sm text-gray-700 w-32">
-										<div className="truncate" title={record.errorTypeName || "Chưa xác định"}>
+									<td className="px-2 py-2 text-sm text-gray-700 hidden xl:table-cell">
+										<div className="max-w-[130px] truncate" title={record.errorTypeName || "Chưa xác định"}>
 											{record.errorTypeName || "Chưa xác định"}
 										</div>
 									</td>
-									<td className="px-2 py-3 w-28">
-										<span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${config.color} truncate`} title={config.label}>
-											{config.label}
+									<td className="px-2 py-2">
+										<span 
+											className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${config.color} whitespace-nowrap`} 
+											title={config.label}
+										>
+											<span className="truncate">{config.label}</span>
 										</span>
 									</td>
-									<td className="px-2 py-3 text-sm text-gray-700 w-24">
-										<div className="truncate" title={new Date(record.createdAt).toLocaleDateString('vi-VN')}>
+									<td className="px-2 py-2 text-sm text-gray-700 hidden lg:table-cell">
+										<div className="whitespace-nowrap" title={new Date(record.createdAt).toLocaleDateString('vi-VN')}>
 											{new Date(record.createdAt).toLocaleDateString('vi-VN')}
 										</div>
 									</td>
-									<td className="px-2 py-3 text-center w-16">
+									<td className="px-1 py-2 text-center w-10">
 										<Link href={`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${record.id}`}>
 											<button 
-											title='Xem chi tiết' 
-											className="text-blue-600 hover:text-blue-900 inline-flex items-center">
+												title='Xem chi tiết' 
+												className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 hover:bg-blue-50 rounded"
+											>
 												<Eye className="w-4 h-4" />
 											</button>
 										</Link>
@@ -508,5 +501,6 @@ export default function DanhSachBaoLoiPage() {
 		</div>
 	)
 }
+
 
 

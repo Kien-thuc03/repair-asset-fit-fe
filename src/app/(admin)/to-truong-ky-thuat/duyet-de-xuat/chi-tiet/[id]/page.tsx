@@ -84,7 +84,7 @@ export default function ChiTietDuyetDeXuatPage() {
       newItemName: item.newItemName || "",
       newItemSpecs: item.newItemSpecs || "",
       assetName: "N/A", // Not available in API
-      assetCode: "N/A", // Not available in API
+      ktCode: "N/A", // Not available in API
       roomName: "N/A", // Not available in API
       buildingName: "N/A", // Not available in API
       quantity: item.quantity || 1,

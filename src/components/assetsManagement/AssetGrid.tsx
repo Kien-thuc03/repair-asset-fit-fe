@@ -1,10 +1,11 @@
 "use client";
 import { Search } from "lucide-react";
 import { Asset } from "@/types";
+import { DeviceAsset } from "@/types/computer";
 import DeviceCard from "./AssetCard";
 
 interface DeviceGridProps {
-  assets: Asset[];
+  assets: Asset[] | DeviceAsset[];
   onViewDetail: (assetId: string) => void;
 }
 

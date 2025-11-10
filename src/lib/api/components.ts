@@ -138,3 +138,28 @@ export const getComponentStatsByComputerId = async (
     );
   }
 };
+
+/**
+ * Get components by asset ID (for replacement selection)
+ * @param assetId Asset ID (UUID)
+ * @returns Promise with list of components for the asset
+ */
+export const getComponentsByAssetId = async (
+  assetId: string
+): Promise<ComponentResponseDto[]> => {
+  try {
+    const response = await api.get<ApiResponse<GetComponentsByComputerData>>(
+      `/computer/asset/${assetId}/components`
+    );
+
+    // Extract components array from nested structure
+    const components = response.data.data.components;
+
+    return components;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy danh sách linh kiện thất bại."
+    );
+  }
+};

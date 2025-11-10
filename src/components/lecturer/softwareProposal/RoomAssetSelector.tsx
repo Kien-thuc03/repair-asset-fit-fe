@@ -114,7 +114,7 @@ const RoomAssetSelector: React.FC<RoomAssetSelectorProps> = ({
             <div>
               <span className="text-gray-600">Mã tài sản:</span>
               <span className="ml-2 font-medium">
-                {selectedAsset.assetCode}
+                {selectedAsset.ktCode}
               </span>
             </div>
             <div>

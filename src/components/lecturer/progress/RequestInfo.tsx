@@ -32,7 +32,7 @@ export default function RequestInfo({ request }: RequestInfoProps) {
                 <p className="mt-1 text-sm text-gray-900 font-medium">
                   {request.assetName}
                 </p>
-                <p className="text-xs text-gray-500">{request.assetCode}</p>
+                <p className="text-xs text-gray-500">{request.ktCode}</p>
                 {request.componentName && (
                   <p className="text-xs text-blue-600">
                     Linh kiện: {request.componentName}

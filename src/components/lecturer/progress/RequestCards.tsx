@@ -87,8 +87,8 @@ export default function RequestCards({
                   </div>
                   <div
                     className="text-xs text-gray-500 truncate"
-                    title={request.assetCode}>
-                    {request.assetCode}
+                    title={request.ktCode}>
+                    {request.ktCode}
                   </div>
                 </div>
                 <div>

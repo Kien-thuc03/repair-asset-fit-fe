@@ -4,9 +4,10 @@ import { Breadcrumb } from "antd";
 
 interface DeviceNotFoundProps {
   onGoBack: () => void;
+  message?: string | null;
 }
 
-export default function DeviceNotFound({ onGoBack }: DeviceNotFoundProps) {
+export default function DeviceNotFound({ onGoBack, message }: DeviceNotFoundProps) {
   return (
     <div className="space-y-4">
       <Breadcrumb
@@ -42,7 +43,7 @@ export default function DeviceNotFound({ onGoBack }: DeviceNotFoundProps) {
           Không tìm thấy thiết bị
         </h1>
         <p className="mt-2 text-gray-600">
-          Thiết bị với ID này không tồn tại hoặc đã bị xóa.
+          {message || "Thiết bị với ID này không tồn tại hoặc đã bị xóa."}
         </p>
         <button
           onClick={onGoBack}

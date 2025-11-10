@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button, Form, Popconfirm, Select, InputNumber, Input } from 'antd'
+import { Button, Form, Popconfirm, Select, InputNumber, Input, Spin, Alert } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Component, ComponentType } from '@/types'
-import { getAvailableComponentsForReplacement, ReplacementPart } from '@/lib/mockData'
+import { ReplacementPart } from '@/lib/mockData'
+import { getComponentsByAssetId } from '@/lib/api/components'
 
 interface Props {
 	value?: ReplacementPart[]
@@ -15,15 +16,37 @@ interface Props {
 export default function ReplacementPartsInput({ value = [], onChange, assetId }: Props) {
 	const [parts, setParts] = useState<ReplacementPart[]>(value)
 	const [availableComponents, setAvailableComponents] = useState<Component[]>([])
+	const [loading, setLoading] = useState(false)
+	const [error, setError] = useState<string | null>(null)
 
-	// Lọc components theo assetId
+	// Lọc components theo assetId - Call API thực
 	useEffect(() => {
-		if (assetId) {
-			const filtered = getAvailableComponentsForReplacement(assetId)
-			setAvailableComponents(filtered)
-		} else {
-			setAvailableComponents([])
+		const fetchComponents = async () => {
+			if (!assetId) {
+				setAvailableComponents([])
+				return
+			}
+
+			setLoading(true)
+			setError(null)
+
+			try {
+				const components = await getComponentsByAssetId(assetId)
+				// Chỉ lấy components có status là INSTALLED hoặc FAULTY để có thể thay thế
+				const filtered = components.filter(
+					comp => comp.status === 'INSTALLED' || comp.status === 'FAULTY'
+				) as unknown as Component[]
+				setAvailableComponents(filtered)
+			} catch (err) {
+				console.error('❌ Fetch components error:', err)
+				setError(err instanceof Error ? err.message : 'Không thể tải danh sách linh kiện')
+				setAvailableComponents([])
+			} finally {
+				setLoading(false)
+			}
 		}
+
+		fetchComponents()
 	}, [assetId])
 
 	const triggerChange = (changedValue: ReplacementPart[]) => {
@@ -89,6 +112,31 @@ export default function ReplacementPartsInput({ value = [], onChange, assetId }:
 				<div className="p-4 bg-gray-50 border rounded-md text-center text-gray-500">
 					<p>Không thể xác định thiết bị. Vui lòng kiểm tra lại thông tin yêu cầu.</p>
 				</div>
+			</div>
+		)
+	}
+
+	if (loading) {
+		return (
+			<div className="space-y-3">
+				<h4 className="text-md font-semibold text-gray-800">Linh kiện cần thay thế</h4>
+				<div className="p-4 bg-gray-50 border rounded-md text-center">
+					<Spin tip="Đang tải danh sách linh kiện..." />
+				</div>
+			</div>
+		)
+	}
+
+	if (error) {
+		return (
+			<div className="space-y-3">
+				<h4 className="text-md font-semibold text-gray-800">Linh kiện cần thay thế</h4>
+				<Alert
+					message="Lỗi tải linh kiện"
+					description={error}
+					type="error"
+					showIcon
+				/>
 			</div>
 		)
 	}

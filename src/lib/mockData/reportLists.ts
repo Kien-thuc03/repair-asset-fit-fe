@@ -2,7 +2,7 @@ import {
   ReplacementRequestItem,
   ReplacementStatus,
   ComponentType,
-} from "@/types/repair";
+} from "@/types";
 
 // Interface for Report List (Tờ trình) containing multiple replacement requests
 export interface ReportList {
@@ -47,7 +47,7 @@ export const mockApprovedReplacementRequests: ReplacementRequestItem[] = [
         componentType: ComponentType.PSU,
         assetId: "ASSET001",
         assetName: "PC Dell OptiPlex 3080",
-        assetCode: "19-0205/01",
+        ktCode: "19-0205/01",
         buildingName: "Tòa H",
         roomName: "H101",
         newItemName: "Dell 250W PSU",

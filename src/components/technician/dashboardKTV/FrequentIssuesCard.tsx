@@ -54,7 +54,7 @@ export default function FrequentIssuesCard() {
 										</span>
 										<Computer className="w-4 h-4 text-gray-400" />
 										<span className="font-medium text-gray-900 text-sm">
-											{item.assetCode}
+											{item.ktCode}
 										</span>
 									</div>
 									<p className="text-xs text-gray-600 ml-8">

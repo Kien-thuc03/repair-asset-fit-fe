@@ -1,12 +1,41 @@
 "use client";
 import { Monitor, Eye, Wrench, Calendar } from "lucide-react";
-import { Asset } from "@/types";
-import { assetStatusConfig } from "@/lib/mockData";
-
+import { Asset, AssetStatus, DeviceAsset } from "@/types";
 interface DeviceCardProps {
-  asset: Asset;
+  asset: Asset | DeviceAsset;
   onViewDetail: (assetId: string) => void;
 }
+
+export const assetStatusConfig = {
+  [AssetStatus.WAITING_HANDOVER]: {
+    label: "Chờ bàn giao",
+    color: "blue"
+  },
+  [AssetStatus.WAITING_RECEIVE]: {
+    label: "Chờ tiếp nhận",
+    color: "orange"
+  },
+  [AssetStatus.IN_USE]: {
+    label: "Đang sử dụng",
+    color: "green"
+  },
+  [AssetStatus.LOST]: {
+    label: "Đã mất",
+    color: "gray"
+  },
+  [AssetStatus.PROPOSED_LIQUIDATION]: {
+    label: "Đề xuất thanh lý",
+    color: "purple"
+  },
+  [AssetStatus.LIQUIDATED]: {
+    label: "Đã thanh lý",
+    color: "black"
+  },
+  [AssetStatus.DAMAGED]: {
+    label: "Hư hỏng",
+    color: "red"
+  }
+};
 
 export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
   const getStatusConfig = (status: string) => {
@@ -34,7 +63,11 @@ export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
     };
   };
 
-  const getWarrantyStatus = (warrantyExpiry: string) => {
+  const getWarrantyStatus = (warrantyExpiry?: string) => {
+    if (!warrantyExpiry) {
+      return { status: "unknown", label: "Không có thông tin", color: "text-gray-600" };
+    }
+
     const today = new Date();
     const expiry = new Date(warrantyExpiry);
     const daysLeft = Math.ceil(
@@ -75,7 +108,7 @@ export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
               <p className="text-sm font-semibold text-gray-900 truncate max-w-32">
                 {asset.name}
               </p>
-              <p className="text-sm text-gray-500 font-mono">{asset.assetCode}</p>
+              <p className="text-sm text-gray-500 font-mono">{asset.ktCode}</p>
             </div>
           </div>
           <div
@@ -90,10 +123,10 @@ export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
           <div className="flex justify-between text-sm">
             <span className="text-gray-500 flex items-center">
               <Wrench className="w-4 h-4 mr-1" />
-              Model:
+              Thông số kĩ thuật:
             </span>
-            <span className="text-gray-900 text-right max-w-32 truncate" title={asset.model}>
-              {asset.model}
+            <span className="text-gray-900 text-right max-w-32 truncate" title={'specs' in asset ? asset.specs : 'N/A'}>
+              {'specs' in asset ? asset.specs : 'N/A'}
             </span>
           </div>
           <div className="flex justify-between text-sm">

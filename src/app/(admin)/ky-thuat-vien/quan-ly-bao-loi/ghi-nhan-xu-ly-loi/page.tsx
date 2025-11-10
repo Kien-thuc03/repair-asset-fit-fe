@@ -2,74 +2,112 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
-  ReportForm as ReportFormType,
-  SimpleAsset as Asset,
   Component,
   Software,
   RepairStatus,
+  ErrorType,
+  ComponentStatus,
+  ComponentType,
 } from "@/types";
-import { Room } from "@/types/unit";
+import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
+import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
+import { getComponentsByComputerId } from "@/lib/api/components";
+import { getSoftwareByAssetId } from "@/lib/api/asset-software";
+import { createAndProcessRepair, CreateAndProcessRepairRequest } from "@/lib/api/repairs";
+import { useProfile } from "@/hooks";
 import {
-  mockErrorTypes,
-  mockAssets,
-  mockRooms,
-  mockComponents,
-  mockComputers,
-  getSoftwareByAssetId,
-} from "@/lib/mockData";
+  getHardwareErrorTypes,
+  getErrorTypeByKey,
+  canSelectComponents as canSelectComponentsByErrorType,
+} from "@/lib/constants/errorTypes";
 
 import { SuccessModal } from "@/components/modal";
 import { TechnicianReportSteps } from "@/components/technician/TechnicianReportHelpers";
-import { Breadcrumb, Card, Form, Button, Input, Select, Radio, Image, Alert } from "antd";
+import { 
+  Breadcrumb, 
+  Card, 
+  Form, 
+  Button, 
+  Input, 
+  Select, 
+  Radio, 
+  Alert, 
+  message 
+} from "antd";
 import { DeleteOutlined, CameraOutlined, ScanOutlined } from "@ant-design/icons";
 
 const { TextArea } = Input;
 const { Option } = Select;
 
 // Interface cho form ghi nhận lỗi kỹ thuật viên
-interface TechnicianReportFormType extends ReportFormType {
+interface TechnicianReportFormType {
   building: string;
   floor: string;
-  errorCategory: "hardware" | "software";
-  repairMethod: string;
+  roomId: string;
+  assetId: string; // This will store asset.id
+  errorCategory: "hardware" | "software" | "";
+  errorType: ErrorType | "";
+  description: string;
+  repairMethod: "" | "software_fixed" | "hardware_fixed" | "need_replacement";
   repairNotes: string;
-  status: RepairStatus;
+  mediaFiles: File[];
 }
 
 export default function GhiNhanXuLyLoiPage() {
   const router = useRouter();
+  const { userDetails } = useProfile();
 
   const [formData, setFormData] = useState<TechnicianReportFormType>({
     building: "",
     floor: "",
     assetId: "",
-    componentId: "",
     roomId: "",
-    errorTypeId: "",
-    errorCategory: "software",
+    errorType: "",
+    errorCategory: "",
     description: "",
     repairMethod: "",
     repairNotes: "",
     mediaFiles: [],
-    status: RepairStatus.ĐANG_XỬ_LÝ,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedComputerId, setSelectedComputerId] = useState<string>(""); // Store computer.id for loading components
   const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
-  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
-  const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
+  const [filteredComputers, setFilteredComputers] = useState<ComputerResponseDto[]>([]);
   const [filteredComponents, setFilteredComponents] = useState<Component[]>([]);
   const [filteredSoftware, setFilteredSoftware] = useState<Software[]>([]);
   const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>([]);
   const [selectedSoftwareIds, setSelectedSoftwareIds] = useState<string[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
 
-  // Danh sách tòa nhà duy nhất từ mockRooms
-  const buildings = [...new Set(mockRooms.map(room => room.building))];
+  // Kiểm tra xem loại lỗi hiện tại có cho phép chọn linh kiện không
+  const canSelectComponents =
+    formData.errorCategory === "hardware" &&
+    formData.errorType &&
+    canSelectComponentsByErrorType(formData.errorType as ErrorType);
 
+  // Extract unique buildings from rooms
+  const buildings = Array.from(
+    new Set(rooms.map((room) => room.building).filter(Boolean))
+  );
 
+  // Fetch rooms from API
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const roomsData = await getRoomsApi();
+        setRooms(roomsData);
+      } catch {
+        message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
+      }
+    };
+    fetchRooms();
+  }, []);
 
   // Detect mobile device
   useEffect(() => {
@@ -83,60 +121,178 @@ export default function GhiNhanXuLyLoiPage() {
 
   // Handle building change
   const handleBuildingChange = (building: string) => {
-    setFormData(prev => ({ ...prev, building, floor: "", roomId: "", assetId: "", componentId: "" }));
+    setFormData(prev => ({ 
+      ...prev, 
+      building, 
+      floor: "", 
+      roomId: "", 
+      assetId: "",
+      errorCategory: "",
+      errorType: "",
+      repairMethod: "",
+      repairNotes: ""
+    }));
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
+    setSelectedComputerId("");
     
     // Filter floors by building
-    const floorsInBuilding = [...new Set(mockRooms
-      .filter(room => room.building === building && room.floor)
-      .map(room => room.floor!))] as string[];
+    const floorsInBuilding = Array.from(
+      new Set(
+        rooms
+          .filter((room) => room.building === building)
+          .map((room) => room.floor)
+          .filter(Boolean)
+      )
+    );
     setFilteredFloors(floorsInBuilding);
     setFilteredRooms([]);
-    setFilteredAssets([]);
+    setFilteredComputers([]);
     setFilteredComponents([]);
     setFilteredSoftware([]);
   };
 
   // Handle floor change
   const handleFloorChange = (floor: string) => {
-    setFormData(prev => ({ ...prev, floor, roomId: "", assetId: "", componentId: "" }));
+    setFormData(prev => ({ 
+      ...prev, 
+      floor, 
+      roomId: "", 
+      assetId: "",
+      errorCategory: "",
+      errorType: "",
+      repairMethod: "",
+      repairNotes: ""
+    }));
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
+    setSelectedComputerId("");
     
     // Filter rooms by building and floor
-    const roomsOnFloor = mockRooms.filter(room => 
-      room.building === formData.building && room.floor === floor
+    const roomsOnFloor = rooms.filter(
+      (room) => room.building === formData.building && room.floor === floor
     );
     setFilteredRooms(roomsOnFloor);
-    setFilteredAssets([]);
+    setFilteredComputers([]);
     setFilteredComponents([]);
     setFilteredSoftware([]);
   };
 
   // Handle room change
-  const handleRoomChange = (roomId: string) => {
-    setFormData(prev => ({ ...prev, roomId, assetId: "", componentId: "" }));
+  const handleRoomChange = async (roomId: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      roomId, 
+      assetId: "",
+      errorCategory: "",
+      errorType: "",
+      repairMethod: "",
+      repairNotes: ""
+    }));
+    setSelectedComputerId("");
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
-    
-    // Filter assets by room
-    const roomAssets = mockAssets.filter(asset => asset.roomId === roomId);
-    setFilteredAssets(roomAssets);
+
+    // Reset computers first
+    setFilteredComputers([]);
     setFilteredComponents([]);
     setFilteredSoftware([]);
+
+    // Fetch computers for the selected room
+    try {
+      const computers = await getComputersByRoomId(roomId);
+      if (Array.isArray(computers)) {
+        setFilteredComputers(computers);
+      } else {
+        setFilteredComputers([]);
+        message.error("Dữ liệu máy tính không đúng định dạng");
+      }
+    } catch {
+      message.error("Không thể tải danh sách máy tính");
+      setFilteredComputers([]);
+    }
   };
 
   // Handle asset change
-  const handleAssetChange = (assetId: string) => {
-    setFormData(prev => ({ ...prev, assetId, componentId: "" }));
+  const handleAssetChange = async (computerId: string) => {
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
-    
-    setFilteredComponents(
-      mockComponents.filter(comp => comp.computerAssetId === assetId)
+
+    // Reset components and software first
+    setFilteredComponents([]);
+    setFilteredSoftware([]);
+
+    // Find the selected computer to get its details
+    const selectedComputer = filteredComputers.find(
+      (comp) => comp.id === computerId
     );
-    setFilteredSoftware(getSoftwareByAssetId(assetId));
+
+    if (!selectedComputer) {
+      message.error("Không tìm thấy máy tính được chọn");
+      return;
+    }
+
+    // Check if computer has asset
+    if (!selectedComputer.asset?.id) {
+      message.error("Máy tính này chưa được gán tài sản");
+      return;
+    }
+
+    // Store asset.id instead of computer.id
+    setFormData((prev) => ({
+      ...prev,
+      assetId: selectedComputer.asset!.id, // Use asset.id for backend
+    }));
+
+    // Store computer.id for loading components
+    setSelectedComputerId(computerId);
+
+    // Fetch components for the selected computer using computer ID
+    try {
+      const components = await getComponentsByComputerId(computerId);
+      if (Array.isArray(components)) {
+        // Map ComponentResponseDto to Component interface
+        const mappedComponents: Component[] = components.map((comp) => ({
+          id: comp.id,
+          computerAssetId: selectedComputer.id,
+          componentType: comp.componentType as unknown as ComponentType,
+          name: comp.name,
+          componentSpecs: comp.componentSpecs,
+          serialNumber: comp.serialNumber,
+          status: comp.status as unknown as ComponentStatus,
+          installedAt: comp.installedAt,
+          removedAt: comp.removedAt,
+          notes: comp.notes,
+        }));
+        setFilteredComponents(mappedComponents);
+      } else {
+        setFilteredComponents([]);
+        message.error("Dữ liệu linh kiện không đúng định dạng");
+      }
+    } catch {
+      message.error("Không thể tải danh sách linh kiện");
+      setFilteredComponents([]);
+    }
+
+    // Fetch software using asset ID
+    try {
+      const softwareList = await getSoftwareByAssetId(
+        selectedComputer.asset.id
+      );
+
+      // Map SoftwareDto to Software interface
+      const mappedSoftware: Software[] = softwareList.map((sw) => ({
+        id: sw.softwareId,
+        name: sw.name,
+        version: sw.version,
+        publisher: sw.publisher,
+        createdAt: sw.installationDate,
+      }));
+      setFilteredSoftware(mappedSoftware);
+    } catch {
+      message.error("Không thể tải danh sách phần mềm");
+      setFilteredSoftware([]);
+    }
   };
 
   // Handle error category change
@@ -144,51 +300,18 @@ export default function GhiNhanXuLyLoiPage() {
     setFormData(prev => ({ 
       ...prev, 
       errorCategory: category, 
-      errorTypeId: "", 
-      componentId: "",
-      repairMethod: "", // Reset repairMethod khi thay đổi category
-      repairNotes: "",  // Reset repairNotes
-      status: RepairStatus.ĐANG_XỬ_LÝ // Reset status về mặc định
+      errorType: category === "software" ? ErrorType.MAY_HU_PHAN_MEM : "",
+      repairMethod: "",
+      repairNotes: ""
     }));
     setSelectedComponentIds([]);
     setSelectedSoftwareIds([]);
   };
 
-  // Handle QR scan
-  const simulateQRScan = () => {
-    const randomAsset = mockAssets[Math.floor(Math.random() * mockAssets.length)];
-    const room = mockRooms.find(room => room.id === randomAsset.roomId);
-    
-    if (room && room.building && room.floor) {
-      // Auto-select building, floor, room, and asset
-      handleBuildingChange(room.building);
-      
-      setTimeout(() => {
-        handleFloorChange(room.floor!);
-        
-        setTimeout(() => {
-          handleRoomChange(room.id);
-          
-          setTimeout(() => {
-            handleAssetChange(randomAsset.id);
-            
-            const computer = mockComputers.find(comp => comp.assetId === randomAsset.id);
-            const machineLabel = computer?.machineLabel || "N/A";
-            
-            alert(
-              `Đã quét thành công thiết bị!\n` +
-              `Mã QR: ${randomAsset.assetCode}\n` +
-              `Tên thiết bị: ${randomAsset.name}\n` +
-              `Máy số: ${machineLabel}\n` +
-              `Tòa: ${room.building}\n` +
-              `Tầng: ${room.floor}\n` +
-              `Phòng: ${room.roomNumber}\n\n` +
-              `Tiếp theo: Chọn loại lỗi và phương pháp xử lý`
-            );
-          }, 100);
-        }, 100);
-      }, 100);
-    }
+  // Handle QR scan (simulation)
+  const simulateQRScan = async () => {
+    // This would open camera in real app
+    message.info("Chức năng quét QR đang được phát triển");
   };
 
   // Handle media upload
@@ -209,38 +332,81 @@ export default function GhiNhanXuLyLoiPage() {
   };
 
   // Handle form submit
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    // Validate user is logged in
+    if (!userDetails?.id) {
+      message.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // ⚠️ LOGIC: Determine finalStatus based on repairMethod
+      // - ĐÃ_HOÀN_THÀNH: khi sửa xong (software_fixed hoặc hardware_fixed)
+      // - CHỜ_THAY_THẾ: khi cần thay thế linh kiện (need_replacement)
+      let finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ | undefined;
+      
+      if (formData.repairMethod === 'software_fixed' || formData.repairMethod === 'hardware_fixed') {
+        finalStatus = RepairStatus.ĐÃ_HOÀN_THÀNH;
+      } else if (formData.repairMethod === 'need_replacement') {
+        // 🔥 Chuyển sang CHỜ_THAY_THẾ ngay khi ghi nhận cần thay thế
+        finalStatus = RepairStatus.CHỜ_THAY_THẾ;
+      }
 
-    setIsSubmitting(false);
-    setShowSuccessModal(true);
+      // Prepare request data
+      const requestData: CreateAndProcessRepairRequest = {
+        computerAssetId: formData.assetId,
+        errorType: formData.errorCategory === 'software' 
+          ? ErrorType.MAY_HU_PHAN_MEM 
+          : (formData.errorType as ErrorType),
+        description: formData.description,
+        mediaFiles: formData.mediaFiles.length > 0 ? formData.mediaFiles : undefined,
+        componentIds: formData.errorCategory === 'hardware' && selectedComponentIds.length > 0 
+          ? selectedComponentIds 
+          : undefined,
+        softwareIds: formData.errorCategory === 'software' && selectedSoftwareIds.length > 0 
+          ? selectedSoftwareIds 
+          : undefined,
+        resolutionNotes: formData.repairNotes || undefined,
+        finalStatus: finalStatus, // undefined nếu need_replacement
+      };
 
-    // Reset form
-    setFormData({
-      building: "",
-      floor: "",
-      assetId: "",
-      componentId: "",
-      roomId: "",
-      errorTypeId: "",
-      errorCategory: "software",
-      description: "",
-      repairMethod: "",
-      repairNotes: "",
-      mediaFiles: [],
-      status: RepairStatus.ĐANG_XỬ_LÝ,
-    });
-    setSelectedComponentIds([]);
-    setSelectedSoftwareIds([]);
-    setFilteredFloors([]);
-    setFilteredRooms([]);
-    setFilteredAssets([]);
-    setFilteredComponents([]);
-    setFilteredSoftware([]);
+      // Call API to create and process repair request
+      await createAndProcessRepair(requestData);
+
+      setIsSubmitting(false);
+      setShowSuccessModal(true);
+
+      // Reset form
+      setFormData({
+        building: "",
+        floor: "",
+        assetId: "",
+        roomId: "",
+        errorType: "",
+        errorCategory: "",
+        description: "",
+        repairMethod: "",
+        repairNotes: "",
+        mediaFiles: [],
+      });
+      setSelectedComponentIds([]);
+      setSelectedSoftwareIds([]);
+      setSelectedComputerId("");
+      setFilteredFloors([]);
+      setFilteredRooms([]);
+      setFilteredComputers([]);
+      setFilteredComponents([]);
+      setFilteredSoftware([]);
+    } catch (error) {
+      setIsSubmitting(false);
+      message.error(
+        error instanceof Error
+          ? error.message
+          : "Ghi nhận và xử lý lỗi thất bại. Vui lòng thử lại."
+      );
+    }
   };
 
   // Handle success modal close
@@ -257,9 +423,9 @@ export default function GhiNhanXuLyLoiPage() {
   // Filter error types based on category
   const getFilteredErrorTypes = () => {
     if (formData.errorCategory === "software") {
-      return mockErrorTypes.filter(error => error.name.includes("phần mềm") || error.id === "ET002");
+      return []; // Không cần chọn loại lỗi cho phần mềm (auto = MAY_HU_PHAN_MEM)
     }
-    return mockErrorTypes.filter(error => !error.name.includes("phần mềm") && error.id !== "ET002");
+    return getHardwareErrorTypes();
   };
 
   return (
@@ -294,10 +460,9 @@ export default function GhiNhanXuLyLoiPage() {
         !formData.building || !formData.floor || !formData.roomId ? 0 :
         !formData.assetId ? 1 :
         !formData.errorCategory ? 2 :
-        (formData.errorCategory === "hardware" && selectedComponentIds.length === 0) || 
-        (formData.errorCategory === "software" && selectedSoftwareIds.length === 0) ? 3 :
-        !formData.description ? 4 :
-        !formData.repairMethod || !formData.repairNotes ? 5 : 6
+        (formData.errorCategory === "hardware" && !formData.errorType) ? 2 :
+        !formData.description ? 3 :
+        !formData.repairMethod || !formData.repairNotes ? 4 : 5
       } />
 
       {/* QR Scanner for Mobile */}
@@ -367,7 +532,7 @@ export default function GhiNhanXuLyLoiPage() {
                 >
                   {filteredRooms.map(room => (
                     <Option key={room.id} value={room.id}>
-                      {room.roomNumber}
+                      {room.name || room.roomNumber}
                     </Option>
                   ))}
                 </Select>
@@ -382,24 +547,17 @@ export default function GhiNhanXuLyLoiPage() {
             </h3>
             <Form.Item label="Chọn thiết bị" required>
               <Select
-                placeholder="Chọn thiết bị cần xử lý"
-                value={formData.assetId}
+                placeholder={!formData.roomId ? "Vui lòng chọn phòng trước" : "Chọn thiết bị"}
+                value={selectedComputerId}
                 onChange={handleAssetChange}
                 disabled={!formData.roomId}
-                showSearch
-                filterOption={(input, option) =>
-                  option?.children?.toString().toLowerCase().includes(input.toLowerCase()) ?? false
-                }
               >
-                {filteredAssets.map(asset => {
-                  const computer = mockComputers.find(comp => comp.assetId === asset.id);
-                  const machineLabel = computer?.machineLabel || "N/A";
-                  return (
-                    <Option key={asset.id} value={asset.id}>
-                      Máy {machineLabel} - {asset.name} ({asset.assetCode})
+                {Array.isArray(filteredComputers) &&
+                  filteredComputers.map((computer) => (
+                    <Option key={computer.id} value={computer.id}>
+                      Máy {computer.machineLabel} - {computer.asset?.name || "N/A"}
                     </Option>
-                  );
-                })}
+                  ))}
               </Select>
             </Form.Item>
           </div>
@@ -424,19 +582,29 @@ export default function GhiNhanXuLyLoiPage() {
               <Form.Item label="Chọn loại lỗi cụ thể" required>
                 <Select
                   placeholder="Chọn loại lỗi"
-                  value={formData.errorTypeId}
-                  onChange={(errorTypeId) => 
-                    setFormData(prev => ({ ...prev, errorTypeId }))
+                  value={formData.errorType}
+                  onChange={(errorType) => 
+                    setFormData(prev => ({ ...prev, errorType }))
                   }
                   disabled={!formData.errorCategory}
                 >
                   {getFilteredErrorTypes().map(errorType => (
-                    <Option key={errorType.id} value={errorType.id}>
+                    <Option key={errorType.key} value={errorType.key}>
                       {errorType.name}
                     </Option>
                   ))}
                 </Select>
               </Form.Item>
+            )}
+
+            {formData.errorCategory === "software" && (
+              <Alert
+                message="Lỗi phần mềm"
+                description="Đã tự động chọn loại lỗi 'Máy hư phần mềm'. Bạn có thể tiếp tục chọn phần mềm cụ thể ở bước tiếp theo."
+                type="info"
+                showIcon
+                className="mt-2"
+              />
             )}
           </div>
 
@@ -447,48 +615,49 @@ export default function GhiNhanXuLyLoiPage() {
             </h3>
             
             {formData.errorCategory === "hardware" && (
-              <Form.Item label="Linh kiện cụ thể" required>
-                <Select
-                  mode="multiple"
-                  placeholder="Chọn linh kiện bị lỗi"
-                  value={selectedComponentIds}
-                  onChange={setSelectedComponentIds}
-                  disabled={!formData.assetId || filteredComponents.length === 0}
-                >
-                  {filteredComponents.map(component => (
-                    <Option key={component.id} value={component.id}>
-                      {component.name} ({component.componentType})
-                    </Option>
-                  ))}
-                </Select>
-                {!formData.assetId && (
-                  <div className="text-sm text-gray-500 mt-1">
-                    Vui lòng chọn thiết bị trước để hiển thị danh sách linh kiện
-                  </div>
+              <>
+                {!canSelectComponents && formData.errorType && (
+                  <Alert
+                    message="Lưu ý"
+                    description="Chỉ có thể chọn linh kiện cụ thể cho các loại lỗi: 'Máy không khởi động', 'Máy không sử dụng được', hoặc 'Máy chạy chậm'."
+                    type="info"
+                    showIcon
+                    className="mb-4"
+                  />
                 )}
-              </Form.Item>
+                <Form.Item label="Linh kiện cụ thể">
+                  <Select
+                    mode="multiple"
+                    placeholder="Chọn linh kiện bị lỗi"
+                    value={selectedComponentIds}
+                    onChange={setSelectedComponentIds}
+                    disabled={!canSelectComponents || filteredComponents.length === 0}
+                  >
+                    {filteredComponents.map(component => (
+                      <Option key={component.id} value={component.id}>
+                        {component.name} ({component.componentType})
+                      </Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </>
             )}
 
             {formData.errorCategory === "software" && (
-              <Form.Item label="Phần mềm cụ thể" required>
+              <Form.Item label="Phần mềm cụ thể">
                 <Select
                   mode="multiple"
                   placeholder="Chọn phần mềm bị lỗi"
                   value={selectedSoftwareIds}
                   onChange={setSelectedSoftwareIds}
-                  disabled={!formData.assetId || filteredSoftware.length === 0}
+                  disabled={filteredSoftware.length === 0}
                 >
                   {filteredSoftware.map(software => (
                     <Option key={software.id} value={software.id}>
-                      {software.name} {software.version}
+                      {software.name} {software.version && `(${software.version})`}
                     </Option>
                   ))}
                 </Select>
-                {!formData.assetId && (
-                  <div className="text-sm text-gray-500 mt-1">
-                    Vui lòng chọn thiết bị trước để hiển thị danh sách phần mềm
-                  </div>
-                )}
               </Form.Item>
             )}
           </div>
@@ -535,20 +704,11 @@ export default function GhiNhanXuLyLoiPage() {
               <Radio.Group
                 value={formData.repairMethod}
                 onChange={(e) => {
-                  const method = e.target.value;
-                  setFormData(prev => ({ ...prev, repairMethod: method }));
-                  
-                  // Tự động cập nhật trạng thái dựa trên kết quả
-                  if (method === 'software_fixed' || method === 'hardware_fixed') {
-                    setFormData(prev => ({ ...prev, status: RepairStatus.ĐÃ_HOÀN_THÀNH }));
-                  } else if (method === 'need_replacement') {
-                    setFormData(prev => ({ ...prev, status: RepairStatus.CHỜ_THAY_THẾ }));
-                  }
+                  setFormData(prev => ({ ...prev, repairMethod: e.target.value }));
                 }}
                 disabled={!formData.errorCategory}
               >
                 <div className="space-y-3">
-                  {/* Hiển thị option phần mềm chỉ khi errorCategory là software */}
                   {formData.errorCategory === "software" && (
                     <Radio value="software_fixed" className="flex items-start">
                       <div className="ml-2">
@@ -558,7 +718,6 @@ export default function GhiNhanXuLyLoiPage() {
                     </Radio>
                   )}
                   
-                  {/* Hiển thị options phần cứng chỉ khi errorCategory là hardware */}
                   {formData.errorCategory === "hardware" && (
                     <>
                       <Radio value="hardware_fixed" className="flex items-start">
@@ -592,54 +751,36 @@ export default function GhiNhanXuLyLoiPage() {
             </Form.Item>
 
             {/* Hiển thị phần chọn linh kiện thay thế nếu cần */}
-            {formData.errorCategory === "hardware" && formData.repairMethod === 'need_replacement' && formData.assetId && (
+            {formData.errorCategory === "hardware" && formData.repairMethod === 'need_replacement' && (
               <div className="mt-4 p-4 border rounded-lg bg-orange-50 border-orange-200">
                 <h4 className="text-md font-semibold text-orange-800 mb-3">Linh kiện cần thay thế</h4>
-                <div className="space-y-3">
-                  {selectedComponentIds.length === 0 ? (
-                    <Alert
-                      message="⚠️ Bắt buộc: Chọn linh kiện cần thay thế"
-                      description="Bạn đã chọn 'Cần thay thế linh kiện'. Vui lòng quay lại bước 4 để chọn linh kiện cụ thể, hoặc chọn từ danh sách dưới đây. Không thể hoàn thành yêu cầu nếu chưa chọn linh kiện."
-                      type="error"
-                      showIcon
-                    />
-                  ) : (
-                    <Alert
-                      message={`Đã chọn ${selectedComponentIds.length} linh kiện để thay thế`}
-                      description={
-                        <div className="mt-2">
-                          <div className="text-sm">Linh kiện được chọn:</div>
-                          <ul className="mt-1 list-disc list-inside text-sm">
-                            {selectedComponentIds.map(id => {
-                              const component = filteredComponents.find(c => c.id === id);
-                              return component ? (
-                                <li key={id}>{component.name} ({component.componentType})</li>
-                              ) : null;
-                            })}
-                          </ul>
-                        </div>
-                      }
-                      type="info"
-                      showIcon
-                    />
-                  )}
-                  
-                  <Form.Item label="Bổ sung linh kiện khác (nếu cần)">
-                    <Select
-                      mode="multiple"
-                      placeholder="Chọn thêm linh kiện cần thay thế"
-                      value={selectedComponentIds}
-                      onChange={setSelectedComponentIds}
-                      disabled={filteredComponents.length === 0}
-                    >
-                      {filteredComponents.map(component => (
-                        <Option key={component.id} value={component.id}>
-                          {component.name} ({component.componentType})
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </div>
+                {selectedComponentIds.length === 0 ? (
+                  <Alert
+                    message="⚠️ Bắt buộc: Chọn linh kiện cần thay thế"
+                    description="Bạn đã chọn 'Cần thay thế linh kiện'. Vui lòng quay lại bước 4 để chọn linh kiện cụ thể."
+                    type="error"
+                    showIcon
+                  />
+                ) : (
+                  <Alert
+                    message={`Đã chọn ${selectedComponentIds.length} linh kiện để thay thế`}
+                    description={
+                      <div className="mt-2">
+                        <div className="text-sm">Linh kiện được chọn:</div>
+                        <ul className="mt-1 list-disc list-inside text-sm">
+                          {selectedComponentIds.map(id => {
+                            const component = filteredComponents.find(c => c.id === id);
+                            return component ? (
+                              <li key={id}>{component.name} ({component.componentType})</li>
+                            ) : null;
+                          })}
+                        </ul>
+                      </div>
+                    }
+                    type="info"
+                    showIcon
+                  />
+                )}
               </div>
             )}
 
@@ -649,31 +790,31 @@ export default function GhiNhanXuLyLoiPage() {
                 <div className="text-sm text-blue-800">
                   <strong>💡 Trạng thái sẽ được cập nhật:</strong>
                   <div className="mt-1">
-                    {formData.repairMethod === 'software_fixed' ? (
+                    {formData.repairMethod === 'software_fixed' || formData.repairMethod === 'hardware_fixed' ? (
                       <div>
                         <span className="text-green-600 font-medium">→ Đã hoàn thành</span>
-                        <div className="text-xs text-gray-600 mt-1">Lỗi phần mềm đã được khắc phục hoàn toàn</div>
-                      </div>
-                    ) : formData.repairMethod === 'hardware_fixed' ? (
-                      <div>
-                        <span className="text-green-600 font-medium">→ Đã hoàn thành</span>
-                        <div className="text-xs text-gray-600 mt-1">Lỗi phần cứng đã được sửa chữa thành công</div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          Lỗi {formData.errorCategory === 'software' ? 'phần mềm' : 'phần cứng'} đã được khắc phục hoàn toàn
+                        </div>
                       </div>
                     ) : formData.repairMethod === 'need_replacement' ? (
                       <div>
-                        <span className="text-orange-600 font-medium">→ Chờ thay thế linh kiện</span>
-                        <div className="text-xs text-gray-600 mt-1">Yêu cầu sẽ chuyển sang quy trình thay thế linh kiện</div>
+                        <span className="text-orange-600 font-medium">→ Chờ thay thế</span>
+                        <div className="text-xs text-gray-600 mt-1 space-y-1">
+                          <div>✅ Repair Request: Status = <strong>&quot;CHỜ_THAY_THẾ&quot;</strong></div>
+                          <div>✅ Linh kiện: Status vẫn giữ <strong>&quot;FAULTY&quot;</strong></div>
+                          <div className="pt-1 text-blue-600">
+                            📋 <strong>Bước tiếp theo:</strong> Vào mục &quot;Lập phiếu đề xuất&quot; để tạo đề xuất thay thế chính thức.
+                            Khi đó, linh kiện sẽ chuyển sang trạng thái <strong>&quot;PENDING_REPLACEMENT&quot;</strong>.
+                          </div>
+                        </div>
                       </div>
-                    ) : (
-                      <span className="text-blue-900 font-medium">→ Đang xử lý</span>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
             )}
           </div>
-
-
 
           {/* Bước 7: Đính kèm hình ảnh */}
           <div className="mb-6">
@@ -696,7 +837,6 @@ export default function GhiNhanXuLyLoiPage() {
                     type="dashed"
                     icon={<CameraOutlined />}
                     onClick={() => {
-                      // In real app, this would open camera
                       const input = document.createElement('input');
                       input.type = 'file';
                       input.accept = 'image/*';
@@ -725,6 +865,8 @@ export default function GhiNhanXuLyLoiPage() {
                         <Image
                           src={URL.createObjectURL(file)}
                           alt={`Preview ${index + 1}`}
+                          width={150}
+                          height={96}
                           className="w-full h-20 object-cover rounded"
                         />
                         <Button
@@ -749,18 +891,25 @@ export default function GhiNhanXuLyLoiPage() {
            formData.assetId && 
            formData.description && 
            formData.repairMethod &&
-           formData.repairNotes &&
-           (formData.errorCategory !== "hardware" || formData.errorTypeId) && (
+           formData.repairNotes && (
             <div className="mb-6">
               <Alert
                 message="Xem lại thông tin trước khi ghi nhận"
                 description={
                   <div className="mt-2">
-                    <p><strong>Vị trí:</strong> {formData.building} - {formData.floor} - {filteredRooms.find(r => r.id === formData.roomId)?.roomNumber}</p>
-                    <p><strong>Thiết bị:</strong> {filteredAssets.find(a => a.id === formData.assetId)?.name}</p>
+                    <p><strong>Vị trí:</strong> {formData.building} - {formData.floor} - {
+                      filteredRooms.find(r => r.id === formData.roomId)?.name || 
+                      filteredRooms.find(r => r.id === formData.roomId)?.roomNumber
+                    }</p>
+                    <p><strong>Thiết bị:</strong> {
+                      (() => {
+                        const computer = filteredComputers.find(c => c.id === selectedComputerId);
+                        return computer ? `Máy ${computer.machineLabel} - ${computer.asset?.name}` : "N/A";
+                      })()
+                    }</p>
                     <p><strong>Phân loại:</strong> {formData.errorCategory === 'hardware' ? 'Lỗi phần cứng' : 'Lỗi phần mềm'}</p>
-                    {formData.errorCategory === "hardware" && formData.errorTypeId && (
-                      <p><strong>Loại lỗi:</strong> {mockErrorTypes.find(e => e.id === formData.errorTypeId)?.name}</p>
+                    {formData.errorCategory === "hardware" && formData.errorType && (
+                      <p><strong>Loại lỗi:</strong> {getErrorTypeByKey(formData.errorType as ErrorType)?.name}</p>
                     )}
                     <p><strong>Kết quả xử lý:</strong> {
                       formData.repairMethod === 'software_fixed' ? 'Lỗi phần mềm - Đã sửa được' :
@@ -768,7 +917,6 @@ export default function GhiNhanXuLyLoiPage() {
                       formData.repairMethod === 'need_replacement' ? 'Cần thay thế linh kiện' :
                       formData.repairMethod
                     }</p>
-                    <p><strong>Trạng thái:</strong> {formData.status}</p>
                   </div>
                 }
                 type="success"
@@ -790,10 +938,11 @@ export default function GhiNhanXuLyLoiPage() {
                 !formData.building || 
                 !formData.roomId || 
                 !formData.assetId || 
+                !formData.errorCategory ||
+                (formData.errorCategory === "hardware" && !formData.errorType) ||
                 !formData.description || 
                 !formData.repairMethod ||
                 !formData.repairNotes ||
-                (formData.errorCategory === "hardware" && !formData.errorTypeId) ||
                 (formData.repairMethod === 'need_replacement' && selectedComponentIds.length === 0)
               }
             >

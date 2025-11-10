@@ -6,49 +6,49 @@ export const mockAssets: SimpleAsset[] = [
   {
     id: "ASSET001",
     name: "PC Dell OptiPlex 3080",
-    assetCode: "19-0205/01",
+    ktCode: "19-0205/01",
     roomId: "ROOM001"
   },
   {
     id: "ASSET002",
     name: "PC Dell OptiPlex 3080", 
-    assetCode: "19-0205/02",
+    ktCode: "19-0205/02",
     roomId: "ROOM001"
   },
   {
     id: "ASSET003",
     name: "PC HP ProDesk 400",
-    assetCode: "19-0206/01", 
+    ktCode: "19-0206/01", 
     roomId: "ROOM001"
   },
   {
     id: "ASSET004",
     name: "PC Lenovo ThinkCentre",
-    assetCode: "19-0207/01",
+    ktCode: "19-0207/01",
     roomId: "ROOM002"
   },
   {
     id: "ASSET005", 
     name: "PC Dell Inspiron",
-    assetCode: "19-0208/01",
+    ktCode: "19-0208/01",
     roomId: "ROOM002"
   },
   {
     id: "ASSET006",
     name: "PC HP Pavilion",
-    assetCode: "19-0209/01",
+    ktCode: "19-0209/01",
     roomId: "ROOM002"
   },
   {
     id: "ASSET009",
     name: "PC ASUS VivoBook",
-    assetCode: "19-0210/01",
+    ktCode: "19-0210/01",
     roomId: "ROOM003"
   },
   {
     id: "ASSET010",
     name: "PC MSI Modern",
-    assetCode: "19-0211/01",
+    ktCode: "19-0211/01",
     roomId: "ROOM004"
   }
 ];
@@ -59,25 +59,25 @@ export const mockAllAssets: SimpleAsset[] = [
   {
     id: "ASSET007",
     name: "Máy in Canon LBP6030",
-    assetCode: "19-0301/01",
+    ktCode: "19-0301/01",
     roomId: "ROOM001"
   },
   {
     id: "ASSET008",
     name: "Bàn giảng viên gỗ",
-    assetCode: "19-0302/01",
+    ktCode: "19-0302/01",
     roomId: "ROOM003"
   },
   {
     id: "ASSET011",
     name: "Máy in HP LaserJet Pro",
-    assetCode: "19-0303/01",
+    ktCode: "19-0303/01",
     roomId: "ROOM005"
   },
   {
     id: "ASSET012",
     name: "Projector Epson EB-X06",
-    assetCode: "19-0212/01",
+    ktCode: "19-0212/01",
     roomId: "ROOM006"
   }
 ];
@@ -122,6 +122,6 @@ export const getAssetsByRoomId = (roomId: string): SimpleAsset[] => {
   return mockAssets.filter(asset => asset.roomId === roomId);
 };
 
-export const getAssetByCode = (assetCode: string): SimpleAsset | undefined => {
-  return mockAssets.find(asset => asset.assetCode === assetCode);
+export const getAssetByCode = (ktCode: string): SimpleAsset | undefined => {
+  return mockAssets.find(asset => asset.ktCode === ktCode);
 };

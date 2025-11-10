@@ -1,75 +1,97 @@
 "use client";
-import { Monitor, CheckCircle, AlertTriangle, Clock } from "lucide-react";
-import { Asset } from "@/types";
+import { Monitor, CheckCircle, AlertTriangle, Clock, Loader2 } from "lucide-react";
+import { Card, Statistic, Row, Col, Skeleton } from "antd";
+import type { DeviceAsset } from "@/types/computer";
+import type { ComputerSummary, AssetStatus } from "@/types/computer";
 
 interface DeviceStatsCardsProps {
-  assets: Asset[];
+  assets: DeviceAsset[];
+  summary?: ComputerSummary | null;
+  loading?: boolean;
 }
 
-export default function DeviceStatsCards({ assets }: DeviceStatsCardsProps) {
+export default function DeviceStatsCards({ 
+  assets, 
+  summary,
+  loading = false 
+}: DeviceStatsCardsProps) {
+  // Sử dụng summary từ API nếu có, fallback về tính từ assets
+  const getStatusCount = (status: string) => {
+    if (summary?.byStatus) {
+      return summary.byStatus[status] || 0;
+    }
+    // Fallback: tính từ assets hiện tại
+    return assets.filter((e) => e.status === status).length;
+  };
+
+  const getTotalCount = () => {
+    if (summary?.totalComputers) {
+      return summary.totalComputers;
+    }
+    // Fallback: đếm assets hiện tại
+    return assets.length;
+  };
+
   const statsData = [
     {
       title: "Đang sử dụng",
-      value: assets.filter((e) => e.status === "đang_sử_dụng").length,
+      value: getStatusCount("IN_USE"),
       icon: CheckCircle,
       color: "text-green-600",
       bgColor: "bg-green-50",
+      valueStyle: { color: "#52c41a" },
     },
     {
       title: "Chờ xử lý",
-      value: assets.filter(
-        (e) => e.status === "chờ_bàn_giao" || e.status === "chờ_tiếp_nhận"
-      ).length,
+      value: getStatusCount("WAITING_HANDOVER") + getStatusCount("WAITING_RECEIVE"),
       icon: Clock,
       color: "text-yellow-600",
       bgColor: "bg-yellow-50",
+      valueStyle: { color: "#faad14" },
     },
     {
       title: "Hư hỏng",
-      value: assets.filter((e) => e.status === "hư_hỏng").length,
+      value: getStatusCount("DAMAGED"),
       icon: AlertTriangle,
       color: "text-red-600",
       bgColor: "bg-red-50",
+      valueStyle: { color: "#ff4d4f" },
     },
     {
       title: "Tổng số",
-      value: assets.length,
+      value: getTotalCount(),
       icon: Monitor,
       color: "text-blue-600",
       bgColor: "bg-blue-50",
+      valueStyle: { color: "#1890ff" },
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <Row gutter={[16, 16]}>
       {statsData.map((stat, index) => {
         const IconComponent = stat.icon;
         return (
-          <div
-            key={index}
-            className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className={`w-10 h-10 ${stat.bgColor} rounded-lg flex items-center justify-center`}>
-                    <IconComponent className={`h-6 w-6 ${stat.color}`} />
+          <Col key={index} xs={24} sm={12} lg={6}>
+            <Card bordered={false} className="hover:shadow-md transition-shadow">
+              {loading ? (
+                <Skeleton active paragraph={{ rows: 1 }} />
+              ) : (
+                <div className="flex items-center">
+                  <div className={`w-12 h-12 ${stat.bgColor} rounded-lg flex items-center justify-center mr-4`}>
+                    <IconComponent className={`h-7 w-7 ${stat.color}`} />
                   </div>
+                  <Statistic
+                    title={stat.title}
+                    value={stat.value}
+                    valueStyle={stat.valueStyle}
+                  />
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      {stat.title}
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      {stat.value}
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+              )}
+            </Card>
+          </Col>
         );
       })}
-    </div>
+    </Row>
   );
 }
