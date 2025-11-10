@@ -1,4 +1,4 @@
-import { ErrorType } from './errorType';
+import { ErrorType } from "./errorType";
 
 // Interface cho ErrorTypes - DEPRECATED - Sử dụng ErrorType enum thay thế
 export interface ErrorTypeOld {
@@ -595,4 +595,19 @@ export interface SubmissionFormData {
   attachments: string;
   director: string;
   rector: string;
+}
+
+// Interface cho dữ liệu form biên bản kiểm tra
+export interface InspectionFormData {
+  requestedBy: string; // Căn cứ đề nghị của
+  year: string; // Năm
+  inspectionDay: string; // Ngày kiểm tra
+  inspectionMonth: string; // Tháng kiểm tra
+  inspectionYear: string; // Năm kiểm tra
+  location: string; // Tại vị trí
+  departmentRep: string; // Đại diện khoa
+  departmentName: string; // Tên khoa/đơn vị
+  adminRep: string; // Đại diện phòng quản trị
+  adminDepartment: string; // Phòng Quản trị
+  notes: string; // Ghi chú bổ sung
 }
