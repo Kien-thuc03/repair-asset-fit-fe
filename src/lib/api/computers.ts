@@ -112,13 +112,14 @@ export const getComputers = async (
   params?: GetComputersParams
 ): Promise<GetComputersResponse> => {
   try {
+    // Destructure to separate status from other params
+    const { status, ...otherParams } = params || {};
+    
     const response = await api.get<GetComputersResponse>("/computer", {
       params: {
-        ...params,
-        // Convert array to multiple query params
-        ...(params?.status && params.status.length > 0
-          ? { status: params.status }
-          : {}),
+        ...otherParams,
+        // Only include status if array has items
+        ...(status && status.length > 0 ? { status } : {}),
       },
     });
 

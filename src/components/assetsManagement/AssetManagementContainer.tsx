@@ -122,15 +122,6 @@ export default function TechnicianDeviceManagementContainer() {
     fetchRooms();
   }, []);
 
-  // Fetch computers from API on mount
-  useEffect(() => {
-    fetchComputers({
-      page: currentPage,
-      limit: pageSize,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency - only fetch on mount
-
   // Fetch computers when filters or pagination change
   useEffect(() => {
     const params: {
@@ -146,35 +137,33 @@ export default function TechnicianDeviceManagementContainer() {
       limit: pageSize,
     };
 
-    // Add search filter
-    if (searchTerm) {
+    // Add search filter (only if not empty)
+    if (searchTerm && searchTerm.trim()) {
       params.search = searchTerm;
     }
 
-    // Add status filter
-    if (statusFilter) {
+    // Add status filter (only if not empty)
+    if (statusFilter && statusFilter.trim()) {
       params.status = [statusFilter];
     }
 
-    // Add building filter
-    if (buildingFilter) {
+    // Add building filter (only if not empty)
+    if (buildingFilter && buildingFilter.trim()) {
       params.building = buildingFilter;
     }
 
-    // Add floor filter
-    if (floorFilter) {
+    // Add floor filter (only if not empty)
+    if (floorFilter && floorFilter.trim()) {
       params.floor = floorFilter;
     }
 
-    // Add room filter
-    if (roomFilter) {
+    // Add room filter (only if not empty)
+    if (roomFilter && roomFilter.trim()) {
       params.roomName = roomFilter;
     }
 
-    // Only fetch if not initial render
-    if (currentPage !== 1 || searchTerm || statusFilter || floorFilter || buildingFilter || roomFilter) {
-      fetchComputers(params);
-    }
+    // Always fetch when dependencies change (including when filters are cleared)
+    fetchComputers(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, floorFilter, buildingFilter, roomFilter, currentPage, pageSize]);
 

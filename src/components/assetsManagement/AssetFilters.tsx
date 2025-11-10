@@ -39,14 +39,14 @@ export default function DeviceFilters({
   // Get status options from enum
   const statusOptions = getAssetStatusOptions();
 
-  // Count active filters
+  // Count active filters (only count non-empty values)
   const activeFiltersCount = [
     searchTerm,
     statusFilter,
     buildingFilter,
     floorFilter,
     roomFilter,
-  ].filter((val) => val && val !== "all").length;
+  ].filter((val) => val && val.trim() !== "").length;
 
   return (
     <Card>
@@ -67,7 +67,7 @@ export default function DeviceFilters({
           <Select
             placeholder="Tất cả trạng thái"
             value={statusFilter || undefined}
-            onChange={(value) => onStatusChange(value || "all")}
+            onChange={(value) => onStatusChange(value || "")}
             allowClear
             style={{ width: "100%" }}
             options={statusOptions}
