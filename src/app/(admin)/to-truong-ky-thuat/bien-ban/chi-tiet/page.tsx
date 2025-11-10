@@ -25,6 +25,8 @@ interface InspectionReport {
   reportNumber: string;
   title: string;
   relatedReportTitle: string;
+  relatedReportUrl?: string; // URL tờ trình
+  verificationReportUrl?: string; // URL biên bản
   inspectionDate: string;
   department: string;
   createdBy: string;
@@ -100,6 +102,8 @@ export default function ChiTietBienBanPage() {
       reportNumber: proposal.proposalCode,
       title: `Biên bản kiểm tra - ${proposal.title || "Không có tiêu đề"}`,
       relatedReportTitle: getRelatedReportTitle(),
+      relatedReportUrl: proposal.submissionFormUrl, // URL tờ trình
+      verificationReportUrl: proposal.verificationReportUrl, // URL biên bản
       inspectionDate: new Date(proposal.createdAt).toISOString().split("T")[0],
       department: "Phòng Quản trị Tài sản",
       createdBy: proposal.proposer?.fullName || "Unknown",
@@ -203,6 +207,8 @@ export default function ChiTietBienBanPage() {
             reportNumber={report.reportNumber}
             title={report.title}
             relatedReportTitle={report.relatedReportTitle}
+            relatedReportUrl={report.relatedReportUrl}
+            verificationReportUrl={report.verificationReportUrl}
             inspectionDate={report.inspectionDate}
             department={report.department}
           />

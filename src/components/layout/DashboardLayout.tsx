@@ -164,7 +164,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: MapPin,
       },
       {
-        name: "Danh sách báo lỗi",
+        name: "Quản lý báo lỗi",
         href: "/to-truong-ky-thuat/danh-sach-bao-loi",
         icon: ClipboardList,
       },
