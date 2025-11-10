@@ -1,35 +1,35 @@
 "use client";
 import { Monitor, Tag, Hash, Building2 } from "lucide-react";
 import { Asset } from "@/types";
-import { assetStatusConfig } from "@/lib/mockData";
 
 interface TechnicianDeviceBasicInfoProps {
   asset: Asset;
 }
 
 export default function TechnicianDeviceBasicInfo({ asset }: TechnicianDeviceBasicInfoProps) {
+  // Asset status configuration - từ database enum
   const getStatusConfig = (status: string) => {
-    const config = assetStatusConfig[status as keyof typeof assetStatusConfig];
-    if (!config) {
-      return {
-        label: status,
-        color: "bg-gray-100 text-gray-800 border-gray-200"
-      };
-    }
-    
-    const colorMap: { [key: string]: string } = {
-      green: "bg-green-100 text-green-800 border-green-200",
-      blue: "bg-blue-100 text-blue-800 border-blue-200",
-      orange: "bg-orange-100 text-orange-800 border-orange-200",
-      red: "bg-red-100 text-red-800 border-red-200",
-      gray: "bg-gray-100 text-gray-800 border-gray-200",
-      purple: "bg-purple-100 text-purple-800 border-purple-200",
-      black: "bg-gray-100 text-gray-800 border-gray-200"
+    const statusMap: { [key: string]: { label: string; color: string } } = {
+      "IN_USE": { label: "Đang sử dụng", color: "bg-green-100 text-green-800 border-green-200" },
+      "DANG_SU_DUNG": { label: "Đang sử dụng", color: "bg-green-100 text-green-800 border-green-200" },
+      "WAITING_HANDOVER": { label: "Chờ bàn giao", color: "bg-blue-100 text-blue-800 border-blue-200" },
+      "CHO_BAN_GIAO": { label: "Chờ bàn giao", color: "bg-blue-100 text-blue-800 border-blue-200" },
+      "WAITING_RECEIVE": { label: "Chờ tiếp nhận", color: "bg-orange-100 text-orange-800 border-orange-200" },
+      "CHO_TIEP_NHAN": { label: "Chờ tiếp nhận", color: "bg-orange-100 text-orange-800 border-orange-200" },
+      "DAMAGED": { label: "Hư hỏng", color: "bg-red-100 text-red-800 border-red-200" },
+      "HU_HONG": { label: "Hư hỏng", color: "bg-red-100 text-red-800 border-red-200" },
+      "LOST": { label: "Đã mất", color: "bg-gray-100 text-gray-800 border-gray-200" },
+      "DA_MAT": { label: "Đã mất", color: "bg-gray-100 text-gray-800 border-gray-200" },
+      "PROPOSED_LIQUIDATION": { label: "Đề xuất thanh lý", color: "bg-purple-100 text-purple-800 border-purple-200" },
+      "DE_XUAT_THANH_LY": { label: "Đề xuất thanh lý", color: "bg-purple-100 text-purple-800 border-purple-200" },
+      "LIQUIDATED": { label: "Đã thanh lý", color: "bg-gray-100 text-gray-800 border-gray-200" },
+      "DA_THANH_LY": { label: "Đã thanh lý", color: "bg-gray-100 text-gray-800 border-gray-200" },
+      "WAITING_ALLOCATION": { label: "Chờ phân bổ", color: "bg-yellow-100 text-yellow-800 border-yellow-200" },
     };
 
-    return {
-      label: config.label,
-      color: colorMap[config.color] || "bg-gray-100 text-gray-800 border-gray-200"
+    return statusMap[status] || {
+      label: status,
+      color: "bg-gray-100 text-gray-800 border-gray-200"
     };
   };
 

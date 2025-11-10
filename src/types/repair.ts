@@ -297,13 +297,45 @@ export interface Asset {
   serialNumber: string;
   roomId: string;
   roomName: string;
-  status: AssetStatus;
+  status: AssetStatus | string; // Accept both enum and string from API
   purchaseDate: string;
-  warrantyExpiry: string;
+  warrantyExpiry?: string;
   lastMaintenanceDate?: string;
   assignedTo?: string;
   specifications?: Record<string, string>;
-  qrCode: string;
+  qrCode?: string;
+  // Extended fields from Computer Detail API
+  building?: string;
+  floor?: string;
+  machineLabel?: string;
+  componentCount?: number;
+  components?: Array<{
+    id: string;
+    componentType: string;
+    name: string;
+    componentSpecs?: string;
+    serialNumber?: string;
+    status: string;
+    installedAt: string;
+    removedAt?: string;
+    notes?: string;
+  }>;
+  software?: Array<{
+    id: string;
+    computerSoftwareId: string;
+    name: string;
+    version?: string;
+    publisher?: string;
+    licenseKey?: string;
+    installationDate?: string;
+    notes?: string;
+  }>;
+  repairSummary?: {
+    total: number;
+    inProgress: number;
+    completed: number;
+    lastRequestDate?: string;
+  };
 }
 
 // Component interface for computer assets (updated to match database schema)

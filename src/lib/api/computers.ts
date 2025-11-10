@@ -133,15 +133,26 @@ export const getComputers = async (
 };
 
 /**
- * Get computer by ID
- * @param computerId Computer ID (UUID)
- * @returns Promise with computer details
+ * Get computer detail by ID
+ * Endpoint: GET /computer/:id
+ * 
+ * @param computerId Computer ID hoặc Asset ID (UUID)
+ * @returns Promise with full computer details
+ * 
+ * @example
+ * ```typescript
+ * // Get by computer ID
+ * const computer = await getComputerDetail('uuid-computer-id');
+ * 
+ * // Get by asset ID (also works)
+ * const computer = await getComputerDetail('uuid-asset-id');
+ * ```
  */
-export const getComputerById = async (
+export const getComputerDetail = async (
   computerId: string
-): Promise<Computer> => {
+): Promise<import("@/types/computer").ComputerDetail> => {
   try {
-    const response = await api.get<ApiResponse<Computer>>(
+    const response = await api.get<ApiResponse<import("@/types/computer").ComputerDetail>>(
       `/computer/${computerId}`
     );
     return response.data.data;
@@ -152,3 +163,8 @@ export const getComputerById = async (
     );
   }
 };
+
+/**
+ * @deprecated Use getComputerDetail instead
+ */
+export const getComputerById = getComputerDetail;

@@ -1,7 +1,6 @@
 "use client";
 import { Cpu, HardDrive, Monitor, Info, MemoryStick, Box, Zap, Keyboard, Mouse, Wifi, CircuitBoard, Fan, Speaker, Camera } from "lucide-react";
-import { Asset, ComponentType, Component } from "@/types";
-import { getInstalledComponentsByAssetId } from "@/lib/mockData";
+import { Asset } from "@/types";
 
 interface AssetSpecificationsProps {
   asset: Asset;
@@ -10,38 +9,38 @@ interface AssetSpecificationsProps {
 export default function AssetSpecifications({
   asset,
 }: AssetSpecificationsProps) {
-  // Lấy danh sách linh kiện được cài đặt trên thiết bị này từ database
-  const installedComponents: Component[] = getInstalledComponentsByAssetId(asset.id);
+  // Lấy danh sách linh kiện từ API data (đã có trong asset.components)
+  const installedComponents = asset.components || [];
 
   // Function to get appropriate icon for each component type
-  const getComponentIcon = (componentType: ComponentType) => {
+  const getComponentIcon = (componentType: string) => {
     switch (componentType) {
-      case ComponentType.CPU:
+      case "CPU":
         return <Cpu className="w-4 h-4 text-blue-500" />;
-      case ComponentType.RAM:
+      case "RAM":
         return <MemoryStick className="w-4 h-4 text-green-500" />;
-      case ComponentType.STORAGE:
+      case "STORAGE":
         return <HardDrive className="w-4 h-4 text-orange-500" />;
-      case ComponentType.GPU:
+      case "GPU":
         return <Box className="w-4 h-4 text-purple-500" />;
-      case ComponentType.MAINBOARD:
+      case "MAINBOARD":
         return <CircuitBoard className="w-4 h-4 text-red-500" />;
-      case ComponentType.PSU:
+      case "PSU":
         return <Zap className="w-4 h-4 text-yellow-500" />;
-      case ComponentType.MONITOR:
+      case "MONITOR":
         return <Monitor className="w-4 h-4 text-gray-500" />;
-      case ComponentType.KEYBOARD:
+      case "KEYBOARD":
         return <Keyboard className="w-4 h-4 text-indigo-500" />;
-      case ComponentType.MOUSE:
+      case "MOUSE":
         return <Mouse className="w-4 h-4 text-pink-500" />;
-      case ComponentType.NETWORK:
-      case ComponentType.NETWORK_CARD:
+      case "NETWORK":
+      case "NETWORK_CARD":
         return <Wifi className="w-4 h-4 text-cyan-500" />;
-      case ComponentType.COOLER:
+      case "COOLER":
         return <Fan className="w-4 h-4 text-teal-500" />;
-      case ComponentType.SPEAKER:
+      case "SPEAKER":
         return <Speaker className="w-4 h-4 text-amber-500" />;
-      case ComponentType.WEBCAM:
+      case "WEBCAM":
         return <Camera className="w-4 h-4 text-lime-500" />;
       default:
         return <Info className="w-4 h-4 text-gray-500" />;
@@ -49,46 +48,28 @@ export default function AssetSpecifications({
   };
 
   // Function to get Vietnamese name for component types
-  const getComponentTypeName = (componentType: ComponentType): string => {
-    switch (componentType) {
-      case ComponentType.CPU:
-        return "Bộ xử lý";
-      case ComponentType.RAM:
-        return "Bộ nhớ";
-      case ComponentType.STORAGE:
-        return "Ổ cứng";
-      case ComponentType.GPU:
-        return "Card đồ họa";
-      case ComponentType.MAINBOARD:
-        return "Bo mạch chủ";
-      case ComponentType.PSU:
-        return "Nguồn";
-      case ComponentType.MONITOR:
-        return "Màn hình";
-      case ComponentType.KEYBOARD:
-        return "Bàn phím";
-      case ComponentType.MOUSE:
-        return "Chuột";
-      case ComponentType.NETWORK:
-      case ComponentType.NETWORK_CARD:
-        return "Card mạng";
-      case ComponentType.COOLER:
-        return "Tản nhiệt";
-      case ComponentType.SPEAKER:
-        return "Loa";
-      case ComponentType.WEBCAM:
-        return "Webcam";
-      case ComponentType.CASE:
-        return "Vỏ case";
-      case ComponentType.OPTICAL_DRIVE:
-        return "Ổ đĩa quang";
-      case ComponentType.UPS:
-        return "UPS";
-      case ComponentType.SOUND_CARD:
-        return "Card âm thanh";
-      default:
-        return "Khác";
-    }
+  const getComponentTypeName = (componentType: string): string => {
+    const typeMap: { [key: string]: string } = {
+      "CPU": "Bộ xử lý",
+      "RAM": "Bộ nhớ",
+      "STORAGE": "Ổ cứng",
+      "GPU": "Card đồ họa",
+      "MAINBOARD": "Bo mạch chủ",
+      "PSU": "Nguồn",
+      "MONITOR": "Màn hình",
+      "KEYBOARD": "Bàn phím",
+      "MOUSE": "Chuột",
+      "NETWORK": "Card mạng",
+      "NETWORK_CARD": "Card mạng",
+      "COOLER": "Tản nhiệt",
+      "SPEAKER": "Loa",
+      "WEBCAM": "Webcam",
+      "CASE": "Vỏ case",
+      "OPTICAL_DRIVE": "Ổ đĩa quang",
+      "UPS": "UPS",
+      "SOUND_CARD": "Card âm thanh",
+    };
+    return typeMap[componentType] || "Khác";
   };
 
   return (

@@ -201,7 +201,31 @@ export interface ComputerRoom {
 }
 
 /**
- * Computer Item từ API
+ * Computer Software Interface
+ */
+export interface ComputerSoftware {
+  id: string;
+  computerSoftwareId: string;
+  name: string;
+  version?: string;
+  publisher?: string;
+  licenseKey?: string;
+  installationDate?: string;
+  notes?: string;
+}
+
+/**
+ * Repair Request Summary Interface
+ */
+export interface RepairRequestSummary {
+  total: number;
+  inProgress: number;
+  completed: number;
+  lastRequestDate?: string;
+}
+
+/**
+ * Computer Item từ API (Basic - for list)
  */
 export interface Computer {
   id: string;
@@ -211,6 +235,23 @@ export interface Computer {
   room?: ComputerRoom;
   components: ComputerComponent[];
   componentCount: number;
+}
+
+/**
+ * Computer Detail từ API (Full detail)
+ * Response từ GET /computer/:id
+ */
+export interface ComputerDetail {
+  id: string;
+  machineLabel: string;
+  notes?: string;
+  asset: ComputerAsset;
+  room?: ComputerRoom;
+  components: ComputerComponent[];
+  componentCount: number;
+  software?: ComputerSoftware[];
+  softwareCount: number;
+  repairSummary?: RepairRequestSummary;
 }
 
 /**
