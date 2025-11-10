@@ -378,7 +378,7 @@ export default function ChiTietBaoLoiPage() {
                   <p className="flex items-center gap-2">
                     <Monitor className="w-4 h-4 text-gray-400" />
                     <span className="font-medium">
-                      {currentRequest.assetCode} - {currentRequest.assetName}
+                      {currentRequest.ktCode} - {currentRequest.assetName}
                     </span>
                   </p>
                 </div>

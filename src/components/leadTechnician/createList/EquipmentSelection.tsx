@@ -2,7 +2,7 @@ import { Computer, User, Building2, Calendar, AlertCircle } from "lucide-react";
 
 interface Equipment {
   id: string;
-  assetCode: string;
+  ktCode: string;
   assetName: string;
   requestedBy: string;
   location: string;
@@ -68,7 +68,7 @@ export default function EquipmentSelection({
                     <Computer className="h-5 w-5 text-gray-400 mr-2" />
                     <div className="flex-1">
                       <div className="text-sm font-medium text-gray-900">
-                        {request.assetCode} - {request.assetName}
+                        {request.ktCode} - {request.assetName}
                       </div>
                     </div>
                     <div className="text-sm font-semibold text-green-600">

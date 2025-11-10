@@ -248,7 +248,7 @@ export default function RepairDetailPage() {
 									<p className="text-sm font-medium text-gray-500 mb-1">Tài sản</p>
 									<p className="flex items-center gap-2">
 										<Monitor className="w-4 h-4 text-gray-400" />
-										<span className="font-medium">{currentRequest.assetCode} - {currentRequest.assetName}</span>
+										<span className="font-medium">{currentRequest.ktCode} - {currentRequest.assetName}</span>
 									</p>
 								</div>
 								<div>

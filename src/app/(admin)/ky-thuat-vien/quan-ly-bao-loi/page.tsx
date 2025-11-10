@@ -114,7 +114,7 @@ export default function DanhSachBaoLoiPage() {
 				'STT': index + 1,
 				'Mã yêu cầu': item.requestCode,
 				'Tên tài sản': item.assetName || 'Chưa xác định',
-				'Mã tài sản': item.assetCode || 'Chưa xác định',
+				'Mã tài sản': item.ktCode || 'Chưa xác định',
 				'Linh kiện': item.componentName || 'Chưa xác định',
 				'Vị trí': `${item.buildingName || 'Chưa xác định'} - ${item.roomName || 'Chưa xác định'}`,
 				'Máy': `Máy ${item.machineLabel || 'Chưa xác định'}`,
@@ -154,7 +154,7 @@ export default function DanhSachBaoLoiPage() {
 		// Lọc dữ liệu từ API
 		const filtered = repairs.filter((item: RepairRequest) => {
 			const matchesSearch = searchText ? 
-				[item.requestCode, item.assetName, item.assetCode, item.componentName, item.errorTypeName, item.roomName, item.buildingName]
+				[item.requestCode, item.assetName, item.ktCode, item.componentName, item.errorTypeName, item.roomName, item.buildingName]
 					.filter(Boolean)
 					.join(' ')
 					.toLowerCase()

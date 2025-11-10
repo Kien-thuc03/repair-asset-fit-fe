@@ -29,7 +29,7 @@ export default function TechnicianDeviceDetailHeader({
 
   const rolePath = getRoleFromPath();
   const getStatusConfig = (status: string) => {
-    const config = assetStatusConfig[status as keyof typeof assetStatusConfig];
+    const config = assetStatusConfig[status as unknown as keyof typeof assetStatusConfig];
     if (!config) {
       return {
         label: status,
@@ -103,7 +103,7 @@ export default function TechnicianDeviceDetailHeader({
                 </h1>
                 <p className="text-gray-600 text-sm lg:text-base flex items-center">
                   <Wrench className="w-4 h-4 mr-1" />
-                  {asset.assetCode} • {asset.category}
+                  {asset.ktCode} • {asset.category}
                 </p>
               </div>
             </div>

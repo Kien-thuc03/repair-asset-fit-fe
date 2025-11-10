@@ -21,7 +21,7 @@ export default function AssetInfo({ request }: AssetInfoProps) {
               Mã tài sản
             </label>
             <p className="text-sm text-gray-900 mt-1 font-mono bg-gray-50 px-3 py-2 rounded">
-              {request.assetCode}
+              {request.ktCode}
             </p>
           </div>
           <div>

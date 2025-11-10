@@ -20,11 +20,11 @@ import type { Computer, DeviceAsset } from "@/types/computer";
 const convertComputerToDeviceAsset = (computer: Computer): DeviceAsset => {
   return {
     id: computer.asset.id,
-    assetCode: computer.asset.ktCode,
+    ktCode: computer.asset.ktCode,
     name: computer.asset.name,
     category: computer.asset.categoryName || "Máy tính",
-    model: computer.asset.specs || "Không có thông số",
-    serialNumber: computer.asset.fixedCode,
+    specs: computer.asset.specs || "Không có thông số",
+    fixedCode: computer.asset.fixedCode,
     roomId: computer.room?.id || "",
     roomName: computer.room?.name || "Không xác định",
     status: computer.asset.status,

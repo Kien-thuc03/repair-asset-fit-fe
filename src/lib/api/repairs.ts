@@ -206,7 +206,7 @@ const transformApiResponse = (apiData: ApiRepairResponse): RepairRequest => {
     components: apiData.components,
 
     // Computed fields từ nested objects
-    assetCode: apiData.computerAsset?.ktCode || "Chưa xác định",
+    ktCode: apiData.computerAsset?.ktCode || "Chưa xác định",
     assetName: apiData.computerAsset?.name || "Chưa xác định",
     reporterName: apiData.reporter?.fullName || "Chưa xác định",
     assignedTechnicianName: apiData.assignedTechnician?.fullName,
@@ -643,7 +643,7 @@ export interface AvailableComponentDto {
   componentSpecs?: string;
   assetId: string;
   assetName: string;
-  assetCode?: string;
+  ktCode?: string;
   roomName?: string;
   buildingName?: string;
   floor?: string;

@@ -4,7 +4,7 @@ import { X, Signature, Send } from "lucide-react";
 
 interface InspectionItem {
   id: string;
-  assetCode: string;
+  ktCode: string;
   assetName: string;
   location: string;
   condition: string;
@@ -173,7 +173,7 @@ export default function InspectionReportDetailModal({
                         <td className="px-3 py-2 text-sm text-gray-900 border border-gray-300">
                           <div className="font-medium">{item.assetName}</div>
                           <div className="text-xs text-gray-500">
-                            Mã: {item.assetCode}
+                            Mã: {item.ktCode}
                           </div>
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900 border border-gray-300 text-center">

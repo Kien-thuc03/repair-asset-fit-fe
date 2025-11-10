@@ -81,7 +81,7 @@ export interface RepairRequest {
   }>;
 
   // Computed fields for backward compatibility (optional)
-  assetCode?: string; // Mã tài sản QR code
+  ktCode?: string; // Mã tài sản QR code
   assetName?: string; // Tên tài sản
   componentName?: string; // Tên linh kiện cụ thể bị lỗi
   reporterName?: string; // Tên người báo lỗi
@@ -97,7 +97,7 @@ export interface RepairRequest {
 // Interface cho RepairRequest với thông tin chi tiết đầy đủ (computed từ join các bảng)
 export interface RepairRequestWithDetails extends RepairRequest {
   // Thông tin từ bảng assets
-  assetCode: string;
+  ktCode: string;
   assetName: string;
   assetSpecs: string;
 
@@ -134,7 +134,7 @@ export interface RepairRequestWithDetails extends RepairRequest {
 export interface ReplacementComponent {
   id: string;
   assetId: string;
-  assetCode: string;
+  ktCode: string;
   assetName: string;
   componentId: string;
   componentName: string;
@@ -290,11 +290,11 @@ export interface RepairInput {
 // Asset related interfaces
 export interface Asset {
   id: string;
-  assetCode: string;
+  ktCode: string;
   name: string;
   category: string;
-  model: string;
-  serialNumber: string;
+  specs: string;
+  fixedCode: string;
   roomId: string;
   roomName: string;
   status: AssetStatus | string; // Accept both enum and string from API
@@ -447,7 +447,7 @@ export interface ComponentFromRequest {
   componentType: ComponentType;
   assetId: string;
   assetName: string;
-  assetCode: string;
+  ktCode: string;
   buildingName: string;
   roomName: string;
   newItemName: string;
@@ -471,7 +471,7 @@ export interface ComponentFromReport {
   componentType: ComponentType;
   assetId: string;
   assetName: string;
-  assetCode: string;
+  ktCode: string;
   buildingName: string;
   roomName: string;
   status: ReplacementStatus;
@@ -494,7 +494,7 @@ export interface ReportForm {
 export interface SimpleAsset {
   id: string;
   name: string;
-  assetCode: string;
+  ktCode: string;
   roomId: string;
 }
 

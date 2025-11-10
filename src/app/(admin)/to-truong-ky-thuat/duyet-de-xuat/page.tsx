@@ -129,7 +129,7 @@ export default function DuyetDeXuatPage() {
           componentType: (item.oldComponent?.componentType || "OTHER") as any, // eslint-disable-line @typescript-eslint/no-explicit-any
           assetId: "", // Not available in API
           assetName: "", // Not available in API
-          assetCode: "", // Not available in API
+          ktCode: "", // Not available in API
           buildingName: "", // Not available in API
           roomName: "", // Not available in API
           newItemName: item.newItemName || "",

@@ -26,11 +26,11 @@ const transformComputerToAsset = (computer: ComputerDetail): Asset => {
 
   return {
     id: computer.asset.id,
-    assetCode: computer.asset.ktCode,
+    ktCode: computer.asset.ktCode,
     name: computer.asset.name,
     category: computer.asset.categoryName || "Không xác định",
-    model: computer.asset.specs || "Không có thông số",
-    serialNumber: computer.asset.fixedCode,
+    specs: computer.asset.specs || "Không có thông số",
+    fixedCode: computer.asset.fixedCode,
     roomId: computer.room?.id || "",
     roomName: computer.room?.name || "Không xác định",
     status: computer.asset.status, // API trả về string từ database enum

@@ -600,7 +600,7 @@ export default function CreateProposalPage() {
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <div>
                         <div className="font-medium">{record.assetName}</div>
-                        <div className="text-sm text-gray-500">Mã: {record.assetCode}</div>
+                        <div className="text-sm text-gray-500">Mã: {record.ktCode}</div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
@@ -700,7 +700,7 @@ export default function CreateProposalPage() {
                         </div>
                       )}
                       <div className="text-gray-600 text-xs">
-                        {component.assetName} ({component.assetCode})
+                        {component.assetName} ({component.ktCode})
                       </div>
                       <div className="text-gray-500 text-xs">
                         {component.buildingName} - {component.roomName}

@@ -309,14 +309,15 @@ export interface GetComputersParams {
 
 /**
  * Asset for Device Grid (mapped từ Computer)
+ * Extends properties từ Asset interface để tương thích với AssetCard component
  */
 export interface DeviceAsset {
   id: string;
-  assetCode: string;
+  ktCode: string;
   name: string;
   category: string;
-  model: string;
-  serialNumber: string;
+  specs: string; // Thông số kỹ thuật - required by AssetCard
+  fixedCode: string; // Mã tài sản cố định - required by AssetCard
   roomId: string;
   roomName: string;
   status: string;
