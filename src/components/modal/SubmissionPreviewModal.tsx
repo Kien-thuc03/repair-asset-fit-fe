@@ -22,6 +22,9 @@ export default function SubmissionPreviewModal({
   onExport,
   onSubmit,
 }: SubmissionPreviewModalProps) {
+  // Early return if no proposal or formData
+  if (!proposal || !formData) return null;
+
   return (
     <Modal
       title={null}
@@ -69,7 +72,7 @@ export default function SubmissionPreviewModal({
             lập - Tự do - Hạnh phúc
           </div>
           <div className="text-xs sm:text-sm text-gray-600 mb-4">
-            {formData.department.toUpperCase()}
+            {formData.department?.toUpperCase() || ""}
           </div>
           <div className="text-right text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">
             Thành phố Hồ Chí Minh, ngày ___ tháng ___ năm 2025

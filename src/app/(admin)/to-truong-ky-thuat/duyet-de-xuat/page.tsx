@@ -83,6 +83,12 @@ export default function DuyetDeXuatPage() {
       rector: "TS. Phan Hồng Hải",
     });
 
+  // Team Lead Approver ID - Tổ trưởng kỹ thuật
+  const TEAM_LEAD_APPROVER_ID = "e30e5ae1-eed1-42f9-82ba-090a4ee27837";
+
+  // Note: submittedBy is always "Giảng Thanh Trọn" by default
+  // Users can edit if needed, but default is fixed
+
   // Memoize query params to prevent unnecessary re-renders
   const queryParams = useMemo(() => {
     const mappedSortBy =
@@ -256,10 +262,11 @@ Trân trọng kính trình.`;
         throw new Error(uploadResult.error || "Upload file thất bại");
       }
 
-      // 3. Cập nhật trạng thái với URL file
+      // 3. Cập nhật trạng thái với URL file và teamLeadApproverId
       await updateStatus(selectedRequestForSubmission.id, {
         status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
         submissionFormUrl: uploadResult.url,
+        teamLeadApproverId: TEAM_LEAD_APPROVER_ID,
       });
 
       // Close modal and reset state
