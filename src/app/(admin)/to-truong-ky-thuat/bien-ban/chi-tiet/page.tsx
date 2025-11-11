@@ -49,7 +49,7 @@ interface InspectionReport {
 
 interface InspectionItem {
   id: string;
-  assetCode: string;
+  ktCode: string;
   assetName: string;
   location: string;
   condition: string;
@@ -78,8 +78,8 @@ export default function ChiTietBienBanPage() {
 
     const items: InspectionItem[] = (proposal.items || []).map((item) => {
       // Format asset code - use component ID as identifier
-      const assetCode = item.oldComponent?.id
-        ? `COMP-${item.oldComponent.id.substring(0, 8)?.toUpperCase() || ""}`
+      const ktCode = item.oldComponent?.id
+        ? `COMP-${item.oldComponent.id.substring(0, 8).toUpperCase()}`
         : "N/A";
 
       // Get room location from API response
@@ -88,7 +88,7 @@ export default function ChiTietBienBanPage() {
 
       return {
         id: item.id,
-        assetCode,
+        ktCode,
         assetName: item.oldComponent?.name || "Không xác định",
         location,
         condition: `Hư hỏng - ${item.reason || "Không rõ"}`,

@@ -74,7 +74,7 @@ const RoomAssetSelector: React.FC<RoomAssetSelectorProps> = ({
             const machineLabel = computer?.machineLabel || "N/A";
             return (
               <option key={asset.id} value={asset.id}>
-                Máy {machineLabel} - {asset.name} ({asset.assetCode})
+                Máy {machineLabel} - {asset.name} ({asset.ktCode})
               </option>
             );
           })}

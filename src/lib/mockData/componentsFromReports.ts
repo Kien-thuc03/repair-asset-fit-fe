@@ -1,4 +1,5 @@
-import { ComponentFromReport, ComponentType, ReplacementStatus } from '@/types/repair';
+import { ComponentFromReport, ReplacementStatus } from '@/types/repair';
+import { ComponentType } from '@/types/computer';
 
 // Mock data cho ComponentFromReport - dùng cho trang lập phiếu đề xuất
 // Dữ liệu này mô phỏng các linh kiện từ báo cáo lỗi có thể được chọn để tạo đề xuất thay thế
@@ -16,7 +17,7 @@ export const mockComponentsFromReportsWithStatus: ComponentFromReport[] = [
     componentType: ComponentType.STORAGE,
     assetId: "ASSET002",
     assetName: "PC Dell OptiPlex 3080",
-    assetCode: "19-0205/02", 
+    ktCode: "19-0205/02", 
     buildingName: "Tòa H",
     roomName: "H101",
     status: ReplacementStatus.CHỜ_XÁC_MINH,
@@ -37,7 +38,7 @@ export const mockComponentsFromReportsWithStatus: ComponentFromReport[] = [
     componentType: ComponentType.RAM,
     assetId: "ASSET002",
     assetName: "PC Dell OptiPlex 3080", 
-    assetCode: "19-0205/02",
+    ktCode: "19-0205/02",
     buildingName: "Tòa H",
     roomName: "H101",
     status: ReplacementStatus.CHỜ_XÁC_MINH,
@@ -58,7 +59,7 @@ export const mockComponentsFromReportsWithStatus: ComponentFromReport[] = [
     componentType: ComponentType.PSU,
     assetId: "ASSET001",
     assetName: "PC Dell OptiPlex 3080",
-    assetCode: "19-0205/01",
+    ktCode: "19-0205/01",
     buildingName: "Tòa H", 
     roomName: "H101",
     status: ReplacementStatus.CHỜ_XÁC_MINH,
@@ -79,7 +80,7 @@ export const mockComponentsFromReportsWithStatus: ComponentFromReport[] = [
     componentType: ComponentType.MONITOR,
     assetId: "ASSET003",
     assetName: "PC HP ProDesk 400",
-    assetCode: "19-0206/01",
+    ktCode: "19-0206/01",
     buildingName: "Tòa H",
     roomName: "H101", 
     status: ReplacementStatus.CHỜ_XÁC_MINH,
@@ -100,7 +101,7 @@ export const mockComponentsFromReportsWithStatus: ComponentFromReport[] = [
     componentType: ComponentType.CPU,
     assetId: "ASSET005",
     assetName: "PC Dell Inspiron",
-    assetCode: "19-0208/01",
+    ktCode: "19-0208/01",
     buildingName: "Tòa H",
     roomName: "H102",
     status: ReplacementStatus.CHỜ_XÁC_MINH,
@@ -121,7 +122,7 @@ export const mockComponentsFromReportsWithStatus: ComponentFromReport[] = [
     componentType: ComponentType.KEYBOARD,
     assetId: "ASSET001",
     assetName: "PC Dell OptiPlex 3080",
-    assetCode: "19-0205/01",
+    ktCode: "19-0205/01",
     buildingName: "Tòa H",
     roomName: "H101",
     status: ReplacementStatus.CHỜ_XÁC_MINH,
@@ -142,7 +143,7 @@ export const mockComponentsFromReportsWithStatus: ComponentFromReport[] = [
     componentType: ComponentType.MOUSE,
     assetId: "ASSET001",
     assetName: "PC Dell OptiPlex 3080",
-    assetCode: "19-0205/01",
+    ktCode: "19-0205/01",
     buildingName: "Tòa H",
     roomName: "H101",
     status: ReplacementStatus.CHỜ_XÁC_MINH,
@@ -163,7 +164,7 @@ export const mockComponentsFromReportsWithStatus: ComponentFromReport[] = [
     componentType: ComponentType.RAM,
     assetId: "ASSET009",
     assetName: "PC ASUS VivoBook",
-    assetCode: "19-0210/01",
+    ktCode: "19-0210/01",
     buildingName: "Tòa H",
     roomName: "H103",
     status: ReplacementStatus.CHỜ_XÁC_MINH,

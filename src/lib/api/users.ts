@@ -74,17 +74,7 @@ export const getUserById = async (id: string): Promise<IUserWithRoles> => {
  * 
  * @param userData - Thông tin người dùng cần tạo
  * @returns Promise<IUserWithRoles> - Người dùng vừa được tạo
- * 
- * @example
- * ```typescript
- * const newUser = await createUser({
- *   username: 'john_doe',
- *   password: 'SecurePassword123',
- *   fullName: 'John Doe',
- *   email: 'john@example.com',
- *   roleIds: ['uuid-of-role']
- * });
- * ```
+ *                         
  */
 export const createUser = async (
   userData: ICreateUserRequest
@@ -99,14 +89,6 @@ export const createUser = async (
  * @param updateData - Thông tin cần cập nhật
  * @returns Promise<IUserWithRoles> - Người dùng sau khi cập nhật
  * 
- * @example
- * ```typescript
- * const updatedUser = await updateUser('uuid-of-user', {
- *   fullName: 'John Smith',
- *   email: 'john.smith@example.com',
- *   status: 'ACTIVE'
- * });
- * ```
  */
 export const updateUser = async (
   id: string,

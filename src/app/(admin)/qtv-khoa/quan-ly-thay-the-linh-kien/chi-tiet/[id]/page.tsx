@@ -113,7 +113,7 @@ export default function QtvKhoaChiTietThayThePage() {
 			render: (record: ComponentFromRequest) => (
 				<div>
 					<div className="font-medium">{record.assetName}</div>
-					<div className="text-sm text-gray-500">Mã: {record.assetCode}</div>
+					<div className="text-sm text-gray-500">Mã: {record.ktCode}</div>
 				</div>
 			),
 		},

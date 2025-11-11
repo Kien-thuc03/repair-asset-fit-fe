@@ -1,9 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Asset, ComprehensiveAsset } from "@/types";
-import { mockDetailedAssets, mockRooms, mockCategories } from "@/lib/mockData";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, message } from "antd";
 import Pagination from "@/components/common/Pagination";
 import {
   DeviceManagementHeader,
@@ -11,27 +9,32 @@ import {
   DeviceFilters,
   DeviceGrid,
 } from "@/components/assetsManagement";
+import { useComputers } from "@/hooks";
+import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
+import type { Computer, DeviceAsset } from "@/types/computer";
 
-// Helper function to convert ComprehensiveAsset to Asset
-const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
-  const room = mockRooms.find((r) => r.id === comprehensive.currentRoomId);
-  const category = mockCategories.find(
-    (c) => c.id === comprehensive.categoryId
-  );
-
+/**
+ * Helper function to convert Computer to DeviceAsset
+ * Maps backend Computer structure to frontend Asset display format
+ */
+const convertComputerToDeviceAsset = (computer: Computer): DeviceAsset => {
   return {
-    id: comprehensive.id,
-    assetCode: comprehensive.ktCode,
-    name: comprehensive.name,
-    category: category?.name || "Không xác định",
-    model: comprehensive.specs || "Không có thông số",
-    serialNumber: comprehensive.fixedCode,
-    roomId: comprehensive.currentRoomId || "",
-    roomName: room?.roomNumber || "Không xác định",
-    status: comprehensive.status,
-    purchaseDate: comprehensive.entryDate,
-    warrantyExpiry: "2025-12-31", // Default warranty
-    qrCode: `QR_${comprehensive.ktCode}`,
+    id: computer.asset.id,
+    ktCode: computer.asset.ktCode,
+    name: computer.asset.name,
+    category: computer.asset.categoryName || "Máy tính",
+    specs: computer.asset.specs || "Không có thông số",
+    fixedCode: computer.asset.fixedCode,
+    roomId: computer.room?.id || "",
+    roomName: computer.room?.name || "Không xác định",
+    status: computer.asset.status,
+    purchaseDate: computer.asset.entrydate,
+    warrantyExpiry: "2025-12-31", // Default warranty - có thể tính từ entrydate
+    qrCode: `QR_${computer.asset.ktCode}`,
+    building: computer.room?.building,
+    floor: computer.room?.floor,
+    machineLabel: computer.machineLabel,
+    componentCount: computer.componentCount,
   };
 };
 
@@ -48,20 +51,29 @@ export default function TechnicianDeviceManagementContainer() {
 
   const rolePath = getRoleFromPath();
 
-  // Convert comprehensive assets to Asset format
-  const convertedAssets = mockDetailedAssets.map(convertToAsset);
-  const [assets] = useState<Asset[]>(convertedAssets);
-  const [filteredAssets, setFilteredAssets] =
-    useState<Asset[]>(convertedAssets);
+  // Use computers hook to fetch data from API
+  const { computers, pagination, summary, loading, error, fetchComputers } =
+    useComputers();
+
+  // Local state for filters
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [floorFilter, setFloorFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [buildingFilter, setBuildingFilter] = useState<string>("");
+  const [floorFilter, setFloorFilter] = useState<string>("");
+  const [roomFilter, setRoomFilter] = useState<string>("");
   const [isMobile, setIsMobile] = useState(false);
 
-  // Pagination state
+  // Pagination state (managed by API)
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12); // 12 items per page for grid layout
-  const [paginatedAssets, setPaginatedAssets] = useState<Asset[]>([]);
+
+  // State for rooms data and cascade filtering
+  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
+  const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
+
+  // Convert computers to device assets for display
+  const deviceAssets: DeviceAsset[] = computers.map(convertComputerToDeviceAsset);
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -97,67 +109,85 @@ export default function TechnicianDeviceManagementContainer() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Fetch rooms from API for cascade filtering
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const roomsData = await getRoomsApi();
+        setRooms(roomsData);
+      } catch {
+        message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
+      }
+    };
+    fetchRooms();
+  }, []);
+
+  // Fetch computers when filters or pagination change
+  useEffect(() => {
+    const params: {
+      page: number;
+      limit: number;
+      search?: string;
+      status?: string[];
+      building?: string;
+      floor?: string;
+      roomName?: string;
+    } = {
+      page: currentPage,
+      limit: pageSize,
+    };
+
+    // Add search filter (only if not empty)
+    if (searchTerm && searchTerm.trim()) {
+      params.search = searchTerm;
+    }
+
+    // Add status filter (only if not empty)
+    if (statusFilter && statusFilter.trim()) {
+      params.status = [statusFilter];
+    }
+
+    // Add building filter (only if not empty)
+    if (buildingFilter && buildingFilter.trim()) {
+      params.building = buildingFilter;
+    }
+
+    // Add floor filter (only if not empty)
+    if (floorFilter && floorFilter.trim()) {
+      params.floor = floorFilter;
+    }
+
+    // Add room filter (only if not empty)
+    if (roomFilter && roomFilter.trim()) {
+      params.roomName = roomFilter;
+    }
+
+    // Always fetch when dependencies change (including when filters are cleared)
+    fetchComputers(params);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, floorFilter, buildingFilter, roomFilter, currentPage, pageSize]);
+
+  // Show error message if API call fails
+  useEffect(() => {
+    if (error) {
+      message.error(error);
+    }
+  }, [error]);
+
   // Simulate QR scan for demo
   const simulateQRScan = () => {
-    const randomAsset = assets[Math.floor(Math.random() * assets.length)];
-    router.push(`${rolePath}/quan-ly-thiet-bi/chi-tiet/${randomAsset.id}`);
+    if (deviceAssets.length > 0) {
+      const randomAsset = deviceAssets[Math.floor(Math.random() * deviceAssets.length)];
+      router.push(`${rolePath}/quan-ly-thiet-bi/chi-tiet/${randomAsset.id}`);
+    } else {
+      message.info("Chưa có thiết bị nào");
+    }
   };
 
   // Handle view detail
   const handleViewDetail = (assetId: string) => {
     router.push(`${rolePath}/quan-ly-thiet-bi/chi-tiet/${assetId}`);
   };
-
-  // Function to extract floor from room name
-  const getFloorFromRoomName = (roomName: string): string => {
-    // Extract floor information from room name
-    // Examples: "H101" -> "Tầng 1", "H202" -> "Tầng 2", etc.
-    const match = roomName.match(/H(\d)/);
-    if (match) {
-      const floorNumber = match[1];
-      return `Tầng ${floorNumber}`;
-    }
-    return "Không xác định";
-  };
-
-  useEffect(() => {
-    let filtered = assets;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (asset) =>
-          asset.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          asset.roomName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((asset) => asset.status === statusFilter);
-    }
-
-    if (floorFilter !== "all") {
-      filtered = filtered.filter((asset) => {
-        const assetFloor = getFloorFromRoomName(asset.roomName);
-        return assetFloor === floorFilter;
-      });
-    }
-
-    setFilteredAssets(filtered);
-
-    // Reset to first page when filter changes
-    setCurrentPage(1);
-  }, [assets, searchTerm, statusFilter, floorFilter]);
-
-  // Handle pagination
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const paginated = filteredAssets.slice(startIndex, endIndex);
-    setPaginatedAssets(paginated);
-  }, [filteredAssets, currentPage, pageSize]);
 
   // Pagination handlers
   const handlePageChange = (page: number) => {
@@ -169,13 +199,84 @@ export default function TechnicianDeviceManagementContainer() {
     setCurrentPage(1); // Reset to first page
   };
 
-  // Generate floors from assets using the getFloorFromRoomName function
-  const floors = Array.from(
-    new Set(
-      assets
-        .map((asset) => getFloorFromRoomName(asset.roomName))
-        .filter((floor) => floor) // Remove empty floors
-    )
+  // Handle filter changes - reset to page 1
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
+  // Handle building change - cascade filter
+  const handleBuildingChange = (value: string) => {
+    setBuildingFilter(value);
+    setFloorFilter("");
+    setRoomFilter("");
+    setCurrentPage(1);
+
+    if (value) {
+      // Filter floors by building
+      const floorsInBuilding = Array.from(
+        new Set(
+          rooms
+            .filter((room) => room.building === value)
+            .map((room) => room.floor)
+            .filter(Boolean)
+        )
+      ).sort();
+      setFilteredFloors(floorsInBuilding);
+    } else {
+      setFilteredFloors([]);
+    }
+    setFilteredRooms([]);
+  };
+
+  // Handle floor change - cascade filter
+  const handleFloorChange = (value: string) => {
+    setFloorFilter(value);
+    setRoomFilter("");
+    setCurrentPage(1);
+
+    if (value && buildingFilter) {
+      // Filter rooms by building and floor
+      const roomsInFloor = rooms.filter(
+        (room) => room.building === buildingFilter && room.floor === value
+      );
+      setFilteredRooms(roomsInFloor);
+    } else {
+      setFilteredRooms([]);
+    }
+  };
+
+  // Handle room change
+  const handleRoomChange = (value: string) => {
+    setRoomFilter(value);
+    setCurrentPage(1);
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setBuildingFilter("");
+    setFloorFilter("");
+    setRoomFilter("");
+    setFilteredFloors([]);
+    setFilteredRooms([]);
+    setCurrentPage(1);
+  };
+
+  // Extract unique buildings from rooms
+  const buildings = Array.from(
+    new Set(rooms.map((room) => room.building).filter(Boolean))
+  ).sort();
+
+  // Use filteredFloors if building is selected, otherwise show all unique floors
+  const floors = filteredFloors.length > 0 ? filteredFloors : Array.from(
+    new Set(rooms.map((room) => room.floor).filter(Boolean))
   ).sort();
 
   return (
@@ -205,30 +306,63 @@ export default function TechnicianDeviceManagementContainer() {
       {/* Header */}
       <DeviceManagementHeader isMobile={isMobile} onQRScan={simulateQRScan} />
 
-      {/* Quick Stats */}
-      <DeviceStatsCards assets={assets} />
+      {/* Quick Stats - Use summary from API */}
+      <DeviceStatsCards 
+        assets={deviceAssets} 
+        summary={summary}
+        loading={loading}
+      />
 
       {/* Filters */}
       <DeviceFilters
         searchTerm={searchTerm}
         statusFilter={statusFilter}
+        buildingFilter={buildingFilter}
         floorFilter={floorFilter}
-        onSearchChange={setSearchTerm}
-        onStatusChange={setStatusFilter}
-        onFloorChange={setFloorFilter}
+        roomFilter={roomFilter}
+        onSearchChange={handleSearchChange}
+        onStatusChange={handleStatusChange}
+        onBuildingChange={handleBuildingChange}
+        onFloorChange={handleFloorChange}
+        onRoomChange={handleRoomChange}
+        onClearAll={clearAllFilters}
+        buildings={buildings}
         floors={floors}
+        rooms={filteredRooms}
       />
 
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">{error}</p>
+          <button
+            onClick={() => fetchComputers({ page: currentPage, limit: pageSize })}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
       {/* Device Grid */}
-      <DeviceGrid assets={paginatedAssets} onViewDetail={handleViewDetail} />
+      {!loading && !error && (
+        <DeviceGrid assets={deviceAssets} onViewDetail={handleViewDetail} />
+      )}
 
       {/* Pagination */}
-      {filteredAssets.length > 0 && (
+      {!loading && !error && pagination && pagination.total > 0 && (
         <div className="bg-white shadow rounded-lg">
           <Pagination
-            currentPage={currentPage}
-            pageSize={pageSize}
-            total={filteredAssets.length}
+            currentPage={pagination.page}
+            pageSize={pagination.limit}
+            total={pagination.total}
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
             showSizeChanger={true}

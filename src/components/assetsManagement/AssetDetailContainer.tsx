@@ -1,13 +1,10 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Asset, ComprehensiveAsset } from "@/types";
-import {
-  mockDetailedAssets,
-  mockRooms,
-  mockCategories,
-  mockRepairHistory,
-} from "@/lib/mockData";
+import { Asset, RepairHistoryItem } from "@/types";
+import { getComputerDetail } from "@/lib/api/computers";
+import { getRepairs, getRepairLogs } from "@/lib/api/repairs";
+import type { ComputerDetail } from "@/types/computer";
 import TechnicianDeviceDetailHeader from "./AssetDetailHeader";
 import DeviceNotFound from "./AssetNotFound";
 import TechnicianDeviceTabNavigation from "./AssetTabNavigation";
@@ -17,24 +14,37 @@ import TechnicianDeviceSpecifications from "./AssetSpecifications";
 import AssetSoftwareInfo from "./AssetSoftwareInfo";
 import TechnicianRepairHistoryTab from "./RepairHistoryTab";
 
-// Helper function to convert ComprehensiveAsset to Asset
-const convertToAsset = (comprehensive: ComprehensiveAsset): Asset => {
-  const room = mockRooms.find((r) => r.id === comprehensive.currentRoomId);
-  const category = mockCategories.find((c) => c.id === comprehensive.categoryId);
+/**
+ * Helper function: Transform ComputerDetail từ API sang Asset format
+ * để tương thích với các sub-components hiện có
+ */
+const transformComputerToAsset = (computer: ComputerDetail): Asset => {
+  // Calculate warranty expiry (2 years from purchase date)
+  const warrantyExpiry = computer.asset.entrydate 
+    ? new Date(new Date(computer.asset.entrydate).setFullYear(new Date(computer.asset.entrydate).getFullYear() + 2)).toISOString().split('T')[0]
+    : undefined;
 
   return {
-    id: comprehensive.id,
-    assetCode: comprehensive.ktCode,
-    name: comprehensive.name,
-    category: category?.name || "Không xác định",
-    model: comprehensive.specs || "Không có thông số",
-    serialNumber: comprehensive.fixedCode,
-    roomId: comprehensive.currentRoomId || "",
-    roomName: room?.roomNumber || "Không xác định",
-    status: comprehensive.status,
-    purchaseDate: comprehensive.entryDate,
-    warrantyExpiry: "2025-12-31", // Default warranty
-    qrCode: `QR_${comprehensive.ktCode}`,
+    id: computer.asset.id,
+    ktCode: computer.asset.ktCode,
+    name: computer.asset.name,
+    category: computer.asset.categoryName || "Không xác định",
+    specs: computer.asset.specs || "Không có thông số",
+    fixedCode: computer.asset.fixedCode,
+    roomId: computer.room?.id || "",
+    roomName: computer.room?.name || "Không xác định",
+    status: computer.asset.status, // API trả về string từ database enum
+    purchaseDate: computer.asset.entrydate,
+    warrantyExpiry,
+    qrCode: `QR_${computer.asset.ktCode}`,
+    building: computer.room?.building,
+    floor: computer.room?.floor,
+    machineLabel: computer.machineLabel,
+    componentCount: computer.componentCount,
+    // Thêm các field mới từ API
+    components: computer.components,
+    software: computer.software,
+    repairSummary: computer.repairSummary,
   };
 };
 
@@ -43,15 +53,122 @@ export default function TechnicianDeviceDetailContainer() {
   const router = useRouter();
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
-  // State for tabs
+  // States
   const [showRepairHistory, setShowRepairHistory] = useState(false);
+  const [computer, setComputer] = useState<ComputerDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [asset, setAsset] = useState<Asset | null>(null);
+  const [repairHistory, setRepairHistory] = useState<RepairHistoryItem[]>([]);
+  const [loadingRepairHistory, setLoadingRepairHistory] = useState(false);
 
-  // Convert comprehensive assets to Asset format
-  const convertedAssets = mockDetailedAssets.map(convertToAsset);
-  const asset = useMemo(
-    () => convertedAssets.find((a) => a.id === id),
-    [id, convertedAssets]
-  );
+  // Fetch computer detail from API
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchComputerDetail = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getComputerDetail(id);
+        setComputer(data);
+        // Transform sang Asset format cho các sub-components
+        const transformedAsset = transformComputerToAsset(data);
+        setAsset(transformedAsset);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Lỗi khi tải thông tin máy tính";
+        setError(errorMessage);
+        console.error("Error fetching computer detail:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchComputerDetail();
+  }, [id]);
+
+  // Fetch repair history with logs when asset is loaded
+  useEffect(() => {
+    if (!asset) return;
+
+    const fetchRepairHistory = async () => {
+      try {
+        setLoadingRepairHistory(true);
+        console.log("🔍 Fetching repair history for asset:", asset.id);
+
+        // Lấy tất cả repair requests cho asset này
+        const repairsResponse = await getRepairs({
+          computerAssetId: asset.id,
+          sortBy: "createdAt",
+          sortOrder: "DESC",
+        });
+
+        console.log(`✅ Found ${repairsResponse.data.length} repair requests`);
+
+        // Với mỗi repair request, fetch logs
+        const historyWithLogs = await Promise.all(
+          repairsResponse.data.map(async (repair) => {
+            try {
+              const logsResponse = await getRepairLogs(repair.id);
+              
+              return {
+                id: repair.id,
+                assetId: asset.id,
+                requestCode: repair.requestCode,
+                errorType: repair.errorType || "Không xác định",
+                description: repair.description,
+                solution: repair.resolutionNotes,
+                status: repair.status,
+                reportDate: repair.createdAt,
+                completedDate: repair.completedAt,
+                technicianName: repair.assignedTechnicianName || "Chưa phân công",
+                reporterName: repair.reporterName || "Không xác định",
+                // Transform logs để match với RepairHistoryItem.steps format
+                steps: logsResponse.data.map((log) => ({
+                  id: log.id,
+                  action: log.action,
+                  fromStatus: log.fromStatus || null,
+                  toStatus: log.toStatus || null,
+                  comment: log.comment,
+                  createdAt: log.createdAt,
+                  actorName: log.actor.fullName,
+                  actorEmail: log.actor.email,
+                })),
+              } as RepairHistoryItem;
+            } catch (logError) {
+              console.warn(`⚠️ Could not fetch logs for repair ${repair.id}:`, logError);
+              // Return repair without logs if logs fetch fails
+              return {
+                id: repair.id,
+                assetId: asset.id,
+                requestCode: repair.requestCode,
+                errorType: repair.errorType || "Không xác định",
+                description: repair.description,
+                solution: repair.resolutionNotes,
+                status: repair.status,
+                reportDate: repair.createdAt,
+                completedDate: repair.completedAt,
+                technicianName: repair.assignedTechnicianName || "Chưa phân công",
+                reporterName: repair.reporterName || "Không xác định",
+                steps: [],
+              } as RepairHistoryItem;
+            }
+          })
+        );
+
+        setRepairHistory(historyWithLogs);
+        console.log(`✅ Loaded ${historyWithLogs.length} repair history items with logs`);
+      } catch (err) {
+        console.error("❌ Error fetching repair history:", err);
+        // Don't set error state, just show empty history
+        setRepairHistory([]);
+      } finally {
+        setLoadingRepairHistory(false);
+      }
+    };
+
+    fetchRepairHistory();
+  }, [asset]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN");
@@ -72,10 +189,6 @@ export default function TechnicianDeviceDetailContainer() {
     }
   };
 
-  const getRepairHistory = (assetId: string) => {
-    return mockRepairHistory.filter((repair) => repair.assetId === assetId);
-  };
-
   const handleGoBack = () => {
     router.back();
   };
@@ -84,12 +197,26 @@ export default function TechnicianDeviceDetailContainer() {
     setShowRepairHistory(showRepairHistory);
   };
 
-  if (!asset) {
-    return <DeviceNotFound onGoBack={handleGoBack} />;
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+          <p className="mt-4 text-gray-600">Đang tải thông tin máy tính...</p>
+        </div>
+      </div>
+    );
   }
 
-  const warrantyStatus = getWarrantyStatus(asset.warrantyExpiry);
-  const repairHistory = getRepairHistory(asset.id);
+  // Error state
+  if (error || !asset || !computer) {
+    return <DeviceNotFound onGoBack={handleGoBack} message={error} />;
+  }
+
+  const warrantyStatus = asset.warrantyExpiry 
+    ? getWarrantyStatus(asset.warrantyExpiry) 
+    : { label: "Không xác định", color: "text-gray-600" };
 
   return (
     <div className="space-y-6">
@@ -125,10 +252,21 @@ export default function TechnicianDeviceDetailContainer() {
             </div>
           ) : (
             // Repair History Tab
-            <TechnicianRepairHistoryTab
-              repairHistory={repairHistory}
-              formatDate={formatDate}
-            />
+            <>
+              {loadingRepairHistory ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+                    <p className="mt-4 text-gray-600">Đang tải lịch sử sửa chữa...</p>
+                  </div>
+                </div>
+              ) : (
+                <TechnicianRepairHistoryTab
+                  repairHistory={repairHistory}
+                  formatDate={formatDate}
+                />
+              )}
+            </>
           )}
         </div>
       </div>

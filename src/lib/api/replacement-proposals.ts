@@ -56,6 +56,17 @@ export interface ReplacementItem {
 }
 
 /**
+ * Interface cho repair request info trong proposal
+ */
+export interface RepairRequestInfo {
+  id: string;
+  requestCode: string;
+  description?: string;
+  status: string;
+  createdAt: string;
+}
+
+/**
  * Interface cho replacement proposal
  */
 export interface ReplacementProposal {
@@ -76,6 +87,8 @@ export interface ReplacementProposal {
   updatedAt: string;
   items?: ReplacementItem[];
   itemsCount?: number;
+  repairRequests?: RepairRequestInfo[]; // 🔥 MỚI: Danh sách repair requests liên quan
+  repairRequestsCount?: number; // 🔥 MỚI: Số lượng repair requests
 }
 
 /**
@@ -129,6 +142,34 @@ export interface CreateReplacementProposalRequest {
   title?: string;
   description?: string;
   items: CreateReplacementItemRequest[];
+  repairRequestIds?: string[]; // 🔥 MỚI: Danh sách ID repair requests liên quan
+}
+
+/**
+ * Interface cho component từ repair request
+ */
+export interface ComponentFromRepair {
+  componentId: string;
+  componentName: string;
+  componentType?: string;
+  componentSpecs?: string;
+  componentStatus?: string;
+  installedAt?: string;
+  assetId?: string;
+  assetName?: string;
+  ktCode?: string;
+  roomName?: string;
+  buildingName?: string;
+  floor?: string;
+  machineLabel?: string;
+  repairRequestId?: string;
+  requestCode?: string;
+  repairStatus?: string;
+  repairDescription?: string;
+  repairCreatedAt?: string;
+  // Fields for UI only (not from API)
+  quantity?: number; // Mặc định 1, có thể edit
+  reason?: string; // Dùng repairDescription làm default
 }
 
 /**
@@ -285,3 +326,4 @@ export const getReplacementProposalsByProposer = async (
     );
   }
 };
+

@@ -1,15 +1,14 @@
 "use client";
 import { Package, Calendar, Building } from "lucide-react";
-import { Asset, Software } from "@/types";
-import { getSoftwareByAssetId } from "@/lib/mockData";
+import { Asset } from "@/types";
 
 interface AssetSoftwareInfoProps {
   asset: Asset;
 }
 
 export default function AssetSoftwareInfo({ asset }: AssetSoftwareInfoProps) {
-  // Lấy danh sách phần mềm được cài đặt trên thiết bị này
-  const installedSoftware: Software[] = getSoftwareByAssetId(asset.id);
+  // Lấy danh sách phần mềm từ API data (đã có trong asset.software)
+  const installedSoftware = asset.software || [];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN");
@@ -49,11 +48,13 @@ export default function AssetSoftwareInfo({ asset }: AssetSoftwareInfoProps) {
                       <span className="font-medium">{software.publisher}</span>
                     </div>
                     
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-3 h-3" />
-                      <span>Ngày thêm:</span>
-                      <span className="font-medium">{formatDate(software.createdAt)}</span>
-                    </div>
+                    {software.installationDate && (
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>Ngày cài đặt:</span>
+                        <span className="font-medium">{formatDate(software.installationDate)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

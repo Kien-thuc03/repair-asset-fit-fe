@@ -2,7 +2,7 @@ import { Settings } from "lucide-react";
 
 interface InspectionItem {
   id: string;
-  assetCode: string;
+  ktCode: string;
   assetName: string;
   location: string;
   condition: string;
@@ -52,7 +52,7 @@ export default function InspectionItemsTable({
               {items.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                    {item.assetCode}
+                    {item.ktCode}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
                     {item.assetName}

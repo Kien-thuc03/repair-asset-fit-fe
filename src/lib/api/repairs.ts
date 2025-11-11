@@ -5,6 +5,7 @@ import {
   RepairStatus,
   ErrorType,
   getErrorTypeLabel,
+  GetRepairLogsResponse,
 } from "@/types";
 import { uploadMultipleFiles } from "./upload";
 
@@ -65,6 +66,26 @@ export interface CreateRepairRequest {
   mediaFiles?: File[]; // ✅ Mảng files cần upload (optional)
   componentIds?: string[]; // Danh sách ID linh kiện bị lỗi (optional)
   softwareIds?: string[]; // Danh sách ID phần mềm bị lỗi (optional)
+}
+
+/**
+ * Interface cho request ghi nhận và xử lý lỗi trực tiếp tại hiện trường
+ * Extends từ CreateRepairRequest và thêm các trường cho xử lý
+ * 
+ * ✅ Các trạng thái finalStatus:
+ * - ĐÃ_HOÀN_THÀNH: Lỗi đã được sửa chữa thành công tại chỗ
+ * - CHỜ_THAY_THẾ: Linh kiện không thể sửa, cần thay thế (status chuyển ngay lập tức)
+ * - undefined: Chỉ ghi nhận lỗi, chưa xử lý (status = ĐANG_XỬ_LÝ)
+ * 
+ * 🔥 Flow khi cần thay thế:
+ * 1. Set finalStatus = CHỜ_THAY_THẾ → Status ngay lập tức = CHỜ_THAY_THẾ
+ * 2. Component status: FAULTY → PENDING_REPLACEMENT
+ * 3. Lập phiếu đề xuất thay thế
+ * 4. Sau khi thay thế xong → Update status sang ĐÃ_HOÀN_THÀN
+ */
+export interface CreateAndProcessRepairRequest extends CreateRepairRequest {
+  resolutionNotes?: string; // Ghi chú chi tiết quá trình xử lý lỗi (BẮT BUỘC khi có finalStatus)
+  finalStatus?: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ; // Cho phép ĐÃ_HOÀN_THÀNH hoặc CHỜ_THAY_THẾ
 }
 
 /**
@@ -190,7 +211,7 @@ const transformApiResponse = (apiData: ApiRepairResponse): RepairRequest => {
     components: apiData.components,
 
     // Computed fields từ nested objects
-    assetCode: apiData.computerAsset?.ktCode || "Chưa xác định",
+    ktCode: apiData.computerAsset?.ktCode || "Chưa xác định",
     assetName: apiData.computerAsset?.name || "Chưa xác định",
     reporterName: apiData.reporter?.fullName || "Chưa xác định",
     assignedTechnicianName: apiData.assignedTechnician?.fullName,
@@ -220,6 +241,7 @@ export interface UpdateRepairRequest {
   mediaFiles?: File[]; // ✅ Files mới cần upload (optional)
   status?: RepairStatus; // Cập nhật trạng thái
   resolutionNotes?: string; // Ghi chú xử lý
+  componentIds?: string[]; // Danh sách ID component bị lỗi (khi chuyển sang CHỜ_THAY_THẾ)
 }
 
 /**
@@ -312,6 +334,76 @@ export const createRepair = async (
 };
 
 /**
+ * Ghi nhận và xử lý lỗi trực tiếp tại hiện trường
+ * Endpoint dành cho kỹ thuật viên để ghi nhận lỗi VÀ xử lý ngay tại chỗ trong một lần submit
+ * 
+ * @param data Dữ liệu yêu cầu sửa chữa và xử lý
+ * @returns Promise với thông tin yêu cầu sửa chữa đã tạo và xử lý
+ * 
+ * @example
+ * // Lỗi phần mềm - đã sửa được
+ * await createAndProcessRepair({
+ *   computerAssetId: "asset-123",
+ *   errorType: ErrorType.MAY_HU_PHAN_MEM,
+ *   description: "Máy bị lỗi phần mềm Office",
+ *   softwareIds: ["software-1", "software-2"],
+ *   resolutionNotes: "Đã cài đặt lại Office 2021",
+ *   finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH
+ * });
+ */
+export const createAndProcessRepair = async (
+  data: CreateAndProcessRepairRequest
+): Promise<GetRepairDetailResponse> => {
+  try {
+    // ✅ Step 1: Upload files lên Cloudinary nếu có
+    let uploadedUrls: string[] = [];
+    if (data.mediaFiles && data.mediaFiles.length > 0) {
+      const uploadResponse = await uploadMultipleFiles(
+        data.mediaFiles,
+        "repair-requests"
+      );
+
+      if (uploadResponse.success && uploadResponse.urls) {
+        uploadedUrls = uploadResponse.urls;
+      } else {
+        throw new Error(uploadResponse.error || "Upload files thất bại");
+      }
+    }
+
+    // ✅ Step 2: Merge uploaded URLs với existing mediaUrls (nếu có)
+    const allMediaUrls = [...(data.mediaUrls || []), ...uploadedUrls];
+
+    // ✅ Step 3: Tạo request body cho API
+    const requestData = {
+      computerAssetId: data.computerAssetId,
+      errorType: data.errorType,
+      description: data.description,
+      mediaUrls: allMediaUrls.length > 0 ? allMediaUrls : undefined,
+      componentIds: data.componentIds,
+      softwareIds: data.softwareIds,
+      resolutionNotes: data.resolutionNotes,
+      finalStatus: data.finalStatus,
+    };
+
+    // ✅ Step 4: Call API endpoint process-onsite
+    const response = await api.post<ApiRepairResponse>(
+      "/api/v1/repairs/process-onsite",
+      requestData
+    );
+
+    // Transform response
+    return transformApiResponse(response.data) as RepairRequestWithDetails;
+  } catch (error: unknown) {
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    throw new Error(
+      err.response?.data?.message || "Ghi nhận và xử lý lỗi thất bại."
+    );
+  }
+};
+
+/**
  * Lấy chi tiết một yêu cầu sửa chữa theo ID
  * @param id ID của yêu cầu sửa chữa
  * @returns Promise với thông tin chi tiết yêu cầu sửa chữa
@@ -371,6 +463,7 @@ export const updateRepair = async (
       mediaUrls: allMediaUrls.length > 0 ? allMediaUrls : data.mediaUrls,
       status: data.status,
       resolutionNotes: data.resolutionNotes,
+      componentIds: data.componentIds,
     };
 
     const response = await api.put<ApiRepairResponse>(
@@ -395,14 +488,16 @@ export const updateRepair = async (
  * @param id ID của yêu cầu sửa chữa
  * @param status Trạng thái mới
  * @param resolutionNotes Ghi chú xử lý (optional)
+ * @param componentIds Danh sách ID component bị lỗi (optional, khi chuyển sang CHỜ_THAY_THẾ)
  * @returns Promise với thông tin yêu cầu sửa chữa đã cập nhật
  */
 export const updateRepairStatus = async (
   id: string,
   status: RepairStatus,
-  resolutionNotes?: string
+  resolutionNotes?: string,
+  componentIds?: string[]
 ): Promise<GetRepairDetailResponse> => {
-  return updateRepair(id, { status, resolutionNotes });
+  return updateRepair(id, { status, resolutionNotes, componentIds });
 };
 
 /**
@@ -518,6 +613,132 @@ export const getRepairsByTechnician = async (
     throw new Error(
       err.response?.data?.message ||
         "Lấy danh sách yêu cầu sửa chữa theo kỹ thuật viên thất bại."
+    );
+  }
+};
+
+/**
+ * Interface for available components query params
+ */
+export interface GetAvailableComponentsQueryParams {
+  requestCode?: string;
+  componentType?: string[];
+  search?: string;
+  building?: string;
+  floor?: string;
+  roomName?: string;
+  excludeInProposal?: boolean;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "ASC" | "DESC";
+}
+
+/**
+ * Interface for available component data
+ */
+export interface AvailableComponentDto {
+  repairRequestId: string;
+  requestCode: string;
+  repairStatus: string;
+  repairDescription: string;
+  repairCreatedAt?: string;
+  componentId: string;
+  componentName: string;
+  componentType?: string;
+  componentSpecs?: string;
+  componentStatus?: string; // 🔥 MỚI: Trạng thái component (FAULTY, PENDING_REPLACEMENT, etc)
+  installedAt?: string;
+  assetId: string;
+  assetName: string;
+  ktCode?: string;
+  roomName?: string;
+  buildingName?: string;
+  floor?: string;
+  machineLabel?: string;
+  createdAt: Date;
+}
+
+/**
+ * Interface for available components response
+ */
+export interface GetAvailableComponentsResponse {
+  data: AvailableComponentDto[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/**
+ * Get available components from repair requests for creating replacement proposals
+ * @param params - Query parameters for filtering and pagination
+ * @returns Promise with available components data
+ */
+export const getAvailableComponents = async (
+  params?: GetAvailableComponentsQueryParams
+): Promise<GetAvailableComponentsResponse> => {
+  try {
+    console.log("🌐 API Call: GET /computer/current-user/available-components", params);
+    const response = await api.get<GetAvailableComponentsResponse>(
+      "/computer/current-user/available-components",
+      { params }
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Get available components error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message ||
+        "Lấy danh sách linh kiện khả dụng thất bại."
+    );
+  }
+};
+
+/**
+ * Get repair logs (history) for a specific repair request
+ * Endpoint: GET /api/v1/repairs/:id/logs
+ *
+ * @param repairRequestId - ID của yêu cầu sửa chữa
+ * @returns Promise with repair logs
+ *
+ * @example
+ * ```typescript
+ * const logs = await getRepairLogs('uuid-repair-request-id');
+ * console.log(logs.data); // Array of RepairLog
+ * ```
+ */
+export const getRepairLogs = async (
+  repairRequestId: string
+): Promise<GetRepairLogsResponse> => {
+  try {
+    console.log(`🔍 Fetching repair logs for request: ${repairRequestId}`);
+    
+    const response = await api.get<GetRepairLogsResponse>(
+      `/api/v1/repairs/${repairRequestId}/logs`
+    );
+    
+    console.log(`✅ Fetched ${response.data.data.length} repair logs successfully`);
+    
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Get repair logs error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message || "Lấy lịch sử repair logs thất bại."
     );
   }
 };

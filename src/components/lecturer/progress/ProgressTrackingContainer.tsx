@@ -82,7 +82,7 @@ export default function ProgressTrackingContainer() {
             ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ??
             false) ||
-          (request.assetCode
+          (request.ktCode
             ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ??
             false) ||
@@ -226,7 +226,7 @@ export default function ProgressTrackingContainer() {
         STT: index + 1,
         "Mã yêu cầu": item.requestCode,
         "Tên tài sản": item.assetName || "Chưa xác định",
-        "Mã tài sản": item.assetCode || "Chưa xác định",
+        "Mã tài sản": item.ktCode || "Chưa xác định",
         "Vị trí": `${item.buildingName || "Chưa xác định"} - ${
           item.roomName || "Chưa xác định"
         }`,

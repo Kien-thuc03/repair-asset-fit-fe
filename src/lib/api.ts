@@ -8,6 +8,25 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  paramsSerializer: {
+    // Serialize array params theo định dạng key=value1&key=value2 thay vì key[]=value1&key[]=value2
+    serialize: (params) => {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          // Lặp qua từng phần tử của array và thêm với cùng key
+          value.forEach((item) => {
+            if (item !== undefined && item !== null && item !== '') {
+              searchParams.append(key, String(item));
+            }
+          });
+        } else if (value !== undefined && value !== null && value !== '') {
+          searchParams.append(key, String(value));
+        }
+      });
+      return searchParams.toString();
+    },
+  },
 });
 
 // Thêm interceptor để xử lý token

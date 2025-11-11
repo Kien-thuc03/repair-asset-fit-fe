@@ -1,4 +1,6 @@
-import { ErrorType } from "./errorType";
+import { ErrorType } from '@/lib/constants/errorTypes';
+import { ComponentStatus, ComponentType } from './computer';
+
 
 // Interface cho ErrorTypes - DEPRECATED - Sử dụng ErrorType enum thay thế
 export interface ErrorTypeOld {
@@ -17,16 +19,6 @@ export enum UserRole {
   PHONG_QUAN_TRI = "PHONG_QUAN_TRI", // Nhân viên Phòng Quản trị
   QTV_KHOA = "QTV_KHOA", // Quản trị viên Khoa
 }
-
-// Interface cho bảng Computers - liên kết với assets
-export interface Computer {
-  id: string; // UUID primary key
-  assetId: string; // FK to assets.id (unique, not null)
-  roomId: string; // FK to rooms.id
-  machineLabel: string; // Số máy (e.g., "01", "02", "03")
-  notes?: string; // Ghi chú
-}
-
 // Interface cho bảng trung gian RepairRequestComponents (quan hệ nhiều-nhiều)
 export interface RepairRequestComponent {
   repairRequestId: string; // FK to repairRequests.id
@@ -90,7 +82,7 @@ export interface RepairRequest {
   }>;
 
   // Computed fields for backward compatibility (optional)
-  assetCode?: string; // Mã tài sản QR code
+  ktCode?: string; // Mã tài sản QR code
   assetName?: string; // Tên tài sản
   componentName?: string; // Tên linh kiện cụ thể bị lỗi
   reporterName?: string; // Tên người báo lỗi
@@ -106,7 +98,7 @@ export interface RepairRequest {
 // Interface cho RepairRequest với thông tin chi tiết đầy đủ (computed từ join các bảng)
 export interface RepairRequestWithDetails extends RepairRequest {
   // Thông tin từ bảng assets
-  assetCode: string;
+  ktCode: string;
   assetName: string;
   assetSpecs: string;
 
@@ -143,7 +135,7 @@ export interface RepairRequestWithDetails extends RepairRequest {
 export interface ReplacementComponent {
   id: string;
   assetId: string;
-  assetCode: string;
+  ktCode: string;
   assetName: string;
   componentId: string;
   componentName: string;
@@ -299,51 +291,52 @@ export interface RepairInput {
 // Asset related interfaces
 export interface Asset {
   id: string;
-  assetCode: string;
+  ktCode: string;
   name: string;
   category: string;
-  model: string;
-  serialNumber: string;
+  specs: string;
+  fixedCode: string;
   roomId: string;
   roomName: string;
-  status: AssetStatus;
+  status: AssetStatus | string; // Accept both enum and string from API
   purchaseDate: string;
-  warrantyExpiry: string;
+  warrantyExpiry?: string;
   lastMaintenanceDate?: string;
   assignedTo?: string;
   specifications?: Record<string, string>;
-  qrCode: string;
-}
-
-// Component Type enum
-export enum ComponentType {
-  CPU = "CPU",
-  RAM = "RAM",
-  MAINBOARD = "MAINBOARD", // Updated to match database
-  STORAGE = "STORAGE",
-  GPU = "GPU",
-  PSU = "PSU",
-  CASE = "CASE",
-  MONITOR = "MONITOR",
-  KEYBOARD = "KEYBOARD",
-  MOUSE = "MOUSE",
-  NETWORK = "NETWORK", // Updated to match database
-  OPTICAL_DRIVE = "OPTICAL_DRIVE",
-  COOLER = "COOLER", // Updated to match database
-  UPS = "UPS", // Added from database
-  OTHER = "OTHER",
-  NETWORK_CARD = "NETWORK_CARD", // Added from database
-  SOUND_CARD = "SOUND_CARD", // Added from database
-  SPEAKER = "SPEAKER", // Added from database
-  WEBCAM = "WEBCAM", // Added from database
-}
-
-// Component Status enum
-export enum ComponentStatus {
-  INSTALLED = "INSTALLED", // Đang được lắp đặt và hoạt động
-  FAULTY = "FAULTY", // Hỏng hóc
-  REMOVED = "REMOVED", // Đã gỡ ra
-  IN_STOCK = "IN_STOCK", // linh kiện mới chờ lắp đặt
+  qrCode?: string;
+  // Extended fields from Computer Detail API
+  building?: string;
+  floor?: string;
+  machineLabel?: string;
+  componentCount?: number;
+  components?: Array<{
+    id: string;
+    componentType: string;
+    name: string;
+    componentSpecs?: string;
+    serialNumber?: string;
+    status: string;
+    installedAt: string;
+    removedAt?: string;
+    notes?: string;
+  }>;
+  software?: Array<{
+    id: string;
+    computerSoftwareId: string;
+    name: string;
+    version?: string;
+    publisher?: string;
+    licenseKey?: string;
+    installationDate?: string;
+    notes?: string;
+  }>;
+  repairSummary?: {
+    total: number;
+    inProgress: number;
+    completed: number;
+    lastRequestDate?: string;
+  };
 }
 
 // Component interface for computer assets (updated to match database schema)
@@ -382,17 +375,26 @@ export interface RepairHistory {
   }[]; // Optional component changes
 }
 
-// Interface for individual repair log entries (matches RepairLogs table)
+// Interface for individual repair log entries (matches RepairLogs table and API response)
 export interface RepairLog {
   id: string; // UUID
-  repairRequestId: string; // FK to RepairRequests
-  actorId: string; // FK to users - person who performed the action
-  actorName: string; // Name of the person who performed the action
-  action: string; // Action performed, e.g., "Tạo yêu cầu", "Tiếp nhận xử lý", "Hoàn tất"
-  fromStatus: RepairStatus | null; // Status before change
-  toStatus: RepairStatus; // Status after change
-  comment: string; // Notes for this action
+  action: string; // Action performed, e.g., "Tạo yêu cầu sửa chữa", "Tiếp nhận yêu cầu sửa chữa"
+  fromStatus?: RepairStatus | null; // Status before change (optional)
+  toStatus?: RepairStatus | null; // Status after change (optional)
+  comment?: string | null; // Notes for this action
   createdAt: string; // ISO timestamp when action was performed
+  actor: {
+    id: string; // Actor ID
+    fullName: string; // Actor full name
+    email: string; // Actor email
+  };
+}
+
+// Interface for API response when fetching repair logs
+export interface GetRepairLogsResponse {
+  success: boolean;
+  message: string;
+  data: RepairLog[];
 }
 
 // Interface for repair history items used in HistoryCard component
@@ -408,7 +410,17 @@ export interface RepairHistoryItem {
   completedDate?: string;
   technicianName: string;
   reporterName: string;
-  logs?: RepairLog[]; // Optional logs for detailed history
+  // Steps là danh sách các log entries (history timeline)
+  steps: Array<{
+    id: string;
+    action: string;
+    fromStatus: string | null;
+    toStatus: string | null;
+    comment?: string | null;
+    createdAt: string;
+    actorName: string;
+    actorEmail?: string;
+  }>;
 }
 
 // Interface for replacement requests displayed in technician pages - Khớp với database ReplacementProposals
@@ -436,7 +448,7 @@ export interface ComponentFromRequest {
   componentType: ComponentType;
   assetId: string;
   assetName: string;
-  assetCode: string;
+  ktCode: string;
   buildingName: string;
   roomName: string;
   newItemName: string;
@@ -460,7 +472,7 @@ export interface ComponentFromReport {
   componentType: ComponentType;
   assetId: string;
   assetName: string;
-  assetCode: string;
+  ktCode: string;
   buildingName: string;
   roomName: string;
   status: ReplacementStatus;
@@ -483,7 +495,7 @@ export interface ReportForm {
 export interface SimpleAsset {
   id: string;
   name: string;
-  assetCode: string;
+  ktCode: string;
   roomId: string;
 }
 
@@ -501,13 +513,14 @@ export enum AssetShape {
 
 // Asset Status enum - Synchronized with database-sync.json
 export enum AssetStatus {
-  DANG_SU_DUNG = "đang_sử_dụng",
-  CHO_BAN_GIAO = "chờ_bàn_giao",
-  CHO_TIEP_NHAN = "chờ_tiếp_nhận",
-  HU_HONG = "hư_hỏng",
-  DA_MAT = "đã_mất", // Updated from MAT_TICH
-  DE_XUAT_THANH_LY = "đề_xuất_thanh_lý",
-  DA_THANH_LY = "đã_thanh_lý",
+    IN_USE = 'IN_USE', // đang sử dụng
+    WAITING_HANDOVER = 'WAITING_HANDOVER', // chờ bàn giao
+    WAITING_RECEIVE = 'WAITING_RECEIVE', // chờ tiếp nhận
+    DAMAGED = 'DAMAGED', // hư hỏng
+    LOST = 'LOST', // đã mất
+    PROPOSED_LIQUIDATION = 'PROPOSED_LIQUIDATION', // đề xuất thanh lý
+    LIQUIDATED = 'LIQUIDATED', // đã thanh lý
+    WAITING_ALLOCATION = 'WAITING_ALLOCATION', // chờ phân bổ
 }
 
 // Comprehensive Asset interface based on database schema

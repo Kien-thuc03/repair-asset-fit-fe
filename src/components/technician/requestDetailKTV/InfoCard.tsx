@@ -18,7 +18,7 @@ export default function InfoCard({ req }: Props) {
 				</div>
 				<div>
 					<p className="text-gray-500">Tài sản</p>
-					<p className="font-medium">{req.assetName} ({req.assetCode})</p>
+					<p className="font-medium">{req.assetName} ({req.ktCode})</p>
 				</div>
 				{req.componentName ? (
 					<div>

@@ -18,7 +18,7 @@ export interface RepairHistoryItem {
   id: string
   requestCode: string
   assetId: string
-  assetCode: string
+  ktCode: string
   errorType: string | null
   description: string | null
   solution?: string
@@ -222,7 +222,7 @@ export const repairLogs: RepairLogItem[] = [
 // Transform repair logs into history format grouped by requestCode
 export const mockRepairHistory: RepairHistoryItem[] = (() => {
   // Get asset code based on computerAssetId
-  const getAssetCode = (assetId: string) => {
+  const getktCode = (assetId: string) => {
     switch (assetId) {
       case 'ASSET001': return '19-0205/01'
       case 'ASSET002': return '19-0205/02'
@@ -302,7 +302,7 @@ export const mockRepairHistory: RepairHistoryItem[] = (() => {
       id: firstLog.repairRequestId,
       requestCode,
       assetId: firstLog.computerAssetId,
-      assetCode: getAssetCode(firstLog.computerAssetId),
+      ktCode: getktCode(firstLog.computerAssetId),
       errorType: firstLog.errorTypeName,
       description: firstLog.comment,
       solution: getSolution(firstLog.errorTypeName, !!completedLog),
@@ -365,7 +365,7 @@ export const getRepairHistoryStats = () => {
 
 export interface AssetFailureStats {
   assetId: string
-  assetCode: string
+  ktCode: string
   assetName: string
   totalIssues: number
   completedIssues: number
@@ -404,13 +404,13 @@ export const getAssetFailureStats = (): AssetFailureStats[] => {
     
     return {
       assetId,
-      assetCode: firstIssue.assetCode,
-      assetName: firstIssue.assetCode.includes('01') ? 'PC Dell OptiPlex 3080' :
-                 firstIssue.assetCode.includes('02') ? 'PC Acer Aspire TC-885' :
-                 firstIssue.assetCode.includes('03') ? 'PC HP EliteDesk 800 G5' :
-                 firstIssue.assetCode.includes('04') ? 'PC ASUS VivoPC VM42' :
-                 firstIssue.assetCode.includes('05') ? 'PC Lenovo ThinkCentre M720s' :
-                 firstIssue.assetCode.includes('09') ? 'PC MSI Modern' : 'Unknown Asset',
+      ktCode: firstIssue.ktCode,
+      assetName: firstIssue.ktCode.includes('01') ? 'PC Dell OptiPlex 3080' :
+                 firstIssue.ktCode.includes('02') ? 'PC Acer Aspire TC-885' :
+                 firstIssue.ktCode.includes('03') ? 'PC HP EliteDesk 800 G5' :
+                 firstIssue.ktCode.includes('04') ? 'PC ASUS VivoPC VM42' :
+                 firstIssue.ktCode.includes('05') ? 'PC Lenovo ThinkCentre M720s' :
+                 firstIssue.ktCode.includes('09') ? 'PC MSI Modern' : 'Unknown Asset',
       totalIssues,
       completedIssues,
       successRate,

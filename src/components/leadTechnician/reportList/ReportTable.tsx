@@ -115,10 +115,10 @@ export default function ReportTable({
                 </th>
                 <th
                   className="w-48 px-1 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => onSort("assetCode")}>
+                  onClick={() => onSort("ktCode")}>
                   <div className="flex items-center">
                     <span className="truncate">Tài sản</span>
-                    {getSortIcon("assetCode")}
+                    {getSortIcon("ktCode")}
                   </div>
                 </th>
                 <th
@@ -189,8 +189,8 @@ export default function ReportTable({
                       <div>
                         <div
                           className="text-xs font-medium text-gray-900 truncate"
-                          title={request.assetCode}>
-                          {request.assetCode}
+                          title={request.ktCode}>
+                          {request.ktCode}
                         </div>
                         <div
                           className="text-xs text-gray-500 truncate"
