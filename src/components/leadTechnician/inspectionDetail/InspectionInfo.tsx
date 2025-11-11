@@ -1,4 +1,4 @@
-import { FileText, Calendar, MapPin, FileCheck } from "lucide-react";
+import { FileText, Calendar, MapPin, Download, Eye } from "lucide-react";
 
 interface InspectionInfoProps {
   reportNumber: string;
@@ -8,6 +8,8 @@ interface InspectionInfoProps {
   verificationReportUrl?: string; // URL biên bản
   inspectionDate: string;
   department: string;
+  onPreviewSubmission?: () => void; // Callback để mở modal preview tờ trình
+  onPreviewInspection?: () => void; // Callback để mở modal preview biên bản
 }
 
 export default function InspectionInfo({
@@ -18,6 +20,8 @@ export default function InspectionInfo({
   verificationReportUrl,
   inspectionDate,
   department,
+  onPreviewSubmission,
+  onPreviewInspection,
 }: InspectionInfoProps) {
   // Helper function to extract filename from URL
   const getFileNameFromUrl = (url: string): string => {
@@ -28,6 +32,30 @@ export default function InspectionInfo({
       return decodeURIComponent(filename);
     } catch {
       return url;
+    }
+  };
+
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      // Fetch the file from URL
+      const response = await fetch(url);
+      const blob = await response.blob();
+
+      // Create download link
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      // Fallback: open in new tab
+      window.open(url, "_blank");
     }
   };
 
@@ -62,16 +90,32 @@ export default function InspectionInfo({
               Tờ trình liên quan
             </label>
             {relatedReportUrl ? (
-              <a
-                href={relatedReportUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 mt-1 bg-blue-50 px-3 py-2 rounded flex items-center justify-between group">
-                <span className="truncate">
+              <div className="mt-1 bg-blue-50 px-3 py-2 rounded flex items-center justify-between group">
+                <span className="text-sm text-blue-600 truncate">
                   {getFileNameFromUrl(relatedReportUrl)}
                 </span>
-                <FileCheck className="h-4 w-4 ml-2 flex-shrink-0 group-hover:scale-110 transition-transform" />
-              </a>
+                <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                  <button
+                    onClick={() =>
+                      handleDownload(
+                        relatedReportUrl,
+                        getFileNameFromUrl(relatedReportUrl)
+                      )
+                    }
+                    className="p-1 hover:bg-blue-100 rounded transition-colors"
+                    title="Tải xuống">
+                    <Download className="h-4 w-4 text-blue-600" />
+                  </button>
+                  {onPreviewSubmission && (
+                    <button
+                      onClick={onPreviewSubmission}
+                      className="p-1 hover:bg-blue-100 rounded transition-colors"
+                      title="Xem trước">
+                      <Eye className="h-4 w-4 text-blue-600" />
+                    </button>
+                  )}
+                </div>
+              </div>
             ) : (
               <p className="text-sm text-gray-900 mt-1 bg-gray-50 px-3 py-2 rounded">
                 {relatedReportTitle}
@@ -83,16 +127,32 @@ export default function InspectionInfo({
               Biên bản liên quan
             </label>
             {verificationReportUrl ? (
-              <a
-                href={verificationReportUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-green-600 hover:text-green-800 mt-1 bg-green-50 px-3 py-2 rounded flex items-center justify-between group">
-                <span className="truncate">
+              <div className="mt-1 bg-green-50 px-3 py-2 rounded flex items-center justify-between group">
+                <span className="text-sm text-green-600 truncate">
                   {getFileNameFromUrl(verificationReportUrl)}
                 </span>
-                <FileCheck className="h-4 w-4 ml-2 flex-shrink-0 group-hover:scale-110 transition-transform" />
-              </a>
+                <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                  <button
+                    onClick={() =>
+                      handleDownload(
+                        verificationReportUrl,
+                        getFileNameFromUrl(verificationReportUrl)
+                      )
+                    }
+                    className="p-1 hover:bg-green-100 rounded transition-colors"
+                    title="Tải xuống">
+                    <Download className="h-4 w-4 text-green-600" />
+                  </button>
+                  {onPreviewInspection && (
+                    <button
+                      onClick={onPreviewInspection}
+                      className="p-1 hover:bg-green-100 rounded transition-colors"
+                      title="Xem trước">
+                      <Eye className="h-4 w-4 text-green-600" />
+                    </button>
+                  )}
+                </div>
+              </div>
             ) : (
               <p className="text-sm text-gray-500 mt-1 bg-gray-50 px-3 py-2 rounded italic">
                 Chưa có biên bản
