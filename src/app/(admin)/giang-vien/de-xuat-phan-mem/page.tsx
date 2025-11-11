@@ -24,9 +24,6 @@ export default function DeXuatPhanMemPage() {
       {
         softwareName: "",
         version: "",
-        publisher: "",
-        quantity: 1,
-        licenseType: "",
       },
     ],
   });
@@ -66,12 +63,7 @@ export default function DeXuatPhanMemPage() {
 
     // Check if all software items are complete
     const hasValidSoftwareItems = formData.softwareItems.every(
-      (item) =>
-        item.softwareName.trim() &&
-        item.version.trim() &&
-        item.publisher.trim() &&
-        item.licenseType &&
-        item.quantity >= 1
+      (item) => item.softwareName.trim() && item.version.trim()
     );
 
     return hasValidSoftwareItems;
@@ -151,19 +143,14 @@ export default function DeXuatPhanMemPage() {
 
     // Validate software items
     const invalidSoftwareItem = formData.softwareItems.find(
-      (item) =>
-        !item.softwareName.trim() ||
-        !item.version.trim() ||
-        !item.publisher.trim() ||
-        !item.licenseType ||
-        item.quantity < 1
+      (item) => !item.softwareName.trim() || !item.version.trim()
     );
 
     if (invalidSoftwareItem) {
       Modal.warning({
         title: "Thông tin phần mềm chưa đầy đủ",
         content:
-          "Vui lòng điền đầy đủ thông tin cho tất cả phần mềm (tên phần mềm, phiên bản, nhà phát hành, số lượng và loại giấy phép).",
+          "Vui lòng điền đầy đủ thông tin cho tất cả phần mềm (tên phần mềm và phiên bản).",
         centered: true,
         okText: "Đồng ý",
       });
@@ -193,9 +180,6 @@ export default function DeXuatPhanMemPage() {
           {
             softwareName: "",
             version: "",
-            publisher: "",
-            quantity: 1,
-            licenseType: "",
           },
         ],
       });
@@ -221,7 +205,7 @@ export default function DeXuatPhanMemPage() {
 
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
-    router.push("/giang-vien");
+    router.push("/giang-vien/danh-sach-de-xuat-phan-mem");
   };
 
   const handleCancel = () => {
@@ -257,9 +241,6 @@ export default function DeXuatPhanMemPage() {
         {
           softwareName: "",
           version: "",
-          publisher: "",
-          quantity: 1,
-          licenseType: "",
         },
       ],
     }));
@@ -365,7 +346,7 @@ export default function DeXuatPhanMemPage() {
                 disabled={!locationData.floor}>
                 {filteredRooms.map((room) => (
                   <Option key={room.id} value={room.id}>
-                    {room.name ||
+                    {room.roomNumber ||
                       `${room.building}.${room.floor}${room.roomNumber}`}
                   </Option>
                 ))}
@@ -456,82 +437,6 @@ export default function DeXuatPhanMemPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nhà phát hành *
-                  </label>
-                  <input
-                    title="Nhà phát hành"
-                    type="text"
-                    value={item.publisher}
-                    onChange={(e) =>
-                      handleSoftwareItemChange(
-                        index,
-                        "publisher",
-                        e.target.value
-                      )
-                    }
-                    placeholder="VD: Adobe Inc."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số lượng bản quyền *
-                  </label>
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleSoftwareItemChange(
-                        index,
-                        "quantity",
-                        parseInt(e.target.value) || 1
-                      )
-                    }
-                    min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Loại giấy phép *
-                  </label>
-                  <select
-                    title="Loại giấy phép"
-                    value={item.licenseType}
-                    onChange={(e) =>
-                      handleSoftwareItemChange(
-                        index,
-                        "licenseType",
-                        e.target.value
-                      )
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required>
-                    <option value="">Chọn loại giấy phép</option>
-                    <option value="Giấy phép giáo dục miễn phí">
-                      Giấy phép giáo dục miễn phí
-                    </option>
-                    <option value="Giấy phép giáo dục theo năm">
-                      Giấy phép giáo dục theo năm
-                    </option>
-                    <option value="Giấy phép thương mại">
-                      Giấy phép thương mại
-                    </option>
-                    <option value="Giấy phép mã nguồn mở">
-                      Giấy phép mã nguồn mở
-                    </option>
-                    <option value="Giấy phép dùng thử">
-                      Giấy phép dùng thử
-                    </option>
-                  </select>
                 </div>
               </div>
             </div>

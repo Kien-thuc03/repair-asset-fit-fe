@@ -3,7 +3,9 @@ import {
   getSoftwareProposals,
   getSoftwareProposalById,
   getSoftwareProposalsByProposer,
+  updateSoftwareProposalStatus,
   GetSoftwareProposalsQueryParams,
+  UpdateSoftwareProposalStatusRequest,
 } from "@/lib/api/software-proposals";
 import { SoftwareProposal } from "@/types/software";
 
@@ -227,5 +229,38 @@ export const useSoftwareProposalsByProposer = (
     loading,
     error,
     refetch,
+  };
+};
+
+/**
+ * Hook để cập nhật trạng thái đề xuất phần mềm
+ */
+export const useUpdateSoftwareProposalStatus = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateStatus = async (
+    id: string,
+    data: UpdateSoftwareProposalStatusRequest
+  ) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await updateSoftwareProposalStatus(id, data);
+      return response;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Đã xảy ra lỗi";
+      setError(errorMessage);
+      console.error("Error updating software proposal status:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    updateStatus,
+    loading,
+    error,
   };
 };

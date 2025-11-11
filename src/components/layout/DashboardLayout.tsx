@@ -31,6 +31,7 @@ import {
   TriangleAlert,
   TimerReset,
   ClipboardEdit,
+  CheckCircle,
 } from "lucide-react";
 
 // Navigation items
@@ -155,6 +156,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
             name: "Biên bản",
             href: "/to-truong-ky-thuat/bien-ban",
             icon: Calendar,
+          },
+          {
+            name: "Danh sách đề xuất phần mềm",
+            href: "/to-truong-ky-thuat/danh-sach-de-xuat-phan-mem",
+            icon: CheckCircle,
           },
         ],
       },

@@ -88,9 +88,6 @@ export interface SoftwareProposalForm {
 export interface SoftwareItemForm {
   softwareName: string;
   version: string;
-  publisher: string;
-  quantity: number;
-  licenseType: string;
 }
 
 // New form type for multiple software items
