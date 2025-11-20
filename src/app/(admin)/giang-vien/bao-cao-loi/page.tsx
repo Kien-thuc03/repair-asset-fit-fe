@@ -401,12 +401,12 @@ export default function BaoCaoLoiPage() {
   // Handle success modal close
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
-    router.push("/giang-vien");
+    router.push("/giang-vien/danh-sach-yeu-cau-sua-chua");
   };
 
   // Handle cancel
   const handleCancel = () => {
-    router.push("/giang-vien");
+    router.push("/giang-vien/danh-sach-yeu-cau-sua-chua");
   };
 
   return (
