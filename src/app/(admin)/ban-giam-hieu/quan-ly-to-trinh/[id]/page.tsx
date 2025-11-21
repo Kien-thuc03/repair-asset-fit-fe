@@ -20,11 +20,13 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { Breadcrumb, Modal } from "antd";
+import { Breadcrumb } from "antd";
 import {
   SignConfirmModal,
   CancelConfirmModal,
   SubmissionPreviewModal,
+  SuccessModal,
+  ErrorModal,
 } from "@/components/modal";
 import {
   useReplacementProposal,
@@ -42,7 +44,16 @@ export default function ChiTietQuanLyToTrinhPage() {
   const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showRejectModalB5, setShowRejectModalB5] = useState(false);
+  const [showSignConfirmModalB5, setShowSignConfirmModalB5] = useState(false);
   const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({
+    title: "",
+    message: "",
+  });
+  const [errorMessage, setErrorMessage] = useState({ title: "", message: "" });
 
   // Fetch proposal data từ API
   const {
@@ -220,14 +231,11 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      Modal.success({
+      setSuccessMessage({
         title: "Phê duyệt thành công",
-        content: `Tờ trình ${proposal.proposalCode} đã được phê duyệt thành công.`,
-        okText: "Đóng",
-        onOk: () => {
-          router.push("/ban-giam-hieu/quan-ly-to-trinh");
-        },
+        message: `Tờ trình ${proposal.proposalCode} đã được phê duyệt thành công.`,
       });
+      setShowSuccessModal(true);
 
       refetch();
     } catch (error) {
@@ -235,11 +243,11 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      Modal.error({
+      setErrorMessage({
         title: "Lỗi",
-        content: "Có lỗi xảy ra khi phê duyệt tờ trình. Vui lòng thử lại.",
-        okText: "Đóng",
+        message: "Có lỗi xảy ra khi phê duyệt tờ trình. Vui lòng thử lại.",
       });
+      setShowErrorModal(true);
     }
   };
 
@@ -256,14 +264,11 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowVerificationModal(false);
 
-      Modal.success({
+      setSuccessMessage({
         title: "Yêu cầu xác minh đã được gửi",
-        content: `Yêu cầu xác minh tình trạng linh kiện cho tờ trình ${proposal.proposalCode} đã được gửi thành công.`,
-        okText: "Đóng",
-        onOk: () => {
-          router.push("/ban-giam-hieu/quan-ly-to-trinh");
-        },
+        message: `Yêu cầu xác minh tình trạng linh kiện cho tờ trình ${proposal.proposalCode} đã được gửi thành công.`,
       });
+      setShowSuccessModal(true);
 
       refetch();
     } catch (error) {
@@ -271,11 +276,11 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowVerificationModal(false);
 
-      Modal.error({
+      setErrorMessage({
         title: "Lỗi",
-        content: "Có lỗi xảy ra khi gửi yêu cầu xác minh. Vui lòng thử lại.",
-        okText: "Đóng",
+        message: "Có lỗi xảy ra khi gửi yêu cầu xác minh. Vui lòng thử lại.",
       });
+      setShowErrorModal(true);
     }
   };
 
@@ -293,14 +298,11 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowRejectModal(false);
 
-      Modal.success({
+      setSuccessMessage({
         title: "Từ chối thành công",
-        content: `Tờ trình ${proposal.proposalCode} đã được từ chối.`,
-        okText: "Đóng",
-        onOk: () => {
-          router.push("/ban-giam-hieu/quan-ly-to-trinh");
-        },
+        message: `Tờ trình ${proposal.proposalCode} đã được từ chối.`,
       });
+      setShowSuccessModal(true);
 
       refetch();
     } catch (error) {
@@ -308,11 +310,79 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowRejectModal(false);
 
-      Modal.error({
+      setErrorMessage({
         title: "Lỗi",
-        content: "Có lỗi xảy ra khi từ chối tờ trình. Vui lòng thử lại.",
-        okText: "Đóng",
+        message: "Có lỗi xảy ra khi từ chối tờ trình. Vui lòng thử lại.",
       });
+      setShowErrorModal(true);
+    }
+  };
+
+  // Hàm xử lý khi duyệt từ trạng thái B5 (KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH) -> B6 (ĐÃ_DUYỆT_TỜ_TRÌNH)
+  const handleApproveFromB5 = async () => {
+    if (!proposal) return;
+
+    setIsProcessing(true);
+
+    try {
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+      });
+
+      setIsProcessing(false);
+      setShowSignConfirmModalB5(false);
+
+      setSuccessMessage({
+        title: "Duyệt thành công",
+        message: `Tờ trình ${proposal.proposalCode} đã được duyệt thành công.`,
+      });
+      setShowSuccessModal(true);
+
+      refetch();
+    } catch (error) {
+      console.error("Error approving proposal from B5:", error);
+      setIsProcessing(false);
+      setShowSignConfirmModalB5(false);
+
+      setErrorMessage({
+        title: "Lỗi",
+        message: "Có lỗi xảy ra khi duyệt tờ trình. Vui lòng thử lại.",
+      });
+      setShowErrorModal(true);
+    }
+  };
+
+  // Hàm xử lý khi từ chối từ trạng thái B5 (KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH) -> B7 (ĐÃ_TỪ_CHỐI_TỜ_TRÌNH)
+  const handleRejectFromB5 = async () => {
+    if (!proposal) return;
+
+    setIsProcessing(true);
+
+    try {
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+      });
+
+      setIsProcessing(false);
+      setShowRejectModalB5(false);
+
+      setSuccessMessage({
+        title: "Từ chối thành công",
+        message: `Tờ trình ${proposal.proposalCode} đã được từ chối.`,
+      });
+      setShowSuccessModal(true);
+
+      refetch();
+    } catch (error) {
+      console.error("Error rejecting proposal from B5:", error);
+      setIsProcessing(false);
+      setShowRejectModalB5(false);
+
+      setErrorMessage({
+        title: "Lỗi",
+        message: "Có lỗi xảy ra khi từ chối tờ trình. Vui lòng thử lại.",
+      });
+      setShowErrorModal(true);
     }
   };
 
@@ -376,7 +446,25 @@ export default function ChiTietQuanLyToTrinhPage() {
                 )}`}>
                 {getStatusText(proposal.status)}
               </span>
-              {/* Action buttons - hiển thị khi status là ĐÃ_DUYỆT_TỜ_TRÌNH */}
+              {/* Action buttons - hiển thị khi status là KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH (B5) */}
+              {proposal.status ===
+                ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowRejectModalB5(true)}
+                    className="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <XCircle className="w-4 h-4 mr-1.5" />
+                    <span className="hidden sm:inline">Từ chối</span>
+                  </button>
+                  <button
+                    onClick={() => setShowSignConfirmModalB5(true)}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <CheckCircle className="w-4 h-4 mr-1.5" />
+                    <span className="hidden sm:inline">Duyệt</span>
+                  </button>
+                </div>
+              )}
+              {/* Action buttons - hiển thị khi status là ĐÃ_DUYỆT_TỜ_TRÌNH (B6) */}
               {proposal.status ===
                 ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
                 <div className="flex space-x-2">
@@ -672,31 +760,6 @@ export default function ChiTietQuanLyToTrinhPage() {
                 )}
             </div>
           </div>
-
-          {/* Action Buttons Section - Nút Duyệt và Từ chối */}
-          {proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
-            <div className="border-t border-gray-200 pt-6">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <h3 className="text-lg font-medium text-gray-900 sm:mr-auto">
-                  Thao tác
-                </h3>
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                  <button
-                    onClick={() => setShowRejectModal(true)}
-                    className="inline-flex items-center justify-center px-6 py-3 border border-red-300 text-base font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                    <XCircle className="w-5 h-5 mr-2" />
-                    Từ chối
-                  </button>
-                  <button
-                    onClick={() => setShowSignConfirmModal(true)}
-                    className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    Duyệt
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -727,7 +790,7 @@ export default function ChiTietQuanLyToTrinhPage() {
         icon={AlertTriangle}
       />
 
-      {/* Reject Confirmation Modal - Sử dụng CancelConfirmModal */}
+      {/* Reject Confirmation Modal - Sử dụng CancelConfirmModal cho B6 */}
       <CancelConfirmModal
         isOpen={showRejectModal}
         onClose={() => setShowRejectModal(false)}
@@ -737,6 +800,55 @@ export default function ChiTietQuanLyToTrinhPage() {
         confirmText="Xác nhận từ chối"
         cancelText="Hủy"
         isLoading={isProcessing}
+      />
+
+      {/* Reject Confirmation Modal cho B5 - Sử dụng CancelConfirmModal */}
+      <CancelConfirmModal
+        isOpen={showRejectModalB5}
+        onClose={() => setShowRejectModalB5(false)}
+        onConfirm={handleRejectFromB5}
+        title="Xác nhận từ chối tờ trình"
+        message={`Bạn có chắc chắn muốn từ chối tờ trình ${proposal.proposalCode}? Sau khi từ chối, tờ trình sẽ chuyển sang trạng thái "Đã từ chối tờ trình" và cần được lập lại từ đầu. Hành động này không thể hoàn tác.`}
+        confirmText="Xác nhận từ chối"
+        cancelText="Hủy"
+        isLoading={isProcessing}
+      />
+
+      {/* SignConfirmModal cho duyệt từ B5 */}
+      <SignConfirmModal
+        isOpen={showSignConfirmModalB5}
+        onClose={() => setShowSignConfirmModalB5(false)}
+        onConfirm={handleApproveFromB5}
+        reportTitle={proposal.title || "Tờ trình thay thế"}
+        reportNumber={proposal.proposalCode}
+        isLoading={isProcessing}
+        actionType="approve"
+        customTitle="Xác nhận duyệt tờ trình"
+        customDescription={`Bạn có chắc chắn muốn duyệt tờ trình ${proposal.proposalCode}?`}
+        customWarning="Sau khi duyệt, tờ trình sẽ chuyển sang trạng thái 'Đã duyệt tờ trình' và có thể thực hiện các thao tác tiếp theo."
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          // Nếu là thao tác từ chối, chuyển về danh sách
+          if (successMessage.title.includes("Từ chối")) {
+            router.push("/ban-giam-hieu/quan-ly-to-trinh");
+          }
+        }}
+        title={successMessage.title}
+        message={successMessage.message}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title={errorMessage.title}
+        message={errorMessage.message}
+        showRetry={false}
       />
 
       {/* Submission Preview Modal */}
