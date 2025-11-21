@@ -20,10 +20,8 @@ import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import {
-  ReplacementProposal,
-  ReplacementProposalStatus,
-} from "@/lib/api/replacement-proposals";
+import {ReplacementProposal} from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types";
 
 type SortField = keyof ReplacementProposal;
 type SortDirection = "asc" | "desc" | null;
@@ -44,14 +42,14 @@ export default function QuanLyToTrinhPage() {
   const [exportFileName, setExportFileName] = useState("");
   const itemsPerPage = 10;
 
-  // Fetch data từ API với status ĐÃ_DUYỆT_TỜ_TRÌNH (đã được phòng quản trị duyệt)
+  // Fetch data từ API với status KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH (đã được Quản trị viên khoa duyệt)
   const {
     data: apiData,
     loading,
     error,
     refetch,
   } = useReplacementProposals({
-    status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH,
     page: 1,
     limit: 1000, // Lấy tất cả để xử lý phân trang và sort trên client
   });
