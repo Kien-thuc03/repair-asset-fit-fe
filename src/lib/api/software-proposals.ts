@@ -240,11 +240,11 @@ export const updateSoftwareProposalStatus = async (
 ): Promise<SoftwareProposal> => {
   try {
     console.log(
-      `🌐 API Call: PUT /api/v1/software-proposals/${id}/status`,
+      `🌐 API Call: PUT /api/v1/software-proposals/${id}`,
       data
     );
     const response = await api.put<SoftwareProposal>(
-      `/api/v1/software-proposals/${id}/status`,
+      `/api/v1/software-proposals/${id}`,
       data
     );
     console.log("✅ API Response:", response.data);
