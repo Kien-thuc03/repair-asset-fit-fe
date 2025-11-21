@@ -1,45 +1,48 @@
 import {
-  ReplacementStatus,
+  ReplacementProposalStatus,
   ReplacementRequestItem,
   ComponentFromRequest,
 } from "@/types";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 
 // Status configuration - Support both old and new enum
 export const STATUS_CONFIG = {
-  [ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: {
+  [ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: {
     text: "Chờ tổ trưởng duyệt",
     color: "orange",
   },
-  [ReplacementStatus.CHỜ_XÁC_MINH]: {
+  [ReplacementProposalStatus.CHỜ_XÁC_MINH]: {
     text: "Chờ xác minh",
     color: "blue",
   },
-  [ReplacementStatus.ĐÃ_XÁC_MINH]: {
+  [ReplacementProposalStatus.ĐÃ_XÁC_MINH]: {
     text: "Đã xác minh",
     color: "cyan",
   },
-  [ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH]: {
+  [ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: {
     text: "Đã lập tờ trình",
     color: "geekblue",
   },
-  [ReplacementStatus.ĐÃ_DUYỆT]: {
+  [ReplacementProposalStatus.ĐÃ_DUYỆT]: {
     text: "Đã duyệt",
     color: "green",
   },
-  [ReplacementStatus.ĐÃ_TỪ_CHỐI]: {
+  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: {
     text: "Đã từ chối",
     color: "red",
   },
-  [ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: {
-    text: "Đã duyệt tờ trình",
+  [ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: {
+    text: "Khoa đã duyệt tờ trình",
     color: "lime",
   },
-  [ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: {
+  [ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: {
+    text: "Ban giám hiệu đã duyệt tờ trình",
+    color: "green",
+  },
+  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: {
     text: "Đã từ chối tờ trình",
     color: "volcano",
   },
-  [ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: {
+  [ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: {
     text: "Đã hoàn tất mua sắm",
     color: "purple",
   },
@@ -67,20 +70,21 @@ export const filterProposals = (
       !selectedStatus ||
       request.status === selectedStatus ||
       (selectedStatus === "pending" &&
-        (request.status === ReplacementStatus.CHỜ_XÁC_MINH ||
-          request.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT)) ||
+        (request.status === ReplacementProposalStatus.CHỜ_XÁC_MINH ||
+          request.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT)) ||
       (selectedStatus === "verified" &&
-        request.status === ReplacementStatus.ĐÃ_XÁC_MINH) ||
+        request.status === ReplacementProposalStatus.ĐÃ_XÁC_MINH) ||
       (selectedStatus === "proposal_created" &&
-        request.status === ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH) ||
+        request.status === ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH) ||
       (selectedStatus === "approved" &&
-        (request.status === ReplacementStatus.ĐÃ_DUYỆT ||
-          request.status === ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH)) ||
+        (request.status === ReplacementProposalStatus.ĐÃ_DUYỆT ||
+          request.status === ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH ||
+          request.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH)) ||
       (selectedStatus === "rejected" &&
-        (request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI ||
-          request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH)) ||
+        (request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ||
+          request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH)) ||
       (selectedStatus === "completed" &&
-        request.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM);
+        request.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM);
 
     const matchesSearch =
       searchTerm === "" ||

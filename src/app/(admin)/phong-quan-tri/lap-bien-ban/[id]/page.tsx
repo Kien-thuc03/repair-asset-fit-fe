@@ -60,7 +60,7 @@ export default function RequestDetailPage() {
 
   const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_XÁC_MINH:
         return "bg-green-100 text-green-800 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -69,7 +69,7 @@ export default function RequestDetailPage() {
 
   const getStatusIcon = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_XÁC_MINH:
         return <CheckCircle className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
@@ -78,8 +78,8 @@ export default function RequestDetailPage() {
 
   const getStatusText = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "Đã duyệt - Cần lập biên bản";
+      case ReplacementProposalStatus.ĐÃ_XÁC_MINH:
+        return "Đã xác minh - Cần lập biên bản";
       default:
         return status;
     }
@@ -122,26 +122,15 @@ export default function RequestDetailPage() {
       }
 
       // 3. Cập nhật trạng thái theo workflow
-      // Workflow: ĐÃ_DUYỆT_TỜ_TRÌNH → CHỜ_XÁC_MINH → ĐÃ_XÁC_MINH → ĐÃ_GỬI_BIÊN_BẢN
+      // Workflow: KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH → ĐÃ_DUYỆT_TỜ_TRÌNH → CHỜ_XÁC_MINH → ĐÃ_XÁC_MINH → ĐÃ_GỬI_BIÊN_BẢN
 
-      // Bước 1: Chuyển sang CHỜ_XÁC_MINH
-      if (proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH) {
+      // Chuyển từ ĐÃ_XÁC_MINH sang ĐÃ_GỬI_BIÊN_BẢN sau khi lập biên bản
+      if (proposal.status === ReplacementProposalStatus.ĐÃ_XÁC_MINH) {
         await updateStatus(proposal.id, {
-          status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
+          status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
+          verificationReportUrl: uploadResult.url,
         });
       }
-
-      // Bước 2: Chuyển sang ĐÃ_XÁC_MINH
-      if (
-        proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH ||
-        proposal.status === ReplacementProposalStatus.CHỜ_XÁC_MINH
-      ) {
-        await updateStatus(proposal.id, {
-          status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
-        });
-      }
-
-      // Bước 3: Chuyển sang ĐÃ_GỬI_BIÊN_BẢN và lưu URL
       await updateStatus(proposal.id, {
         status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
         verificationReportUrl: uploadResult.url,
@@ -644,7 +633,7 @@ export default function RequestDetailPage() {
                     className="bg-white border rounded-lg shadow-sm p-3 space-y-3">
                     {/* Header */}
                     <div className="flex items-start gap-2">
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium flex-shrink-0">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium shrink-0">
                         {index + 1}
                       </span>
                       <div className="flex-1 min-w-0">
@@ -659,7 +648,7 @@ export default function RequestDetailPage() {
 
                     {/* Location */}
                     <div className="flex items-start gap-2 bg-gray-50 p-2 rounded">
-                      <Building className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <Building className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                       <div className="text-xs">
                         <p className="font-medium text-gray-900">
                           {item.oldComponent?.roomLocation ||

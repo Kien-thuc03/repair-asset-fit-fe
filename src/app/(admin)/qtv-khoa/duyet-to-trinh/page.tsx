@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import {
-  Search,
   FileText,
   Calendar,
   Eye,
@@ -13,7 +12,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { Breadcrumb, Button, Modal } from "antd";
+import { Breadcrumb, Button, Modal, Card, Row, Col, Input, Select, DatePicker } from "antd";
+import { SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import { Pagination, SortableHeader } from "@/components/common";
 import { useRouter } from "next/navigation";
 import {
@@ -24,13 +24,18 @@ import {
   ReplacementProposal,
   ReplacementProposalStatus,
 } from "@/lib/api/replacement-proposals";
+import type { Dayjs } from "dayjs";
+
+const { RangePicker } = DatePicker;
 
 type SortField = keyof ReplacementProposal;
 type SortDirection = "asc" | "desc" | null;
 
-export default function XuLyToTrinhPage() {
+export default function DuyetToTrinhPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,78 +49,56 @@ export default function XuLyToTrinhPage() {
   const [exportFileName, setExportFileName] = useState("");
   const itemsPerPage = 10;
 
-  // Fetch data từ API với status CHỜ_XÁC_MINH (sau khi Ban giám hiệu duyệt)
+  // Tính toán fromDate và toDate từ dateRange
+  const fromDate = dateRange?.[0]?.toISOString();
+  const toDate = dateRange?.[1]?.toISOString();
+
+  // Map sortField to API sortBy
+  const mapSortFieldToAPI = (
+    field: SortField | null
+  ): "createdAt" | "updatedAt" | "proposalCode" | "status" | undefined => {
+    if (!field) return undefined;
+    if (field === "createdAt" || field === "updatedAt" || field === "proposalCode" || field === "status") {
+      return field;
+    }
+    return undefined;
+  };
+
+  // Fetch data từ API với các filter
   const {
     data: apiData,
     loading,
     error,
     refetch,
   } = useReplacementProposals({
-    status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
-    page: 1,
-    limit: 1000, // Lấy tất cả để xử lý phân trang và sort trên client
+    status: statusFilter ? (statusFilter as ReplacementProposalStatus) : ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+    search: searchTerm || undefined,
+    fromDate: fromDate,
+    toDate: toDate,
+    page: currentPage,
+    limit: itemsPerPage,
+    sortBy: mapSortFieldToAPI(sortField),
+    sortOrder: sortDirection ? (sortDirection === "asc" ? "ASC" : "DESC") : undefined,
   });
 
   const { updateStatus } = useUpdateReplacementProposalStatus();
 
-  const filteredData = useMemo(() => {
-    const proposals = apiData?.data || [];
-    let filtered = [...proposals];
+  // Data từ API đã được filter và paginate
+  const proposals = apiData?.data || [];
+  const totalItems = apiData?.total || 0;
+  const totalPages = apiData?.totalPages || 0;
+  const paginatedData = proposals;
 
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (item) =>
-          item.proposalCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Apply sorting
-    if (sortField && sortDirection) {
-      filtered.sort((a, b) => {
-        let aValue: string | Date | number;
-        let bValue: string | Date | number;
-
-        switch (sortField) {
-          case "createdAt":
-            aValue = new Date(a.createdAt);
-            bValue = new Date(b.createdAt);
-            break;
-          case "proposalCode":
-            aValue = a.proposalCode;
-            bValue = b.proposalCode;
-            break;
-          case "title":
-            aValue = a.title || "";
-            bValue = b.title || "";
-            break;
-          case "status":
-            aValue = a.status;
-            bValue = b.status;
-            break;
-          default:
-            return 0;
-        }
-
-        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return filtered;
-  }, [apiData?.data, searchTerm, sortField, sortDirection]);
-
-  // Pagination
-  const totalItems = filteredData.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  // Hàm reset filters
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setDateRange(null);
+    setSortField(null);
+    setSortDirection(null);
+    setCurrentPage(1);
+    setSelectedRowKeys([]);
+  };
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -137,12 +120,12 @@ export default function XuLyToTrinhPage() {
 
   const getStatusColor = () => {
     // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị màu xanh dương (chờ xử lý)
-    return "bg-blue-100 text-blue-800 border-blue-200";
+    return "bg-indigo-100 text-indigo-800 border-indigo-200";
   };
 
   const getStatusText = () => {
-    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị "Chờ xử lý"
-    return "Chờ xử lý";
+    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị "Đã lập tờ trình"
+    return "Đã lập tờ trình";
   };
 
   // Hàm xử lý khi nhấn nút duyệt tờ trình
@@ -157,7 +140,7 @@ export default function XuLyToTrinhPage() {
 
     try {
       await updateStatus(selectedProposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
+        status: ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH,
       });
 
       // Đóng modal
@@ -166,8 +149,15 @@ export default function XuLyToTrinhPage() {
       // Refetch data
       refetch();
 
-      // Chuyển hướng đến trang lập biên bản
-      router.push("/phong-quan-tri/lap-bien-ban");
+      // Hiển thị thông báo thành công
+      Modal.success({
+        title: "Duyệt tờ trình thành công!",
+        content: `Tờ trình ${selectedProposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
+        okText: "Đóng",
+        onOk: () => {
+          router.push("/qtv-khoa/duyet-to-trinh");
+        },
+      });
     } catch (error) {
       console.error("Error approving proposal:", error);
       setShowExportErrorModal(true);
@@ -176,7 +166,7 @@ export default function XuLyToTrinhPage() {
 
   // Hàm xuất Excel
   const handleExportExcel = async () => {
-    const selectedData = filteredData.filter((item) =>
+    const selectedData = proposals.filter((item) =>
       selectedRowKeys.includes(item.id)
     );
 
@@ -196,8 +186,9 @@ export default function XuLyToTrinhPage() {
         "Tiêu đề": item.title || "",
         "Mô tả": item.description || "",
         "Người tạo": item.proposer?.fullName || "Chưa xác định",
+        "Tổ trưởng duyệt": item.teamLeadApprover?.fullName || "Chưa có",
         "Số lượng linh kiện": item.itemsCount || 0,
-        "Trạng thái": "Chờ xử lý",
+        "Trạng thái": "Đã lập tờ trình",
         "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
       }));
 
@@ -212,6 +203,7 @@ export default function XuLyToTrinhPage() {
         { wch: 30 }, // Tiêu đề
         { wch: 40 }, // Mô tả
         { wch: 20 }, // Người tạo
+        { wch: 20 }, // Tổ trưởng duyệt
         { wch: 15 }, // Số lượng linh kiện
         { wch: 15 }, // Trạng thái
         { wch: 15 }, // Ngày tạo
@@ -219,10 +211,10 @@ export default function XuLyToTrinhPage() {
       ws["!cols"] = colWidths;
 
       // Thêm worksheet vào workbook
-      XLSX.utils.book_append_sheet(wb, ws, "Danh sách tờ trình");
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách tờ trình cần duyệt");
 
       // Xuất file
-      const fileName = `Danh_sach_to_trinh_${
+      const fileName = `Danh_sach_to_trinh_can_duyet_${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
       XLSX.writeFile(wb, fileName);
@@ -276,17 +268,17 @@ export default function XuLyToTrinhPage() {
               ),
             },
             {
-              href: "/phong-quan-tri",
+              href: "/qtv-khoa",
               title: (
                 <div className="flex items-center">
-                  <span>Phòng quản trị</span>
+                  <span>Quản trị viên khoa</span>
                 </div>
               ),
             },
             {
               title: (
                 <div className="flex items-center">
-                  <span>Xử lý tờ trình</span>
+                  <span>Duyệt tờ trình</span>
                 </div>
               ),
             },
@@ -297,34 +289,81 @@ export default function XuLyToTrinhPage() {
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-4 sm:p-6">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-          Xử lý tờ trình thay thế
+          Duyệt tờ trình đề xuất thay thế
         </h1>
         <p className="mt-2 text-sm sm:text-base text-gray-600">
-          Danh sách các tờ trình đang chờ xử lý từ tổ trưởng kỹ thuật. Tất cả tờ
+          Danh sách các tờ trình đang chờ phê duyệt từ tổ trưởng kỹ thuật. Tất cả tờ
           trình ở đây đều có trạng thái &ldquo;Đã lập tờ trình&rdquo; và cần
-          được xem xét phê duyệt.
+          được quản trị viên khoa xem xét phê duyệt.
         </p>
       </div>
 
-      {/* Search và Xuất Excel */}
-      <div className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
-          {/* Search - chiếm 3 cột */}
-          <div className="md:col-span-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm theo mã đề xuất, tiêu đề..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
+      {/* Filters */}
+      <Card>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={5}>
+            <Input
+              placeholder="Tìm kiếm theo mã hoặc tiêu đề"
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              allowClear
+            />
+          </Col>
 
-          {/* Nút Xuất Excel - chiếm 1 cột */}
-          <div className="md:col-span-1">
+          <Col xs={24} sm={12} md={5}>
+            <Select
+              placeholder="Lọc theo trạng thái"
+              style={{ width: "100%" }}
+              value={statusFilter || undefined}
+              onChange={(value) => {
+                setStatusFilter(value || "");
+                setCurrentPage(1);
+              }}
+              allowClear>
+              <Select.Option value={ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH}>
+                Đã lập tờ trình
+              </Select.Option>
+              <Select.Option value={ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH}>
+                Khoa đã duyệt tờ trình
+              </Select.Option>
+              <Select.Option value={ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH}>
+                Ban giám hiệu đã duyệt tờ trình
+              </Select.Option>
+              <Select.Option value={ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH}>
+                Đã từ chối tờ trình
+              </Select.Option>
+            </Select>
+          </Col>
+
+          <Col xs={24} sm={12} md={8}>
+            <RangePicker
+              placeholder={["Từ ngày", "Đến ngày"]}
+              format="DD/MM/YYYY"
+              style={{ width: "100%" }}
+              value={dateRange}
+              onChange={(dates) => {
+                setDateRange(dates);
+                setCurrentPage(1);
+              }}
+            />
+          </Col>
+
+          <Col xs={24} sm={12} md={3}>
+            <Button
+              icon={<SyncOutlined />}
+              title="Tải lại bộ lọc"
+              onClick={handleResetFilters}
+              type="default"
+              style={{ width: "100%" }}>
+              Clear
+            </Button>
+          </Col>
+
+          <Col xs={24} sm={12} md={3}>
             <Button
               type="primary"
               icon={<Download className="w-4 h-4" />}
@@ -334,8 +373,8 @@ export default function XuLyToTrinhPage() {
                 backgroundColor:
                   selectedRowKeys.length > 0 ? "#16a34a" : undefined,
                 borderColor: selectedRowKeys.length > 0 ? "#16a34a" : undefined,
-              }}
-              className="w-full h-[40px] flex items-center justify-center">
+                width: "100%",
+              }}>
               <span className="hidden sm:inline">
                 Xuất Excel{" "}
                 {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
@@ -345,15 +384,15 @@ export default function XuLyToTrinhPage() {
                 {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
               </span>
             </Button>
-          </div>
-        </div>
-      </div>
+          </Col>
+        </Row>
+      </Card>
 
       {/* Table - Desktop */}
       <div className="bg-white rounded-lg shadow overflow-hidden hidden lg:block">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách tờ trình ({filteredData.length})
+            Danh sách tờ trình ({totalItems})
           </h2>
         </div>
 
@@ -499,7 +538,7 @@ export default function XuLyToTrinhPage() {
                     </td>
                     <td className="px-2 py-3">
                       <div className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3 flex-shrink-0 text-gray-400" />
+                        <Calendar className="w-3 h-3 shrink-0 text-gray-400" />
                         <span className="text-xs text-gray-500">
                           {new Date(item.createdAt).toLocaleDateString(
                             "vi-VN",
@@ -515,7 +554,7 @@ export default function XuLyToTrinhPage() {
                     <td className="px-2 py-3 text-center">
                       <div className="flex items-center justify-center space-x-1">
                         <Link
-                          href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
+                          href={`/qtv-khoa/duyet-to-trinh/chi-tiet/${item.id}`}
                           className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                           title="Xem chi tiết">
                           <Eye className="w-3 h-3" />
@@ -554,7 +593,7 @@ export default function XuLyToTrinhPage() {
         {/* Header */}
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-            Danh sách tờ trình ({filteredData.length})
+            Danh sách tờ trình ({totalItems})
           </h2>
         </div>
 
@@ -585,7 +624,7 @@ export default function XuLyToTrinhPage() {
                   {/* Header Row */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-start gap-2 flex-1">
-                      <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <FileText className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 text-sm">
                           {item.proposalCode}
@@ -601,7 +640,8 @@ export default function XuLyToTrinhPage() {
                       onChange={(e) =>
                         handleRowSelect(item.id, e.target.checked)
                       }
-                      className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 flex-shrink-0"
+                      aria-label={`Chọn tờ trình ${item.proposalCode}`}
+                      className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 shrink-0"
                     />
                   </div>
 
@@ -637,9 +677,9 @@ export default function XuLyToTrinhPage() {
                   </div>
 
                   {/* Footer with Actions */}
-                  <div className="flex items-center gap-2 pt-2 ">
+                  <div className="flex items-center gap-2 pt-2">
                     <Link
-                      href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
+                      href={`/qtv-khoa/duyet-to-trinh/chi-tiet/${item.id}`}
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
                       <Eye className="h-3.5 w-3.5" />
                       <span>Xem chi tiết</span>
@@ -762,13 +802,13 @@ export default function XuLyToTrinhPage() {
           <div className="flex items-center space-x-3">
             <CheckCircle className="h-8 w-8 text-green-600" />
             <div>
-              <h3 className="text-lg font-medium text-gray-900">
-                Bạn có chắc chắn muốn duyệt tờ trình sau?
-              </h3>
-              <p className="text-sm text-red-500 mt-1 font-medium">
-                Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành
-                &ldquo;Đã duyệt&rdquo; và không thể hoàn tác.
-              </p>
+            <h3 className="text-lg font-medium text-gray-900">
+              Bạn có chắc chắn muốn duyệt tờ trình sau?
+            </h3>
+            <p className="text-sm text-red-500 mt-1 font-medium">
+              Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành
+              &ldquo;Khoa đã duyệt tờ trình&rdquo; và chuyển tới Ban giám hiệu để phê duyệt cuối cùng. Không thể hoàn tác.
+            </p>
             </div>
           </div>
 

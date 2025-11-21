@@ -16,7 +16,7 @@ import {
   Cpu,
   MemoryStick,
   Eye,
-  Loader2,
+  Loader2
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
 import SignConfirmModal from "@/components/modal/SignConfirmModal";
@@ -26,7 +26,7 @@ import {
 } from "@/hooks";
 import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
 
-export default function XuLyToTrinhDetailPage() {
+export default function ChiTietDuyetToTrinhPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -61,7 +61,7 @@ export default function XuLyToTrinhDetailPage() {
         <h3 className="text-lg font-medium text-gray-900">Lỗi tải dữ liệu</h3>
         <p className="text-gray-500">{error}</p>
         <Link
-          href="/phong-quan-tri/xu-ly-to-trinh"
+          href="/qtv-khoa/duyet-to-trinh"
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
           Quay lại danh sách
         </Link>
@@ -80,7 +80,7 @@ export default function XuLyToTrinhDetailPage() {
           Tờ trình bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
         </p>
         <Link
-          href="/phong-quan-tri/xu-ly-to-trinh"
+          href="/qtv-khoa/duyet-to-trinh"
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
           Quay lại danh sách
         </Link>
@@ -112,16 +112,14 @@ export default function XuLyToTrinhDetailPage() {
 
   const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.CHỜ_XÁC_MINH:
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case ReplacementProposalStatus.ĐÃ_XÁC_MINH:
-        return "bg-green-100 text-green-800 border-green-200";
+      case ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH:
+        return "bg-indigo-100 text-indigo-800 border-indigo-200";
       case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-lime-100 text-lime-800 border-lime-200";
       case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-green-100 text-green-800 border-green-200";
       case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-orange-100 text-orange-800 border-orange-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -129,16 +127,14 @@ export default function XuLyToTrinhDetailPage() {
 
   const getStatusText = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.CHỜ_XÁC_MINH:
-        return "Chờ xác minh";
-      case ReplacementProposalStatus.ĐÃ_XÁC_MINH:
-        return "Đã xác minh";
+      case ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH:
+        return "Đã lập tờ trình";
       case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "Khoa đã duyệt tờ trình";
       case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "Ban giám hiệu đã duyệt tờ trình";
       case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
-        return "Đã từ chối";
+        return "Đã từ chối tờ trình";
       default:
         return status;
     }
@@ -154,7 +150,7 @@ export default function XuLyToTrinhDetailPage() {
       await updateStatus(proposal.id, {
         status:
           actionType === "approve"
-            ? ReplacementProposalStatus.ĐÃ_XÁC_MINH
+            ? ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH
             : ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
       });
 
@@ -166,15 +162,15 @@ export default function XuLyToTrinhDetailPage() {
       if (actionType === "reject") {
         Modal.success({
           title: "Từ chối tờ trình thành công",
-          content: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công.`,
+          content: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công. Tổ trưởng kỹ thuật cần lập lại tờ trình.`,
           okText: "Đóng",
           onOk: () => {
-            router.push("/phong-quan-tri/xu-ly-to-trinh?success=rejected");
+            router.push("/qtv-khoa/duyet-to-trinh?success=rejected");
           },
         });
       } else {
         router.push(
-          "/phong-quan-tri/xu-ly-to-trinh?success=" +
+          "/qtv-khoa/duyet-to-trinh?success=" +
             (actionType === "approve" ? "approved" : "rejected")
         );
       }
@@ -197,14 +193,21 @@ export default function XuLyToTrinhDetailPage() {
 
     try {
       await updateStatus(proposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+        status: ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH,
       });
 
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      // Chuyển hướng đến trang lập biên bản
-      router.push("/phong-quan-tri/lap-bien-ban");
+      // Hiển thị thông báo thành công và chuyển hướng
+      Modal.success({
+        title: "Duyệt tờ trình thành công!",
+        content: `Tờ trình ${proposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
+        okText: "Đóng",
+        onOk: () => {
+          router.push("/qtv-khoa/duyet-to-trinh?success=approved");
+        },
+      });
     } catch (error) {
       console.error("Error approving proposal:", error);
       setIsProcessing(false);
@@ -233,18 +236,18 @@ export default function XuLyToTrinhDetailPage() {
               ),
             },
             {
-              href: "/phong-quan-tri",
+              href: "/qtv-khoa",
               title: (
                 <div className="flex items-center">
-                  <span>Phòng quản trị</span>
+                  <span>Quản trị viên khoa</span>
                 </div>
               ),
             },
             {
-              href: "/phong-quan-tri/xu-ly-to-trinh",
+              href: "/qtv-khoa/duyet-to-trinh",
               title: (
                 <div className="flex items-center">
-                  <span>Xử lý tờ trình</span>
+                  <span>Duyệt tờ trình</span>
                 </div>
               ),
             },
@@ -288,7 +291,7 @@ export default function XuLyToTrinhDetailPage() {
                 Thông tin cơ bản
               </h3>
               {proposal.status ===
-                ReplacementProposalStatus.CHỜ_XÁC_MINH && (
+                ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH && (
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
@@ -423,7 +426,7 @@ export default function XuLyToTrinhDetailPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-start space-x-3">
-                          <div className="flex-shrink-0">
+                          <div className="shrink-0">
                             {getComponentIcon(
                               item.oldComponent?.componentType || "UNKNOWN"
                             )}
@@ -461,7 +464,7 @@ export default function XuLyToTrinhDetailPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-900 max-w-xs">
+                        <p className="text-sm text-gray-900 max-w-xs wrap-break-word">
                           {item.reason || "Không có lý do"}
                         </p>
                       </td>
@@ -492,6 +495,8 @@ export default function XuLyToTrinhDetailPage() {
                   <div className="flex items-center space-x-2">
                     <a
                       href={proposal.submissionFormUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-900"
                       title="Xem tài liệu">
                       <Eye className="w-4 h-4" />
@@ -528,6 +533,9 @@ export default function XuLyToTrinhDetailPage() {
                     Bạn có chắc chắn muốn từ chối tờ trình
                     <strong> {proposal.proposalCode}</strong>?
                   </p>
+                  <p className="text-xs text-red-500 mt-2">
+                    Sau khi từ chối, tổ trưởng kỹ thuật sẽ cần lập lại tờ trình.
+                  </p>
                   {adminNotes && (
                     <div className="mt-3 p-2 bg-gray-50 rounded text-left">
                       <p className="text-xs text-gray-600">Ghi chú:</p>
@@ -562,6 +570,7 @@ export default function XuLyToTrinhDetailPage() {
         reportNumber={proposal.proposalCode}
         isLoading={isProcessing}
         actionType="approve"
+        customWarning="Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành 'Khoa đã duyệt tờ trình' và chuyển tới Ban giám hiệu để phê duyệt cuối cùng. Không thể hoàn tác."
       />
     </div>
   );
