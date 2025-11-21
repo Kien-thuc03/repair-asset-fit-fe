@@ -70,7 +70,6 @@ export interface SoftwareProposalItem {
   version?: string;
   publisher?: string;
   quantity: number;
-  licenseType?: string;
   newlyAcquiredSoftwareId?: string | null;
 }
 

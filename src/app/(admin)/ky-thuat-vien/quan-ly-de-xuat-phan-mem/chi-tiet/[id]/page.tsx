@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { 
   ArrowLeft,
@@ -16,38 +16,14 @@ import {
   AlertCircle,
   Wrench
 } from 'lucide-react';
-import { Breadcrumb, Button, Modal, Form, Input, message } from 'antd';
-import { SoftwareProposalStatus, SoftwareProposalItem } from '@/types/software';
-import { 
-  getSoftwareProposalById,
-  getSoftwareProposalItems 
-} from '@/lib/mockData/softwareProposals';
+import { Breadcrumb, Button, Modal, Form, Input, InputNumber, DatePicker, message, Spin } from 'antd';
+import { SoftwareProposalStatus, SoftwareProposalItem, SoftwareProposal } from '@/types/software';
+import { useSoftwareProposalDetail } from '@/hooks/useSoftwareProposals';
+import { useUpdateSoftwareProposalStatus } from '@/hooks/useSoftwareProposals';
+import { completeSoftwareProposal, CompleteSoftwareProposalRequest } from '@/lib/api/software-proposals';
+import { useAuth } from '@/contexts/AuthContext';
 
 const { TextArea } = Input;
-
-// Mock users và rooms data để hiển thị tên
-const mockUsers = {
-  'user-5': 'Nguyễn Văn A',
-  'user-6': 'Trần Thị B', 
-  'user-1': 'Lê Văn C'
-} as const;
-
-const mockRooms = {
-  'ROOM001': 'H101',
-  'ROOM002': 'H102',
-  'ROOM003': 'H103', 
-  'ROOM004': 'H201',
-  'ROOM005': 'H202'
-} as const;
-
-// Helper functions
-const getUserName = (userId: string): string => {
-  return (mockUsers as Record<string, string>)[userId] || userId;
-};
-
-const getRoomName = (roomId: string): string => {
-  return (mockRooms as Record<string, string>)[roomId] || roomId;
-};
 
 
 
@@ -80,100 +56,118 @@ const softwareProposalStatusConfig = {
   }
 };
 
+
 export default function SoftwareProposalDetailPage() {
   const router = useRouter();
   const params = useParams();
   const proposalId = params.id as string;
+  const { user } = useAuth();
   
   // State
-  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isStartSetupModalOpen, setIsStartSetupModalOpen] = useState(false);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
+  const [setupForm] = Form.useForm();
+  const [completeForm] = Form.useForm();
+  
+  // Lấy dữ liệu đề xuất từ API
+  const { data: proposal, loading, error, refetch } = useSoftwareProposalDetail(proposalId);
+  const { updateStatus, loading: updateLoading } = useUpdateSoftwareProposalStatus();
 
-  // Lấy dữ liệu đề xuất
-  const proposal = useMemo(() => {
-    return getSoftwareProposalById(proposalId);
-  }, [proposalId]);
+  // Helper functions
+  const getUserName = (proposal: SoftwareProposal | null): string => {
+    if (!proposal) return 'N/A';
+    return proposal.proposer?.fullName || proposal.proposerId || 'N/A';
+  };
 
-  // Lấy items của proposal
-  const proposalItems = useMemo(() => {
-    return getSoftwareProposalItems(proposalId);
-  }, [proposalId]);
+  const getRoomName = (proposal: SoftwareProposal | null): string => {
+    if (!proposal) return 'N/A';
+    return proposal.room?.name || proposal.roomId || 'N/A';
+  };
 
-  if (!proposal) {
+  if (loading) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">
-          Không tìm thấy đề xuất
-        </h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Đề xuất phần mềm không tồn tại hoặc đã bị xóa.
-        </p>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
       </div>
     );
   }
 
-  const StatusIcon = softwareProposalStatusConfig[proposal.status].icon;
+  if (error || !proposal) {
+    return (
+      <div className="text-center py-12">
+        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <h3 className="mt-2 text-sm font-medium text-gray-900">
+          {error || 'Không tìm thấy đề xuất'}
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Đề xuất phần mềm không tồn tại hoặc đã bị xóa.
+        </p>
+        <Button 
+          className="mt-4" 
+          onClick={() => router.push('/ky-thuat-vien/quan-ly-de-xuat-phan-mem')}
+        >
+          Quay lại
+        </Button>
+      </div>
+    );
+  }
+
+  const StatusIcon = softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
+  const proposalItems = proposal.items || [];
 
   // Handlers
-  const handleApprove = async (values: { approvalNotes?: string }) => {
+  const handleStartSetup = async () => {
     try {
-      setLoading(true);
-      // TODO: Gọi API để duyệt đề xuất
-      console.log('Approving proposal:', proposalId, values);
-      message.success('Đã duyệt đề xuất phần mềm thành công!');
-      setIsApproveModalOpen(false);
-      form.resetFields();
-      router.refresh();
+      await updateStatus(proposalId, {
+        status: SoftwareProposalStatus.ĐANG_TRANG_BỊ,
+        technicianId: user?.id,
+      });
+      message.success('Đã bắt đầu thiết lập phần mềm!');
+      setIsStartSetupModalOpen(false);
+      setupForm.resetFields();
+      refetch();
     } catch (error) {
-      console.error('Error approving proposal:', error);
-      message.error('Có lỗi xảy ra khi duyệt đề xuất!');
-    } finally {
-      setLoading(false);
+      console.error('Error starting setup:', error);
+      message.error('Có lỗi xảy ra khi bắt đầu thiết lập!');
     }
   };
 
-  const handleReject = async (values: { rejectionReason: string }) => {
-    try {
-      setLoading(true);
-      // TODO: Gọi API để từ chối đề xuất
-      console.log('Rejecting proposal:', proposalId, values);
-      message.success('Đã từ chối đề xuất phần mềm!');
-      setIsRejectModalOpen(false);
-      form.resetFields();
-      router.refresh();
-    } catch (error) {
-      console.error('Error rejecting proposal:', error);
-      message.error('Có lỗi xảy ra khi từ chối đề xuất!');
-    } finally {
-      setLoading(false);
+  const handleComplete = async (values: { softwareInfo: Array<{ itemId: string; name?: string; version?: string; publisher?: string }>; completionNotes?: string }) => {
+    if (!proposal || !proposal.items || proposal.items.length === 0) {
+      message.error('Không có phần mềm nào trong đề xuất!');
+      return;
     }
-  };
 
-  const handleComplete = async (values: { completionNotes?: string }) => {
     try {
-      setLoading(true);
-      // TODO: Gọi API để hoàn thành trang bị phần mềm
-      console.log('Completing proposal:', proposalId, values);
-      message.success('Đã hoàn thành trang bị phần mềm!');
+      const completeData: CompleteSoftwareProposalRequest = {
+        softwareInfo: values.softwareInfo.map((info) => ({
+          itemId: info.itemId,
+          name: info.name || undefined,
+          version: info.version || undefined,
+          publisher: info.publisher || undefined,
+        })),
+        completionNotes: values.completionNotes,
+      };
+
+      await completeSoftwareProposal(proposalId, completeData);
+      message.success('Đã hoàn thành trang bị phần mềm cho tất cả máy tính trong phòng!');
       setIsCompleteModalOpen(false);
-      form.resetFields();
-      router.refresh();
+      completeForm.resetFields();
+      refetch();
+      // Chuyển về trang danh sách sau 1.5 giây
+      setTimeout(() => {
+        router.push('/ky-thuat-vien/quan-ly-de-xuat-phan-mem');
+      }, 1500);
     } catch (error) {
       console.error('Error completing proposal:', error);
-      message.error('Có lỗi xảy ra khi hoàn thành trang bị!');
-    } finally {
-      setLoading(false);
+      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi hoàn thành trang bị!';
+      message.error(errorMessage);
     }
   };
 
   // Check quyền thao tác theo trạng thái
-  const canApprove = proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT;
-  const canReject = proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT;
-  const canComplete = proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT;
+  const canStartSetup = proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT;
+  const canComplete = proposal.status === SoftwareProposalStatus.ĐANG_TRANG_BỊ;
 
   return (
     <div className="space-y-6">
@@ -222,22 +216,19 @@ export default function SoftwareProposalDetailPage() {
         
         {/* Action Buttons */}
         <div className="flex gap-2">
-          {canApprove && (
+          <Button 
+            icon={<ArrowLeft className="h-4 w-4" />}
+            onClick={() => router.push('/ky-thuat-vien/quan-ly-de-xuat-phan-mem')}
+          >
+            Quay lại
+          </Button>
+          {canStartSetup && (
             <Button 
               type="primary"
-              icon={<CheckCircle className="h-4 w-4" />}
-              onClick={() => setIsApproveModalOpen(true)}
+              icon={<Wrench className="h-4 w-4" />}
+              onClick={() => setIsStartSetupModalOpen(true)}
             >
-              Duyệt đề xuất
-            </Button>
-          )}
-          {canReject && (
-            <Button 
-              danger
-              icon={<XCircle className="h-4 w-4" />}
-              onClick={() => setIsRejectModalOpen(true)}
-            >
-              Từ chối
+              Bắt đầu thiết lập
             </Button>
           )}
           {canComplete && (
@@ -271,7 +262,7 @@ export default function SoftwareProposalDetailPage() {
                 <User className="h-5 w-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-500">Người đề xuất</p>
-                  <p className="font-medium text-gray-900">{getUserName(proposal.proposerId)}</p>
+                  <p className="font-medium text-gray-900">{getUserName(proposal)}</p>
                 </div>
               </div>
               
@@ -279,7 +270,7 @@ export default function SoftwareProposalDetailPage() {
                 <Building className="h-5 w-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-500">Phòng</p>
-                  <p className="font-medium text-gray-900">{getRoomName(proposal.roomId)}</p>
+                  <p className="font-medium text-gray-900">{getRoomName(proposal)}</p>
                 </div>
               </div>
               
@@ -293,13 +284,13 @@ export default function SoftwareProposalDetailPage() {
                 </div>
               </div>
               
-              {proposal.approverId && proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT && (
+              {proposal.approver && (
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   <div>
-                    <p className="text-sm text-gray-500">Đã được duyệt</p>
+                    <p className="text-sm text-gray-500">Đã được duyệt bởi</p>
                     <p className="font-medium text-gray-900">
-                      Bởi: {getUserName(proposal.approverId)}
+                      {proposal.approver.fullName}
                     </p>
                   </div>
                 </div>
@@ -332,9 +323,11 @@ export default function SoftwareProposalDetailPage() {
                       <p className="font-medium text-gray-900">
                         {item.softwareName} {item.version}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        {item.publisher} • {item.licenseType}
-                      </p>
+                      {item.publisher && (
+                        <p className="text-sm text-gray-500">
+                          {item.publisher}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
@@ -375,7 +368,7 @@ export default function SoftwareProposalDetailPage() {
               </div>
               
               {/* Duyệt đề xuất */}
-              {proposal.approverId && proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT && (
+              {proposal.approver && (
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                     <CheckCircle className="h-4 w-4 text-green-600" />
@@ -383,7 +376,25 @@ export default function SoftwareProposalDetailPage() {
                   <div>
                     <p className="font-medium text-gray-900">Đã duyệt</p>
                     <p className="text-sm text-gray-500">
-                      Bởi: {getUserName(proposal.approverId)}
+                      Bởi: {proposal.approver.fullName}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(proposal.updatedAt).toLocaleString('vi-VN')}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Đang trang bị */}
+              {proposal.status === SoftwareProposalStatus.ĐANG_TRANG_BỊ && (
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Wrench className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Đang trang bị</p>
+                    <p className="text-sm text-gray-500">
+                      Đang trong quá trình thiết lập phần mềm
                     </p>
                     <p className="text-xs text-gray-400">
                       {new Date(proposal.updatedAt).toLocaleString('vi-VN')}
@@ -400,9 +411,9 @@ export default function SoftwareProposalDetailPage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Đã từ chối</p>
-                    {proposal.approverId && (
+                    {proposal.approver && (
                       <p className="text-sm text-gray-500">
-                        Bởi: {getUserName(proposal.approverId)}
+                        Bởi: {proposal.approver.fullName}
                       </p>
                     )}
                     <p className="text-xs text-gray-400">
@@ -434,96 +445,111 @@ export default function SoftwareProposalDetailPage() {
         </div>
       </div>
 
-      {/* Modal Duyệt */}
+      {/* Modal Bắt đầu thiết lập */}
       <Modal
-        title="Duyệt đề xuất phần mềm"
-        open={isApproveModalOpen}
+        title="Bắt đầu thiết lập phần mềm"
+        open={isStartSetupModalOpen}
         onCancel={() => {
-          setIsApproveModalOpen(false);
-          form.resetFields();
+          setIsStartSetupModalOpen(false);
+          setupForm.resetFields();
         }}
         footer={null}
+        width={800}
       >
         <Form
-          form={form}
+          form={setupForm}
           layout="vertical"
-          onFinish={handleApprove}
+          onFinish={handleStartSetup}
+          initialValues={{
+            setupInfo: proposalItems.map(item => ({
+              itemId: item.id,
+              installedQuantity: item.quantity,
+            }))
+          }}
         >
-          <Form.Item
-            name="approvalNotes"
-            label="Ghi chú duyệt (tùy chọn)"
-          >
-            <TextArea
-              rows={4}
-              placeholder="Nhập ghi chú về việc duyệt đề xuất..."
-            />
-          </Form.Item>
+          <Form.List name="setupInfo">
+            {(fields) => (
+              <>
+                {fields.map((field, index) => {
+                  const item = proposalItems[index];
+                  return (
+                    <div key={field.key} className="mb-6 p-4 border rounded-lg bg-gray-50">
+                      <h4 className="font-semibold text-gray-900 mb-4">
+                        {item.softwareName} {item.version && `(${item.version})`}
+                      </h4>
+                      
+                      <Form.Item
+                        {...field}
+                        name={[field.name, 'itemId']}
+                        hidden
+                      >
+                        <Input type="hidden" />
+                      </Form.Item>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'installedQuantity']}
+                          label="Số lượng đã cài đặt"
+                          rules={[
+                            { required: true, message: 'Vui lòng nhập số lượng!' },
+                            { type: 'number', min: 0, max: item.quantity, message: `Số lượng không được vượt quá ${item.quantity}!` }
+                          ]}
+                        >
+                          <InputNumber
+                            min={0}
+                            max={item.quantity}
+                            className="w-full"
+                            placeholder="Nhập số lượng đã cài đặt"
+                          />
+                        </Form.Item>
+                        
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'installationDate']}
+                          label="Ngày cài đặt"
+                        >
+                          <DatePicker
+                            className="w-full"
+                            format="DD/MM/YYYY"
+                            placeholder="Chọn ngày cài đặt"
+                          />
+                        </Form.Item>
+                      </div>
+                      
+                      <Form.Item
+                        {...field}
+                        name={[field.name, 'notes']}
+                        label="Ghi chú thiết lập"
+                      >
+                        <TextArea
+                          rows={3}
+                          placeholder="Nhập ghi chú về quá trình cài đặt phần mềm này..."
+                        />
+                      </Form.Item>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </Form.List>
           
-          <Form.Item className="mb-0 flex justify-end gap-2">
+          <Form.Item className="mb-0 flex justify-end gap-2 mt-6">
             <Button 
               onClick={() => {
-                setIsApproveModalOpen(false);
-                form.resetFields();
+                setIsStartSetupModalOpen(false);
+                setupForm.resetFields();
               }}
             >
               Hủy
             </Button>
             <Button 
-              type="primary" 
+              type="primary"
               htmlType="submit"
-              loading={loading}
-              icon={<CheckCircle className="h-4 w-4" />}
+              loading={updateLoading}
+              icon={<Wrench className="h-4 w-4" />}
             >
-              Duyệt đề xuất
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* Modal Từ chối */}
-      <Modal
-        title="Từ chối đề xuất phần mềm"
-        open={isRejectModalOpen}
-        onCancel={() => {
-          setIsRejectModalOpen(false);
-          form.resetFields();
-        }}
-        footer={null}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleReject}
-        >
-          <Form.Item
-            name="rejectionReason"
-            label="Lý do từ chối"
-            rules={[
-              { required: true, message: 'Vui lòng nhập lý do từ chối!' }
-            ]}
-          >
-            <TextArea
-              rows={4}
-              placeholder="Nhập lý do từ chối đề xuất..."
-            />
-          </Form.Item>
-          
-          <Form.Item className="mb-0 flex justify-end gap-2">
-            <Button 
-              onClick={() => {
-                setIsRejectModalOpen(false);
-                form.resetFields();
-              }}
-            >
-              Hủy
-            </Button>
-            <Button 
-              danger
-              htmlType="submit"
-              loading={loading}
-              icon={<XCircle className="h-4 w-4" />}
-            >
-              Từ chối
+              Bắt đầu thiết lập
             </Button>
           </Form.Item>
         </Form>
@@ -535,15 +561,91 @@ export default function SoftwareProposalDetailPage() {
         open={isCompleteModalOpen}
         onCancel={() => {
           setIsCompleteModalOpen(false);
-          form.resetFields();
+          completeForm.resetFields();
         }}
         footer={null}
+        width={800}
       >
         <Form
-          form={form}
+          form={completeForm}
           layout="vertical"
           onFinish={handleComplete}
+          initialValues={{
+            softwareInfo: proposalItems.map(item => ({
+              itemId: item.id,
+              name: item.softwareName,
+              version: item.version || '',
+              publisher: item.publisher || '',
+            }))
+          }}
         >
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Lưu ý:</strong> Vui lòng kiểm tra và bổ sung thông tin phần mềm nếu cần. 
+              Hệ thống sẽ tự động cập nhật phần mềm cho tất cả máy tính trong phòng.
+            </p>
+          </div>
+
+          <Form.List name="softwareInfo">
+            {(fields) => (
+              <>
+                {fields.map((field, index) => {
+                  const item = proposalItems[index];
+                  return (
+                    <div key={field.key} className="mb-6 p-4 border rounded-lg bg-gray-50">
+                      <h4 className="font-semibold text-gray-900 mb-4">
+                        {item.softwareName} {item.version && `(${item.version})`}
+                      </h4>
+                      
+                      <Form.Item
+                        {...field}
+                        name={[field.name, 'itemId']}
+                        hidden
+                      >
+                        <Input type="hidden" />
+                      </Form.Item>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'name']}
+                          label="Tên phần mềm"
+                          rules={[
+                            { required: true, message: 'Vui lòng nhập tên phần mềm!' }
+                          ]}
+                        >
+                          <Input
+                            placeholder="Nhập tên phần mềm"
+                          />
+                        </Form.Item>
+                        
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'version']}
+                          label="Phiên bản"
+                        >
+                          <Input
+                            placeholder="Nhập phiên bản (tùy chọn)"
+                          />
+                        </Form.Item>
+                        
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'publisher']}
+                          label="Nhà sản xuất"
+                        >
+                          <Input
+                            placeholder="Nhập nhà sản xuất (tùy chọn)"
+                          />
+                        </Form.Item>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </Form.List>
+
           <Form.Item
             name="completionNotes"
             label="Ghi chú hoàn thành (tùy chọn)"
@@ -558,7 +660,7 @@ export default function SoftwareProposalDetailPage() {
             <Button 
               onClick={() => {
                 setIsCompleteModalOpen(false);
-                form.resetFields();
+                completeForm.resetFields();
               }}
             >
               Hủy
@@ -566,7 +668,7 @@ export default function SoftwareProposalDetailPage() {
             <Button 
               type="primary"
               htmlType="submit"
-              loading={loading}
+              loading={updateLoading}
               icon={<Package className="h-4 w-4" />}
             >
               Hoàn thành trang bị

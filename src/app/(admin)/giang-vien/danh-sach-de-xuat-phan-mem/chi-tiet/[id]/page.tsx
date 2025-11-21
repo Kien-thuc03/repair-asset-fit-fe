@@ -309,9 +309,11 @@ export default function SoftwareProposalDetailPage() {
                         <p className="font-medium text-gray-900">
                           {item.softwareName} {item.version}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          {item.publisher} • {item.licenseType}
-                        </p>
+                        {item.publisher && (
+                          <p className="text-sm text-gray-500">
+                            {item.publisher}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">

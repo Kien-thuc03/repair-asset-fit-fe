@@ -80,7 +80,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "2024",
     publisher: "Adobe Inc.",
     quantity: 30,
-    licenseType: "Educational License",
     newlyAcquiredSoftwareId: "SW002",
   },
   {
@@ -90,7 +89,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "2024",
     publisher: "Adobe Inc.",
     quantity: 30,
-    licenseType: "Educational License",
     newlyAcquiredSoftwareId: null,
   },
   {
@@ -100,7 +98,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "2024",
     publisher: "Adobe Inc.",
     quantity: 30,
-    licenseType: "Educational License",
     newlyAcquiredSoftwareId: null,
   },
 
@@ -112,7 +109,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "365",
     publisher: "Microsoft Corporation",
     quantity: 30,
-    licenseType: "Volume License",
     newlyAcquiredSoftwareId: null,
   },
   {
@@ -122,7 +118,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "365",
     publisher: "Microsoft Corporation",
     quantity: 30,
-    licenseType: "Volume License",
     newlyAcquiredSoftwareId: null,
   },
   {
@@ -132,7 +127,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "365",
     publisher: "Microsoft Corporation",
     quantity: 30,
-    licenseType: "Volume License",
     newlyAcquiredSoftwareId: null,
   },
 
@@ -144,7 +138,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "2022",
     publisher: "Microsoft Corporation",
     quantity: 25,
-    licenseType: "Educational License",
     newlyAcquiredSoftwareId: null,
   },
   {
@@ -154,7 +147,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "1.85",
     publisher: "Microsoft Corporation",
     quantity: 25,
-    licenseType: "Free License",
     newlyAcquiredSoftwareId: "SW004",
   },
   {
@@ -164,7 +156,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "2023.3",
     publisher: "JetBrains",
     quantity: 25,
-    licenseType: "Educational License",
     newlyAcquiredSoftwareId: null,
   },
 
@@ -176,7 +167,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "2024",
     publisher: "Adobe Inc.",
     quantity: 30,
-    licenseType: "Professional License",
     newlyAcquiredSoftwareId: null,
   },
   {
@@ -186,7 +176,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "2024",
     publisher: "Adobe Inc.",
     quantity: 30,
-    licenseType: "Professional License",
     newlyAcquiredSoftwareId: null,
   },
 
@@ -198,7 +187,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "120.0",
     publisher: "Google LLC",
     quantity: 25,
-    licenseType: "Free License",
     newlyAcquiredSoftwareId: "SW005",
   },
   {
@@ -208,7 +196,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "121.0",
     publisher: "Mozilla Foundation",
     quantity: 25,
-    licenseType: "Free License",
     newlyAcquiredSoftwareId: null,
   },
   {
@@ -218,7 +205,6 @@ export const mockSoftwareProposalItems: SoftwareProposalItem[] = [
     version: "6.24",
     publisher: "win.rar GmbH",
     quantity: 25,
-    licenseType: "Commercial License",
     newlyAcquiredSoftwareId: null,
   },
 ];
