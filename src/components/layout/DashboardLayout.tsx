@@ -153,7 +153,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
             icon: FileText,
           },
           {
-            name: "Biên bản",
+            name: "Danh sách biên bản",
             href: "/to-truong-ky-thuat/bien-ban",
             icon: Calendar,
           },
@@ -165,7 +165,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         ],
       },
       {
-        name: "Phân công khu vực",
+        name: "Quản lý khu vực",
         href: "/to-truong-ky-thuat/phan-cong",
         icon: MapPin,
       },
@@ -193,12 +193,12 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: LayoutDashboard,
       },
       {
-        name: "Xử lý tờ trình",
+        name: "Quản lý tờ trình",
         href: "/phong-quan-tri/xu-ly-to-trinh",
         icon: FileText,
       },
       {
-        name: "Lập biên bản",
+        name: "Quản lý biên bản",
         href: "/phong-quan-tri/lap-bien-ban",
         icon: ClipboardList,
       },

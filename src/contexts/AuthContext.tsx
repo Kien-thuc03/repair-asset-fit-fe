@@ -30,55 +30,83 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // Hàm helper để chuyển đổi response từ API thành AuthenticatedUser
-const mapLoginResponseToUser = (
-  apiUser: {
-    id: string;
-    username: string;
-    fullName: string;
-    email?: string;
-    phoneNumber?: string;
-    birthDate?: string;
-    roles: string[];
-    permissions: string[];
-    activeRole?: string; // Optional: active role code from storage
-  }
-): AuthenticatedUser => {
+const mapLoginResponseToUser = (apiUser: {
+  id: string;
+  username: string;
+  fullName: string;
+  email?: string;
+  phoneNumber?: string;
+  birthDate?: string;
+  roles: string[];
+  permissions: string[];
+  activeRole?: string; // Optional: active role code from storage
+}): AuthenticatedUser => {
   console.log("🔄 Mapping API user to AuthenticatedUser:", apiUser);
-  
+
   // Convert role codes to IRole objects with proper name and description
   const userRoles: IRole[] = apiUser.roles.map((roleCode) => {
+    // Normalize role code: remove "ROLE_" prefix if present
+    const normalizedCode = roleCode.startsWith("ROLE_")
+      ? roleCode.replace("ROLE_", "")
+      : roleCode;
+
     // Get role info from RoleInfo if available
-    const roleInfo = RoleInfo[roleCode as UserRole];
-    
-    console.log(`  📌 Mapping role: ${roleCode}`, roleInfo ? "✅ Found" : "❌ Not found");
-    
+    // Đảm bảo normalizedCode được cast đúng thành UserRole enum
+    const roleKey = normalizedCode as UserRole;
+    const roleInfo = RoleInfo[roleKey];
+
+    console.log(
+      `  📌 Mapping role: ${roleCode} -> ${normalizedCode}`,
+      roleInfo ? "✅ Found" : "❌ Not found"
+    );
+    if (roleInfo) {
+      console.log(
+        `    Name: ${roleInfo.name}, Description: ${roleInfo.description}`
+      );
+    }
+
     return {
-      id: roleCode, // Use code as id
-      name: roleInfo?.name || roleCode, // Use name from RoleInfo or fallback to code
-      code: roleCode,
+      id: roleCode, // Use original code as id
+      name: roleInfo?.name || normalizedCode, // Use name from RoleInfo or fallback to normalized code
+      code: normalizedCode, // Store normalized code for easier access
     };
   });
 
   // Convert permission codes to IPermission objects
-  const userPermissions: IPermission[] = apiUser.permissions.map((permCode) => ({
-    id: permCode,
-    name: permCode,
-    code: permCode,
-  }));
+  const userPermissions: IPermission[] = apiUser.permissions.map(
+    (permCode) => ({
+      id: permCode,
+      name: permCode,
+      code: permCode,
+    })
+  );
 
   // Determine active role
   let activeRole = userRoles[0]; // Default to first role
   if (apiUser.activeRole) {
-    // Try to find the saved active role
-    const savedActiveRole = userRoles.find((r) => r.code === apiUser.activeRole);
+    // Normalize activeRole code: remove "ROLE_" prefix if present
+    const normalizedActiveRole = apiUser.activeRole.startsWith("ROLE_")
+      ? apiUser.activeRole.replace("ROLE_", "")
+      : apiUser.activeRole;
+
+    // Try to find the saved active role (compare with normalized code)
+    const savedActiveRole = userRoles.find(
+      (r) => r.code === normalizedActiveRole
+    );
     if (savedActiveRole) {
       activeRole = savedActiveRole;
       console.log("  ✅ Using saved active role:", activeRole.code);
     } else {
-      console.log("  ⚠️ Saved active role not found, using first role:", activeRole.code);
+      console.log(
+        "  ⚠️ Saved active role not found, using first role:",
+        activeRole.code
+      );
     }
   } else {
-    console.log("  ℹ️ No saved active role, using first role:", activeRole.code);
+    console.log(
+      "  ℹ️ No saved active role, using first role:",
+      activeRole.code
+    );
   }
 
   const authenticatedUser: AuthenticatedUser = {
@@ -94,7 +122,7 @@ const mapLoginResponseToUser = (
     unit: undefined,
     department: undefined,
   };
-  
+
   console.log("✅ Mapped AuthenticatedUser:", authenticatedUser);
   return authenticatedUser;
 };
@@ -105,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Thêm trạng thái isInitializing để kiểm soát quá trình khởi tạo
   const [isInitializing, setIsInitializing] = useState(true);
 
-      // Check if user is logged in on app start
+  // Check if user is logged in on app start
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -113,11 +141,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const savedUser = getStoredUser();
         if (savedUser) {
           console.log("🔍 Found saved user in storage:", savedUser);
-          
+
           // Convert saved user to AuthenticatedUser format
           const authenticatedUser = mapLoginResponseToUser(savedUser);
           setUser(authenticatedUser);
-          
+
           // Set cookie for middleware với cấu trúc đơn giản
           const cookieData = {
             id: authenticatedUser.id,
@@ -125,14 +153,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             fullName: authenticatedUser.fullName,
             email: authenticatedUser.email,
             activeRole: authenticatedUser.activeRole?.code || "",
-            roles: authenticatedUser.roles.map(r => r.code || ""),
+            roles: authenticatedUser.roles.map((r) => r.code || ""),
           };
-          
+
           const userJson = JSON.stringify(cookieData);
-          document.cookie = `repair_user=${encodeURIComponent(userJson)}; path=/; max-age=${
-            7 * 24 * 60 * 60
-          }`; // 7 days
-          
+          document.cookie = `repair_user=${encodeURIComponent(
+            userJson
+          )}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
+
           console.log("🍪 Cookie restored:", cookieData);
         }
       } catch (error) {
@@ -172,14 +200,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fullName: authenticatedUser.fullName,
         email: authenticatedUser.email,
         activeRole: authenticatedUser.activeRole?.code || "", // Chỉ lưu code
-        roles: authenticatedUser.roles.map(r => r.code || ""), // Chỉ lưu mảng code
+        roles: authenticatedUser.roles.map((r) => r.code || ""), // Chỉ lưu mảng code
       };
-      
+
       const userJson = JSON.stringify(cookieData);
-      document.cookie = `repair_user=${encodeURIComponent(userJson)}; path=/; max-age=${
-        7 * 24 * 60 * 60
-      }`; // 7 days
-      
+      document.cookie = `repair_user=${encodeURIComponent(
+        userJson
+      )}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
+
       console.log("🍪 Cookie set:", cookieData);
     } catch (error) {
       console.error("❌ Login error:", error);
@@ -196,10 +224,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     // Call API logout để xóa token và user info từ localStorage
     apiLogout();
-    
+
     // Clear state
     setUser(null);
-    
+
     // Remove cookie
     document.cookie =
       "repair_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -235,9 +263,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fullName: updatedUser.fullName,
         email: updatedUser.email,
         activeRole: role.code || "",
-        roles: updatedUser.roles.map(r => r.code || ""),
+        roles: updatedUser.roles.map((r) => r.code || ""),
       };
-      
+
       const userJson = JSON.stringify(cookieData);
       document.cookie = `repair_user=${encodeURIComponent(
         userJson
@@ -245,11 +273,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log("✅ Switched to role:", role.name || role.code);
       console.log("🍪 Updated cookie:", cookieData);
-      console.log("📍 Redirecting to:", RoleInfo[role.code as UserRole]?.defaultRoute);
+      console.log(
+        "📍 Redirecting to:",
+        RoleInfo[role.code as UserRole]?.defaultRoute
+      );
 
       // Chuyển hướng tới URL tương ứng với vai trò được chọn
       if (role.code) {
-        const defaultRoute = RoleInfo[role.code as UserRole]?.defaultRoute || "/";
+        const defaultRoute =
+          RoleInfo[role.code as UserRole]?.defaultRoute || "/";
         // Sử dụng window.location để refresh page và load layout mới
         window.location.href = defaultRoute;
       }

@@ -145,7 +145,7 @@ export default function SubmissionPreviewModal({
                       Linh kiện cũ
                     </th>
                     <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
-                      Linh kiện mới đề xuất
+                      Vị trí
                     </th>
                     <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
                       SL
@@ -170,12 +170,7 @@ export default function SubmissionPreviewModal({
                         </div>
                       </td>
                       <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
-                        <div className="font-medium">
-                          {item.newItemName || "Không xác định"}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {item.newItemSpecs || ""}
-                        </div>
+                        {item.oldComponent?.roomLocation || "Chưa xác định"}
                       </td>
                       <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center">
                         {item.quantity}

@@ -15,7 +15,7 @@ import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
 } from "@/hooks/useReplacementProposals";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types";
 
 // Interface cho InspectionReport
 interface InspectionReport {
