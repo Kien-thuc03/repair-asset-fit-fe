@@ -54,6 +54,9 @@ interface LecturerReportFormType extends ReportFormType {
   floor: string;
 }
 
+// Giới hạn độ dài mô tả
+const MAX_DESCRIPTION_LENGTH = 1000;
+
 export default function BaoCaoLoiPage() {
   const router = useRouter();
   const { userDetails } = useProfile();
@@ -323,10 +326,26 @@ export default function BaoCaoLoiPage() {
   // Handle media upload
   const handleMediaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setFormData((prev) => ({
-      ...prev,
-      mediaFiles: [...prev.mediaFiles, ...files],
-    }));
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+    const validFiles: File[] = [];
+
+    files.forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        message.error(`File "${file.name}" quá lớn, vui lòng chọn file < 10MB`);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (validFiles.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        mediaFiles: [...prev.mediaFiles, ...validFiles],
+      }));
+    }
+
+    // Reset input để có thể chọn lại cùng file nếu cần
+    e.target.value = "";
   };
 
   // Remove media file
@@ -342,6 +361,12 @@ export default function BaoCaoLoiPage() {
     // Validate user is logged in
     if (!userDetails?.id) {
       message.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
+
+    // Validate description length
+    if (formData.description.length > MAX_DESCRIPTION_LENGTH) {
+      message.error("Mô tả quá dài!");
       return;
     }
 
@@ -699,6 +724,8 @@ export default function BaoCaoLoiPage() {
             <Form.Item label="Mô tả chi tiết lỗi" required>
               <TextArea
                 rows={4}
+                maxLength={MAX_DESCRIPTION_LENGTH}
+                showCount
                 placeholder="Mô tả chi tiết hiện tượng lỗi, khi nào xảy ra, tần suất lỗi..."
                 value={formData.description}
                 onChange={(e) =>
@@ -806,7 +833,7 @@ export default function BaoCaoLoiPage() {
             )}
           </div> */}
 
-          {/* Bước 6: Đính kèm hình ảnh */}
+          {/* Bước 5: Đính kèm hình ảnh */}
           <div className="mb-6">
             <h3 className="text-base sm:text-lg font-semibold mb-4 text-blue-900">
               Bước 5: Đính kèm hình ảnh (tùy chọn)
