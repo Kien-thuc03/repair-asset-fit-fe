@@ -181,18 +181,30 @@ export interface UpdateSoftwareProposalStatusRequest {
  * @param id ID của đề xuất phần mềm
  * @param data Thông tin cập nhật trạng thái
  * @returns Promise với đề xuất phần mềm đã cập nhật
+ *
+ * **Quyền hạn theo role:**
+ * - Người tạo đề xuất: Có thể cập nhật khi CHỜ_DUYỆT (thông tin phòng, lý do)
+ * - Kỹ thuật viên: Có thể cập nhật trạng thái (duyệt, từ chối, đánh dấu đã trang bị)
+ * - Admin: Có thể cập nhật bất kỳ lúc nào
+ *
+ * **Quy trình chuyển trạng thái:**
+ * - CHỜ_DUYỆT → ĐÃ_DUYỆT (Kỹ thuật viên duyệt đề xuất)
+ * - CHỜ_DUYỆT → ĐÃ_TỪ_CHỐI (Kỹ thuật viên từ chối)
+ * - ĐÃ_DUYỆT → ĐÃ_TRANG_BỊ (Kỹ thuật viên đánh dấu đã cài đặt xong)
+ * - ĐÃ_TỪ_CHỐI → CHỜ_DUYỆT (Có thể gửi lại đề xuất)
+ *
+ * **Lưu ý:**
+ * - Khi cập nhật status thành ĐÃ_DUYỆT, ĐÃ_TỪ_CHỐI, hoặc ĐÃ_TRANG_BỊ, approverId sẽ tự động được set
+ * - Không thể cập nhật danh sách items qua endpoint này
  */
 export const updateSoftwareProposalStatus = async (
   id: string,
   data: UpdateSoftwareProposalStatusRequest
 ): Promise<SoftwareProposal> => {
   try {
-    console.log(
-      `🌐 API Call: PUT /api/v1/software-proposals/${id}/status`,
-      data
-    );
+    console.log(`🌐 API Call: PUT /api/v1/software-proposals/${id}`, data);
     const response = await api.put<SoftwareProposal>(
-      `/api/v1/software-proposals/${id}/status`,
+      `/api/v1/software-proposals/${id}`,
       data
     );
     console.log("✅ API Response:", response.data);

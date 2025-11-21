@@ -11,3 +11,4 @@ export { default as SubmissionFormModal } from "./SubmissionFormModal";
 export { default as SubmissionPreviewModal } from "./SubmissionPreviewModal";
 export { default as InspectionFormModal } from "./InspectionFormModal";
 export { default as InspectionPreviewModal } from "./InspectionPreviewModal";
+export { default as SoftwareProposalConfirmModal } from "./SoftwareProposalConfirmModal";
