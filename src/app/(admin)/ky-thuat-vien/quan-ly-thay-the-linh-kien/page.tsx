@@ -7,7 +7,8 @@ import Link from 'next/link'
 import { Pagination } from '@/components/ui'
 import { useProfile } from '@/hooks/useProfile'
 import { useReplacementProposalsByProposer } from '@/hooks/useReplacementProposals'
-import { ReplacementProposal, ReplacementProposalStatus } from '@/lib/api/replacement-proposals'
+import { ReplacementProposal } from '@/lib/api/replacement-proposals'
+import { ReplacementProposalStatus } from '@/types'
 import type { Dayjs } from 'dayjs'
 
 const { RangePicker } = DatePicker
@@ -219,6 +220,10 @@ export default function QuanLyThayTheLinhKienPage() {
 		[ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
 			color: 'orange', 
 			text: 'Chờ Tổ trưởng duyệt' 
+		},
+		[ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+			color: 'lime', 
+			text: 'Khoa đã duyệt tờ trình' 
 		},
 		[ReplacementProposalStatus.CHỜ_XÁC_MINH]: { 
 			color: 'blue', 

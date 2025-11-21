@@ -27,7 +27,7 @@ import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks/useReplacementProposals";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types";
 
 export default function ChiTietDuyetDeXuatPage() {
   const params = useParams();

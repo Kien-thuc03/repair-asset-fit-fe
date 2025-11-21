@@ -17,7 +17,7 @@ import { Breadcrumb, Modal, Row, Col, Input, Button } from "antd";
 import { CheckCircle, XCircle } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
 import { useReplacementProposals } from "@/hooks/useReplacementProposals";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types";
 
 export default function LapToTrinhPage() {
   const router = useRouter();

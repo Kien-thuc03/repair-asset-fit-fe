@@ -4,7 +4,8 @@ import { useParams } from 'next/navigation'
 import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table, Button } from 'antd'
 import { Clock, CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react'
 import { useReplacementProposal } from '@/hooks/useReplacementProposals'
-import { ReplacementProposalStatus, ReplacementItem, RepairRequestInfo } from '@/lib/api/replacement-proposals'
+import { ReplacementItem } from '@/lib/api/replacement-proposals'
+import { ReplacementProposalStatus } from '@/types'
 
 export default function ChiTietThayThePage() {
 	const params = useParams()
@@ -75,6 +76,11 @@ export default function ChiTietThayThePage() {
 			color: 'orange', 
 			text: 'Chờ Tổ trưởng duyệt',
 			icon: Clock
+		},
+		[ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+			color: 'lime', 
+			text: 'Khoa đã duyệt tờ trình',
+			icon: CheckCircle
 		},
 		[ReplacementProposalStatus.CHỜ_XÁC_MINH]: { 
 			color: 'blue', 

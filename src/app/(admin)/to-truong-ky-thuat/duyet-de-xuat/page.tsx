@@ -20,10 +20,8 @@ import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
 } from "@/hooks/useReplacementProposals";
-import {
-  ReplacementProposal,
-  ReplacementProposalStatus,
-} from "@/lib/api/replacement-proposals";
+import {ReplacementProposal} from "@/lib/api/replacement-proposals";
+import {ReplacementProposalStatus} from "@/types/repair";
 import { uploadFile } from "@/lib/api/upload";
 
 // Map table field names to API field names - outside component to avoid recreation

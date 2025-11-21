@@ -20,10 +20,8 @@ import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import {
-  ReplacementProposal,
-  ReplacementProposalStatus,
-} from "@/lib/api/replacement-proposals";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types/repair";
 
 type SortField = keyof ReplacementProposal;
 type SortDirection = "asc" | "desc" | null;
@@ -157,7 +155,7 @@ export default function XuLyToTrinhPage() {
 
     try {
       await updateStatus(selectedProposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
+        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
       });
 
       // Đóng modal

@@ -1,6 +1,6 @@
 import {
   ReplacementRequestItem,
-  ReplacementStatus,
+  ReplacementProposalStatus,
   ComponentType,
 } from "@/types";
 
@@ -34,7 +34,7 @@ export const mockApprovedReplacementRequests: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế nguồn điện Dell 200W PSU",
     description:
       "Đề xuất thay thế nguồn điện cho máy tính PC Dell OptiPlex 3080 tại phòng H101 do nguồn điện hiện tại đã bị cháy và có mùi khét. Cần thay thế bằng nguồn có công suất cao hơn để đảm bảo hoạt động ổn định.",
-    status: ReplacementStatus.ĐÃ_DUYỆT,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0002-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0002-verification.pdf",
     createdAt: "2024-01-16T02:00:00.000Z",

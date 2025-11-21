@@ -13,12 +13,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useReplacementProposal } from "@/hooks/useReplacementProposals";
-import {
-  ReplacementProposalStatus,
-  ReplacementProposal,
-} from "@/lib/api/replacement-proposals";
+import { ReplacementProposal} from "@/lib/api/replacement-proposals";
 import { SubmissionPreviewModal } from "@/components/modal";
-import { SubmissionFormData } from "@/types";
+import { SubmissionFormData, ReplacementProposalStatus } from "@/types";
 
 export default function ChiTietLapToTrinhPage() {
   const params = useParams();

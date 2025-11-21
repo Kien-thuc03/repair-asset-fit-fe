@@ -22,8 +22,8 @@ import {
 } from "@/hooks";
 import {
   ReplacementProposal,
-  ReplacementProposalStatus,
 } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types/repair";
 import type { Dayjs } from "dayjs";
 
 const { RangePicker } = DatePicker;
