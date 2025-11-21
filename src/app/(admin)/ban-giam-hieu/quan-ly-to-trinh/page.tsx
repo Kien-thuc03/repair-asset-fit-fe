@@ -20,7 +20,7 @@ import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import {ReplacementProposal} from "@/lib/api/replacement-proposals";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
 import { ReplacementProposalStatus } from "@/types";
 
 type SortField = keyof ReplacementProposal;
@@ -36,6 +36,7 @@ export default function QuanLyToTrinhPage() {
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedProposal, setSelectedProposal] =
     useState<ReplacementProposal | null>(null);
   const [exportCount, setExportCount] = useState(0);
@@ -211,6 +212,43 @@ export default function QuanLyToTrinhPage() {
       Modal.error({
         title: "Lỗi",
         content: "Có lỗi xảy ra khi gửi yêu cầu xác minh. Vui lòng thử lại.",
+        centered: true,
+      });
+    }
+  };
+
+  // Hàm xử lý khi nhấn nút từ chối tờ trình
+  const handleRejectClick = (proposal: ReplacementProposal) => {
+    setSelectedProposal(proposal);
+    setShowRejectModal(true);
+  };
+
+  // Hàm xử lý khi xác nhận từ chối tờ trình
+  const handleRejectConfirm = async () => {
+    if (!selectedProposal) return;
+
+    try {
+      // Chuyển trạng thái sang ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
+      await updateStatus(selectedProposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+      });
+
+      // Đóng modal
+      setShowRejectModal(false);
+
+      // Refetch data
+      refetch();
+
+      Modal.success({
+        title: "Từ chối thành công",
+        content: `Tờ trình ${selectedProposal.proposalCode} đã được từ chối.`,
+        centered: true,
+      });
+    } catch (error) {
+      console.error("Error rejecting proposal:", error);
+      Modal.error({
+        title: "Lỗi",
+        content: "Có lỗi xảy ra khi từ chối tờ trình. Vui lòng thử lại.",
         centered: true,
       });
     }
@@ -563,10 +601,10 @@ export default function QuanLyToTrinhPage() {
                           <Eye className="w-3 h-3" />
                         </Link>
                         <button
-                          onClick={() => handleRequestVerificationClick(item)}
-                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                          title="Yêu cầu xác minh">
-                          <AlertTriangle className="w-3 h-3" />
+                          onClick={() => handleRejectClick(item)}
+                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          title="Từ chối">
+                          <XCircle className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => handleApproveClick(item)}
@@ -685,25 +723,33 @@ export default function QuanLyToTrinhPage() {
                   </div>
 
                   {/* Footer with Actions */}
-                  <div className="flex items-center gap-2 pt-2">
+                  <div className="space-y-2 pt-2">
                     <Link
                       href={`/ban-giam-hieu/quan-ly-to-trinh/${item.id}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
                       <Eye className="h-3.5 w-3.5" />
                       <span>Chi tiết</span>
                     </Link>
-                    <button
-                      onClick={() => handleRequestVerificationClick(item)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-yellow-600 text-white text-xs font-medium rounded-md hover:bg-yellow-700">
-                      <AlertTriangle className="h-3.5 w-3.5" />
-                      <span>Xác minh</span>
-                    </button>
-                    <button
-                      onClick={() => handleApproveClick(item)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      <span>Duyệt</span>
-                    </button>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => handleRequestVerificationClick(item)}
+                        className="flex items-center justify-center gap-1.5 px-2 py-2 bg-yellow-600 text-white text-xs font-medium rounded-md hover:bg-yellow-700">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Xác minh</span>
+                      </button>
+                      <button
+                        onClick={() => handleRejectClick(item)}
+                        className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700">
+                        <XCircle className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Từ chối</span>
+                      </button>
+                      <button
+                        onClick={() => handleApproveClick(item)}
+                        className="flex items-center justify-center gap-1.5 px-2 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">Duyệt</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -909,6 +955,70 @@ export default function QuanLyToTrinhPage() {
               <strong>Lưu ý:</strong> Sau khi gửi yêu cầu xác minh, tờ trình sẽ
               chuyển sang trạng thái &ldquo;Chờ xác minh&rdquo; và phòng quản
               trị sẽ tiến hành kiểm tra tình trạng các linh kiện.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Reject Confirmation Modal */}
+      <Modal
+        open={showRejectModal}
+        onCancel={() => setShowRejectModal(false)}
+        footer={[
+          <button
+            key="cancel"
+            onClick={() => setShowRejectModal(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
+            Hủy
+          </button>,
+          <button
+            key="confirm"
+            onClick={handleRejectConfirm}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+            Xác nhận từ chối
+          </button>,
+        ]}
+        centered
+        width={500}
+        title="Xác nhận từ chối tờ trình">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <XCircle className="h-8 w-8 text-red-600" />
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                Bạn có chắc chắn muốn từ chối tờ trình sau?
+              </h3>
+              <p className="text-sm text-red-500 mt-1 font-medium">
+                Sau khi từ chối, trạng thái tờ trình sẽ được cập nhật và không
+                thể hoàn tác.
+              </p>
+            </div>
+          </div>
+
+          {selectedProposal && (
+            <div className="bg-gray-50 p-4 rounded-md">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-600">Mã tờ trình:</div>
+                <div className="font-medium">
+                  {selectedProposal.proposalCode}
+                </div>
+
+                <div className="text-gray-600">Tiêu đề:</div>
+                <div className="font-medium">{selectedProposal.title}</div>
+
+                <div className="text-gray-600">Thời gian từ chối:</div>
+                <div className="font-medium">
+                  {new Date().toLocaleString("vi-VN")}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-red-50 border border-red-200 rounded-md p-3">
+            <p className="text-xs text-red-800">
+              <strong>Lưu ý:</strong> Sau khi từ chối, tờ trình sẽ chuyển sang
+              trạng thái &ldquo;Đã từ chối tờ trình&rdquo; và cần được lập lại
+              từ đầu.
             </p>
           </div>
         </div>
