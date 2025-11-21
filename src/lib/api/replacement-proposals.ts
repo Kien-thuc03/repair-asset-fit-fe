@@ -80,6 +80,10 @@ export interface ReplacementProposal {
   teamLeadApprover?: UserInfo;
   adminVerifierId?: string;
   adminVerifier?: UserInfo;
+  facultyAdminApproverId?: string;
+  facultyAdminApprover?: UserInfo;
+  principalApproverId?: string;
+  principalApprover?: UserInfo;
   status: ReplacementProposalStatus;
   submissionFormUrl?: string;
   verificationReportUrl?: string;
@@ -179,6 +183,8 @@ export interface UpdateReplacementProposalStatusRequest {
   status: ReplacementProposalStatus;
   teamLeadApproverId?: string;
   adminVerifierId?: string;
+  facultyAdminApproverId?: string;
+  principalApproverId?: string;
   submissionFormUrl?: string;
   verificationReportUrl?: string;
 }
