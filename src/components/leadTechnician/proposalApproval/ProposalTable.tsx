@@ -5,8 +5,7 @@ import { Tag } from "antd";
 import { Eye, ChevronUp, ChevronDown, Check, X, FileText } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ReplacementRequestItem, ReplacementStatus } from "@/types";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { ReplacementRequestItem, ReplacementProposalStatus} from "@/types";
 import { useUpdateReplacementProposalStatus } from "@/hooks/useReplacementProposals";
 import { SuccessModal, ErrorModal } from "@/components/modal";
 
@@ -279,7 +278,7 @@ export default function ProposalTable({
                       <Eye className="w-4 h-4" />
                     </button>
                   </Link>
-                  {record.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT && (
+                  {record.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT && (
                     <>
                       <button
                         onClick={() => handleApproveClick(record.id)}
@@ -295,7 +294,7 @@ export default function ProposalTable({
                       </button>
                     </>
                   )}
-                  {record.status === ReplacementStatus.ĐÃ_DUYỆT && (
+                  {record.status === ReplacementProposalStatus.ĐÃ_DUYỆT && (
                     <button
                       onClick={() => onCreateSubmission(record.id)}
                       title="Lập tờ trình"

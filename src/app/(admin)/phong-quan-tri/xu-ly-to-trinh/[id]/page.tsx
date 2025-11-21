@@ -24,7 +24,7 @@ import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types/repair";
 
 export default function XuLyToTrinhDetailPage() {
   const params = useParams();

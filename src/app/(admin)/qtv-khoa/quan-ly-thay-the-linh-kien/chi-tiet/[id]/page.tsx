@@ -3,9 +3,9 @@
 import { useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table } from 'antd'
-import { Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, AlertTriangle, FileText } from 'lucide-react'
 import { mockReplacementRequestItem } from '@/lib/mockData'
-import { ReplacementStatus, ComponentFromRequest } from '@/types'
+import { ReplacementProposalStatus, ComponentFromRequest } from '@/types'
 
 export default function QtvKhoaChiTietThayThePage() {
 	const params = useParams()
@@ -32,55 +32,70 @@ export default function QtvKhoaChiTietThayThePage() {
 	}
 
 	// Cấu hình trạng thái
-	const statusConfig = {
-		[ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
+	const statusConfig: Record<ReplacementProposalStatus, { color: string; text: string; icon: React.ElementType }> = {
+		[ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
 			color: 'orange', 
 			text: 'Chờ Tổ trưởng duyệt',
 			icon: Clock
 		},
-		[ReplacementStatus.CHỜ_XÁC_MINH]: { 
+		[ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+			color: 'lime', 
+			text: 'Khoa đã duyệt tờ trình',
+			icon: CheckCircle
+		},
+		[ReplacementProposalStatus.CHỜ_XÁC_MINH]: { 
 			color: 'blue', 
 			text: 'Chờ xác minh',
 			icon: AlertTriangle
 		},
-		[ReplacementStatus.ĐÃ_DUYỆT]: { 
+		[ReplacementProposalStatus.ĐÃ_DUYỆT]: { 
 			color: 'green', 
 			text: 'Đã duyệt',
 			icon: CheckCircle
 		},
-		[ReplacementStatus.ĐÃ_TỪ_CHỐI]: { 
+		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: { 
 			color: 'red', 
 			text: 'Đã từ chối',
 			icon: XCircle
 		},
-		[ReplacementStatus.ĐÃ_XÁC_MINH]: { 
+		[ReplacementProposalStatus.ĐÃ_XÁC_MINH]: { 
 			color: 'purple', 
 			text: 'Đã xác minh',
 			icon: CheckCircle
 		},
-		[ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
 			color: 'geekblue', 
 			text: 'Đã lập tờ trình',
 			icon: CheckCircle
 		},
-		[ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
 			color: 'lime', 
 			text: 'Đã duyệt tờ trình',
 			icon: CheckCircle
 		},
-		[ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
 			color: 'volcano', 
 			text: 'Đã từ chối tờ trình',
 			icon: XCircle
 		},
-		[ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
+		[ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: { 
 			color: 'cyan', 
+			text: 'Đã gửi biên bản',
+			icon: FileText
+		},
+		[ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: { 
+			color: 'geekblue', 
+			text: 'Đã ký biên bản',
+			icon: CheckCircle
+		},
+		[ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
+			color: 'purple', 
 			text: 'Đã hoàn tất mua sắm',
 			icon: CheckCircle
 		},
 	}
 
-	const currentStatus = statusConfig[request.status] || { 
+	const currentStatus = statusConfig[request.status as ReplacementProposalStatus] || { 
 		color: 'default', 
 		text: request.status,
 		icon: Clock
@@ -166,12 +181,12 @@ export default function QtvKhoaChiTietThayThePage() {
 				</div>
 			),
 		},
-		...(request.status !== ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT ? [{
-			color: request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI ? 'red' : 'green',
+		...(request.status !== ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT ? [{
+			color: request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ? 'red' : 'green',
 			children: (
 				<div>
 					<p className="font-medium">
-						{request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI ? 'Từ chối đề xuất' : 'Chấp thuận đề xuất'}
+						{request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ? 'Từ chối đề xuất' : 'Chấp thuận đề xuất'}
 					</p>
 					<p className="text-sm text-gray-500">
 						{request.createdBy && `Người duyệt: ${request.createdBy}`}
@@ -182,7 +197,7 @@ export default function QtvKhoaChiTietThayThePage() {
 				</div>
 			),
 		}] : []),
-		...(request.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM ? [{
+		...(request.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM ? [{
 			color: 'green',
 			children: (
 				<div>
@@ -229,7 +244,7 @@ export default function QtvKhoaChiTietThayThePage() {
 			</div>
 
 			{/* Status Alert */}
-			{request.status === ReplacementStatus.ĐÃ_TỪ_CHỐI && (
+			{request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI && (
 				<Alert
 					message="Đề xuất đã bị từ chối"
 					description="Đề xuất này đã bị từ chối bởi cấp trên"
@@ -238,7 +253,7 @@ export default function QtvKhoaChiTietThayThePage() {
 				/>
 			)}
 
-			{request.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
+			{request.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
 				<Alert
 					message="Linh kiện đã sẵn sàng"
 					description="Linh kiện đã được mua sắm và sẵn sàng để thay thế."

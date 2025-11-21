@@ -7,8 +7,8 @@ import { Tag } from "antd";
 import { Check, X, Eye, Calendar, Package, FileText } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ReplacementRequestItem, ReplacementStatus } from "@/types";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { ReplacementRequestItem } from "@/types";
+import { ReplacementProposalStatus } from "@/types/repair";
 import { useUpdateReplacementProposalStatus } from "@/hooks/useReplacementProposals";
 import { SuccessModal, ErrorModal } from "@/components/modal";
 
@@ -192,7 +192,7 @@ export default function ProposalCards({
                   </button>
                 </Link>
 
-                {proposal.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT && (
+                {proposal.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT && (
                   <>
                     <button
                       onClick={() => handleApproveClick(proposal.id)}
@@ -209,7 +209,7 @@ export default function ProposalCards({
                   </>
                 )}
 
-                {proposal.status === ReplacementStatus.ĐÃ_DUYỆT && (
+                {proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT && (
                   <button
                     onClick={() => onCreateSubmission(proposal.id)}
                     title="Lập tờ trình"

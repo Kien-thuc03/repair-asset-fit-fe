@@ -1,7 +1,7 @@
 import {
   ReplacementRequestItem,
   ComponentFromRequest,
-  ReplacementStatus,
+  ReplacementProposalStatus,
 } from "@/types/repair";
 import { ComponentType } from "@/types/computer";
 
@@ -16,7 +16,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế RAM cho máy tính phòng thực hành H3.12",
     description:
       "2 thanh RAM DDR4 8GB trong phòng H3.12 bị lỗi, máy thường xuyên restart và blue screen. Kỹ thuật viên đã kiểm tra và đề xuất thay thế.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0019-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-04-28T14:20:00.000Z",
@@ -49,7 +49,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế ổ cứng SSD cho server file sharing",
     description:
       "SSD 240GB trong server file sharing xuất hiện nhiều bad sector và tốc độ giảm đáng kể. Cần thay thế ngay để tránh mất dữ liệu.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0020-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-04-30T10:15:00.000Z",
@@ -82,7 +82,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế nguồn máy tính cho lab H4.08",
     description:
       "Nguồn 450W của máy tính số 15 trong lab H4.08 bị hỏng, có tiếng kêu và mùi khét. Cần thay thế khẩn cấp để đảm bảo an toàn.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0021-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-05-02T08:45:00.000Z",
@@ -115,7 +115,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế bo mạch chủ cho máy tính giảng viên",
     description:
       "Bo mạch chủ máy tính giảng viên phòng H2.20 bị cháy chip, không thể khởi động. Cần thay thế để phục vụ giảng dạy.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0022-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-05-05T11:30:00.000Z",
@@ -148,7 +148,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế màn hình cho phòng hội thảo H10.01",
     description:
       "3 màn hình trong phòng hội thảo bị sọc dọc và mất màu. Ảnh hưởng đến chất lượng trình chiếu trong các buổi hội thảo và seminar.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0023-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-05-08T09:00:00.000Z",
@@ -182,7 +182,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế CPU cho máy tính lab AI H11.05",
     description:
       "CPU Intel i5-8400 không đủ hiệu năng để chạy các mô hình AI và Deep Learning. Sinh viên phàn nàn máy chạy quá chậm khi train model.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0024-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-05-10T13:20:00.000Z",
@@ -217,7 +217,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế card mạng cho server database",
     description:
       "Card mạng Gigabit hiện tại thường xuyên bị disconnect và tốc độ không ổn định. Ảnh hưởng đến việc truy cập database từ các máy client.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0025-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-05-12T16:45:00.000Z",
@@ -251,7 +251,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế webcam cho phòng học online H9.08",
     description:
       "5 webcam trong phòng học online bị mờ ảnh và micro không hoạt động. Ảnh hưởng đến chất lượng học trực tuyến của sinh viên.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0026-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-05-15T10:30:00.000Z",
@@ -284,7 +284,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế loa cho phòng thuyết trình H12.01",
     description:
       "Hệ thống loa 2.1 trong phòng thuyết trình bị rè và âm thanh không rõ ràng. Cần thay thế để phục vụ các buổi báo cáo và seminar.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0027-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-05-18T14:15:00.000Z",
@@ -317,7 +317,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế UPS cho lab server H1.Server",
     description:
       "UPS 1500VA hiện tại không còn giữ được điện khi mất điện, pin đã hỏng. Cần thay thế để bảo vệ hệ thống server quan trọng.",
-    status: ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
+    status: ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0028-submission.pdf",
     verificationReportUrl: undefined,
     createdAt: "2024-05-20T11:00:00.000Z",
@@ -354,7 +354,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế card đồ họa cho phòng thiết kế H6.05",
     description:
       "Card đồ họa GTX 1650 trong phòng thiết kế đồ họa không đáp ứng được yêu cầu render các dự án mới. Tổ trưởng đã duyệt và cần lập tờ trình mua sắm.",
-    status: ReplacementStatus.ĐÃ_DUYỆT,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0014-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0014-verification.pdf",
     createdAt: "2024-04-05T09:20:00.000Z",
@@ -388,7 +388,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế CPU cho máy chủ xử lý dữ liệu",
     description:
       "CPU hiện tại Intel i5-8400 không đủ hiệu năng xử lý dữ liệu lớn cho nghiên cứu. Tổ trưởng đã phê duyệt nâng cấp lên chip mạnh hơn.",
-    status: ReplacementStatus.ĐÃ_DUYỆT,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0015-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0015-verification.pdf",
     createdAt: "2024-04-10T11:15:00.000Z",
@@ -423,7 +423,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế bàn phím và chuột cho phòng thực hành H8.4",
     description:
       "10 bộ bàn phím và chuột trong phòng H8.4 đã hỏng và mòn. Tổ trưởng đã duyệt thay thế toàn bộ để đảm bảo chất lượng thực hành.",
-    status: ReplacementStatus.ĐÃ_DUYỆT,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0016-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0016-verification.pdf",
     createdAt: "2024-04-15T08:30:00.000Z",
@@ -471,7 +471,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất nâng cấp ổ cứng NVMe cho server backup",
     description:
       "Server backup hiện tại sử dụng HDD 1TB quá chậm cho việc backup dữ liệu quan trọng. Tổ trưởng đã phê duyệt nâng cấp lên SSD NVMe.",
-    status: ReplacementStatus.ĐÃ_DUYỆT,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0017-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0017-verification.pdf",
     createdAt: "2024-04-20T13:45:00.000Z",
@@ -504,7 +504,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế switch mạng cho phòng H9.01",
     description:
       "Switch mạng 24 port hiện tại đã hỏng 8 port, không đủ để kết nối tất cả máy tính. Tổ trưởng đã duyệt thay thế switch mới.",
-    status: ReplacementStatus.ĐÃ_DUYỆT,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0018-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0018-verification.pdf",
     createdAt: "2024-04-25T10:30:00.000Z",
@@ -538,7 +538,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế bo mạch chủ máy tính phòng H2.10",
     description:
       "Bo mạch chủ máy tính số 05 trong phòng H2.10 bị hỏng không thể khởi động. Tổ trưởng kỹ thuật đã ký biên bản xác nhận và cần lập tờ trình.",
-    status: ReplacementStatus.ĐÃ_XÁC_MINH,
+    status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0009-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0009-verification.pdf",
     createdAt: "2024-03-15T08:30:00.000Z",
@@ -572,7 +572,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế ổ cứng SSD cho 3 máy tính phòng H3.05",
     description:
       "3 máy tính trong phòng H3.05 có ổ SSD bị bad sector nghiêm trọng. Tổ trưởng đã kiểm tra và ký xác nhận cần thay thế.",
-    status: ReplacementStatus.ĐÃ_XÁC_MINH,
+    status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0010-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0010-verification.pdf",
     createdAt: "2024-03-20T09:45:00.000Z",
@@ -606,7 +606,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế nguồn máy tính cho phòng lab H4.02",
     description:
       "Nguồn máy tính số 12 trong phòng H4.02 bị cháy, có mùi khét. Tổ trưởng đã kiểm tra và xác nhận cần thay thế ngay.",
-    status: ReplacementStatus.ĐÃ_XÁC_MINH,
+    status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0011-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0011-verification.pdf",
     createdAt: "2024-03-25T11:20:00.000Z",
@@ -639,7 +639,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế RAM cho máy tính giảng viên",
     description:
       "RAM máy tính giảng viên phòng H1.08 bị lỗi, máy thường xuyên blue screen. Tổ trưởng đã test và xác nhận cần thay.",
-    status: ReplacementStatus.ĐÃ_XÁC_MINH,
+    status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0012-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0012-verification.pdf",
     createdAt: "2024-03-28T13:15:00.000Z",
@@ -673,7 +673,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế màn hình cho phòng máy H5.01",
     description:
       "2 màn hình trong phòng H5.01 bị sọc dọc và không hiển thị được. Tổ trưởng đã kiểm tra và ký xác nhận thay thế.",
-    status: ReplacementStatus.ĐÃ_XÁC_MINH,
+    status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0013-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0013-verification.pdf",
     createdAt: "2024-04-01T07:30:00.000Z",
@@ -706,7 +706,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế linh kiện máy tính phòng H2.15",
     description:
       "Máy tính trong phòng H2.15 gặp sự cố về bo mạch chủ và cần được thay thế để đảm bảo hoạt động giảng dạy.",
-    status: ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0001-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0001-verification.pdf",
     createdAt: "2024-01-15T08:30:00.000Z",
@@ -739,7 +739,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất nâng cấp RAM cho máy tính giảng dạy",
     description:
       "Nâng cấp RAM từ 4GB lên 8GB để cải thiện hiệu suất khi sử dụng các phần mềm giảng dạy.",
-    status: ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0002-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0002-verification.pdf",
     createdAt: "2024-01-20T09:15:00.000Z",
@@ -772,7 +772,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Thay thế ổ cứng SSD cho máy chủ",
     description:
       "Ổ cứng SSD hiện tại đã xuất hiện bad sector, cần thay thế để tránh mất dữ liệu.",
-    status: ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0003-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0003-verification.pdf",
     createdAt: "2024-02-01T10:00:00.000Z",
@@ -805,7 +805,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay màn hình máy tính văn phòng",
     description:
       "Màn hình hiện tại bị mờ và có đốm, ảnh hưởng đến công việc của giảng viên.",
-    status: ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0004-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0004-verification.pdf",
     createdAt: "2024-02-10T14:20:00.000Z",
@@ -838,7 +838,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Nâng cấp nguồn máy tính phòng lab",
     description:
       "Nguồn máy tính không đủ công suất để hỗ trợ card đồ họa mới được lắp đặt.",
-    status: ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0005-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0005-verification.pdf",
     createdAt: "2024-02-15T09:45:00.000Z",
@@ -871,7 +871,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Thay thế màn hình cho phòng họp",
     description:
       "Thay thế 5 màn hình cũ trong phòng họp bằng màn hình mới có độ phân giải cao hơn.",
-    status: ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0006-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0006-verification.pdf",
     createdAt: "2024-02-25T11:00:00.000Z",
@@ -905,7 +905,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Nâng cấp RAM cho lab máy tính",
     description:
       "Nâng cấp RAM cho 8 máy tính trong phòng lab để chạy được phần mềm mới.",
-    status: ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0007-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0007-verification.pdf",
     createdAt: "2024-02-28T08:15:00.000Z",
@@ -940,7 +940,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
       "Đề xuất nâng cấp SSD và RAM cho các phòng Lab Khoa CNTT (H8.1, H8.2, H8.3)",
     description:
       "Đề xuất nâng cấp SSD và RAM cho tổng cộng 90 máy tính tại 3 phòng Lab của Khoa CNTT (H8.1: 30 máy, H8.2: 30 máy, H8.3: 30 máy). Mục đích phục vụ việc cập nhật phần mềm chuyên ngành mới nhất như Xử lý ảnh, Nhận dạng mẫu, Học sâu, Công nghệ mới để đáp ứng yêu cầu giảng dạy và nghiên cứu.",
-    status: ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0008-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0008-verification.pdf",
     createdAt: "2024-03-01T09:00:00.000Z",
@@ -1066,7 +1066,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế bo mạch chủ cho máy tính phòng H1.01",
     description:
       "Bo mạch chủ của máy tính số 05 trong phòng H1.01 bị hỏng chip southbridge, không thể khởi động được. Đề xuất thay thế bo mạch chủ mới.",
-    status: ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN,
+    status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0029-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0029-verification.pdf",
     createdAt: "2024-04-15T09:30:00.000Z",
@@ -1099,7 +1099,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế nguồn máy tính phòng thực hành H2.15",
     description:
       "Nguồn máy tính số 12 và 14 trong phòng H2.15 bị hỏng, có tiếng kêu bất thường và không ổn định. Cần thay thế để đảm bảo an toàn.",
-    status: ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN,
+    status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0030-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0030-verification.pdf",
     createdAt: "2024-04-18T11:15:00.000Z",
@@ -1147,7 +1147,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế màn hình và bàn phím cho phòng máy K1.05",
     description:
       "3 màn hình LCD và 2 bàn phím trong phòng K1.05 bị hỏng. Màn hình bị sọc dọc, bàn phím một số phím không hoạt động.",
-    status: ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN,
+    status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0031-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0031-verification.pdf",
     createdAt: "2024-04-20T13:45:00.000Z",
@@ -1240,7 +1240,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế card mạng cho server phòng K2.08",
     description:
       "Card mạng của server trong phòng K2.08 thường xuyên mất kết nối, ảnh hưởng đến hoạt động mạng của toàn phòng.",
-    status: ReplacementStatus.ĐÃ_GỬI_BIÊN_BẢN,
+    status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0032-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0032-verification.pdf",
     createdAt: "2024-04-22T08:20:00.000Z",
@@ -1275,7 +1275,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế ổ cứng SSD cho máy tính phòng H2.05",
     description:
       "Ổ cứng SSD Kingston 240GB của máy tính số 02 trong phòng H2.05 bị bad sector và không thể khởi động được. Đề xuất thay thế ổ cứng SSD mới.",
-    status: ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
+    status: ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0033-submission.pdf",
     verificationReportUrl: "/documents/reports/DXTT-2025-0033-verification.pdf",
     createdAt: "2024-03-15T10:30:00.000Z",
@@ -1310,7 +1310,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế GPU cho phòng lab đồ họa H5.02",
     description:
       "GPU hiện tại không đáp ứng được nhu cầu render các file đồ họa 3D phức tạp của sinh viên.",
-    status: ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
+    status: ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0050-submission.pdf",
     verificationReportUrl: "/documents/verifications/DXTT-2025-0050-report.pdf",
     createdAt: "2025-09-15T09:30:00.000Z",
@@ -1343,7 +1343,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế bộ nguồn UPS cho phòng máy chủ",
     description:
       "UPS hiện tại đã quá cũ và pin không còn khả năng lưu điện, gây nguy cơ mất dữ liệu khi mất điện đột ngột.",
-    status: ReplacementStatus.ĐÃ_KÝ_BIÊN_BẢN,
+    status: ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0051-submission.pdf",
     verificationReportUrl: "/documents/verifications/DXTT-2025-0051-report.pdf",
     createdAt: "2025-09-18T11:45:00.000Z",
@@ -1379,7 +1379,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế ổ cứng SSD cho máy tính phòng thực hành H4.05",
     description:
       "Các ổ SSD trong phòng máy H4.05 đã sử dụng hơn 5 năm và có dấu hiệu xuống cấp rõ rệt, ảnh hưởng đến tốc độ khởi động và load phần mềm.",
-    status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
+    status: ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0052-submission.pdf",
     verificationReportUrl: "/documents/verifications/DXTT-2025-0052-report.pdf",
     createdAt: "2025-08-25T10:15:00.000Z",
@@ -1412,7 +1412,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế màn hình cho phòng nghiên cứu H8.03",
     description:
       "Màn hình máy tính phòng nghiên cứu đã lỗi thời, độ phân giải thấp ảnh hưởng đến chất lượng công việc của các nhà nghiên cứu.",
-    status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
+    status: ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0053-submission.pdf",
     verificationReportUrl: "/documents/verifications/DXTT-2025-0053-report.pdf",
     createdAt: "2025-08-30T14:00:00.000Z",
@@ -1447,7 +1447,7 @@ export const mockReplacementRequestItem: ReplacementRequestItem[] = [
     title: "Đề xuất thay thế bàn phím và chuột cho phòng học H2.06",
     description:
       "Bàn phím và chuột tại phòng học H2.06 đã cũ và bị hỏng nhiều phím, gây khó khăn cho sinh viên khi thực hành.",
-    status: ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
+    status: ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
     submissionFormUrl: "/documents/proposals/DXTT-2025-0054-submission.pdf",
     verificationReportUrl: "/documents/verifications/DXTT-2025-0054-report.pdf",
     createdAt: "2025-09-05T08:30:00.000Z",
@@ -1498,7 +1498,7 @@ export const getReplacementRequestById = (
 };
 
 export const getReplacementRequestsByStatus = (
-  status: ReplacementStatus
+  status: ReplacementProposalStatus
 ): ReplacementRequestItem[] => {
   return mockReplacementRequestItem.filter(
     (request) => request.status === status

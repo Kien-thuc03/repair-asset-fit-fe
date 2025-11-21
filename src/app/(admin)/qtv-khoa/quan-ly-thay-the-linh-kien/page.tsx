@@ -5,7 +5,7 @@ import { Breadcrumb, Input, Select, DatePicker, Tag } from 'antd'
 import { Search, Eye, ChevronUp, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { mockReplacementRequestItem } from '@/lib/mockData'
-import { ReplacementStatus, ReplacementRequestItem, ComponentFromRequest } from '@/types'
+import { ReplacementProposalStatus, ReplacementRequestItem, ComponentFromRequest } from '@/types'
 import { Pagination } from '@/components/ui'
 import type { Dayjs } from 'dayjs'
 
@@ -17,7 +17,7 @@ type SortDirection = "asc" | "desc" | "none"
 
 export default function QtvKhoaQuanLyThayTheLinhKienPage() {
 	const [searchText, setSearchText] = useState('')
-	const [statusFilter, setStatusFilter] = useState<ReplacementStatus | ''>('')
+	const [statusFilter, setStatusFilter] = useState<ReplacementProposalStatus | ''>('')
 	const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null)
 	const [sortField, setSortField] = useState<SortField | "">("")
 	const [sortDirection, setSortDirection] = useState<SortDirection>("none")
@@ -138,39 +138,39 @@ export default function QtvKhoaQuanLyThayTheLinhKienPage() {
 
 	// Cấu hình trạng thái
 	const statusConfig = {
-		[ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
+		[ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
 			color: 'orange', 
 			text: 'Chờ Tổ trưởng duyệt' 
 		},
-		[ReplacementStatus.CHỜ_XÁC_MINH]: { 
+		[ReplacementProposalStatus.CHỜ_XÁC_MINH]: { 
 			color: 'blue', 
 			text: 'Chờ xác minh' 
 		},
-		[ReplacementStatus.ĐÃ_DUYỆT]: { 
+		[ReplacementProposalStatus.ĐÃ_DUYỆT]: { 
 			color: 'green', 
 			text: 'Đã duyệt' 
 		},
-		[ReplacementStatus.ĐÃ_TỪ_CHỐI]: { 
+		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: { 
 			color: 'red', 
 			text: 'Đã từ chối' 
 		},
-		[ReplacementStatus.ĐÃ_XÁC_MINH]: { 
+		[ReplacementProposalStatus.ĐÃ_XÁC_MINH]: { 
 			color: 'purple', 
 			text: 'Đã xác minh' 
 		},
-		[ReplacementStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
 			color: 'geekblue', 
 			text: 'Đã lập tờ trình' 
 		},
-		[ReplacementStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
 			color: 'lime', 
 			text: 'Đã duyệt tờ trình' 
 		},
-		[ReplacementStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
+		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
 			color: 'volcano', 
 			text: 'Đã từ chối tờ trình' 
 		},
-		[ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
+		[ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
 			color: 'cyan', 
 			text: 'Đã hoàn tất mua sắm' 
 		},
@@ -235,19 +235,19 @@ export default function QtvKhoaQuanLyThayTheLinhKienPage() {
 						allowClear
 					>
 						<Option value="">Tất cả trạng thái</Option>
-						<Option value={ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT}>
+						<Option value={ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT}>
 							Chờ Tổ trưởng duyệt
 						</Option>
-						<Option value={ReplacementStatus.CHỜ_XÁC_MINH}>
+						<Option value={ReplacementProposalStatus.CHỜ_XÁC_MINH}>
 							Chờ xác minh
 						</Option>
-						<Option value={ReplacementStatus.ĐÃ_DUYỆT}>
+						<Option value={ReplacementProposalStatus.ĐÃ_DUYỆT}>
 							Đã duyệt
 						</Option>
-						<Option value={ReplacementStatus.ĐÃ_TỪ_CHỐI}>
+						<Option value={ReplacementProposalStatus.ĐÃ_TỪ_CHỐI}>
 							Đã từ chối
 						</Option>
-						<Option value={ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM}>
+						<Option value={ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM}>
 							Đã hoàn tất mua sắm
 						</Option>
 					</Select>
@@ -321,7 +321,7 @@ export default function QtvKhoaQuanLyThayTheLinhKienPage() {
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
 						{paginatedData.map((record: ReplacementRequestItem, index: number) => {
-							const config = statusConfig[record.status as ReplacementStatus] || { 
+							const config = statusConfig[record.status as ReplacementProposalStatus] || { 
 								color: 'default', 
 								text: record.status 
 							}

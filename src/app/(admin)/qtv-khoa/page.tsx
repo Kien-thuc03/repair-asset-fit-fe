@@ -3,7 +3,6 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { 
   Users, 
-  Settings, 
   Activity, 
   Server, 
   ClipboardList,
@@ -19,7 +18,7 @@ import { users } from '@/lib/mockData/users'
 import { mockSoftwareProposals, getSoftwareProposalsByStatus } from '@/lib/mockData/softwareProposals'
 import { mockReplacementRequestItem } from '@/lib/mockData/replacementRequests'
 import { SoftwareProposalStatus } from '@/types/software'
-import { ReplacementStatus, UserStatus } from '@/types'
+import { ReplacementProposalStatus, UserStatus } from '@/types'
 
 export default function QTVKhoaDashboard() {
   const { user } = useAuth()
@@ -37,8 +36,8 @@ export default function QTVKhoaDashboard() {
     // Thống kê đề xuất linh kiện
     const totalComponentRequests = mockReplacementRequestItem.length
     const pendingComponentRequests = mockReplacementRequestItem.filter(
-      req => req.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT || 
-             req.status === ReplacementStatus.CHỜ_XÁC_MINH
+      req => req.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT || 
+             req.status === ReplacementProposalStatus.CHỜ_XÁC_MINH
     ).length
 
     return [
@@ -244,7 +243,7 @@ export default function QTVKhoaDashboard() {
                   <span className="text-sm font-medium">Chờ tổ trưởng duyệt</span>
                 </div>
                 <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
-                  {mockReplacementRequestItem.filter(req => req.status === ReplacementStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT).length}
+                  {mockReplacementRequestItem.filter(req => req.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT).length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -253,7 +252,7 @@ export default function QTVKhoaDashboard() {
                   <span className="text-sm font-medium">Đã duyệt</span>
                 </div>
                 <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  {mockReplacementRequestItem.filter(req => req.status === ReplacementStatus.ĐÃ_DUYỆT).length}
+                  {mockReplacementRequestItem.filter(req => req.status === ReplacementProposalStatus.ĐÃ_DUYỆT).length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -262,7 +261,7 @@ export default function QTVKhoaDashboard() {
                   <span className="text-sm font-medium">Đã hoàn tất mua sắm</span>
                 </div>
                 <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                  {mockReplacementRequestItem.filter(req => req.status === ReplacementStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM).length}
+                  {mockReplacementRequestItem.filter(req => req.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM).length}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -271,7 +270,7 @@ export default function QTVKhoaDashboard() {
                   <span className="text-sm font-medium">Đã từ chối</span>
                 </div>
                 <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                  {mockReplacementRequestItem.filter(req => req.status === ReplacementStatus.ĐÃ_TỪ_CHỐI).length}
+                  {mockReplacementRequestItem.filter(req => req.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI).length}
                 </span>
               </div>
             </div>

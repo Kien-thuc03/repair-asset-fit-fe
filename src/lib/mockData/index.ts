@@ -3,7 +3,6 @@ export * from "./detailedAssets";
 export * from "./categories";
 export * from "./components";
 export * from "./computers";
-export * from "./componentsFromReports";
 export * from "./errorTypes";
 export * from "./permissions";
 export * from "./repairRequests";
