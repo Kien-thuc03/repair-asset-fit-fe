@@ -42,13 +42,13 @@ export default function LapBienBanPage() {
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
 
-  // Fetch proposals với status ĐÃ_DUYỆT_TỜ_TRÌNH
+  // Fetch proposals với status ĐÃ_XÁC_MINH (sau khi Phòng Quản trị đã xác minh)
   const {
     data: apiData,
     loading,
     error,
   } = useReplacementProposals({
-    status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
     page: 1,
     limit: 1000,
   });

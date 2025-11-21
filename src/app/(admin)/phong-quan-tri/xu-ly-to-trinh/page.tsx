@@ -44,14 +44,14 @@ export default function XuLyToTrinhPage() {
   const [exportFileName, setExportFileName] = useState("");
   const itemsPerPage = 10;
 
-  // Fetch data từ API với status ĐÃ_LẬP_TỜ_TRÌNH
+  // Fetch data từ API với status CHỜ_XÁC_MINH (sau khi Ban giám hiệu duyệt)
   const {
     data: apiData,
     loading,
     error,
     refetch,
   } = useReplacementProposals({
-    status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+    status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
     page: 1,
     limit: 1000, // Lấy tất cả để xử lý phân trang và sort trên client
   });
@@ -157,7 +157,7 @@ export default function XuLyToTrinhPage() {
 
     try {
       await updateStatus(selectedProposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+        status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
       });
 
       // Đóng modal

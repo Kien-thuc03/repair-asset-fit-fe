@@ -114,8 +114,10 @@ export default function ChiTietDuyetToTrinhPage() {
     switch (status) {
       case ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH:
         return "bg-indigo-100 text-indigo-800 border-indigo-200";
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-lime-100 text-lime-800 border-lime-200";
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "bg-green-100 text-green-800 border-green-200";
       case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
         return "bg-orange-100 text-orange-800 border-orange-200";
       default:
@@ -127,8 +129,10 @@ export default function ChiTietDuyetToTrinhPage() {
     switch (status) {
       case ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH:
         return "Đã lập tờ trình";
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "Khoa đã duyệt tờ trình";
       case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "Đã duyệt tờ trình";
+        return "Ban giám hiệu đã duyệt tờ trình";
       case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
         return "Đã từ chối tờ trình";
       default:
@@ -146,7 +150,7 @@ export default function ChiTietDuyetToTrinhPage() {
       await updateStatus(proposal.id, {
         status:
           actionType === "approve"
-            ? ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
+            ? ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH
             : ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
       });
 
@@ -189,7 +193,7 @@ export default function ChiTietDuyetToTrinhPage() {
 
     try {
       await updateStatus(proposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+        status: ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH,
       });
 
       setIsProcessing(false);
@@ -198,7 +202,7 @@ export default function ChiTietDuyetToTrinhPage() {
       // Hiển thị thông báo thành công và chuyển hướng
       Modal.success({
         title: "Duyệt tờ trình thành công!",
-        content: `Tờ trình ${proposal.proposalCode} đã được phê duyệt và chuyển tới Ban giám hiệu.`,
+        content: `Tờ trình ${proposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
         okText: "Đóng",
         onOk: () => {
           router.push("/qtv-khoa/duyet-to-trinh?success=approved");
@@ -566,7 +570,7 @@ export default function ChiTietDuyetToTrinhPage() {
         reportNumber={proposal.proposalCode}
         isLoading={isProcessing}
         actionType="approve"
-        customWarning="Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành 'Đã duyệt tờ trình' và chuyển tới Ban giám hiệu để phê duyệt cuối cùng. Không thể hoàn tác."
+        customWarning="Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành 'Khoa đã duyệt tờ trình' và chuyển tới Ban giám hiệu để phê duyệt cuối cùng. Không thể hoàn tác."
       />
     </div>
   );

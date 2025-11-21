@@ -112,8 +112,12 @@ export default function XuLyToTrinhDetailPage() {
 
   const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH:
+      case ReplacementProposalStatus.CHỜ_XÁC_MINH:
         return "bg-blue-100 text-blue-800 border-blue-200";
+      case ReplacementProposalStatus.ĐÃ_XÁC_MINH:
+        return "bg-green-100 text-green-800 border-green-200";
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "bg-lime-100 text-lime-800 border-lime-200";
       case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-green-100 text-green-800 border-green-200";
       case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
@@ -125,10 +129,14 @@ export default function XuLyToTrinhDetailPage() {
 
   const getStatusText = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH:
-        return "Chờ xử lý";
+      case ReplacementProposalStatus.CHỜ_XÁC_MINH:
+        return "Chờ xác minh";
+      case ReplacementProposalStatus.ĐÃ_XÁC_MINH:
+        return "Đã xác minh";
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "Khoa đã duyệt tờ trình";
       case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "Đã duyệt";
+        return "Ban giám hiệu đã duyệt tờ trình";
       case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
         return "Đã từ chối";
       default:
@@ -146,7 +154,7 @@ export default function XuLyToTrinhDetailPage() {
       await updateStatus(proposal.id, {
         status:
           actionType === "approve"
-            ? ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
+            ? ReplacementProposalStatus.ĐÃ_XÁC_MINH
             : ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
       });
 
@@ -280,7 +288,7 @@ export default function XuLyToTrinhDetailPage() {
                 Thông tin cơ bản
               </h3>
               {proposal.status ===
-                ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH && (
+                ReplacementProposalStatus.CHỜ_XÁC_MINH && (
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
