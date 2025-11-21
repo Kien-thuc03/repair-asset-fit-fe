@@ -83,11 +83,29 @@ export default function ChiTietQuanLyToTrinhPage() {
   // Handler for downloading submission document
   const handleDownloadFile = async (url: string, filename: string) => {
     try {
-      // Fetch the file from URL
-      const response = await fetch(url);
+      // Fetch the file from URL với mode 'no-cors' nếu cần
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/octet-stream",
+        },
+      });
+
       if (!response.ok) {
-        throw new Error("Failed to fetch file");
+        // Nếu fetch thất bại, thử download trực tiếp
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.target = "_blank";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 100);
+        return;
       }
+
       const blob = await response.blob();
 
       // Create download link
@@ -95,16 +113,42 @@ export default function ChiTietQuanLyToTrinhPage() {
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = filename;
+      link.style.display = "none"; // Ẩn link
       document.body.appendChild(link);
-      link.click();
 
-      // Cleanup
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+      // Đảm bảo link được append trước khi click
+      requestAnimationFrame(() => {
+        link.click();
+
+        // Cleanup sau một chút delay
+        setTimeout(() => {
+          if (document.body.contains(link)) {
+            document.body.removeChild(link);
+          }
+          window.URL.revokeObjectURL(blobUrl);
+        }, 200);
+      });
     } catch (error) {
       console.error("Error downloading file:", error);
-      // Fallback: open in new tab
-      window.open(url, "_blank");
+      // Fallback: thử download trực tiếp từ URL
+      try {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.target = "_blank";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (document.body.contains(link)) {
+            document.body.removeChild(link);
+          }
+        }, 100);
+      } catch (fallbackError) {
+        console.error("Fallback download also failed:", fallbackError);
+        // Cuối cùng, mở trong tab mới
+        window.open(url, "_blank");
+      }
     }
   };
 

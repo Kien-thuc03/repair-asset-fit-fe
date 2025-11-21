@@ -13,7 +13,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useReplacementProposal } from "@/hooks/useReplacementProposals";
-import { ReplacementProposal} from "@/lib/api/replacement-proposals";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
 import { SubmissionPreviewModal } from "@/components/modal";
 import { SubmissionFormData, ReplacementProposalStatus } from "@/types";
 
