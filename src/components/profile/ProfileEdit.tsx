@@ -318,7 +318,7 @@ export function ProfileEditComponent() {
         return;
       }
 
-      await changePassword(passwordData.currentPassword, passwordData.newPassword);
+      await changePassword(passwordData.currentPassword, passwordData.newPassword, passwordData.confirmPassword);
       setSuccessMessage("Thay đổi mật khẩu thành công");
       
       // Reset password form

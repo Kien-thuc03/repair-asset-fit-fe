@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { IUpdateUserRequest, IUserWithRoles } from "@/types/user";
 import { getUserById, updateUser as updateUserApi } from "@/lib/api/users";
+import { changePassword as changePasswordApi } from "@/lib/api/auth";
 
 interface UserDetail {
   id: string;
@@ -24,7 +25,7 @@ interface UserDetail {
 interface UseProfileReturn {
   userDetails: UserDetail | null;
   updateProfile: (data: IUpdateUserRequest) => Promise<void>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
   refreshUserDetails: () => Promise<void>;
   isLoading: boolean;
   error: string | null;
@@ -164,41 +165,42 @@ export function useProfile(): UseProfileReturn {
   /**
    * Thay đổi mật khẩu
    */
-  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string, confirmPassword: string) => {
     if (!user) {
       throw new Error("Vui lòng đăng nhập để thực hiện chức năng này");
     }
 
     setIsLoading(true);
+    setError(null);
+    
     try {
-      // TODO: Thay thế bằng API call thực tế khi backend có endpoint
-      // const response = await fetch(`/api/v1/users/${user.id}/change-password`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     currentPassword,
-      //     newPassword,
-      //   }),
-      // });
-
-      // if (!response.ok) {
-      //   throw new Error('Thay đổi mật khẩu thất bại');
-      // }
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      console.log("Password changed successfully", { 
-        userId: user.id, 
-        hasCurrentPassword: !!currentPassword, 
-        hasNewPassword: !!newPassword 
+      // Gọi API changePassword từ auth.ts
+      await changePasswordApi({
+        currentPassword,
+        newPassword,
+        confirmPassword,
       });
 
-    } catch (error) {
-      console.error("Change password error:", error);
-      throw error;
+    } catch (err) {
+      let errorMessage = "Thay đổi mật khẩu thất bại";
+      
+      // Xử lý error message từ backend
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { message?: string | string[] } } };
+        if (axiosError.response?.data?.message) {
+          const backendMessage = axiosError.response.data.message;
+          // Nếu message là array, join thành string
+          errorMessage = Array.isArray(backendMessage) 
+            ? backendMessage.join(', ') 
+            : backendMessage;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      console.error("Change password error:", err);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }

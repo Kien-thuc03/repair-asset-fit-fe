@@ -35,6 +35,22 @@ export interface ChangePasswordRequest {
 }
 
 /**
+ * Interface cho request quên mật khẩu
+ */
+export interface ForgotPasswordRequest {
+  username: string;
+}
+
+/**
+ * Interface cho request đặt lại mật khẩu
+ */
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+/**
  * Interface cho request cập nhật profile
  */
 export interface UpdateProfileRequest {
@@ -208,4 +224,72 @@ export const loginAndSave = async (
   saveToken(response.token);
   saveUser(response.user);
   return response;
+};
+
+/**
+ * Quên mật khẩu - Gửi email đặt lại mật khẩu
+ * @param data Thông tin email
+ * @returns Promise với message thành công
+ */
+export const forgotPassword = async (
+  data: ForgotPasswordRequest
+): Promise<{ message: string }> => {
+  try {
+    const response = await api.post<{ message: string }>(
+      "/api/v1/auth/forgot-password",
+      data
+    );
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { 
+      response?: { 
+        data?: { 
+          message?: string | string[];
+          error?: string | string[];
+        } 
+      } 
+    };
+    
+    // Xử lý validation errors
+    if (err.response?.data) {
+      const errorData = err.response.data;
+      let errorMessage = "Gửi email đặt lại mật khẩu thất bại. Vui lòng thử lại.";
+      
+      if (errorData.message) {
+        errorMessage = Array.isArray(errorData.message) 
+          ? errorData.message.join(', ') 
+          : errorData.message;
+      } else if (errorData.error) {
+        errorMessage = Array.isArray(errorData.error) 
+          ? errorData.error.join(', ') 
+          : errorData.error;
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    throw new Error("Gửi email đặt lại mật khẩu thất bại. Vui lòng thử lại.");
+  }
+};
+
+/**
+ * Đặt lại mật khẩu với token
+ * @param data Thông tin đặt lại mật khẩu (token, newPassword, confirmPassword)
+ * @returns Promise với message thành công
+ */
+export const resetPassword = async (
+  data: ResetPasswordRequest
+): Promise<{ message: string }> => {
+  try {
+    const response = await api.post<{ message: string }>(
+      "/api/v1/auth/reset-password",
+      data
+    );
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Đặt lại mật khẩu thất bại. Vui lòng thử lại."
+    );
+  }
 };
