@@ -13,7 +13,8 @@ import {
   XCircle,
   Clock,
   Package,
-  AlertCircle
+  AlertCircle,
+  Wrench
 } from 'lucide-react';
 import { Breadcrumb, Button, Modal, Form, Input, message } from 'antd';
 import { SoftwareProposalStatus, SoftwareProposalItem } from '@/types/software';
@@ -66,6 +67,11 @@ const softwareProposalStatusConfig = {
     label: 'Đã từ chối',
     color: 'text-red-600 bg-red-50 border-red-200',
     icon: XCircle
+  },
+  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
+    label: 'Đang trang bị',
+    color: 'text-orange-600 bg-orange-50 border-orange-200',
+    icon: Wrench
   },
   [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
     label: 'Đã trang bị',

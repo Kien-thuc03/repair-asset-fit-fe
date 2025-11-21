@@ -122,6 +122,39 @@ export const getSoftwareProposalsByProposer = async (
 };
 
 /**
+ * Lấy danh sách đề xuất phần mềm theo kỹ thuật viên được phân công
+ * @param technicianId ID của kỹ thuật viên
+ * @returns Promise với danh sách đề xuất phần mềm của kỹ thuật viên
+ */
+export const getSoftwareProposalsByTechnician = async (
+  technicianId: string
+): Promise<SoftwareProposal[]> => {
+  try {
+    console.log(
+      `🌐 API Call: GET /api/v1/software-proposals/technicians/${technicianId}`
+    );
+    const response = await api.get<SoftwareProposal[]>(
+      `/api/v1/software-proposals/technicians/${technicianId}`
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Get software proposals by technician error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message ||
+        "Lấy danh sách đề xuất phần mềm theo kỹ thuật viên thất bại."
+    );
+  }
+};
+
+/**
  * Interface cho request body khi tạo đề xuất phần mềm mới
  */
 export interface CreateSoftwareProposalRequest {

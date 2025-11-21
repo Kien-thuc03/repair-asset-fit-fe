@@ -78,6 +78,7 @@ export enum SoftwareProposalStatus {
   CHỜ_DUYỆT = "CHỜ_DUYỆT", // Waiting for approval
   ĐÃ_DUYỆT = "ĐÃ_DUYỆT", // Approved
   ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI", // Rejected
+  ĐANG_TRANG_BỊ = "ĐANG_TRANG_BỊ", // Being equipped
   ĐÃ_TRANG_BỊ = "ĐÃ_TRANG_BỊ", // Software equipped
 }
 
