@@ -28,6 +28,13 @@ export interface ApproverInfo {
   unitName: string;
 }
 
+export interface TechnicianInfo {
+  id: string;
+  fullName: string;
+  email: string;
+  unitName: string;
+}
+
 export interface RoomInfo {
   id: string;
   name: string;
@@ -42,6 +49,7 @@ export interface SoftwareProposal {
   proposalCode: string;
   proposerId: string;
   approverId?: string | null;
+  technicianId?: string | null;
   roomId: string;
   reason: string;
   status: SoftwareProposalStatus;
@@ -50,6 +58,7 @@ export interface SoftwareProposal {
   // Nested objects from backend
   proposer?: ProposerInfo;
   approver?: ApproverInfo;
+  technician?: TechnicianInfo;
   room?: RoomInfo;
   items?: SoftwareProposalItem[];
 }

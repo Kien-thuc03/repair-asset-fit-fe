@@ -12,6 +12,7 @@ interface SubmissionPreviewModalProps {
   proposal: ReplacementProposal | null;
   onExport: () => void;
   onSubmit: () => void;
+  showSubmitButton?: boolean; // Optional prop to show/hide submit button
 }
 
 export default function SubmissionPreviewModal({
@@ -21,6 +22,7 @@ export default function SubmissionPreviewModal({
   proposal,
   onExport,
   onSubmit,
+  showSubmitButton = true, // Default to true for backward compatibility
 }: SubmissionPreviewModalProps) {
   // Early return if no proposal or formData
   if (!proposal || !formData) return null;
@@ -44,15 +46,17 @@ export default function SubmissionPreviewModal({
             <Download className="w-4 h-4" />
             Xuất file
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              onClose();
-              onSubmit();
-            }}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
-            Gửi tờ trình
-          </button>
+          {showSubmitButton && (
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onSubmit();
+              }}
+              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
+              Gửi tờ trình
+            </button>
+          )}
         </div>
       }
       width="90%"

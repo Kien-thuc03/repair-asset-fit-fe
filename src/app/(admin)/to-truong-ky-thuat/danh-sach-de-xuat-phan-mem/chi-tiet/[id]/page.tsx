@@ -13,6 +13,7 @@ import {
   Clock,
   Package,
   AlertCircle,
+  Wrench,
 } from "lucide-react";
 import { Breadcrumb, Modal, message } from "antd";
 import { SoftwareProposalStatus, SoftwareProposal } from "@/types/software";
@@ -33,6 +34,12 @@ const getRoomName = (proposal: SoftwareProposal): string => {
       proposal.room?.roomNumber || ""
     }` ||
     proposal.roomId
+  );
+};
+
+const getTechnicianName = (proposal: SoftwareProposal): string => {
+  return (
+    proposal.technician?.fullName || proposal.technicianId || "Chưa phân công"
   );
 };
 
@@ -288,6 +295,16 @@ export default function SoftwareProposalDetailPage() {
                   <p className="text-sm text-gray-500">Ngày tạo</p>
                   <p className="font-medium text-gray-900">
                     {new Date(proposal.createdAt).toLocaleDateString("vi-VN")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Wrench className="h-5 w-5 text-gray-400" />
+                <div>
+                  <p className="text-sm text-gray-500">Kỹ thuật viên</p>
+                  <p className="font-medium text-gray-900">
+                    {getTechnicianName(proposal)}
                   </p>
                 </div>
               </div>

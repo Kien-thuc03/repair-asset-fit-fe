@@ -18,6 +18,7 @@ export enum UserRole {
   TO_TRUONG_KY_THUAT = "TO_TRUONG_KY_THUAT", // Tổ trưởng Kỹ thuật
   PHONG_QUAN_TRI = "PHONG_QUAN_TRI", // Nhân viên Phòng Quản trị
   QTV_KHOA = "QTV_KHOA", // Quản trị viên Khoa
+  BAN_GIAM_HIEU = "BAN_GIAM_HIEU", // Ban Giám hiệu
 }
 // Interface cho bảng trung gian RepairRequestComponents (quan hệ nhiều-nhiều)
 export interface RepairRequestComponent {
@@ -211,9 +212,17 @@ export const RoleInfo = {
     defaultRoute: "/qtv-khoa",
     permissions: [
       "manage_users",
-      "final_approval",
+      "approval",
       "view_reports",
       "system_oversight",
+    ],
+  },
+  [UserRole.BAN_GIAM_HIEU]: {
+    name: "Ban Giám hiệu",
+    description: "Quản lý hệ thống và phê duyệt cuối cùng",
+    defaultRoute: "/ban-giam-hieu",
+    permissions: [
+      "final_approval",
     ],
   },
 } as const;

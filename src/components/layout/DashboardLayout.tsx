@@ -76,7 +76,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
             icon: FileText,
           },
         ],
-      }, 
+      },
     ],
     [UserRole.KY_THUAT_VIEN]: [
       {
@@ -232,8 +232,8 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
             name: "Danh sách đề xuất phần mềm",
             href: "/qtv-khoa/quan-ly-de-xuat-phan-mem",
             icon: FolderCode,
-          }
-        ]
+          },
+        ],
       },
       // {
       //   name: "Thống kê báo cáo",
@@ -246,9 +246,25 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       //   icon: Settings,
       // },
     ],
+    [UserRole.BAN_GIAM_HIEU]: [
+      {
+        name: "Dashboard",
+        href: "/ban-giam-hieu",
+        icon: LayoutDashboard,
+      },
+      {
+        name: "Quản lý tờ trình",
+        href: "/ban-giam-hieu/quan-ly-to-trinh",
+        icon: FileText,
+      },
+    ],
   };
 
-  return navigationMap[userRole as UserRole] || [];
+  return (
+    (navigationMap[
+      userRole as keyof typeof navigationMap
+    ] as NavigationItem[]) || []
+  );
 };
 
 // Fallback navigation for admin route

@@ -712,7 +712,7 @@ export default function BaoCaoLoiPage() {
           </div>
 
           {/* Bước 5: Chọn linh kiện/phần mềm cụ thể */}
-          <div
+          {/* <div
             className={`mb-6 ${
               !errorCategory ||
               (errorCategory === "hardware" && !formData.errorType)
@@ -804,12 +804,12 @@ export default function BaoCaoLoiPage() {
                 )}
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Bước 6: Đính kèm hình ảnh */}
           <div className="mb-6">
             <h3 className="text-base sm:text-lg font-semibold mb-4 text-blue-900">
-              Bước 6: Đính kèm hình ảnh (tùy chọn)
+              Bước 5: Đính kèm hình ảnh (tùy chọn)
             </h3>
 
             <Form.Item label="Hình ảnh minh họa">
