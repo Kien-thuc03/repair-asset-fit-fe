@@ -10,7 +10,7 @@ import {
   ComponentStatus,
   ComponentType,
 } from "@/types";
-import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
+import { getRoomsByUnitApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
 import { getComponentsByComputerId } from "@/lib/api/components";
 import { getSoftwareByAssetId } from "@/lib/api/asset-software";
@@ -106,7 +106,7 @@ export default function BaoCaoLoiPage() {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const roomsData = await getRoomsApi();
+        const roomsData = await getRoomsByUnitApi();
         setRooms(roomsData);
       } catch {
         message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");

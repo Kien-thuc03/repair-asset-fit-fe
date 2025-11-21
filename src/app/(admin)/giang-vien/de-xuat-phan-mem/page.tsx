@@ -7,7 +7,7 @@ import {
   SoftwareItemForm,
 } from "@/types";
 import { createSoftwareProposal } from "@/lib/api/software-proposals";
-import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
+import { getRoomsByUnitApi, RoomResponseDto } from "@/lib/api/rooms";
 import { ProposalHeader } from "@/components/lecturer/softwareProposal";
 import { Breadcrumb, Select, Modal, Button, message } from "antd";
 import { CheckCircleOutlined } from "@ant-design/icons";
@@ -43,7 +43,7 @@ export default function DeXuatPhanMemPage() {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const roomsData = await getRoomsApi();
+        const roomsData = await getRoomsByUnitApi();
         setRooms(roomsData);
       } catch (error) {
         console.error("Error fetching rooms:", error);
