@@ -23,10 +23,9 @@ import {
   useUpdateReplacementProposalStatus,
 } from "@/hooks/useReplacementProposals";
 import {
-  ReplacementProposalStatus,
   ReplacementProposal,
 } from "@/lib/api/replacement-proposals";
-import { InspectionFormData, SubmissionFormData } from "@/types";
+import { InspectionFormData, SubmissionFormData, ReplacementProposalStatus } from "@/types";
 
 // Interface cho InspectionReport (sử dụng interface hiện có)
 interface InspectionReport {

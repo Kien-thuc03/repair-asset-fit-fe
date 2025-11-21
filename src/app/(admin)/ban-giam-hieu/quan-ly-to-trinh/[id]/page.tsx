@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -21,11 +21,13 @@ import {
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
 import SignConfirmModal from "@/components/modal/SignConfirmModal";
+import { SubmissionPreviewModal } from "@/components/modal";
 import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { ReplacementProposalStatus } from "@/types";
+import { ReplacementProposalStatus, SubmissionFormData } from "@/types";
+import { getFileNameFromUrl } from "@/lib/utils";
 
 export default function ChiTietQuanLyToTrinhPage() {
   const params = useParams();
@@ -35,10 +37,69 @@ export default function ChiTietQuanLyToTrinhPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
 
   // Fetch proposal data từ API
-  const { data: proposal, loading, error, refetch } = useReplacementProposal(id);
+  const {
+    data: proposal,
+    loading,
+    error,
+    refetch,
+  } = useReplacementProposal(id);
   const { updateStatus } = useUpdateReplacementProposalStatus();
+
+  // Default form data for preview modal
+  const defaultSubmissionFormData: SubmissionFormData = useMemo(
+    () => ({
+      recipientDepartment: "Ban Giám hiệu",
+      submittedBy: proposal?.proposer?.fullName || "Giảng Thanh Trọn",
+      position: "Tổ trưởng Kỹ thuật",
+      department: "Phòng Quản trị",
+      subject: proposal?.title || "",
+      attachments: "Biên bản kiểm tra kỹ thuật",
+      content: proposal?.description || "",
+      director: "TS. Lê Nhất Duy",
+      rector: "TS. Phan Hồng Hải",
+    }),
+    [proposal?.title, proposal?.description, proposal?.proposer?.fullName]
+  );
+
+  // Handler for downloading submission document
+  const handleDownloadFile = async (url: string, filename: string) => {
+    try {
+      // Fetch the file from URL
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch file");
+      }
+      const blob = await response.blob();
+
+      // Create download link
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      // Fallback: open in new tab
+      window.open(url, "_blank");
+    }
+  };
+
+  // Handler for exporting submission document
+  const handleExportSubmissionDocx = () => {
+    if (proposal?.submissionFormUrl) {
+      const filename =
+        getFileNameFromUrl(proposal.submissionFormUrl) || "to-trinh.pdf";
+      handleDownloadFile(proposal.submissionFormUrl, filename);
+    }
+  };
 
   // Loading state
   if (loading) {
@@ -463,37 +524,95 @@ export default function ChiTietQuanLyToTrinhPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Tài liệu đính kèm
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+            <div className="space-y-4">
               {proposal.submissionFormUrl && (
-                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md bg-white">
                   <div className="flex items-center space-x-3">
                     <FileText className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        Tờ trình đề xuất
+                        Tờ trình đệ trình
                       </p>
-                      <p className="text-xs text-gray-500">PDF Document</p>
+                      <p className="text-xs text-gray-500">
+                        {getFileNameFromUrl(proposal.submissionFormUrl)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setShowSubmissionPreview(true)}
+                      className="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                      title="Xem tài liệu">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (proposal.submissionFormUrl) {
+                          const filename =
+                            getFileNameFromUrl(proposal.submissionFormUrl) ||
+                            "to-trinh.pdf";
+                          handleDownloadFile(
+                            proposal.submissionFormUrl,
+                            filename
+                          );
+                        }
+                      }}
+                      className="p-2 text-gray-600 hover:bg-blue-100 rounded transition-colors"
+                      title="Tải xuống">
+                      <Download className="w-4 h-4 text-blue-600" />
+                    </button>
+                  </div>
+                </div>
+              )}
+              {proposal.verificationReportUrl && (
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md bg-white">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        Biên bản xác minh
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {getFileNameFromUrl(proposal.verificationReportUrl)}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <a
-                      href={proposal.submissionFormUrl}
+                      href={proposal.verificationReportUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-900"
+                      className="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors"
                       title="Xem tài liệu">
                       <Eye className="w-4 h-4" />
                     </a>
-                    <a
-                      href={proposal.submissionFormUrl}
-                      download
-                      className="text-gray-600 hover:text-gray-900"
+                    <button
+                      onClick={() => {
+                        if (proposal.verificationReportUrl) {
+                          const filename =
+                            getFileNameFromUrl(
+                              proposal.verificationReportUrl
+                            ) || "bien-ban-xac-minh.pdf";
+                          handleDownloadFile(
+                            proposal.verificationReportUrl,
+                            filename
+                          );
+                        }
+                      }}
+                      className="p-2 text-gray-600 hover:bg-blue-100 rounded transition-colors"
                       title="Tải xuống">
-                      <Download className="w-4 h-4" />
-                    </a>
+                      <Download className="w-4 h-4 text-blue-600" />
+                    </button>
                   </div>
                 </div>
               )}
+              {!proposal.submissionFormUrl &&
+                !proposal.verificationReportUrl && (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">Chưa có tài liệu đính kèm</p>
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -525,7 +644,8 @@ export default function ChiTietQuanLyToTrinhPage() {
                 <div className="mt-2 px-2 py-2">
                   <p className="text-sm text-gray-500">
                     Bạn có chắc chắn muốn gửi yêu cầu xác minh tình trạng các
-                    linh kiện trong tờ trình <strong>{proposal.proposalCode}</strong>?
+                    linh kiện trong tờ trình{" "}
+                    <strong>{proposal.proposalCode}</strong>?
                   </p>
                   <div className="mt-3 p-2 bg-yellow-50 rounded text-left">
                     <p className="text-xs text-yellow-800">
@@ -553,7 +673,19 @@ export default function ChiTietQuanLyToTrinhPage() {
           </div>
         </div>
       )}
+
+      {/* Submission Preview Modal */}
+      {proposal && (
+        <SubmissionPreviewModal
+          isOpen={showSubmissionPreview}
+          onClose={() => setShowSubmissionPreview(false)}
+          formData={defaultSubmissionFormData}
+          proposal={proposal}
+          onExport={handleExportSubmissionDocx}
+          onSubmit={() => {}}
+          showSubmitButton={false}
+        />
+      )}
     </div>
   );
 }
-
