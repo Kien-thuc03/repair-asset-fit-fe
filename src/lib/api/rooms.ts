@@ -37,17 +37,18 @@ export interface RoomResponseDto {
 }
 
 /**
- * Get all rooms
+ * Lấy danh sách phòng theo Khoa Công nghệ Thông tin
  * @returns Promise with list of rooms
  */
 export const getRoomsApi = async (): Promise<RoomResponseDto[]> => {
   try {
-    const response = await api.get<RoomResponseDto[]>("/api/v1/rooms");
+    const url = `/api/v1/rooms/unit`;
+    const response = await api.get<RoomResponseDto[]>(url);
     return response.data;
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
-      err.response?.data?.message || "Lấy danh sách phòng thất bại."
+      err.response?.data?.message || "Lấy danh sách phòng theo khoa thất bại."
     );
   }
 };
@@ -69,25 +70,3 @@ export const getRoomByIdApi = async (id: string): Promise<RoomResponseDto> => {
   }
 };
 
-/**
- * Get rooms by unit
- * Lấy danh sách phòng theo Khoa Công nghệ Thông tin
- * @param unitId Unit ID (optional, nếu không truyền sẽ lấy theo unit mặc định)
- * @returns Promise with list of rooms
- */
-export const getRoomsByUnitApi = async (
-  unitId?: string
-): Promise<RoomResponseDto[]> => {
-  try {
-    const url = unitId
-      ? `/api/v1/rooms/unit?unitId=${unitId}`
-      : `/api/v1/rooms/unit`;
-    const response = await api.get<RoomResponseDto[]>(url);
-    return response.data;
-  } catch (error: unknown) {
-    const err = error as { response?: { data?: { message?: string } } };
-    throw new Error(
-      err.response?.data?.message || "Lấy danh sách phòng theo khoa thất bại."
-    );
-  }
-};
