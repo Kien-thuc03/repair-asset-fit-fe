@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Breadcrumb, Modal, Input, Select, message } from "antd";
+import { Breadcrumb, Input, Select, message } from "antd";
 import {
   Search,
   Eye,
@@ -21,6 +21,7 @@ import {
   useUpdateSoftwareProposalStatus,
 } from "@/hooks/useSoftwareProposals";
 import { useAuth } from "@/contexts/AuthContext";
+import { SoftwareProposalConfirmModal } from "@/components/modal";
 
 const { Option } = Select;
 
@@ -86,7 +87,18 @@ export default function DanhSachDeXuatPhanMemPage() {
   );
 
   // Update status hook
-  const { updateStatus } = useUpdateSoftwareProposalStatus();
+  const { updateStatus, loading: isUpdatingStatus } =
+    useUpdateSoftwareProposalStatus();
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedProposal, setSelectedProposal] = useState<{
+    id: string;
+    code: string;
+  } | null>(null);
+  const [modalActionType, setModalActionType] = useState<"approve" | "reject">(
+    "approve"
+  );
 
   // Query params
   const queryParams = useMemo(() => {
@@ -224,58 +236,90 @@ export default function DanhSachDeXuatPhanMemPage() {
   };
 
   // Handle approve
-  const handleApproveClick = (proposalId: string) => {
-    Modal.confirm({
-      title: "Xác nhận duyệt đề xuất",
-      content: "Bạn có chắc chắn muốn duyệt đề xuất phần mềm này?",
-      okText: "Đồng ý",
-      cancelText: "Hủy",
-      centered: true,
-      onOk: async () => {
-        try {
-          await updateStatus(proposalId, {
-            status: SoftwareProposalStatus.ĐÃ_DUYỆT,
-            approverId: user?.id,
-          });
-          message.success("Đã duyệt đề xuất phần mềm thành công!");
-          refetch();
-        } catch (error) {
-          console.error("Error approving proposal:", error);
-          message.error(
-            error instanceof Error ? error.message : "Không thể duyệt đề xuất."
-          );
-        }
-      },
-    });
+  const handleApproveClick = (proposalId: string, proposalCode: string) => {
+    if (!user?.id) {
+      message.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
+
+    setSelectedProposal({ id: proposalId, code: proposalCode });
+    setModalActionType("approve");
+    setIsModalOpen(true);
   };
 
   // Handle reject
-  const handleRejectClick = (proposalId: string) => {
-    Modal.confirm({
-      title: "Xác nhận từ chối đề xuất",
-      content: "Bạn có chắc chắn muốn từ chối đề xuất phần mềm này?",
-      okText: "Đồng ý",
-      cancelText: "Hủy",
-      okButtonProps: { danger: true },
-      centered: true,
-      onOk: async () => {
-        try {
-          await updateStatus(proposalId, {
-            status: SoftwareProposalStatus.ĐÃ_TỪ_CHỐI,
-            approverId: user?.id,
-          });
-          message.success("Đã từ chối đề xuất phần mềm!");
-          refetch();
-        } catch (error) {
-          console.error("Error rejecting proposal:", error);
-          message.error(
-            error instanceof Error
-              ? error.message
-              : "Không thể từ chối đề xuất."
-          );
+  const handleRejectClick = (proposalId: string, proposalCode: string) => {
+    if (!user?.id) {
+      message.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
+
+    setSelectedProposal({ id: proposalId, code: proposalCode });
+    setModalActionType("reject");
+    setIsModalOpen(true);
+  };
+
+  // Handle modal confirm
+  const handleModalConfirm = async () => {
+    if (!selectedProposal || !user?.id) {
+      message.error("Không thể xác định thông tin. Vui lòng thử lại.");
+      return;
+    }
+
+    try {
+      const status =
+        modalActionType === "approve"
+          ? SoftwareProposalStatus.ĐÃ_DUYỆT
+          : SoftwareProposalStatus.ĐÃ_TỪ_CHỐI;
+
+      console.log(
+        `🔄 ${
+          modalActionType === "approve" ? "Approving" : "Rejecting"
+        } proposal:`,
+        selectedProposal.id,
+        {
+          status,
+          approverId: user.id,
         }
-      },
-    });
+      );
+
+      await updateStatus(selectedProposal.id, {
+        status,
+        approverId: user.id,
+      });
+
+      message.success(
+        modalActionType === "approve"
+          ? "Đã duyệt đề xuất phần mềm thành công!"
+          : "Đã từ chối đề xuất phần mềm!"
+      );
+      refetch();
+      setIsModalOpen(false);
+      setSelectedProposal(null);
+    } catch (error) {
+      console.error(
+        `Error ${
+          modalActionType === "approve" ? "approving" : "rejecting"
+        } proposal:`,
+        error
+      );
+      message.error(
+        error instanceof Error
+          ? error.message
+          : `Không thể ${
+              modalActionType === "approve" ? "duyệt" : "từ chối"
+            } đề xuất.`
+      );
+      throw error; // Re-throw để modal không đóng khi có lỗi
+    }
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    if (!isUpdatingStatus) {
+      setIsModalOpen(false);
+      setSelectedProposal(null);
+    }
   };
 
   // Navigation
@@ -507,7 +551,12 @@ export default function DanhSachDeXuatPhanMemPage() {
                         </button>
                         {canApprove && (
                           <button
-                            onClick={() => handleApproveClick(proposal.id)}
+                            onClick={() =>
+                              handleApproveClick(
+                                proposal.id,
+                                proposal.proposalCode
+                              )
+                            }
                             title="Phê duyệt"
                             className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-600 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                             <CheckCircle className="h-4 w-4" />
@@ -515,7 +564,12 @@ export default function DanhSachDeXuatPhanMemPage() {
                         )}
                         {canReject && (
                           <button
-                            onClick={() => handleRejectClick(proposal.id)}
+                            onClick={() =>
+                              handleRejectClick(
+                                proposal.id,
+                                proposal.proposalCode
+                              )
+                            }
                             title="Từ chối"
                             className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-red-600 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                             <XCircle className="h-4 w-4" />
@@ -593,7 +647,9 @@ export default function DanhSachDeXuatPhanMemPage() {
                   </button>
                   {canApprove && (
                     <button
-                      onClick={() => handleApproveClick(proposal.id)}
+                      onClick={() =>
+                        handleApproveClick(proposal.id, proposal.proposalCode)
+                      }
                       className="inline-flex items-center px-3 py-2 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
                       <CheckCircle className="w-3 h-3 mr-1" />
                       Duyệt
@@ -601,7 +657,9 @@ export default function DanhSachDeXuatPhanMemPage() {
                   )}
                   {canReject && (
                     <button
-                      onClick={() => handleRejectClick(proposal.id)}
+                      onClick={() =>
+                        handleRejectClick(proposal.id, proposal.proposalCode)
+                      }
                       className="inline-flex items-center px-3 py-2 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
                       <XCircle className="w-3 h-3 mr-1" />
                       Từ chối
@@ -637,6 +695,18 @@ export default function DanhSachDeXuatPhanMemPage() {
           showTotal={true}
         />
       </div>
+
+      {/* Software Proposal Confirm Modal */}
+      {selectedProposal && (
+        <SoftwareProposalConfirmModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          onConfirm={handleModalConfirm}
+          proposalCode={selectedProposal.code}
+          actionType={modalActionType}
+          isLoading={isUpdatingStatus}
+        />
+      )}
     </div>
   );
 }

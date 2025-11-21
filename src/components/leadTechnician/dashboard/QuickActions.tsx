@@ -44,10 +44,10 @@ const QuickActions: React.FC = () => {
             </span>
             <div className="mt-4">
               <h3 className="text-lg font-medium text-gray-900">
-                Quản lý tờ trình
+                Danh sách tờ trình
               </h3>
               <p className="mt-2 text-sm text-gray-500">
-                Tạo và quản lý tờ trình
+                Quản lý tờ trình
               </p>
             </div>
           </Link>
@@ -59,7 +59,7 @@ const QuickActions: React.FC = () => {
               <Calendar className="h-6 w-6" />
             </span>
             <div className="mt-4">
-              <h3 className="text-lg font-medium text-gray-900">Biên bản</h3>
+              <h3 className="text-lg font-medium text-gray-900">Danh sách biên bản</h3>
               <p className="mt-2 text-sm text-gray-500">
                 Quản lý biên bản xác nhận
               </p>
@@ -74,10 +74,10 @@ const QuickActions: React.FC = () => {
             </span>
             <div className="mt-4">
               <h3 className="text-lg font-medium text-gray-900">
-                Phân công khu vực
+                Quản lý khu vực
               </h3>
               <p className="mt-2 text-sm text-gray-500">
-                Gán khu vực cho kỹ thuật viên
+                Quản lý khu vực phụ trách
               </p>
             </div>
           </Link>
@@ -94,7 +94,7 @@ const QuickActions: React.FC = () => {
               </span>
               <div>
                 <h4 className="text-sm font-medium text-gray-900">
-                  Danh sách báo lỗi
+                  Quản lý báo lỗi
                 </h4>
                 <p className="text-xs text-gray-500">
                   Theo dõi các báo cáo lỗi

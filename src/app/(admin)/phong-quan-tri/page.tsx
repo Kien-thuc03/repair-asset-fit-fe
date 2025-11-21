@@ -118,10 +118,10 @@ export default function PhongQuanTriDashboard() {
               </span>
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Xử lý tờ trình
+                  Quản lý tờ trình
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Xem xét và phê duyệt các tờ trình thay thế từ các đơn vị
+                  Xem xét và phê duyệt các tờ trình thay thế từ các khoa
                 </p>
               </div>
             </Link>
@@ -134,10 +134,10 @@ export default function PhongQuanTriDashboard() {
               </span>
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Lập biên bản
+                  Quản lý biên bản
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Tạo biên bản hoàn thành và bàn giao thiết bị
+                  Tạo biên bản hoàn thành và bàn giao thiết bị từ các khoa
                 </p>
               </div>
             </Link>
@@ -150,10 +150,10 @@ export default function PhongQuanTriDashboard() {
               </span>
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Gửi đề xuất thay thế
+                  Danh sách mua sắm thiết bị
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Tạo và gửi đề xuất thay thế thiết bị lên cấp trên
+                  Tạo và gửi đề xuất thay thế thiết bị lên cấp trên từ các khoa
                 </p>
               </div>
             </Link>

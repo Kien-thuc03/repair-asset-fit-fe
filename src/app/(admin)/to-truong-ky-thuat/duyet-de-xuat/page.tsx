@@ -364,7 +364,7 @@ Trân trọng kính trình.`;
               <tr>
                 <th width="5%">STT</th>
                 <th width="25%">Linh kiện cũ</th>
-                <th width="30%">Linh kiện mới đề xuất</th>
+                <th width="30%">Vị trí</th>
                 <th width="10%">SL</th>
                 <th width="30%">Lý do</th>
               </tr>
@@ -382,10 +382,7 @@ Trân trọng kính trình.`;
                     }</strong><br>
                     <small>${item.oldComponent?.componentSpecs || ""}</small>
                   </td>
-                  <td>
-                    <strong>${item.newItemName || "Không xác định"}</strong><br>
-                    <small>${item.newItemSpecs || ""}</small>
-                  </td>
+                  <td>${item.oldComponent?.roomLocation || "Chưa xác định"}</td>
                   <td style="text-align: center;">${item.quantity}</td>
                   <td>${item.reason || "Cần thay thế"}</td>
                 </tr>

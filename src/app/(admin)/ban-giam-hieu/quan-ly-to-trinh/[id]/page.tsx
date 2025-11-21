@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -18,14 +18,22 @@ import {
   Eye,
   Loader2,
   CheckCircle,
+  XCircle,
 } from "lucide-react";
-import { Breadcrumb, Modal } from "antd";
-import SignConfirmModal from "@/components/modal/SignConfirmModal";
+import { Breadcrumb } from "antd";
+import {
+  SignConfirmModal,
+  CancelConfirmModal,
+  SubmissionPreviewModal,
+  SuccessModal,
+  ErrorModal,
+} from "@/components/modal";
 import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus, SubmissionFormData } from "@/types";
+import { getFileNameFromUrl } from "@/lib/utils";
 
 export default function ChiTietQuanLyToTrinhPage() {
   const params = useParams();
@@ -35,10 +43,123 @@ export default function ChiTietQuanLyToTrinhPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showRejectModalB5, setShowRejectModalB5] = useState(false);
+  const [showSignConfirmModalB5, setShowSignConfirmModalB5] = useState(false);
+  const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({
+    title: "",
+    message: "",
+  });
+  const [errorMessage, setErrorMessage] = useState({ title: "", message: "" });
 
   // Fetch proposal data từ API
-  const { data: proposal, loading, error, refetch } = useReplacementProposal(id);
+  const {
+    data: proposal,
+    loading,
+    error,
+    refetch,
+  } = useReplacementProposal(id);
   const { updateStatus } = useUpdateReplacementProposalStatus();
+
+  // Default form data for preview modal
+  const defaultSubmissionFormData: SubmissionFormData = useMemo(
+    () => ({
+      recipientDepartment: "Ban Giám hiệu",
+      submittedBy: proposal?.proposer?.fullName || "Giảng Thanh Trọn",
+      position: "Tổ trưởng Kỹ thuật",
+      department: "Phòng Quản trị",
+      subject: proposal?.title || "",
+      attachments: "Biên bản kiểm tra kỹ thuật",
+      content: proposal?.description || "",
+      director: "TS. Lê Nhất Duy",
+      rector: "TS. Phan Hồng Hải",
+    }),
+    [proposal?.title, proposal?.description, proposal?.proposer?.fullName]
+  );
+
+  // Handler for downloading submission document
+  const handleDownloadFile = async (url: string, filename: string) => {
+    try {
+      // Fetch the file from URL với mode 'no-cors' nếu cần
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/octet-stream",
+        },
+      });
+
+      if (!response.ok) {
+        // Nếu fetch thất bại, thử download trực tiếp
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.target = "_blank";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 100);
+        return;
+      }
+
+      const blob = await response.blob();
+
+      // Create download link
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      link.style.display = "none"; // Ẩn link
+      document.body.appendChild(link);
+
+      // Đảm bảo link được append trước khi click
+      requestAnimationFrame(() => {
+        link.click();
+
+        // Cleanup sau một chút delay
+        setTimeout(() => {
+          if (document.body.contains(link)) {
+            document.body.removeChild(link);
+          }
+          window.URL.revokeObjectURL(blobUrl);
+        }, 200);
+      });
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      // Fallback: thử download trực tiếp từ URL
+      try {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.target = "_blank";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          if (document.body.contains(link)) {
+            document.body.removeChild(link);
+          }
+        }, 100);
+      } catch (fallbackError) {
+        console.error("Fallback download also failed:", fallbackError);
+        // Cuối cùng, mở trong tab mới
+        window.open(url, "_blank");
+      }
+    }
+  };
+
+  // Handler for exporting submission document
+  const handleExportSubmissionDocx = () => {
+    if (proposal?.submissionFormUrl) {
+      const filename =
+        getFileNameFromUrl(proposal.submissionFormUrl) || "to-trinh.pdf";
+      handleDownloadFile(proposal.submissionFormUrl, filename);
+    }
+  };
 
   // Loading state
   if (loading) {
@@ -110,11 +231,15 @@ export default function ChiTietQuanLyToTrinhPage() {
   const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
       case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-lime-100 text-lime-800 border-lime-200";
       case ReplacementProposalStatus.CHỜ_XÁC_MINH:
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
         return "bg-blue-100 text-blue-800 border-blue-200";
+      case ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
+        return "bg-cyan-100 text-cyan-800 border-cyan-200";
+      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+        return "bg-orange-100 text-orange-800 border-orange-200";
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "bg-green-100 text-green-800 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -128,6 +253,10 @@ export default function ChiTietQuanLyToTrinhPage() {
         return "Chờ xác minh";
       case ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
         return "Đã hoàn tất";
+      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+        return "Đã từ chối tờ trình";
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "Khoa đã duyệt tờ trình";
       default:
         return status;
     }
@@ -146,14 +275,11 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      Modal.success({
+      setSuccessMessage({
         title: "Phê duyệt thành công",
-        content: `Tờ trình ${proposal.proposalCode} đã được phê duyệt thành công.`,
-        okText: "Đóng",
-        onOk: () => {
-          router.push("/ban-giam-hieu/quan-ly-to-trinh");
-        },
+        message: `Tờ trình ${proposal.proposalCode} đã được phê duyệt thành công.`,
       });
+      setShowSuccessModal(true);
 
       refetch();
     } catch (error) {
@@ -161,11 +287,11 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      Modal.error({
+      setErrorMessage({
         title: "Lỗi",
-        content: "Có lỗi xảy ra khi phê duyệt tờ trình. Vui lòng thử lại.",
-        okText: "Đóng",
+        message: "Có lỗi xảy ra khi phê duyệt tờ trình. Vui lòng thử lại.",
       });
+      setShowErrorModal(true);
     }
   };
 
@@ -182,14 +308,11 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowVerificationModal(false);
 
-      Modal.success({
+      setSuccessMessage({
         title: "Yêu cầu xác minh đã được gửi",
-        content: `Yêu cầu xác minh tình trạng linh kiện cho tờ trình ${proposal.proposalCode} đã được gửi thành công.`,
-        okText: "Đóng",
-        onOk: () => {
-          router.push("/ban-giam-hieu/quan-ly-to-trinh");
-        },
+        message: `Yêu cầu xác minh tình trạng linh kiện cho tờ trình ${proposal.proposalCode} đã được gửi thành công.`,
       });
+      setShowSuccessModal(true);
 
       refetch();
     } catch (error) {
@@ -197,11 +320,113 @@ export default function ChiTietQuanLyToTrinhPage() {
       setIsProcessing(false);
       setShowVerificationModal(false);
 
-      Modal.error({
+      setErrorMessage({
         title: "Lỗi",
-        content: "Có lỗi xảy ra khi gửi yêu cầu xác minh. Vui lòng thử lại.",
-        okText: "Đóng",
+        message: "Có lỗi xảy ra khi gửi yêu cầu xác minh. Vui lòng thử lại.",
       });
+      setShowErrorModal(true);
+    }
+  };
+
+  // Hàm xử lý khi xác nhận từ chối tờ trình
+  const handleRejectConfirm = async () => {
+    if (!proposal) return;
+
+    setIsProcessing(true);
+
+    try {
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+      });
+
+      setIsProcessing(false);
+      setShowRejectModal(false);
+
+      setSuccessMessage({
+        title: "Từ chối thành công",
+        message: `Tờ trình ${proposal.proposalCode} đã được từ chối.`,
+      });
+      setShowSuccessModal(true);
+
+      refetch();
+    } catch (error) {
+      console.error("Error rejecting proposal:", error);
+      setIsProcessing(false);
+      setShowRejectModal(false);
+
+      setErrorMessage({
+        title: "Lỗi",
+        message: "Có lỗi xảy ra khi từ chối tờ trình. Vui lòng thử lại.",
+      });
+      setShowErrorModal(true);
+    }
+  };
+
+  // Hàm xử lý khi duyệt từ trạng thái B5 (KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH) -> B6 (ĐÃ_DUYỆT_TỜ_TRÌNH)
+  const handleApproveFromB5 = async () => {
+    if (!proposal) return;
+
+    setIsProcessing(true);
+
+    try {
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+      });
+
+      setIsProcessing(false);
+      setShowSignConfirmModalB5(false);
+
+      setSuccessMessage({
+        title: "Duyệt thành công",
+        message: `Tờ trình ${proposal.proposalCode} đã được duyệt thành công.`,
+      });
+      setShowSuccessModal(true);
+
+      refetch();
+    } catch (error) {
+      console.error("Error approving proposal from B5:", error);
+      setIsProcessing(false);
+      setShowSignConfirmModalB5(false);
+
+      setErrorMessage({
+        title: "Lỗi",
+        message: "Có lỗi xảy ra khi duyệt tờ trình. Vui lòng thử lại.",
+      });
+      setShowErrorModal(true);
+    }
+  };
+
+  // Hàm xử lý khi từ chối từ trạng thái B5 (KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH) -> B7 (ĐÃ_TỪ_CHỐI_TỜ_TRÌNH)
+  const handleRejectFromB5 = async () => {
+    if (!proposal) return;
+
+    setIsProcessing(true);
+
+    try {
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+      });
+
+      setIsProcessing(false);
+      setShowRejectModalB5(false);
+
+      setSuccessMessage({
+        title: "Từ chối thành công",
+        message: `Tờ trình ${proposal.proposalCode} đã được từ chối.`,
+      });
+      setShowSuccessModal(true);
+
+      refetch();
+    } catch (error) {
+      console.error("Error rejecting proposal from B5:", error);
+      setIsProcessing(false);
+      setShowRejectModalB5(false);
+
+      setErrorMessage({
+        title: "Lỗi",
+        message: "Có lỗi xảy ra khi từ chối tờ trình. Vui lòng thử lại.",
+      });
+      setShowErrorModal(true);
     }
   };
 
@@ -249,7 +474,7 @@ export default function ChiTietQuanLyToTrinhPage() {
       {/* Proposal Info Card */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
                 Chi tiết tờ trình thay thế
@@ -258,40 +483,65 @@ export default function ChiTietQuanLyToTrinhPage() {
                 Mã đề xuất: {proposal.proposalCode}
               </p>
             </div>
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
-                proposal.status
-              )}`}>
-              {getStatusText(proposal.status)}
-            </span>
+            <div className="flex items-center gap-3">
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
+                  proposal.status
+                )}`}>
+                {getStatusText(proposal.status)}
+              </span>
+              {/* Action buttons - hiển thị khi status là KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH (B5) */}
+              {proposal.status ===
+                ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowRejectModalB5(true)}
+                    className="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <XCircle className="w-4 h-4 mr-1.5" />
+                    <span className="hidden sm:inline">Từ chối</span>
+                  </button>
+                  <button
+                    onClick={() => setShowSignConfirmModalB5(true)}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <CheckCircle className="w-4 h-4 mr-1.5" />
+                    <span className="hidden sm:inline">Duyệt</span>
+                  </button>
+                </div>
+              )}
+              {/* Action buttons - hiển thị khi status là ĐÃ_DUYỆT_TỜ_TRÌNH (B6) */}
+              {proposal.status ===
+                ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowVerificationModal(true)}
+                    className="inline-flex items-center px-3 py-2 border border-yellow-300 text-sm font-medium rounded-md text-yellow-700 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                    <AlertTriangle className="w-4 h-4 mr-1.5" />
+                    <span className="hidden sm:inline">Xác minh</span>
+                  </button>
+                  <button
+                    onClick={() => setShowRejectModal(true)}
+                    className="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <XCircle className="w-4 h-4 mr-1.5" />
+                    <span className="hidden sm:inline">Từ chối</span>
+                  </button>
+                  <button
+                    onClick={() => setShowSignConfirmModal(true)}
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <CheckCircle className="w-4 h-4 mr-1.5" />
+                    <span className="hidden sm:inline">Phê duyệt</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="px-6 py-6 space-y-6">
           {/* Basic Information */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Thông tin cơ bản
-              </h3>
-              {proposal.status ===
-                ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setShowVerificationModal(true)}
-                    className="inline-flex items-center px-3 py-1 border border-yellow-300 text-xs font-medium rounded text-yellow-700 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-yellow-500">
-                    <AlertTriangle className="w-4 h-4 mr-1" />
-                    Yêu cầu xác minh
-                  </button>
-                  <button
-                    onClick={() => setShowSignConfirmModal(true)}
-                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500">
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Phê duyệt
-                  </button>
-                </div>
-              )}
-            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Thông tin cơ bản
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -463,37 +713,93 @@ export default function ChiTietQuanLyToTrinhPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Tài liệu đính kèm
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+            <div className="space-y-4">
               {proposal.submissionFormUrl && (
-                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md bg-white">
                   <div className="flex items-center space-x-3">
                     <FileText className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        Tờ trình đề xuất
+                        {getFileNameFromUrl(proposal.submissionFormUrl)}
                       </p>
-                      <p className="text-xs text-gray-500">PDF Document</p>
+                      <p className="text-xs text-gray-500">DOC Document</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setShowSubmissionPreview(true)}
+                      className="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                      title="Xem tài liệu">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (proposal.submissionFormUrl) {
+                          const filename =
+                            getFileNameFromUrl(proposal.submissionFormUrl) ||
+                            "to-trinh.pdf";
+                          handleDownloadFile(
+                            proposal.submissionFormUrl,
+                            filename
+                          );
+                        }
+                      }}
+                      className="p-2 text-gray-600 hover:bg-blue-100 rounded transition-colors"
+                      title="Tải xuống">
+                      <Download className="w-4 h-4 text-blue-600" />
+                    </button>
+                  </div>
+                </div>
+              )}
+              {proposal.verificationReportUrl && (
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md bg-white">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        Biên bản xác minh
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {getFileNameFromUrl(proposal.verificationReportUrl)}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <a
-                      href={proposal.submissionFormUrl}
+                      href={proposal.verificationReportUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-900"
+                      className="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors"
                       title="Xem tài liệu">
                       <Eye className="w-4 h-4" />
                     </a>
-                    <a
-                      href={proposal.submissionFormUrl}
-                      download
-                      className="text-gray-600 hover:text-gray-900"
+                    <button
+                      onClick={() => {
+                        if (proposal.verificationReportUrl) {
+                          const filename =
+                            getFileNameFromUrl(
+                              proposal.verificationReportUrl
+                            ) || "bien-ban-xac-minh.pdf";
+                          handleDownloadFile(
+                            proposal.verificationReportUrl,
+                            filename
+                          );
+                        }
+                      }}
+                      className="p-2 text-gray-600 hover:bg-blue-100 rounded transition-colors"
                       title="Tải xuống">
-                      <Download className="w-4 h-4" />
-                    </a>
+                      <Download className="w-4 h-4 text-blue-600" />
+                    </button>
                   </div>
                 </div>
               )}
+              {!proposal.submissionFormUrl &&
+                !proposal.verificationReportUrl && (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">Chưa có tài liệu đính kèm</p>
+                  </div>
+                )}
             </div>
           </div>
         </div>
@@ -510,50 +816,95 @@ export default function ChiTietQuanLyToTrinhPage() {
         actionType="approve"
       />
 
-      {/* Verification Request Modal */}
-      {showVerificationModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-          <div className="relative p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
-                <AlertTriangle className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div className="mt-2 px-4 py-3 text-center">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Yêu cầu xác minh tình trạng linh kiện
-                </h3>
-                <div className="mt-2 px-2 py-2">
-                  <p className="text-sm text-gray-500">
-                    Bạn có chắc chắn muốn gửi yêu cầu xác minh tình trạng các
-                    linh kiện trong tờ trình <strong>{proposal.proposalCode}</strong>?
-                  </p>
-                  <div className="mt-3 p-2 bg-yellow-50 rounded text-left">
-                    <p className="text-xs text-yellow-800">
-                      <strong>Lưu ý:</strong> Sau khi gửi yêu cầu, tờ trình sẽ
-                      chuyển sang trạng thái &ldquo;Chờ xác minh&rdquo; và phòng
-                      quản trị sẽ tiến hành kiểm tra tình trạng các linh kiện.
-                    </p>
-                  </div>
-                </div>
-                <div className="items-center px-4 py-3 flex justify-center space-x-4">
-                  <button
-                    onClick={() => setShowVerificationModal(false)}
-                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600">
-                    Hủy
-                  </button>
-                  <button
-                    onClick={handleVerificationConfirm}
-                    disabled={isProcessing}
-                    className="px-4 py-2 text-white text-base font-medium rounded-md shadow-sm bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50">
-                    {isProcessing ? "Đang xử lý..." : "Xác nhận"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Verification Request Modal - Sử dụng SignConfirmModal với custom config */}
+      <SignConfirmModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onConfirm={handleVerificationConfirm}
+        reportTitle={proposal.title || "Tờ trình thay thế"}
+        reportNumber={proposal.proposalCode}
+        isLoading={isProcessing}
+        actionType="approve"
+        customTitle="Yêu cầu xác minh tình trạng linh kiện"
+        customConfirmText="Xác nhận gửi yêu cầu"
+        customDescription={`Bạn có chắc chắn muốn gửi yêu cầu xác minh tình trạng các linh kiện trong tờ trình ${proposal.proposalCode}?`}
+        customWarning="Sau khi gửi yêu cầu, tờ trình sẽ chuyển sang trạng thái 'Chờ xác minh' và phòng quản trị sẽ tiến hành kiểm tra tình trạng các linh kiện."
+        icon={AlertTriangle}
+      />
+
+      {/* Reject Confirmation Modal - Sử dụng CancelConfirmModal cho B6 */}
+      <CancelConfirmModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onConfirm={handleRejectConfirm}
+        title="Xác nhận từ chối tờ trình"
+        message={`Bạn có chắc chắn muốn từ chối tờ trình ${proposal.proposalCode}? Sau khi từ chối, tờ trình sẽ chuyển sang trạng thái "Đã từ chối tờ trình" và cần được lập lại từ đầu. Hành động này không thể hoàn tác.`}
+        confirmText="Xác nhận từ chối"
+        cancelText="Hủy"
+        isLoading={isProcessing}
+      />
+
+      {/* Reject Confirmation Modal cho B5 - Sử dụng CancelConfirmModal */}
+      <CancelConfirmModal
+        isOpen={showRejectModalB5}
+        onClose={() => setShowRejectModalB5(false)}
+        onConfirm={handleRejectFromB5}
+        title="Xác nhận từ chối tờ trình"
+        message={`Bạn có chắc chắn muốn từ chối tờ trình ${proposal.proposalCode}? Sau khi từ chối, tờ trình sẽ chuyển sang trạng thái "Đã từ chối tờ trình" và cần được lập lại từ đầu. Hành động này không thể hoàn tác.`}
+        confirmText="Xác nhận từ chối"
+        cancelText="Hủy"
+        isLoading={isProcessing}
+      />
+
+      {/* SignConfirmModal cho duyệt từ B5 */}
+      <SignConfirmModal
+        isOpen={showSignConfirmModalB5}
+        onClose={() => setShowSignConfirmModalB5(false)}
+        onConfirm={handleApproveFromB5}
+        reportTitle={proposal.title || "Tờ trình thay thế"}
+        reportNumber={proposal.proposalCode}
+        isLoading={isProcessing}
+        actionType="approve"
+        customTitle="Xác nhận duyệt tờ trình"
+        customDescription={`Bạn có chắc chắn muốn duyệt tờ trình ${proposal.proposalCode}?`}
+        customWarning="Sau khi duyệt, tờ trình sẽ chuyển sang trạng thái 'Đã duyệt tờ trình' và có thể thực hiện các thao tác tiếp theo."
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          // Nếu là thao tác từ chối, chuyển về danh sách
+          if (successMessage.title.includes("Từ chối")) {
+            router.push("/ban-giam-hieu/quan-ly-to-trinh");
+          }
+        }}
+        title={successMessage.title}
+        message={successMessage.message}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title={errorMessage.title}
+        message={errorMessage.message}
+        showRetry={false}
+      />
+
+      {/* Submission Preview Modal */}
+      {proposal && (
+        <SubmissionPreviewModal
+          isOpen={showSubmissionPreview}
+          onClose={() => setShowSubmissionPreview(false)}
+          formData={defaultSubmissionFormData}
+          proposal={proposal}
+          onExport={handleExportSubmissionDocx}
+          onSubmit={() => {}}
+          showSubmitButton={false}
+        />
       )}
     </div>
   );
 }
-
