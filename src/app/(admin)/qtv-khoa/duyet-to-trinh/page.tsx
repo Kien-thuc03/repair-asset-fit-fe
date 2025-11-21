@@ -301,7 +301,7 @@ export default function DuyetToTrinhPage() {
       {/* Filters */}
       <Card>
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={5}>
+          <Col xs={24} sm={12} md={7}>
             <Input
               placeholder="Tìm kiếm theo mã hoặc tiêu đề"
               prefix={<SearchOutlined />}
@@ -339,7 +339,7 @@ export default function DuyetToTrinhPage() {
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={8}>
+          <Col xs={24} sm={12} md={7}>
             <RangePicker
               placeholder={["Từ ngày", "Đến ngày"]}
               format="DD/MM/YYYY"
@@ -352,14 +352,13 @@ export default function DuyetToTrinhPage() {
             />
           </Col>
 
-          <Col xs={24} sm={12} md={3}>
+          <Col xs={24} sm={12} md={1}>
             <Button
               icon={<SyncOutlined />}
               title="Tải lại bộ lọc"
               onClick={handleResetFilters}
               type="default"
               style={{ width: "100%" }}>
-              Clear
             </Button>
           </Col>
 

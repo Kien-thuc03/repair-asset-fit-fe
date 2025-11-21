@@ -1,15 +1,16 @@
-"use client";
+'use client'
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import toast from "react-hot-toast";
-import { Eye, EyeOff, User, Lock } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { RoleSelectionModal } from "@/components/modal/RoleSelectionModal";
-import Image from "next/image";
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+import toast from 'react-hot-toast'
+import { Eye, EyeOff, User, Lock } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { RoleSelectionModal } from '@/components/modal/RoleSelectionModal'
+import Image from 'next/image'
+import Link from 'next/link'
 
 const schema = yup.object({
   username: yup.string().required("Tên đăng nhập là bắt buộc"),
@@ -185,11 +186,9 @@ export default function LoginPage() {
             </label>
           </div>
           <div className="text-sm">
-            <a
-              href="#"
-              className="font-medium text-blue-700 hover:text-blue-600">
+            <Link href="/forgot-password" className="font-medium text-blue-700 hover:text-blue-600">
               Quên mật khẩu?
-            </a>
+            </Link>
           </div>
         </div>
 

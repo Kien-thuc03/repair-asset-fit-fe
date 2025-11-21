@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   Monitor,
   User,
@@ -60,6 +60,11 @@ const softwareProposalStatusConfig = {
     color: "text-red-600 bg-red-50 border-red-200",
     icon: XCircle,
   },
+  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
+    label: "Đang trang bị",
+    color: "text-orange-600 bg-orange-50 border-orange-200",
+    icon: Wrench,
+  },
   [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
     label: "Đã trang bị",
     color: "text-blue-600 bg-blue-50 border-blue-200",
@@ -69,7 +74,6 @@ const softwareProposalStatusConfig = {
 
 export default function SoftwareProposalDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const { user } = useAuth();
   const proposalId = params.id as string;
 
@@ -178,9 +182,8 @@ export default function SoftwareProposalDetailPage() {
     );
   }
 
-  const StatusIcon = softwareProposalStatusConfig[proposal.status].icon;
+  const StatusIcon = softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
   const canApprove = proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT;
-  const canReject = proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT;
 
   return (
     <div className="space-y-6">
@@ -398,7 +401,7 @@ export default function SoftwareProposalDetailPage() {
             <div className="space-y-4">
               {/* Tạo đề xuất */}
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <FileText className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
@@ -413,7 +416,7 @@ export default function SoftwareProposalDetailPage() {
               {proposal.approverId &&
                 proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT && (
                   <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <div className="shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                       <CheckCircle className="h-4 w-4 text-green-600" />
                     </div>
                     <div>
@@ -429,10 +432,30 @@ export default function SoftwareProposalDetailPage() {
                   </div>
                 )}
 
+              {/* Đang trang bị */}
+              {proposal.status === SoftwareProposalStatus.ĐANG_TRANG_BỊ && (
+                <div className="flex items-start gap-3">
+                  <div className="shrink-0 w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Wrench className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Đang trang bị</p>
+                    {proposal.technician && (
+                      <p className="text-sm text-gray-500">
+                        Kỹ thuật viên: {proposal.technician.fullName}
+                      </p>
+                    )}
+                    <p className="text-xs text-gray-400">
+                      {new Date(proposal.updatedAt).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Từ chối */}
               {proposal.status === SoftwareProposalStatus.ĐÃ_TỪ_CHỐI && (
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <div className="shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
                     <XCircle className="h-4 w-4 text-red-600" />
                   </div>
                   <div>
@@ -453,14 +476,16 @@ export default function SoftwareProposalDetailPage() {
               {/* Hoàn thành */}
               {proposal.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ && (
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <div className="shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                     <Package className="h-4 w-4 text-blue-600" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Đã trang bị</p>
-                    <p className="text-sm text-gray-500">
-                      Hoàn thành cài đặt phần mềm
-                    </p>
+                    {proposal.technician && (
+                      <p className="text-sm text-gray-500">
+                        Hoàn thành bởi: {proposal.technician.fullName}
+                      </p>
+                    )}
                     <p className="text-xs text-gray-400">
                       {new Date(proposal.updatedAt).toLocaleString("vi-VN")}
                     </p>

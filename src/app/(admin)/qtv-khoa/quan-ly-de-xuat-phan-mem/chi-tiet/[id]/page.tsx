@@ -1,7 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { 
   Monitor,
   User,
@@ -12,37 +11,22 @@ import {
   XCircle,
   Clock,
   Package,
-  AlertCircle
+  AlertCircle,
+  Wrench
 } from 'lucide-react';
-import { Breadcrumb } from 'antd';
-import { SoftwareProposalStatus, SoftwareProposalItem } from '@/types/software';
-import { 
-  getSoftwareProposalById,
-  getSoftwareProposalItems 
-} from '@/lib/mockData/softwareProposals';
-
-// Mock users và rooms data để hiển thị tên
-const mockUsers = {
-  'user-5': 'Nguyễn Văn A',
-  'user-6': 'Trần Thị B', 
-  'user-1': 'Lê Văn C'
-} as const;
-
-const mockRooms = {
-  'ROOM001': 'H101',
-  'ROOM002': 'H102',
-  'ROOM003': 'H103', 
-  'ROOM004': 'H201',
-  'ROOM005': 'H202'
-} as const;
+import { Breadcrumb, Button, Spin } from 'antd';
+import { SoftwareProposalStatus, SoftwareProposal, SoftwareProposalItem } from '@/types/software';
+import { useSoftwareProposalDetail } from '@/hooks/useSoftwareProposals';
 
 // Helper functions
-const getUserName = (userId: string): string => {
-  return (mockUsers as Record<string, string>)[userId] || userId;
+const getUserName = (proposal: SoftwareProposal | null): string => {
+  if (!proposal) return 'N/A';
+  return proposal.proposer?.fullName || proposal.proposerId || 'N/A';
 };
 
-const getRoomName = (roomId: string): string => {
-  return (mockRooms as Record<string, string>)[roomId] || roomId;
+const getRoomName = (proposal: SoftwareProposal | null): string => {
+  if (!proposal) return 'N/A';
+  return proposal.room?.name || proposal.roomId || 'N/A';
 };
 
 // Config cho trạng thái đề xuất
@@ -62,6 +46,11 @@ const softwareProposalStatusConfig = {
     color: 'text-red-600 bg-red-50 border-red-200',
     icon: XCircle
   },
+  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
+    label: 'Đang trang bị',
+    color: 'text-orange-600 bg-orange-50 border-orange-200',
+    icon: Wrench
+  },
   [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
     label: 'Đã trang bị',
     color: 'text-blue-600 bg-blue-50 border-blue-200',
@@ -70,34 +59,43 @@ const softwareProposalStatusConfig = {
 };
 
 export default function QtvKhoaSoftwareProposalDetailPage() {
+  const router = useRouter();
   const params = useParams();
   const proposalId = params.id as string;
   
-  // Lấy dữ liệu đề xuất
-  const proposal = useMemo(() => {
-    return getSoftwareProposalById(proposalId);
-  }, [proposalId]);
+  // Lấy dữ liệu đề xuất từ API
+  const { data: proposal, loading, error } = useSoftwareProposalDetail(proposalId);
 
-  // Lấy items của proposal
-  const proposalItems = useMemo(() => {
-    return getSoftwareProposalItems(proposalId);
-  }, [proposalId]);
-
-  if (!proposal) {
+  if (loading) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">
-          Không tìm thấy đề xuất
-        </h3>
-        <p className="mt-1 text-sm text-gray-500">
-          Đề xuất phần mềm không tồn tại hoặc đã bị xóa.
-        </p>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
       </div>
     );
   }
 
-  const StatusIcon = softwareProposalStatusConfig[proposal.status].icon;
+  if (error || !proposal) {
+    return (
+      <div className="text-center py-12">
+        <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
+        <h3 className="mt-2 text-sm font-medium text-gray-900">
+          {error || 'Không tìm thấy đề xuất'}
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Đề xuất phần mềm không tồn tại hoặc đã bị xóa.
+        </p>
+        <Button 
+          className="mt-4" 
+          onClick={() => router.push('/qtv-khoa/quan-ly-de-xuat-phan-mem')}
+        >
+          Quay lại
+        </Button>
+      </div>
+    );
+  }
+
+  const StatusIcon = softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
+  const proposalItems = proposal.items || [];
 
   return (
     <div className="space-y-6">
@@ -164,7 +162,7 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
                 <User className="h-5 w-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-500">Người đề xuất</p>
-                  <p className="font-medium text-gray-900">{getUserName(proposal.proposerId)}</p>
+                  <p className="font-medium text-gray-900">{getUserName(proposal)}</p>
                 </div>
               </div>
               
@@ -172,7 +170,7 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
                 <Building className="h-5 w-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-500">Phòng</p>
-                  <p className="font-medium text-gray-900">{getRoomName(proposal.roomId)}</p>
+                  <p className="font-medium text-gray-900">{getRoomName(proposal)}</p>
                 </div>
               </div>
               
@@ -186,13 +184,25 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
                 </div>
               </div>
               
-              {proposal.approverId && proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT && (
+              {proposal.approver && proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT && (
                 <div className="flex items-center gap-3">
                   <CheckCircle className="h-5 w-5 text-green-500" />
                   <div>
                     <p className="text-sm text-gray-500">Đã được duyệt</p>
                     <p className="font-medium text-gray-900">
-                      Bởi: {getUserName(proposal.approverId)}
+                      Bởi: {proposal.approver.fullName}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {proposal.technician && (
+                <div className="flex items-center gap-3">
+                  <User className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Kỹ thuật viên được phân công</p>
+                    <p className="font-medium text-gray-900">
+                      {proposal.technician.fullName}
                     </p>
                   </div>
                 </div>
@@ -225,9 +235,11 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
                       <p className="font-medium text-gray-900">
                         {item.softwareName} {item.version}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        {item.publisher} • {item.licenseType}
-                      </p>
+                      {item.publisher && (
+                        <p className="text-sm text-gray-500">
+                          {item.publisher}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
@@ -254,7 +266,7 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
             <div className="space-y-4">
               {/* Tạo đề xuất */}
               <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                   <FileText className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
@@ -266,16 +278,36 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
               </div>
               
               {/* Duyệt đề xuất */}
-              {proposal.approverId && proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT && (
+              {proposal.approver && proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT && (
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <div className="shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                     <CheckCircle className="h-4 w-4 text-green-600" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Đã duyệt</p>
                     <p className="text-sm text-gray-500">
-                      Bởi: {getUserName(proposal.approverId)}
+                      Bởi: {proposal.approver.fullName}
                     </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(proposal.updatedAt).toLocaleString('vi-VN')}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Đang trang bị */}
+              {proposal.status === SoftwareProposalStatus.ĐANG_TRANG_BỊ && (
+                <div className="flex items-start gap-3">
+                  <div className="shrink-0 w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Wrench className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Đang trang bị</p>
+                    {proposal.technician && (
+                      <p className="text-sm text-gray-500">
+                        Kỹ thuật viên: {proposal.technician.fullName}
+                      </p>
+                    )}
                     <p className="text-xs text-gray-400">
                       {new Date(proposal.updatedAt).toLocaleString('vi-VN')}
                     </p>
@@ -286,14 +318,14 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
               {/* Từ chối */}
               {proposal.status === SoftwareProposalStatus.ĐÃ_TỪ_CHỐI && (
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                  <div className="shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
                     <XCircle className="h-4 w-4 text-red-600" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Đã từ chối</p>
-                    {proposal.approverId && (
+                    {proposal.approver && (
                       <p className="text-sm text-gray-500">
-                        Bởi: {getUserName(proposal.approverId)}
+                        Bởi: {proposal.approver.fullName}
                       </p>
                     )}
                     <p className="text-xs text-gray-400">
@@ -306,14 +338,16 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
               {/* Hoàn thành */}
               {proposal.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ && (
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <div className="shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                     <Package className="h-4 w-4 text-blue-600" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Đã trang bị</p>
-                    <p className="text-sm text-gray-500">
-                      Hoàn thành cài đặt phần mềm
-                    </p>
+                    {proposal.technician && (
+                      <p className="text-sm text-gray-500">
+                        Hoàn thành bởi: {proposal.technician.fullName}
+                      </p>
+                    )}
                     <p className="text-xs text-gray-400">
                       {new Date(proposal.updatedAt).toLocaleString('vi-VN')}
                     </p>

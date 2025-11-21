@@ -3,6 +3,7 @@ import {
   getSoftwareProposals,
   getSoftwareProposalById,
   getSoftwareProposalsByProposer,
+  getSoftwareProposalsByTechnician,
   updateSoftwareProposalStatus,
   GetSoftwareProposalsQueryParams,
   UpdateSoftwareProposalStatusRequest,
@@ -223,6 +224,77 @@ export const useSoftwareProposalsByProposer = (
   useEffect(() => {
     fetchSoftwareProposalsByProposer();
   }, [fetchSoftwareProposalsByProposer]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Custom hook để lấy danh sách đề xuất phần mềm theo kỹ thuật viên được phân công
+ * @param technicianId ID của kỹ thuật viên
+ * @returns Object chứa data, loading state, error, và hàm refetch
+ */
+export const useSoftwareProposalsByTechnician = (
+  technicianId: string | undefined
+) => {
+  const [data, setData] = useState<SoftwareProposal[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Lấy danh sách đề xuất phần mềm theo kỹ thuật viên
+   */
+  const fetchSoftwareProposalsByTechnician = useCallback(async () => {
+    if (!technicianId) {
+      console.warn("⚠️ useSoftwareProposalsByTechnician: No technicianId provided");
+      setData([]);
+      return;
+    }
+
+    console.log(
+      "🔍 useSoftwareProposalsByTechnician: Fetching proposals for technicianId:",
+      technicianId
+    );
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getSoftwareProposalsByTechnician(technicianId);
+      console.log(
+        "✅ useSoftwareProposalsByTechnician: Raw API Response:",
+        response
+      );
+
+      setData(response);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Có lỗi xảy ra khi lấy danh sách đề xuất phần mềm.";
+      setError(errorMessage);
+      console.error(
+        "❌ useSoftwareProposalsByTechnician: Error fetching proposals:",
+        err
+      );
+      setData([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  }, [technicianId]);
+
+  /**
+   * Refetch data
+   */
+  const refetch = useCallback(() => {
+    fetchSoftwareProposalsByTechnician();
+  }, [fetchSoftwareProposalsByTechnician]);
+
+  useEffect(() => {
+    fetchSoftwareProposalsByTechnician();
+  }, [fetchSoftwareProposalsByTechnician]);
 
   return {
     data,

@@ -122,6 +122,39 @@ export const getSoftwareProposalsByProposer = async (
 };
 
 /**
+ * Lấy danh sách đề xuất phần mềm theo kỹ thuật viên được phân công
+ * @param technicianId ID của kỹ thuật viên
+ * @returns Promise với danh sách đề xuất phần mềm của kỹ thuật viên
+ */
+export const getSoftwareProposalsByTechnician = async (
+  technicianId: string
+): Promise<SoftwareProposal[]> => {
+  try {
+    console.log(
+      `🌐 API Call: GET /api/v1/software-proposals/technicians/${technicianId}`
+    );
+    const response = await api.get<SoftwareProposal[]>(
+      `/api/v1/software-proposals/technicians/${technicianId}`
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Get software proposals by technician error:", error);
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+    throw new Error(
+      err.response?.data?.message ||
+        "Lấy danh sách đề xuất phần mềm theo kỹ thuật viên thất bại."
+    );
+  }
+};
+
+/**
  * Interface cho request body khi tạo đề xuất phần mềm mới
  */
 export interface CreateSoftwareProposalRequest {
@@ -174,6 +207,25 @@ export const createSoftwareProposal = async (
 export interface UpdateSoftwareProposalStatusRequest {
   status: SoftwareProposalStatus;
   approverId?: string;
+  technicianId?: string;
+}
+
+/**
+ * Interface cho thông tin phần mềm khi hoàn thành đề xuất
+ */
+export interface SoftwareInfoRequest {
+  itemId: string;
+  name?: string;
+  version?: string;
+  publisher?: string;
+}
+
+/**
+ * Interface cho request hoàn thành đề xuất
+ */
+export interface CompleteSoftwareProposalRequest {
+  softwareInfo: SoftwareInfoRequest[];
+  completionNotes?: string;
 }
 
 /**
@@ -202,7 +254,10 @@ export const updateSoftwareProposalStatus = async (
   data: UpdateSoftwareProposalStatusRequest
 ): Promise<SoftwareProposal> => {
   try {
-    console.log(`🌐 API Call: PUT /api/v1/software-proposals/${id}`, data);
+    console.log(
+      `🌐 API Call: PUT /api/v1/software-proposals/${id}`,
+      data
+    );
     const response = await api.put<SoftwareProposal>(
       `/api/v1/software-proposals/${id}`,
       data
@@ -225,6 +280,47 @@ export const updateSoftwareProposalStatus = async (
 
     throw new Error(
       errorMessage || "Cập nhật trạng thái đề xuất phần mềm thất bại."
+    );
+  }
+};
+
+/**
+ * Hoàn thành đề xuất phần mềm và cập nhật phần mềm cho các máy tính
+ * @param id ID của đề xuất phần mềm
+ * @param data Thông tin hoàn thành đề xuất
+ * @returns Promise với đề xuất phần mềm đã hoàn thành
+ */
+export const completeSoftwareProposal = async (
+  id: string,
+  data: CompleteSoftwareProposalRequest
+): Promise<SoftwareProposal> => {
+  try {
+    console.log(
+      `🌐 API Call: PUT /api/v1/software-proposals/${id}/complete`,
+      data
+    );
+    const response = await api.put<SoftwareProposal>(
+      `/api/v1/software-proposals/${id}/complete`,
+      data
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Complete software proposal error:", error);
+    const err = error as {
+      response?: { data?: { message?: string | string[] }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+
+    const errorMessage = Array.isArray(err.response?.data?.message)
+      ? err.response.data.message.join(", ")
+      : err.response?.data?.message;
+
+    throw new Error(
+      errorMessage || "Hoàn thành đề xuất phần mềm thất bại."
     );
   }
 };

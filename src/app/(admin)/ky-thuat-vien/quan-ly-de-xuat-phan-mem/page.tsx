@@ -14,15 +14,14 @@ import {
   Building,
   ChevronUp,
   ChevronDown,
-  Download
+  Download,
+  Wrench
 } from 'lucide-react';
 import { Breadcrumb, Select, DatePicker, Button, Input, message } from 'antd';
 import type { Dayjs } from 'dayjs';
 import { SoftwareProposal, SoftwareProposalStatus } from '@/types/software';
-import { 
-  mockSoftwareProposals,
-  getSoftwareProposalsByStatus 
-} from '@/lib/mockData/softwareProposals';
+import { useSoftwareProposalsByTechnician } from '@/hooks/useSoftwareProposals';
+import { useAuth } from '@/contexts/AuthContext';
 import { Pagination } from '@/components/common';
 
 const { RangePicker } = DatePicker;
@@ -31,28 +30,13 @@ const { Option } = Select;
 type SortField = "proposalCode" | "reason" | "proposerId" | "roomId" | "status" | "createdAt"
 type SortDirection = "asc" | "desc" | "none"
 
-// Mock users và rooms data để hiển thị tên
-const mockUsers = {
-  'user-5': 'Giảng viên',
-  'user-6': 'Giảng viên kiêm QTV',
-  'user-1': 'QTV Khoa'
-} as const;
-
-const mockRooms = {
-  'ROOM001': 'H101',
-  'ROOM002': 'H102', 
-  'ROOM003': 'H103',
-  'ROOM004': 'H201',
-  'ROOM005': 'H202'
-} as const;
-
 // Helper functions
-const getUserName = (userId: string): string => {
-  return (mockUsers as Record<string, string>)[userId] || userId;
+const getUserName = (proposal: SoftwareProposal): string => {
+  return proposal.proposer?.fullName || proposal.proposerId || 'N/A';
 };
 
-const getRoomName = (roomId: string): string => {
-  return (mockRooms as Record<string, string>)[roomId] || roomId;
+const getRoomName = (proposal: SoftwareProposal): string => {
+  return proposal.room?.name || proposal.roomId || 'N/A';
 };
 
 // Config cho trạng thái đề xuất
@@ -72,6 +56,11 @@ const softwareProposalStatusConfig = {
     color: 'text-red-600 bg-red-50 border-red-200',
     icon: XCircle
   },
+  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
+    label: 'Đang trang bị',
+    color: 'text-orange-600 bg-orange-50 border-orange-200',
+    icon: Wrench
+  },
   [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
     label: 'Đã trang bị',
     color: 'text-blue-600 bg-blue-50 border-blue-200',
@@ -81,6 +70,7 @@ const softwareProposalStatusConfig = {
 
 export default function SoftwareProposalsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   
   // State
   const [searchText, setSearchText] = useState('');
@@ -91,6 +81,10 @@ export default function SoftwareProposalsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+
+  // Lấy danh sách đề xuất từ API theo kỹ thuật viên được phân công
+  // Endpoint: GET /technicians/:technicianId
+  const { data: technicianProposals, loading, error } = useSoftwareProposalsByTechnician(user?.id);
 
   // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: SortField) => {
@@ -170,8 +164,8 @@ export default function SoftwareProposalsPage() {
         'STT': index + 1,
         'Mã đề xuất': item.proposalCode,
         'Lý do đề xuất': item.reason,
-        'Người đề xuất': getUserName(item.proposerId),
-        'Phòng': getRoomName(item.roomId),
+        'Người đề xuất': getUserName(item),
+        'Phòng': getRoomName(item),
         'Trạng thái': softwareProposalStatusConfig[item.status]?.label || item.status,
         'Ngày tạo': new Date(item.createdAt).toLocaleDateString('vi-VN'),
       }))
@@ -199,13 +193,17 @@ export default function SoftwareProposalsPage() {
 
   // Lọc và sắp xếp dữ liệu
   const filteredAndSortedData = useMemo(() => {
-    // Reset về trang 1 khi filter thay đổi
-    setCurrentPage(1);
-
-    // Lọc dữ liệu
-    const filtered = mockSoftwareProposals.filter((proposal: SoftwareProposal) => {
+    if (!technicianProposals) return [];
+    
+    // Lọc dữ liệu từ technicianProposals
+    const filtered = technicianProposals.filter((proposal: SoftwareProposal) => {
       const matchesSearch = searchText ? 
-        [proposal.proposalCode, proposal.reason, getUserName(proposal.proposerId), getRoomName(proposal.roomId)]
+        [
+          proposal.proposalCode, 
+          proposal.reason, 
+          getUserName(proposal), 
+          getRoomName(proposal)
+        ]
           .filter(Boolean)
           .join(' ')
           .toLowerCase()
@@ -237,12 +235,12 @@ export default function SoftwareProposalsPage() {
           bValue = b.reason
           break
         case "proposerId":
-          aValue = getUserName(a.proposerId)
-          bValue = getUserName(b.proposerId)
+          aValue = getUserName(a)
+          bValue = getUserName(b)
           break
         case "roomId":
-          aValue = getRoomName(a.roomId)
-          bValue = getRoomName(b.roomId)
+          aValue = getRoomName(a)
+          bValue = getRoomName(b)
           break
         case "status":
           aValue = a.status
@@ -260,7 +258,7 @@ export default function SoftwareProposalsPage() {
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
       return 0
     })
-  }, [searchText, statusFilter, dateRange, sortField, sortDirection]);
+  }, [technicianProposals, searchText, statusFilter, dateRange, sortField, sortDirection]);
 
   // Dữ liệu phân trang
   const paginatedData = useMemo(() => {
@@ -274,13 +272,19 @@ export default function SoftwareProposalsPage() {
     router.push(`/ky-thuat-vien/quan-ly-de-xuat-phan-mem/chi-tiet/${proposal.id}`);
   };
 
-  // Stats
-  const stats = {
-    total: mockSoftwareProposals.length,
-    pending: getSoftwareProposalsByStatus(SoftwareProposalStatus.CHỜ_DUYỆT).length,
-    approved: getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_DUYỆT).length,
-    equipped: getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_TRANG_BỊ).length,
-  };
+  // Stats - tính toán từ dữ liệu đề xuất của technician
+  const stats = useMemo(() => {
+    if (!technicianProposals) {
+      return { total: 0, approved: 0, equipping: 0, equipped: 0 };
+    }
+    
+    return {
+      total: technicianProposals.length,
+      approved: technicianProposals.filter(p => p.status === SoftwareProposalStatus.ĐÃ_DUYỆT).length,
+      equipping: technicianProposals.filter(p => p.status === SoftwareProposalStatus.ĐANG_TRANG_BỊ).length,
+      equipped: technicianProposals.filter(p => p.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ).length,
+    };
+  }, [technicianProposals]);
 
   return (
     <div className="space-y-6">
@@ -342,15 +346,15 @@ export default function SoftwareProposalsPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <Clock className="h-6 w-6 text-yellow-400" />
+                <CheckCircle className="h-6 w-6 text-green-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Chờ duyệt
+                    Đã duyệt
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {stats.pending}
+                    {stats.approved}
                   </dd>
                 </dl>
               </div>
@@ -362,15 +366,15 @@ export default function SoftwareProposalsPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <CheckCircle className="h-6 w-6 text-green-400" />
+                <Wrench className="h-6 w-6 text-orange-400" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">
-                    Đã duyệt
+                    Đang trang bị
                   </dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {stats.approved}
+                    {stats.equipping}
                   </dd>
                 </dl>
               </div>
@@ -423,8 +427,8 @@ export default function SoftwareProposalsPage() {
             <Option value={SoftwareProposalStatus.ĐÃ_DUYỆT}>
               Đã duyệt
             </Option>
-            <Option value={SoftwareProposalStatus.ĐÃ_TỪ_CHỐI}>
-              Đã từ chối
+            <Option value={SoftwareProposalStatus.ĐANG_TRANG_BỊ}>
+              Đang trang bị
             </Option>
             <Option value={SoftwareProposalStatus.ĐÃ_TRANG_BỊ}>
               Đã trang bị
@@ -514,10 +518,29 @@ export default function SoftwareProposalsPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {paginatedData.map((proposal) => {
-              const StatusIcon = softwareProposalStatusConfig[proposal.status].icon;
-              return (
-                <tr key={proposal.id} className="hover:bg-gray-50">
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-3 text-gray-600">Đang tải dữ liệu...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center">
+                  <div className="text-red-600">
+                    <p className="font-medium">Có lỗi xảy ra</p>
+                    <p className="text-sm mt-1">{error}</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              paginatedData.map((proposal) => {
+                const StatusIcon = softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
+                return (
+                  <tr key={proposal.id} className="hover:bg-gray-50">
                   <td className="px-4 py-4 whitespace-nowrap">
                     <input
                       type="checkbox"
@@ -536,7 +559,7 @@ export default function SoftwareProposalsPage() {
                     <div className="flex items-center">
                       <User className="h-4 w-4 text-gray-400 mr-2" />
                       <div className="text-sm text-gray-900">
-                        {getUserName(proposal.proposerId)}
+                        {getUserName(proposal)}
                       </div>
                     </div>
                   </td>
@@ -544,7 +567,7 @@ export default function SoftwareProposalsPage() {
                     <div className="flex items-center">
                       <Building className="h-4 w-4 text-gray-400 mr-2" />
                       <div className="text-sm text-gray-900">
-                        {getRoomName(proposal.roomId)}
+                        {getRoomName(proposal)}
                       </div>
                     </div>
                   </td>
@@ -570,8 +593,9 @@ export default function SoftwareProposalsPage() {
                     </button>
                   </td>
                 </tr>
-              );
-            })}
+                );
+              })
+            )}
           </tbody>
         </table>
         
@@ -592,7 +616,10 @@ export default function SoftwareProposalsPage() {
           pageSize={pageSize}
           total={filteredAndSortedData.length}
           onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
           showSizeChanger={true}
           pageSizeOptions={[10, 20, 50, 100]}
           showQuickJumper={true}
