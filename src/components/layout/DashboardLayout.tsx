@@ -252,6 +252,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         href: "/ban-giam-hieu",
         icon: LayoutDashboard,
       },
+      {
+        name: "Quản lý tờ trình",
+        href: "/ban-giam-hieu/quan-ly-to-trinh",
+        icon: FileText,
+      },
     ],
   };
 
