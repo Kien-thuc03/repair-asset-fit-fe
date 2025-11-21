@@ -183,7 +183,7 @@ export default function ChiTietLapToTrinhPage() {
                 <tr>
                   <th>STT</th>
                   <th>Linh kiện cũ</th>
-                  <th>Linh kiện mới đề xuất</th>
+                  <th>Vị trí</th>
                   <th>SL</th>
                   <th>Lý do</th>
                 </tr>
@@ -199,9 +199,9 @@ export default function ChiTietLapToTrinhPage() {
                     }<br><small>${
                       item.oldComponent?.componentSpecs || ""
                     }</small></td>
-                    <td>${item.newItemName || "Không xác định"}<br><small>${
-                      item.newItemSpecs || ""
-                    }</small></td>
+                    <td>${
+                      item.oldComponent?.roomLocation || "Chưa xác định"
+                    }</td>
                     <td style="text-align: center;">${item.quantity}</td>
                     <td>${item.reason || "Cần thay thế"}</td>
                   </tr>
