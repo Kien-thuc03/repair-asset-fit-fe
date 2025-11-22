@@ -18,10 +18,8 @@ import {
 import { Breadcrumb, Modal, Button } from "antd";
 import { SortableHeader } from "@/components/common";
 import { useReplacementProposals } from "@/hooks";
-import {
-  ReplacementProposal,
-  ReplacementProposalStatus,
-} from "@/lib/api/replacement-proposals";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types";
 
 type SortField = keyof ReplacementProposal;
 type SortDirection = "asc" | "desc" | null;
@@ -48,7 +46,7 @@ export default function LapBienBanPage() {
     loading,
     error,
   } = useReplacementProposals({
-    status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
+    status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
     page: 1,
     limit: 1000,
   });

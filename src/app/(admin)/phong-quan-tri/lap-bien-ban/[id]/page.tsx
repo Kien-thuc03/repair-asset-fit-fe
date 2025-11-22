@@ -22,8 +22,7 @@ import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { InspectionFormData } from "@/types";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { InspectionFormData, ReplacementProposalStatus } from "@/types";
 import { uploadFile } from "@/lib/api/upload";
 
 export default function RequestDetailPage() {
