@@ -20,7 +20,6 @@ import { useProfile } from "@/hooks";
 import {
   getHardwareErrorTypes,
   getErrorTypeByKey,
-  canSelectComponents as canSelectComponentsByErrorType,
 } from "@/lib/constants/errorTypes";
 
 import { SuccessModal } from "@/components/modal";
@@ -84,12 +83,6 @@ export default function GhiNhanXuLyLoiPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
   const [assignedFloors, setAssignedFloors] = useState<AssignedFloor[]>([]);
-
-  // Kiểm tra xem loại lỗi hiện tại có cho phép chọn linh kiện không
-  const canSelectComponents =
-    formData.errorCategory === "hardware" &&
-    formData.errorType &&
-    canSelectComponentsByErrorType(formData.errorType as ErrorType);
 
   // Extract unique buildings from rooms - chỉ lấy buildings được phân công
   const buildings = assignedFloors.length > 0
@@ -426,7 +419,7 @@ export default function GhiNhanXuLyLoiPage() {
           : (formData.errorType as ErrorType),
         description: formData.description,
         mediaFiles: formData.mediaFiles.length > 0 ? formData.mediaFiles : undefined,
-        componentIds: formData.errorCategory === 'hardware' && selectedComponentIds.length > 0 
+        componentIds: formData.errorCategory === 'hardware' && selectedComponentIds.length > 0
           ? selectedComponentIds 
           : undefined,
         softwareIds: formData.errorCategory === 'software' && selectedSoftwareIds.length > 0 
@@ -694,32 +687,36 @@ export default function GhiNhanXuLyLoiPage() {
             </h3>
             
             {formData.errorCategory === "hardware" && (
-              <>
-                {!canSelectComponents && formData.errorType && (
-                  <Alert
-                    message="Lưu ý"
-                    description="Chỉ có thể chọn linh kiện cụ thể cho các loại lỗi: 'Máy không khởi động', 'Máy không sử dụng được', hoặc 'Máy chạy chậm'."
-                    type="info"
-                    showIcon
-                    className="mb-4"
-                  />
-                )}
-                <Form.Item label="Linh kiện cụ thể">
-                  <Select
-                    mode="multiple"
-                    placeholder="Chọn linh kiện bị lỗi"
-                    value={selectedComponentIds}
-                    onChange={setSelectedComponentIds}
-                    disabled={!canSelectComponents || filteredComponents.length === 0}
-                  >
-                    {filteredComponents.map(component => (
-                      <Option key={component.id} value={component.id}>
-                        {component.name} ({component.componentType})
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </>
+              <Form.Item 
+                label="Linh kiện cụ thể" 
+                required
+                help="Vui lòng chọn ít nhất 1 linh kiện bị lỗi"
+              >
+                <Select
+                  mode="multiple"
+                  placeholder={
+                    !formData.assetId 
+                      ? "Vui lòng chọn thiết bị trước" 
+                      : filteredComponents.length === 0
+                        ? "Không có linh kiện nào"
+                        : "Chọn linh kiện bị lỗi"
+                  }
+                  value={selectedComponentIds}
+                  onChange={setSelectedComponentIds}
+                  disabled={!formData.assetId || filteredComponents.length === 0}
+                  notFoundContent={
+                    filteredComponents.length === 0 && formData.assetId
+                      ? "Không có linh kiện nào trong thiết bị này"
+                      : "Không có dữ liệu"
+                  }
+                >
+                  {filteredComponents.map(component => (
+                    <Option key={component.id} value={component.id}>
+                      {component.name} ({component.componentType})
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
             )}
 
             {formData.errorCategory === "software" && (
@@ -836,7 +833,7 @@ export default function GhiNhanXuLyLoiPage() {
                 {selectedComponentIds.length === 0 ? (
                   <Alert
                     message="⚠️ Bắt buộc: Chọn linh kiện cần thay thế"
-                    description="Bạn đã chọn 'Cần thay thế linh kiện'. Vui lòng quay lại bước 4 để chọn linh kiện cụ thể."
+                    description="Bạn đã chọn 'Cần thay thế linh kiện'. Vui lòng chọn linh kiện cụ thể ở bước 4."
                     type="error"
                     showIcon
                   />
@@ -861,6 +858,20 @@ export default function GhiNhanXuLyLoiPage() {
                   />
                 )}
               </div>
+            )}
+            
+            {/* Cảnh báo khi chưa chọn linh kiện cho lỗi phần cứng */}
+            {formData.errorCategory === "hardware" && 
+             formData.errorType && 
+             selectedComponentIds.length === 0 && 
+             formData.assetId && (
+              <Alert
+                message="⚠️ Chưa chọn linh kiện"
+                description="Vui lòng chọn ít nhất 1 linh kiện bị lỗi ở bước 4."
+                type="warning"
+                showIcon
+                className="mt-4"
+              />
             )}
 
             {/* Thông báo trạng thái sẽ được cập nhật */}
