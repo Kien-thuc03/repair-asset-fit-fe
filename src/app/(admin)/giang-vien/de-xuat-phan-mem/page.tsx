@@ -14,6 +14,11 @@ import { CheckCircleOutlined, WarningOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 
+// Giới hạn độ dài các trường
+const MAX_REASON_LENGTH = 1000; // Mô tả lý do
+const MAX_SOFTWARE_NAME_LENGTH = 255; // Tên phần mềm
+const MAX_VERSION_LENGTH = 50; // Phiên bản
+
 export default function DeXuatPhanMemPage() {
   const router = useRouter();
 
@@ -60,12 +65,17 @@ export default function DeXuatPhanMemPage() {
     // Check if room is selected
     if (!formData.roomId) return false;
 
-    // Check if reason is provided
-    if (!formData.reason.trim()) return false;
+    // Check if reason is provided and within limit
+    if (!formData.reason.trim() || formData.reason.length > MAX_REASON_LENGTH)
+      return false;
 
-    // Check if all software items are complete
+    // Check if all software items are complete and within limits
     const hasValidSoftwareItems = formData.softwareItems.every(
-      (item) => item.softwareName.trim() && item.version.trim()
+      (item) =>
+        item.softwareName.trim() &&
+        item.softwareName.length <= MAX_SOFTWARE_NAME_LENGTH &&
+        item.version.trim() &&
+        item.version.length <= MAX_VERSION_LENGTH
     );
 
     return hasValidSoftwareItems;
@@ -143,6 +153,12 @@ export default function DeXuatPhanMemPage() {
       return;
     }
 
+    // Validate reason length
+    if (formData.reason.length > MAX_REASON_LENGTH) {
+      message.error("Mô tả quá dài!");
+      return;
+    }
+
     // Validate software items
     const invalidSoftwareItem = formData.softwareItems.find(
       (item) => !item.softwareName.trim() || !item.version.trim()
@@ -156,6 +172,24 @@ export default function DeXuatPhanMemPage() {
         centered: true,
         okText: "Đồng ý",
       });
+      return;
+    }
+
+    // Validate software name length
+    const softwareNameTooLong = formData.softwareItems.find(
+      (item) => item.softwareName.length > MAX_SOFTWARE_NAME_LENGTH
+    );
+    if (softwareNameTooLong) {
+      message.error("Tên phần mềm quá dài!");
+      return;
+    }
+
+    // Validate version length
+    const versionTooLong = formData.softwareItems.find(
+      (item) => item.version.length > MAX_VERSION_LENGTH
+    );
+    if (versionTooLong) {
+      message.error("Phiên bản quá dài!");
       return;
     }
 
@@ -270,7 +304,7 @@ export default function DeXuatPhanMemPage() {
     setFormData((prev) => ({
       ...prev,
       softwareItems: prev.softwareItems.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
+        i === index ? { ...item, [field]: String(value) } : item
       ),
     }));
   };
@@ -408,8 +442,12 @@ export default function DeXuatPhanMemPage() {
             placeholder="Mô tả lý do cần trang bị phần mềm cho phòng máy này..."
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows={3}
+            maxLength={MAX_REASON_LENGTH}
             required
           />
+          <div className="mt-1 text-xs text-gray-500 text-right">
+            {formData.reason.length}/{MAX_REASON_LENGTH} ký tự
+          </div>
         </div>
 
         {/* Software Items */}
@@ -461,8 +499,12 @@ export default function DeXuatPhanMemPage() {
                     }
                     placeholder="VD: Adobe Photoshop"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={MAX_SOFTWARE_NAME_LENGTH}
                     required
                   />
+                  <div className="mt-1 text-xs text-gray-500 text-right">
+                    {item.softwareName.length}/{MAX_SOFTWARE_NAME_LENGTH} ký tự
+                  </div>
                 </div>
 
                 <div>
@@ -477,8 +519,12 @@ export default function DeXuatPhanMemPage() {
                     }
                     placeholder="VD: 2024"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    maxLength={MAX_VERSION_LENGTH}
                     required
                   />
+                  <div className="mt-1 text-xs text-gray-500 text-right">
+                    {item.version.length}/{MAX_VERSION_LENGTH} ký tự
+                  </div>
                 </div>
               </div>
             </div>
