@@ -183,21 +183,43 @@ export const createSoftwareProposal = async (
     console.log("✅ API Response:", response.data);
     return response.data;
   } catch (error: unknown) {
-    console.error("❌ Create software proposal error:", error);
     const err = error as {
       response?: { data?: { message?: string | string[] }; status?: number };
     };
-    console.error("❌ Error details:", {
-      status: err.response?.status,
-      message: err.response?.data?.message,
-    });
+
+    const errorStatus = err.response?.status;
 
     // Handle array of error messages
     const errorMessage = Array.isArray(err.response?.data?.message)
       ? err.response.data.message.join(", ")
       : err.response?.data?.message;
 
-    throw new Error(errorMessage || "Tạo đề xuất phần mềm thất bại.");
+    // Create error with status code information
+    const finalErrorMessage = errorMessage || "Tạo đề xuất phần mềm thất bại.";
+    const errorWithStatus = new Error(finalErrorMessage) as Error & {
+      statusCode?: number;
+    };
+    errorWithStatus.statusCode = errorStatus;
+
+    // Log error based on status code
+    // 409 Conflict is expected and handled by UI modal, so log as warning instead of error
+    if (errorStatus === 409) {
+      console.warn("⚠️ Conflict (409):", {
+        status: errorStatus,
+        message: errorMessage,
+        note: "This error is handled by UI modal",
+      });
+    } else {
+      // Log other errors as errors for debugging
+      console.error("❌ Create software proposal error:", error);
+      console.error("❌ Error details:", {
+        status: errorStatus,
+        message: errorMessage,
+      });
+    }
+
+    // Throw error with backend message and status code
+    throw errorWithStatus;
   }
 };
 
@@ -254,10 +276,7 @@ export const updateSoftwareProposalStatus = async (
   data: UpdateSoftwareProposalStatusRequest
 ): Promise<SoftwareProposal> => {
   try {
-    console.log(
-      `🌐 API Call: PUT /api/v1/software-proposals/${id}`,
-      data
-    );
+    console.log(`🌐 API Call: PUT /api/v1/software-proposals/${id}`, data);
     const response = await api.put<SoftwareProposal>(
       `/api/v1/software-proposals/${id}`,
       data
@@ -319,8 +338,6 @@ export const completeSoftwareProposal = async (
       ? err.response.data.message.join(", ")
       : err.response?.data?.message;
 
-    throw new Error(
-      errorMessage || "Hoàn thành đề xuất phần mềm thất bại."
-    );
+    throw new Error(errorMessage || "Hoàn thành đề xuất phần mềm thất bại.");
   }
 };

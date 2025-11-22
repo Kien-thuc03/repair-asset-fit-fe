@@ -10,7 +10,7 @@ import { createSoftwareProposal } from "@/lib/api/software-proposals";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { ProposalHeader } from "@/components/lecturer/softwareProposal";
 import { Breadcrumb, Select, Modal, Button, message } from "antd";
-import { CheckCircleOutlined } from "@ant-design/icons";
+import { CheckCircleOutlined, WarningOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 
@@ -36,6 +36,8 @@ export default function DeXuatPhanMemPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
   const [createdProposalCode, setCreatedProposalCode] = useState<string>("");
 
@@ -188,16 +190,56 @@ export default function DeXuatPhanMemPage() {
         floor: "",
       });
     } catch (error) {
-      console.error("❌ Create software proposal error:", error);
-      Modal.error({
-        title: "Lỗi gửi đề xuất",
-        content:
-          error instanceof Error
-            ? error.message
-            : "Đã xảy ra lỗi khi gửi đề xuất. Vui lòng thử lại.",
-        centered: true,
-        okText: "Đồng ý",
-      });
+      // Extract error message and status code
+      let extractedMessage = "Đã xảy ra lỗi khi gửi đề xuất. Vui lòng thử lại.";
+      let errorStatus: number | undefined;
+
+      if (error instanceof Error) {
+        extractedMessage = error.message;
+        // Check if error has statusCode property (from our custom error)
+        const errorWithStatus = error as Error & { statusCode?: number };
+        if (errorWithStatus.statusCode !== undefined) {
+          errorStatus = errorWithStatus.statusCode;
+        }
+      } else if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: {
+            data?: {
+              message?: string | string[];
+            };
+            status?: number;
+          };
+        };
+        errorStatus = axiosError.response?.status;
+        if (axiosError.response?.data?.message) {
+          const backendMessage = axiosError.response.data.message;
+          extractedMessage = Array.isArray(backendMessage)
+            ? backendMessage.join(", ")
+            : backendMessage;
+        }
+      }
+
+      // Check if error is 409 Conflict (phòng đã có đề xuất chưa hoàn thành)
+      if (
+        errorStatus === 409 ||
+        extractedMessage.includes("đang có đề xuất phần mềm chưa hoàn thành")
+      ) {
+        // Show error modal for 409 Conflict
+        setErrorMessage(extractedMessage);
+        setShowErrorModal(true);
+        // Don't log 409 errors as errors since they're handled by UI modal
+        console.info("ℹ️ Conflict (409) handled by modal:", extractedMessage);
+      } else {
+        // Show regular error modal for other errors
+        Modal.error({
+          title: "Lỗi gửi đề xuất",
+          content: extractedMessage,
+          centered: true,
+          okText: "Đồng ý",
+        });
+        // Log other errors for debugging
+        console.error("Create software proposal error:", error);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -488,6 +530,46 @@ export default function DeXuatPhanMemPage() {
               formData.roomId
             }. Mã đề xuất: ${createdProposalCode}. Kỹ thuật viên sẽ xem xét và phản hồi trong thời gian sớm nhất. Bạn có thể theo dõi trạng thái đề xuất trong mục quản lý đề xuất.`}
           </p>
+        </div>
+      </Modal>
+
+      {/* Error Modal for 409 Conflict */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2">
+            <WarningOutlined className="text-orange-500 text-xl" />
+            <span>Không thể tạo đề xuất phần mềm</span>
+          </div>
+        }
+        open={showErrorModal}
+        onOk={() => setShowErrorModal(false)}
+        onCancel={() => setShowErrorModal(false)}
+        okText="Đã hiểu"
+        cancelText="Đóng"
+        centered
+        footer={[
+          <Button
+            key="ok"
+            type="primary"
+            onClick={() => setShowErrorModal(false)}>
+            Đã hiểu
+          </Button>,
+        ]}>
+        <div className="py-4">
+          <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-sm text-orange-800 font-medium mb-2">
+              ⚠️ Lưu ý quan trọng
+            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {errorMessage}
+            </p>
+          </div>
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-700">
+              <strong>Gợi ý:</strong> Vui lòng đợi đề xuất hiện tại được xử lý
+              xong trước khi tạo đề xuất mới cho phòng này.
+            </p>
+          </div>
         </div>
       </Modal>
     </div>
