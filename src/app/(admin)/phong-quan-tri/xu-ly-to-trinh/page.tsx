@@ -582,18 +582,16 @@ export default function XuLyToTrinhPage() {
                             <AlertTriangle className="w-3 h-3" />
                           </button>
                         )}
-                        {/* Nút duyệt/xác minh - hiển thị cho cả B6 và B8 */}
-                        <button
-                          onClick={() => handleApproveClick(item)}
-                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                          title={
-                            item.status ===
-                            ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-                              ? "Xác minh"
-                              : "Duyệt"
-                          }>
-                          <CheckCircle className="w-3 h-3" />
-                        </button>
+                        {/* Nút xác minh (B9) - chỉ hiển thị khi status là B8 (CHỜ_XÁC_MINH) */}
+                        {item.status ===
+                          ReplacementProposalStatus.CHỜ_XÁC_MINH && (
+                          <button
+                            onClick={() => handleApproveClick(item)}
+                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            title="Xác minh">
+                            <CheckCircle className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -714,35 +712,25 @@ export default function XuLyToTrinhPage() {
                       <Eye className="h-3.5 w-3.5" />
                       <span>Xem chi tiết</span>
                     </Link>
-                    <div className="grid grid-cols-2 gap-2">
-                      {/* Nút chuyển sang B8 - chỉ hiển thị khi status là B6 */}
-                      {item.status ===
-                        ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
-                        <button
-                          onClick={() => handleRequestVerificationClick(item)}
-                          className="flex items-center justify-center gap-1.5 px-3 py-2 bg-yellow-600 text-white text-xs font-medium rounded-md hover:bg-yellow-700">
-                          <AlertTriangle className="h-3.5 w-3.5" />
-                          <span>Yêu cầu xác minh</span>
-                        </button>
-                      )}
-                      {/* Nút duyệt/xác minh */}
+                    {/* Nút yêu cầu xác minh - chỉ hiển thị khi status là B6 (ĐÃ_DUYỆT_TỜ_TRÌNH) */}
+                    {item.status ===
+                      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
+                      <button
+                        onClick={() => handleRequestVerificationClick(item)}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-yellow-600 text-white text-xs font-medium rounded-md hover:bg-yellow-700">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        <span>Yêu cầu xác minh</span>
+                      </button>
+                    )}
+                    {/* Nút xác minh (B9) - chỉ hiển thị khi status là B8 (CHỜ_XÁC_MINH) */}
+                    {item.status === ReplacementProposalStatus.CHỜ_XÁC_MINH && (
                       <button
                         onClick={() => handleApproveClick(item)}
-                        className={`flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700 ${
-                          item.status ===
-                          ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-                            ? "col-span-1"
-                            : "col-span-2"
-                        }`}>
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
                         <CheckCircle className="h-3.5 w-3.5" />
-                        <span>
-                          {item.status ===
-                          ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-                            ? "Xác minh"
-                            : "Duyệt"}
-                        </span>
+                        <span>Xác minh</span>
                       </button>
-                    </div>
+                    )}
                   </div>
                 </div>
               ))

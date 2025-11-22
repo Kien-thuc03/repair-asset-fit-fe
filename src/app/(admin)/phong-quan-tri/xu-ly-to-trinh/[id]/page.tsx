@@ -532,14 +532,15 @@ export default function XuLyToTrinhDetailPage() {
                       Yêu cầu xác minh
                     </button>
                   )}
-                  <button
-                    onClick={() => setShowSignConfirmModal(true)}
-                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500">
-                    {proposal.status ===
-                    ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-                      ? "Xác minh"
-                      : "Duyệt"}
-                  </button>
+                  {/* Nút xác minh (B9) - chỉ hiển thị khi status là B8 (CHỜ_XÁC_MINH) */}
+                  {proposal.status ===
+                    ReplacementProposalStatus.CHỜ_XÁC_MINH && (
+                    <button
+                      onClick={() => setShowSignConfirmModal(true)}
+                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500">
+                      Duyệt
+                    </button>
+                  )}
                 </div>
               )}
             </div>

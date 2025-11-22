@@ -518,7 +518,7 @@ export default function RequestDetailPage() {
                     </label>
                     <div className="mt-1 flex items-center text-xs sm:text-sm text-gray-900">
                       <User className="w-3 sm:w-4 h-3 sm:h-4 mr-1.5 sm:mr-2 text-gray-400" />
-                      {proposal.proposer?.fullName || "Chưa xác định"}
+                      {proposal.teamLeadApprover?.fullName || "Chưa xác định"}
                     </div>
                   </div>
                   <div className="col-span-1 md:col-span-2">
@@ -712,7 +712,7 @@ export default function RequestDetailPage() {
                 <div>
                   <span className="font-medium">Người tạo:</span>
                   <span className="ml-2 block sm:inline mt-1 sm:mt-0">
-                    {proposal.proposer?.fullName || "Chưa xác định"}
+                    {proposal.teamLeadApprover?.fullName || "Chưa xác định"}
                   </span>
                 </div>
                 <div>
