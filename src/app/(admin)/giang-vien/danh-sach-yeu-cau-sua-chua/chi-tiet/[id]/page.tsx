@@ -145,14 +145,26 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
 
   // Helper function to get status step
   const getStatusStep = (status: RepairStatus) => {
-    const steps = [
-      RepairStatus.CHỜ_TIẾP_NHẬN,
-      RepairStatus.ĐÃ_TIẾP_NHẬN,
-      RepairStatus.ĐANG_XỬ_LÝ,
-      RepairStatus.ĐÃ_HOÀN_THÀNH,
-    ];
-    const currentIndex = steps.indexOf(status);
-    return currentIndex >= 0 ? currentIndex : 0;
+    switch (status) {
+      case RepairStatus.CHỜ_TIẾP_NHẬN:
+        return 0;
+      case RepairStatus.ĐÃ_TIẾP_NHẬN:
+        return 1;
+      case RepairStatus.ĐANG_XỬ_LÝ:
+        return 2;
+      case RepairStatus.CHỜ_THAY_THẾ:
+        return 3;
+      case RepairStatus.ĐÃ_HOÀN_THÀNH:
+        return 4;
+      case RepairStatus.ĐÃ_HỦY:
+        // Nếu đã hủy, trả về step hiện tại dựa trên thông tin khác
+        // Nếu có acceptedAt thì đã qua step 1, nếu có completedAt thì đã qua step 4
+        if (currentRequest?.completedAt) return 4;
+        if (currentRequest?.acceptedAt) return 1;
+        return 0;
+      default:
+        return 0;
+    }
   };
 
   // Helper function to calculate processing time
@@ -322,6 +334,8 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
             status={
               currentRequest.status === RepairStatus.ĐÃ_HỦY
                 ? "error"
+                : currentRequest.status === RepairStatus.ĐÃ_HOÀN_THÀNH
+                ? "finish"
                 : "process"
             }
             size="small"
@@ -332,7 +346,15 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
                 description:
                   currentRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN
                     ? "Hiện tại"
+                    : currentRequest.status === RepairStatus.ĐÃ_HỦY &&
+                      !currentRequest.acceptedAt
+                    ? "Đã hủy"
                     : "",
+                status:
+                  currentRequest.status === RepairStatus.ĐÃ_HỦY &&
+                  !currentRequest.acceptedAt
+                    ? "error"
+                    : undefined,
               },
               {
                 title: "Đã tiếp nhận",
@@ -341,7 +363,16 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
                   ? new Date(currentRequest.acceptedAt).toLocaleDateString(
                       "vi-VN"
                     )
+                  : currentRequest.status === RepairStatus.ĐÃ_HỦY &&
+                    currentRequest.acceptedAt
+                  ? "Đã hủy"
                   : "",
+                status:
+                  currentRequest.status === RepairStatus.ĐÃ_HỦY &&
+                  currentRequest.acceptedAt &&
+                  !currentRequest.completedAt
+                    ? "error"
+                    : undefined,
               },
               {
                 title: "Đang xử lý",
@@ -352,13 +383,31 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
                     : "",
               },
               {
+                title: "Chờ thay thế",
+                icon: <Package className="w-4 h-4" />,
+                description:
+                  currentRequest.status === RepairStatus.CHỜ_THAY_THẾ
+                    ? "Hiện tại"
+                    : "",
+              },
+              {
                 title: "Hoàn thành",
                 icon: <CheckCircle className="w-4 h-4" />,
                 description: currentRequest.completedAt
                   ? new Date(currentRequest.completedAt).toLocaleDateString(
                       "vi-VN"
                     )
+                  : currentRequest.status === RepairStatus.ĐÃ_HỦY &&
+                    currentRequest.completedAt
+                  ? "Đã hủy"
                   : "",
+                status:
+                  currentRequest.status === RepairStatus.ĐÃ_HỦY &&
+                  currentRequest.completedAt
+                    ? "error"
+                    : currentRequest.status === RepairStatus.ĐÃ_HOÀN_THÀNH
+                    ? "finish"
+                    : undefined,
               },
             ]}
           />
