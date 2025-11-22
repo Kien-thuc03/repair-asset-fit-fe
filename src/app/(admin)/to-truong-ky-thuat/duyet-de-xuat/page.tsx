@@ -222,7 +222,8 @@ Trân trọng kính trình.`;
         ...prev,
         content: autoContent,
         attachments: `Đề xuất ${request.proposalCode}`,
-        submittedBy: proposerName,
+        // submittedBy luôn là "Giảng Thanh Trọn" (Tổ trưởng kỹ thuật), không thay đổi
+        // submittedBy: "Giảng Thanh Trọn", // Giữ nguyên giá trị mặc định
       }));
 
       setShowSubmissionModal(true);
