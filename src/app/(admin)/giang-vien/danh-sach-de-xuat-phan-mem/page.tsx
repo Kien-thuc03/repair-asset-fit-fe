@@ -49,6 +49,11 @@ const softwareProposalStatusConfig = {
     color: "text-red-600 bg-red-50 border-red-200",
     icon: XCircle,
   },
+  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
+    label: "Đang trang bị",
+    color: "text-orange-600 bg-orange-50 border-orange-200",
+    icon: Clock,
+  },
   [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
     label: "Đã trang bị",
     color: "text-blue-600 bg-blue-50 border-blue-200",
@@ -394,6 +399,9 @@ export default function SoftwareProposalsPage() {
             <Option value={SoftwareProposalStatus.ĐÃ_TỪ_CHỐI}>
               Đã từ chối
             </Option>
+            <Option value={SoftwareProposalStatus.ĐANG_TRANG_BỊ}>
+              Đang trang bị
+            </Option>
             <Option value={SoftwareProposalStatus.ĐÃ_TRANG_BỊ}>
               Đã trang bị
             </Option>
@@ -476,7 +484,7 @@ export default function SoftwareProposalsPage() {
               {paginatedProposals.map((proposal: SoftwareProposal) => {
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
-                    <td className=" py-3 sm:py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={selectedRowKeys.includes(proposal.id)}
