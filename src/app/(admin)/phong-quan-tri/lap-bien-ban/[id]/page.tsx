@@ -22,8 +22,7 @@ import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { InspectionFormData } from "@/types";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { InspectionFormData, ReplacementProposalStatus } from "@/types";
 import { uploadFile } from "@/lib/api/upload";
 
 export default function RequestDetailPage() {
@@ -122,17 +121,11 @@ export default function RequestDetailPage() {
       }
 
       // 3. Cập nhật trạng thái theo workflow
-      // Workflow: KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH → ĐÃ_DUYỆT_TỜ_TRÌNH → CHỜ_XÁC_MINH → ĐÃ_XÁC_MINH → ĐÃ_GỬI_BIÊN_BẢN
+      // Workflow: KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH → ĐÃ_DUYỆT_TỜ_TRÌNH → CHỜ_XÁC_MINH → ĐÃ_XÁC_MINH → ĐÃ_GỬI_BIÊN_BẢN (B10)
 
-      // Chuyển từ ĐÃ_XÁC_MINH sang ĐÃ_GỬI_BIÊN_BẢN sau khi lập biên bản
-      if (proposal.status === ReplacementProposalStatus.ĐÃ_XÁC_MINH) {
-        await updateStatus(proposal.id, {
-          status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
-          verificationReportUrl: uploadResult.url,
-        });
-      }
+      // Chuyển từ ĐÃ_XÁC_MINH (B9) sang ĐÃ_GỬI_BIÊN_BẢN (B10) sau khi lập biên bản
       await updateStatus(proposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
+        status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN, // B10
         verificationReportUrl: uploadResult.url,
       });
 
@@ -519,7 +512,7 @@ export default function RequestDetailPage() {
                     </label>
                     <div className="mt-1 flex items-center text-xs sm:text-sm text-gray-900">
                       <User className="w-3 sm:w-4 h-3 sm:h-4 mr-1.5 sm:mr-2 text-gray-400" />
-                      {proposal.proposer?.fullName || "Chưa xác định"}
+                      {proposal.teamLeadApprover?.fullName || "Chưa xác định"}
                     </div>
                   </div>
                   <div className="col-span-1 md:col-span-2">
@@ -713,7 +706,7 @@ export default function RequestDetailPage() {
                 <div>
                   <span className="font-medium">Người tạo:</span>
                   <span className="ml-2 block sm:inline mt-1 sm:mt-0">
-                    {proposal.proposer?.fullName || "Chưa xác định"}
+                    {proposal.teamLeadApprover?.fullName || "Chưa xác định"}
                   </span>
                 </div>
                 <div>

@@ -154,11 +154,13 @@ export default function QuanLyToTrinhPage() {
   };
 
   const getStatusColor = () => {
-    return "bg-green-100 text-green-800 border-green-200";
+    // Chỉ có trạng thái KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH nên luôn hiển thị màu lime
+    return "bg-lime-100 text-lime-800 border-lime-200";
   };
 
   const getStatusText = () => {
-    return "Đã duyệt (P.QT)";
+    // Chỉ có trạng thái KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH nên luôn hiển thị "Khoa đã duyệt tờ trình"
+    return "Khoa đã duyệt tờ trình";
   };
 
   // Hàm xử lý khi nhấn nút phê duyệt tờ trình
@@ -307,7 +309,7 @@ export default function QuanLyToTrinhPage() {
         "Mô tả": item.description || "",
         "Người tạo": item.proposer?.fullName || "Chưa xác định",
         "Số lượng linh kiện": item.itemsCount || 0,
-        "Trạng thái": "Đã duyệt (P.QT)",
+        "Trạng thái": "Khoa đã duyệt tờ trình",
         "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
       }));
 
@@ -410,9 +412,10 @@ export default function QuanLyToTrinhPage() {
           Quản lý tờ trình thay thế
         </h1>
         <p className="mt-2 text-sm sm:text-base text-gray-600">
-          Danh sách các tờ trình đã được phòng quản trị duyệt và đang chờ phê
-          duyệt từ ban giám hiệu. Bạn có thể phê duyệt tờ trình hoặc yêu cầu xác
-          minh tình trạng linh kiện.
+          Danh sách các tờ trình đã được Quản trị viên khoa duyệt (trạng thái
+          &ldquo;Khoa đã duyệt tờ trình&rdquo;) và đang chờ phê duyệt từ ban
+          giám hiệu. Bạn có thể phê duyệt tờ trình hoặc yêu cầu xác minh tình
+          trạng linh kiện.
         </p>
       </div>
 

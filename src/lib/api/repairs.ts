@@ -71,12 +71,12 @@ export interface CreateRepairRequest {
 /**
  * Interface cho request ghi nhận và xử lý lỗi trực tiếp tại hiện trường
  * Extends từ CreateRepairRequest và thêm các trường cho xử lý
- * 
+ *
  * ✅ Các trạng thái finalStatus:
  * - ĐÃ_HOÀN_THÀNH: Lỗi đã được sửa chữa thành công tại chỗ
  * - CHỜ_THAY_THẾ: Linh kiện không thể sửa, cần thay thế (status chuyển ngay lập tức)
  * - undefined: Chỉ ghi nhận lỗi, chưa xử lý (status = ĐANG_XỬ_LÝ)
- * 
+ *
  * 🔥 Flow khi cần thay thế:
  * 1. Set finalStatus = CHỜ_THAY_THẾ → Status ngay lập tức = CHỜ_THAY_THẾ
  * 2. Component status: FAULTY → PENDING_REPLACEMENT
@@ -325,21 +325,57 @@ export const createRepair = async (
     return transformApiResponse(response.data) as RepairRequestWithDetails;
   } catch (error: unknown) {
     const err = error as {
-      response?: { data?: { message?: string }; status?: number };
+      response?: {
+        data?: {
+          message?: string | string[];
+        };
+        status?: number;
+      };
     };
-    throw new Error(
-      err.response?.data?.message || "Tạo yêu cầu sửa chữa thất bại."
-    );
+
+    const errorStatus = err.response?.status;
+
+    // Handle array of error messages (NestJS validation errors)
+    const errorMessage = Array.isArray(err.response?.data?.message)
+      ? err.response.data.message.join(", ")
+      : err.response?.data?.message;
+
+    // Create error with status code information
+    const finalErrorMessage = errorMessage || "Tạo yêu cầu sửa chữa thất bại.";
+    const errorWithStatus = new Error(finalErrorMessage) as Error & {
+      statusCode?: number;
+    };
+    errorWithStatus.statusCode = errorStatus;
+
+    // Log error based on status code
+    // 409 Conflict is expected and handled by UI modal, so log as warning instead of error
+    if (errorStatus === 409) {
+      console.warn("⚠️ Conflict (409):", {
+        status: errorStatus,
+        message: errorMessage,
+        note: "This error is handled by UI modal",
+      });
+    } else {
+      // Log other errors as errors for debugging
+      console.error("❌ Create repair error:", error);
+      console.error("❌ Error details:", {
+        status: errorStatus,
+        message: errorMessage,
+      });
+    }
+
+    // Throw error with backend message and status code
+    throw errorWithStatus;
   }
 };
 
 /**
  * Ghi nhận và xử lý lỗi trực tiếp tại hiện trường
  * Endpoint dành cho kỹ thuật viên để ghi nhận lỗi VÀ xử lý ngay tại chỗ trong một lần submit
- * 
+ *
  * @param data Dữ liệu yêu cầu sửa chữa và xử lý
  * @returns Promise với thông tin yêu cầu sửa chữa đã tạo và xử lý
- * 
+ *
  * @example
  * // Lỗi phần mềm - đã sửa được
  * await createAndProcessRepair({
@@ -679,7 +715,10 @@ export const getAvailableComponents = async (
   params?: GetAvailableComponentsQueryParams
 ): Promise<GetAvailableComponentsResponse> => {
   try {
-    console.log("🌐 API Call: GET /computer/current-user/available-components", params);
+    console.log(
+      "🌐 API Call: GET /computer/current-user/available-components",
+      params
+    );
     const response = await api.get<GetAvailableComponentsResponse>(
       "/computer/current-user/available-components",
       { params }
@@ -720,13 +759,15 @@ export const getRepairLogs = async (
 ): Promise<GetRepairLogsResponse> => {
   try {
     console.log(`🔍 Fetching repair logs for request: ${repairRequestId}`);
-    
+
     const response = await api.get<GetRepairLogsResponse>(
       `/api/v1/repairs/${repairRequestId}/logs`
     );
-    
-    console.log(`✅ Fetched ${response.data.data.length} repair logs successfully`);
-    
+
+    console.log(
+      `✅ Fetched ${response.data.data.length} repair logs successfully`
+    );
+
     return response.data;
   } catch (error: unknown) {
     console.error("❌ Get repair logs error:", error);

@@ -11,6 +11,7 @@ import {
   XCircle,
   Loader2,
   AlertCircle,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb, Button, Modal } from "antd";
@@ -36,20 +37,21 @@ export default function XuLyToTrinhPage() {
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [selectedProposal, setSelectedProposal] =
     useState<ReplacementProposal | null>(null);
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
   const itemsPerPage = 10;
 
-  // Fetch data từ API với status CHỜ_XÁC_MINH (sau khi Ban giám hiệu duyệt)
+  // Fetch data từ API - lấy tất cả rồi filter ở frontend để lấy cả B6 và B8
   const {
     data: apiData,
     loading,
     error,
     refetch,
   } = useReplacementProposals({
-    status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
+    status: undefined, // Không filter ở API, sẽ filter ở frontend
     page: 1,
     limit: 1000, // Lấy tất cả để xử lý phân trang và sort trên client
   });
@@ -58,7 +60,16 @@ export default function XuLyToTrinhPage() {
 
   const filteredData = useMemo(() => {
     const proposals = apiData?.data || [];
-    let filtered = [...proposals];
+
+    // Filter chỉ lấy B6 (ĐÃ_DUYỆT_TỜ_TRÌNH) và B8 (CHỜ_XÁC_MINH)
+    const ALLOWED_STATUSES = [
+      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH, // B6
+      ReplacementProposalStatus.CHỜ_XÁC_MINH, // B8
+    ];
+
+    let filtered = proposals.filter((proposal) =>
+      ALLOWED_STATUSES.includes(proposal.status)
+    );
 
     // Apply search filter
     if (searchTerm) {
@@ -133,29 +144,70 @@ export default function XuLyToTrinhPage() {
     }
   };
 
-  const getStatusColor = () => {
-    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị màu xanh dương (chờ xử lý)
-    return "bg-blue-100 text-blue-800 border-blue-200";
+  const getStatusColor = (status: ReplacementProposalStatus) => {
+    switch (status) {
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "bg-lime-100 text-lime-800 border-lime-200";
+      case ReplacementProposalStatus.CHỜ_XÁC_MINH:
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
   };
 
-  const getStatusText = () => {
-    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị "Chờ xử lý"
-    return "Chờ xử lý";
+  const getStatusText = (status: ReplacementProposalStatus) => {
+    switch (status) {
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "Ban giám hiệu đã duyệt tờ trình";
+      case ReplacementProposalStatus.CHỜ_XÁC_MINH:
+        return "Chờ xác minh";
+      default:
+        return status;
+    }
   };
 
-  // Hàm xử lý khi nhấn nút duyệt tờ trình
+  // Hàm xử lý khi nhấn nút duyệt/xác minh tờ trình
   const handleApproveClick = (proposal: ReplacementProposal) => {
     setSelectedProposal(proposal);
     setShowApprovalModal(true);
   };
 
-  // Hàm xử lý khi xác nhận duyệt tờ trình
+  // Hàm xử lý khi nhấn nút chuyển sang B8 (CHỜ_XÁC_MINH)
+  const handleRequestVerificationClick = (proposal: ReplacementProposal) => {
+    setSelectedProposal(proposal);
+    setShowVerificationModal(true);
+  };
+
+  // Hàm xử lý khi xác nhận chuyển sang B8 (CHỜ_XÁC_MINH)
+  const handleVerificationConfirm = async () => {
+    if (!selectedProposal) return;
+
+    try {
+      // Chuyển sang trạng thái CHỜ_XÁC_MINH (B8)
+      await updateStatus(selectedProposal.id, {
+        status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
+      });
+
+      // Đóng modal
+      setShowVerificationModal(false);
+
+      // Refetch data
+      refetch();
+    } catch (error) {
+      console.error("Error requesting verification:", error);
+      setShowExportErrorModal(true);
+    }
+  };
+
+  // Hàm xử lý khi xác nhận xác minh tờ trình (từ B6 hoặc B8 -> B9)
   const handleApproveConfirm = async () => {
     if (!selectedProposal) return;
 
     try {
+      // Khi Phòng Quản trị xác minh tờ trình,
+      // chuyển sang trạng thái ĐÃ_XÁC_MINH (B9)
       await updateStatus(selectedProposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+        status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
       });
 
       // Đóng modal
@@ -167,7 +219,7 @@ export default function XuLyToTrinhPage() {
       // Chuyển hướng đến trang lập biên bản
       router.push("/phong-quan-tri/lap-bien-ban");
     } catch (error) {
-      console.error("Error approving proposal:", error);
+      console.error("Error verifying proposal:", error);
       setShowExportErrorModal(true);
     }
   };
@@ -298,9 +350,9 @@ export default function XuLyToTrinhPage() {
           Xử lý tờ trình thay thế
         </h1>
         <p className="mt-2 text-sm sm:text-base text-gray-600">
-          Danh sách các tờ trình đang chờ xử lý từ tổ trưởng kỹ thuật. Tất cả tờ
-          trình ở đây đều có trạng thái &ldquo;Đã lập tờ trình&rdquo; và cần
-          được xem xét phê duyệt.
+          Danh sách các tờ trình đã được Ban giám hiệu duyệt (B6) hoặc đang chờ
+          xác minh (B8). Phòng Quản trị có thể yêu cầu xác minh hoặc xác minh và
+          xử lý các tờ trình này.
         </p>
       </div>
 
@@ -489,9 +541,11 @@ export default function XuLyToTrinhPage() {
                     </td>
                     <td className="px-2 py-3">
                       <span
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor()}`}>
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                          item.status
+                        )}`}>
                         <span className="hidden lg:inline text-xs">
-                          {getStatusText()}
+                          {getStatusText(item.status)}
                         </span>
                       </span>
                     </td>
@@ -518,12 +572,26 @@ export default function XuLyToTrinhPage() {
                           title="Xem chi tiết">
                           <Eye className="w-3 h-3" />
                         </Link>
-                        <button
-                          onClick={() => handleApproveClick(item)}
-                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                          title="Duyệt tờ trình">
-                          <CheckCircle className="w-3 h-3" />
-                        </button>
+                        {/* Nút chuyển sang B8 - chỉ hiển thị khi status là B6 */}
+                        {item.status ===
+                          ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
+                          <button
+                            onClick={() => handleRequestVerificationClick(item)}
+                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                            title="Yêu cầu xác minh">
+                            <AlertTriangle className="w-3 h-3" />
+                          </button>
+                        )}
+                        {/* Nút xác minh (B9) - chỉ hiển thị khi status là B8 (CHỜ_XÁC_MINH) */}
+                        {item.status ===
+                          ReplacementProposalStatus.CHỜ_XÁC_MINH && (
+                          <button
+                            onClick={() => handleApproveClick(item)}
+                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            title="Xác minh">
+                            <CheckCircle className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -627,27 +695,42 @@ export default function XuLyToTrinhPage() {
                       <span className="text-gray-500">Trạng thái:</span>
                       <div className="mt-0.5">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor()}`}>
-                          {getStatusText()}
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor(
+                            item.status
+                          )}`}>
+                          {getStatusText(item.status)}
                         </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Footer with Actions */}
-                  <div className="flex items-center gap-2 pt-2 ">
+                  <div className="space-y-2 pt-2">
                     <Link
                       href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
                       <Eye className="h-3.5 w-3.5" />
                       <span>Xem chi tiết</span>
                     </Link>
-                    <button
-                      onClick={() => handleApproveClick(item)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      <span>Duyệt</span>
-                    </button>
+                    {/* Nút yêu cầu xác minh - chỉ hiển thị khi status là B6 (ĐÃ_DUYỆT_TỜ_TRÌNH) */}
+                    {item.status ===
+                      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
+                      <button
+                        onClick={() => handleRequestVerificationClick(item)}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-yellow-600 text-white text-xs font-medium rounded-md hover:bg-yellow-700">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        <span>Yêu cầu xác minh</span>
+                      </button>
+                    )}
+                    {/* Nút xác minh (B9) - chỉ hiển thị khi status là B8 (CHỜ_XÁC_MINH) */}
+                    {item.status === ReplacementProposalStatus.CHỜ_XÁC_MINH && (
+                      <button
+                        onClick={() => handleApproveClick(item)}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        <span>Xác minh</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
@@ -735,37 +818,37 @@ export default function XuLyToTrinhPage() {
         </div>
       </Modal>
 
-      {/* Approval Confirmation Modal */}
+      {/* Verification Request Modal - Chuyển sang B8 */}
       <Modal
-        open={showApprovalModal}
-        onCancel={() => setShowApprovalModal(false)}
+        open={showVerificationModal}
+        onCancel={() => setShowVerificationModal(false)}
         footer={[
           <button
             key="cancel"
-            onClick={() => setShowApprovalModal(false)}
+            onClick={() => setShowVerificationModal(false)}
             className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
             Hủy
           </button>,
           <button
             key="confirm"
-            onClick={handleApproveConfirm}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-            Xác nhận duyệt
+            onClick={handleVerificationConfirm}
+            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2">
+            Xác nhận yêu cầu xác minh
           </button>,
         ]}
         centered
         width={500}
-        title="Xác nhận duyệt tờ trình">
+        title="Yêu cầu xác minh tờ trình">
         <div className="space-y-4">
           <div className="flex items-center space-x-3">
-            <CheckCircle className="h-8 w-8 text-green-600" />
+            <AlertTriangle className="h-8 w-8 text-yellow-600" />
             <div>
               <h3 className="text-lg font-medium text-gray-900">
-                Bạn có chắc chắn muốn duyệt tờ trình sau?
+                Bạn có chắc chắn muốn yêu cầu xác minh tờ trình sau?
               </h3>
-              <p className="text-sm text-red-500 mt-1 font-medium">
-                Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành
-                &ldquo;Đã duyệt&rdquo; và không thể hoàn tác.
+              <p className="text-sm text-yellow-600 mt-1 font-medium">
+                Sau khi yêu cầu, trạng thái tờ trình sẽ được chuyển thành
+                &ldquo;Chờ xác minh&rdquo; (B8).
               </p>
             </div>
           </div>
@@ -781,7 +864,74 @@ export default function XuLyToTrinhPage() {
                 <div className="text-gray-600">Tiêu đề:</div>
                 <div className="font-medium">{selectedProposal.title}</div>
 
-                <div className="text-gray-600">Thời gian duyệt:</div>
+                <div className="text-gray-600">Thời gian yêu cầu:</div>
+                <div className="font-medium">
+                  {new Date().toLocaleString("vi-VN")}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Approval Confirmation Modal - Chuyển sang B9 */}
+      <Modal
+        open={showApprovalModal}
+        onCancel={() => setShowApprovalModal(false)}
+        footer={[
+          <button
+            key="cancel"
+            onClick={() => setShowApprovalModal(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
+            Hủy
+          </button>,
+          <button
+            key="confirm"
+            onClick={handleApproveConfirm}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            {selectedProposal?.status ===
+            ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
+              ? "Xác nhận xác minh"
+              : "Xác nhận duyệt"}
+          </button>,
+        ]}
+        centered
+        width={500}
+        title={
+          selectedProposal?.status ===
+          ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
+            ? "Xác nhận xác minh tờ trình"
+            : "Xác nhận duyệt tờ trình"
+        }>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                {selectedProposal?.status ===
+                ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
+                  ? "Bạn có chắc chắn muốn xác minh tờ trình sau?"
+                  : "Bạn có chắc chắn muốn duyệt tờ trình sau?"}
+              </h3>
+              <p className="text-sm text-red-500 mt-1 font-medium">
+                Sau khi xác minh, trạng thái tờ trình sẽ được chuyển thành
+                &ldquo;Đã xác minh&rdquo; (B9) và không thể hoàn tác.
+              </p>
+            </div>
+          </div>
+
+          {selectedProposal && (
+            <div className="bg-gray-50 p-4 rounded-md">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-600">Mã tờ trình:</div>
+                <div className="font-medium">
+                  {selectedProposal.proposalCode}
+                </div>
+
+                <div className="text-gray-600">Tiêu đề:</div>
+                <div className="font-medium">{selectedProposal.title}</div>
+
+                <div className="text-gray-600">Thời gian xử lý:</div>
                 <div className="font-medium">
                   {new Date().toLocaleString("vi-VN")}
                 </div>

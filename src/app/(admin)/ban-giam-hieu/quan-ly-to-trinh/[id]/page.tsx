@@ -248,11 +248,11 @@ export default function ChiTietQuanLyToTrinhPage() {
   const getStatusText = (status: ReplacementProposalStatus) => {
     switch (status) {
       case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "Đã duyệt (P.QT)";
+        return "Ban giám hiệu đã duyệt tờ trình";
       case ReplacementProposalStatus.CHỜ_XÁC_MINH:
         return "Chờ xác minh";
       case ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM:
-        return "Đã hoàn tất";
+        return "Đã hoàn tất mua sắm";
       case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
         return "Đã từ chối tờ trình";
       case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
@@ -262,14 +262,16 @@ export default function ChiTietQuanLyToTrinhPage() {
     }
   };
 
+  // Hàm xử lý khi phê duyệt tờ trình (từ B6 -> B6, hoặc từ trạng thái khác)
   const handleSignConfirm = async () => {
     if (!proposal) return;
 
     setIsProcessing(true);
 
     try {
+      // Cập nhật trạng thái sang ĐÃ_DUYỆT_TỜ_TRÌNH (B6 - Ban giám hiệu duyệt tờ trình)
       await updateStatus(proposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
+        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
       });
 
       setIsProcessing(false);

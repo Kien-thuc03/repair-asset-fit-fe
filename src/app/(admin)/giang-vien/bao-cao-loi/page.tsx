@@ -89,6 +89,8 @@ export default function BaoCaoLoiPage() {
   const [showSoftwareSelection, setShowSoftwareSelection] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorCategory, setErrorCategory] = useState<
     "hardware" | "software" | ""
   >(""); // Phân loại lỗi phần cứng/phần mềm
@@ -415,11 +417,52 @@ export default function BaoCaoLoiPage() {
       setFilteredSoftware([]);
     } catch (error) {
       setIsSubmitting(false);
-      message.error(
-        error instanceof Error
-          ? error.message
-          : "Tạo yêu cầu sửa chữa thất bại. Vui lòng thử lại."
-      );
+
+      // Extract error message and status code
+      let extractedMessage = "Tạo yêu cầu sửa chữa thất bại. Vui lòng thử lại.";
+      let errorStatus: number | undefined;
+
+      if (error instanceof Error) {
+        extractedMessage = error.message;
+        // Check if error has statusCode property (from our custom error)
+        const errorWithStatus = error as Error & { statusCode?: number };
+        if (errorWithStatus.statusCode !== undefined) {
+          errorStatus = errorWithStatus.statusCode;
+        }
+      } else if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as {
+          response?: {
+            data?: {
+              message?: string | string[];
+            };
+            status?: number;
+          };
+        };
+        errorStatus = axiosError.response?.status;
+        if (axiosError.response?.data?.message) {
+          const backendMessage = axiosError.response.data.message;
+          extractedMessage = Array.isArray(backendMessage)
+            ? backendMessage.join(", ")
+            : backendMessage;
+        }
+      }
+
+      // Check if error is 409 Conflict (máy đã có yêu cầu chưa xử lý)
+      if (
+        errorStatus === 409 ||
+        extractedMessage.includes("đang có yêu cầu sửa chữa chưa hoàn thành")
+      ) {
+        // Show error modal for 409 Conflict
+        setErrorMessage(extractedMessage);
+        setShowErrorModal(true);
+        // Don't log 409 errors as errors since they're handled by UI modal
+        console.info("ℹ️ Conflict (409) handled by modal:", extractedMessage);
+      } else {
+        // Show regular error message for other errors
+        message.error(extractedMessage, 5);
+        // Log other errors for debugging
+        console.error("Create repair request error:", error);
+      }
     }
   };
 
@@ -941,6 +984,47 @@ export default function BaoCaoLoiPage() {
               Cảm ơn bạn đã báo cáo lỗi. Chúng tôi sẽ xem xét và xử lý trong
               thời gian sớm nhất. Bạn có thể theo dõi tiến độ xử lý trong phần
               &apos;Danh sách yêu cầu sửa chữa&apos;.
+            </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Error Modal for 409 Conflict */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2">
+            <WarningOutlined className="text-orange-500 text-xl" />
+            <span>Không thể tạo yêu cầu sửa chữa</span>
+          </div>
+        }
+        open={showErrorModal}
+        onOk={() => setShowErrorModal(false)}
+        onCancel={() => setShowErrorModal(false)}
+        okText="Đã hiểu"
+        cancelText="Đóng"
+        centered
+        footer={[
+          <Button
+            key="ok"
+            type="primary"
+            onClick={() => setShowErrorModal(false)}>
+            Đã hiểu
+          </Button>,
+        ]}>
+        <div className="py-4">
+          <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-sm text-orange-800 font-medium mb-2">
+              ⚠️ Lưu ý quan trọng
+            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {errorMessage}
+            </p>
+          </div>
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-xs text-blue-700">
+              <strong>Gợi ý:</strong> Vui lòng chọn máy tính khác hoặc đợi yêu
+              cầu hiện tại được xử lý xong trước khi tạo yêu cầu mới cho máy
+              này.
             </p>
           </div>
         </div>

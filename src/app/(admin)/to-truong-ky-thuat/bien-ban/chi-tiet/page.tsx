@@ -22,10 +22,12 @@ import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks/useReplacementProposals";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
 import {
-  ReplacementProposal,
-} from "@/lib/api/replacement-proposals";
-import { InspectionFormData, SubmissionFormData, ReplacementProposalStatus } from "@/types";
+  InspectionFormData,
+  SubmissionFormData,
+  ReplacementProposalStatus,
+} from "@/types";
 
 // Interface cho InspectionReport (sử dụng interface hiện có)
 interface InspectionReport {
@@ -66,7 +68,12 @@ export default function ChiTietBienBanPage() {
   const [showInspectionPreview, setShowInspectionPreview] = useState(false);
 
   // Fetch data from API
-  const { data: proposal, loading, error } = useReplacementProposal(reportId);
+  const {
+    data: proposal,
+    loading,
+    error,
+    refetch,
+  } = useReplacementProposal(reportId);
 
   // API hook for updating status
   const { updateStatus } = useUpdateReplacementProposalStatus();
@@ -253,7 +260,9 @@ export default function ChiTietBienBanPage() {
                     }<br><small>${
                       item.oldComponent?.componentSpecs || ""
                     }</small></td>
-                    <td>${item.oldComponent?.roomLocation || "Chưa xác định"}</td>
+                    <td>${
+                      item.oldComponent?.roomLocation || "Chưa xác định"
+                    }</td>
                     <td style="text-align: center;">${item.quantity}</td>
                     <td>${item.reason || "Cần thay thế"}</td>
                   </tr>
@@ -367,8 +376,19 @@ export default function ChiTietBienBanPage() {
 
       setShowSignModal(false);
 
-      // Redirect back to list after signing
-      router.push("/to-truong-ky-thuat/bien-ban");
+      // Refresh data để cập nhật trạng thái
+      refetch();
+
+      // Hiển thị thông báo thành công
+      Modal.success({
+        title: "Ký biên bản thành công!",
+        content: `Biên bản ${report?.reportNumber} đã được ký thành công.`,
+        centered: true,
+        onOk: () => {
+          // Redirect back to list after signing
+          router.push("/to-truong-ky-thuat/bien-ban");
+        },
+      });
     } catch (error) {
       console.error("❌ Error signing report:", error);
       alert(

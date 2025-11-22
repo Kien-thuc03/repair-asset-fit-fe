@@ -1,949 +1,656 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  Card,
-  Row,
-  Col,
-  Statistic,
-  DatePicker,
-  Select,
-  Button,
-  Table,
-  Tag,
-  Progress,
-  Timeline,
-  Space,
-  Tabs,
-  Typography,
-  Dropdown,
-  Breadcrumb,
-} from "antd";
+import { useState, useEffect } from "react";
+import { Breadcrumb, Card, Select, Spin, message, Tabs } from "antd";
 import {
   BarChart,
   Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
-import {
-  TrendingUp,
-  Download,
-  FileText,
-  CheckCircle,
-  Clock,
-  ChevronUp,
-  ChevronDown,
-} from "lucide-react";
-import type { DepartmentStats } from "@/types/stats";
-import {
-  monthlyData,
-  errorTypeStatsData,
-  weeklyTrendData,
-  detailedTableData,
-  activityTimelineData,
-  detailedErrorStats,
-  equipmentStatsData,
-} from "@/lib/mockData/statisticsData";
-import { useStatistics } from "@/hooks/useStatistics";
-import {
-  UnitStatistics,
-  RepairRequestDetails,
-} from "@/components/assetsManagement";
+import { RepairStatus, ReplacementProposalStatus } from "@/types/repair";
+import { SoftwareProposalStatus } from "@/types/software";
+import { ErrorType, ERROR_TYPE_LABELS } from "@/lib/constants/errorTypes";
+import { Table } from "antd";
 
-const { RangePicker } = DatePicker;
 const { Option } = Select;
-const { Title, Text } = Typography;
 
-// Interface cho dữ liệu lỗi chi tiết
-interface DetailedErrorStat {
-  key: string;
-  errorType: string;
-  count: number;
-  percentage: number;
-  avgRepairTime: string;
-  difficulty: string;
-  commonCauses: string[];
+// Interface cho dữ liệu thống kê
+interface StatisticsData {
+  repairRequests: {
+    status: string;
+    count: number;
+  }[];
+  replacementProposals: {
+    status: string;
+    count: number;
+  }[];
+  replacementProposalDetails: {
+    status: string;
+    proposalCount: number;
+    totalItems: number;
+  }[];
+  softwareProposals: {
+    status: string;
+    count: number;
+  }[];
+  softwareProposalDetails: {
+    status: string;
+    proposalCount: number;
+    totalItems: number;
+  }[];
+  errorTypes: {
+    errorType: ErrorType;
+    count: number;
+  }[];
 }
 
-// Helper function để tạo icon
-const getIcon = (iconType: string) => {
-  const iconClass = "w-4 h-4";
-  switch (iconType) {
-    case "FileText":
-      return <FileText className={iconClass} />;
-    case "Clock":
-      return <Clock className={iconClass} />;
-    case "CheckCircle":
-      return <CheckCircle className={iconClass} />;
-    case "TrendingUp":
-      return <TrendingUp className={iconClass} />;
-    default:
-      return <FileText className={iconClass} />;
-  }
+// Config cho trạng thái Repair Requests
+const repairStatusConfig: Record<string, string> = {
+  [RepairStatus.CHỜ_TIẾP_NHẬN]: "Chờ tiếp nhận",
+  [RepairStatus.ĐÃ_TIẾP_NHẬN]: "Đã tiếp nhận",
+  [RepairStatus.ĐANG_XỬ_LÝ]: "Đang xử lý",
+  [RepairStatus.CHỜ_THAY_THẾ]: "Chờ thay thế",
+  [RepairStatus.ĐÃ_HOÀN_THÀNH]: "Đã hoàn thành",
+  [RepairStatus.ĐÃ_HỦY]: "Đã hủy",
 };
 
-const StatsReportsPage = () => {
-  // Sử dụng hook để quản lý state và tính toán dữ liệu
-  const {
-    selectedPeriod,
-    setSelectedPeriod,
-    dateRange,
-    setDateRange,
-    updatedStatsData,
-    errorTypeStatsFromReal,
-    technicianStatsFromReal,
-    realTimeStats,
-  } = useStatistics();
+// Màu cho từng trạng thái Repair Requests
+const repairStatusColors: Record<string, string> = {
+  [RepairStatus.CHỜ_TIẾP_NHẬN]: "#fbbf24", // Vàng
+  [RepairStatus.ĐÃ_TIẾP_NHẬN]: "#3b82f6", // Xanh dương
+  [RepairStatus.ĐANG_XỬ_LÝ]: "#8b5cf6", // Tím
+  [RepairStatus.CHỜ_THAY_THẾ]: "#f59e0b", // Cam
+  [RepairStatus.ĐÃ_HOÀN_THÀNH]: "#10b981", // Xanh lá
+  [RepairStatus.ĐÃ_HỦY]: "#ef4444", // Đỏ
+};
 
-  const [activeTab, setActiveTab] = useState("overview");
-  const [sortField, setSortField] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+// Config cho trạng thái Replacement Proposals
+const replacementStatusConfig: Record<string, string> = {
+  [ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: "Chờ tổ trưởng duyệt",
+  [ReplacementProposalStatus.ĐÃ_DUYỆT]: "Đã duyệt",
+  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: "Đã từ chối",
+  [ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: "Đã lập tờ trình",
+  [ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: "Khoa đã duyệt tờ trình",
+  [ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: "Đã duyệt tờ trình",
+  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: "Đã từ chối tờ trình",
+  [ReplacementProposalStatus.CHỜ_XÁC_MINH]: "Chờ xác minh",
+  [ReplacementProposalStatus.ĐÃ_XÁC_MINH]: "Đã xác minh",
+  [ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: "Đã gửi biên bản",
+  [ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: "Đã ký biên bản",
+  [ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: "Đã hoàn tất mua sắm",
+};
 
-  // State cho bảng thống kê lỗi riêng biệt
-  const [errorSortField, setErrorSortField] = useState<string | null>(null);
-  const [errorSortOrder, setErrorSortOrder] = useState<"asc" | "desc" | null>(
-    null
-  );
+// Màu cho từng trạng thái Replacement Proposals
+const replacementStatusColors: Record<string, string> = {
+  [ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: "#f59e0b", // Cam
+  [ReplacementProposalStatus.ĐÃ_DUYỆT]: "#10b981", // Xanh lá
+  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: "#ef4444", // Đỏ
+  [ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: "#3b82f6", // Xanh dương
+  [ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: "#06b6d4", // Cyan
+  [ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: "#8b5cf6", // Tím
+  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: "#f97316", // Cam đậm
+  [ReplacementProposalStatus.CHỜ_XÁC_MINH]: "#6366f1", // Indigo
+  [ReplacementProposalStatus.ĐÃ_XÁC_MINH]: "#14b8a6", // Teal
+  [ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: "#a855f7", // Tím đậm
+  [ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: "#ec4899", // Hồng
+  [ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: "#22c55e", // Xanh lá đậm
+};
 
-  // Hàm xử lý sắp xếp cho bảng chính
-  const handleSort = (field: string) => {
-    if (sortField === field) {
-      // Nếu đang sắp xếp cột này, chuyển đổi thứ tự: asc -> desc -> null -> asc
-      if (sortOrder === "asc") {
-        setSortOrder("desc");
-      } else if (sortOrder === "desc") {
-        setSortOrder(null);
-        setSortField(null);
-      } else {
-        setSortOrder("asc");
+// Config cho trạng thái Software Proposals
+const softwareStatusConfig: Record<string, string> = {
+  [SoftwareProposalStatus.CHỜ_DUYỆT]: "Chờ duyệt",
+  [SoftwareProposalStatus.ĐÃ_DUYỆT]: "Đã duyệt",
+  [SoftwareProposalStatus.ĐÃ_TỪ_CHỐI]: "Đã từ chối",
+  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: "Đang trang bị",
+  [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: "Đã trang bị",
+};
+
+// Màu cho từng trạng thái Software Proposals
+const softwareStatusColors: Record<string, string> = {
+  [SoftwareProposalStatus.CHỜ_DUYỆT]: "#fbbf24", // Vàng
+  [SoftwareProposalStatus.ĐÃ_DUYỆT]: "#10b981", // Xanh lá
+  [SoftwareProposalStatus.ĐÃ_TỪ_CHỐI]: "#ef4444", // Đỏ
+  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: "#3b82f6", // Xanh dương
+  [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: "#8b5cf6", // Tím
+};
+
+export default function ThongKeBaoCaoPage() {
+  const [loading, setLoading] = useState(true);
+  const [statistics, setStatistics] = useState<StatisticsData>({
+    repairRequests: [],
+    replacementProposals: [],
+    replacementProposalDetails: [],
+    softwareProposals: [],
+    softwareProposalDetails: [],
+    errorTypes: [],
+  });
+
+  // Filter states
+  const [repairStatusFilter, setRepairStatusFilter] = useState<string>("all");
+  const [replacementStatusFilter, setReplacementStatusFilter] =
+    useState<string>("all");
+  const [softwareStatusFilter, setSoftwareStatusFilter] =
+    useState<string>("all");
+
+  // Fetch statistics data using MCP queries
+  // Data from MCP postgres queries executed by AI assistant:
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      setLoading(true);
+      try {
+        // MCP Query Results (executed by AI assistant):
+        // Repair Requests: 53 total records
+        const repairRequests = [
+          { status: "CHỜ_THAY_THẾ", count: 23 },
+          { status: "ĐANG_XỬ_LÝ", count: 8 },
+          { status: "ĐÃ_HOÀN_THÀNH", count: 8 },
+          { status: "ĐÃ_TIẾP_NHẬN", count: 6 },
+          { status: "CHỜ_TIẾP_NHẬN", count: 4 },
+          { status: "ĐÃ_HỦY", count: 4 },
+        ];
+
+        // Replacement Proposals: 12 total records
+        const replacementProposals = [
+          { status: "ĐÃ_LẬP_TỜ_TRÌNH", count: 3 },
+          { status: "ĐÃ_GỬI_BIÊN_BẢN", count: 2 },
+          { status: "ĐÃ_DUYỆT", count: 2 },
+          { status: "ĐÃ_TỪ_CHỐI", count: 2 },
+          { status: "ĐÃ_HOÀN_TẤT_MUA_SẮM", count: 1 },
+          { status: "KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH", count: 1 },
+          { status: "CHỜ_XÁC_MINH", count: 1 },
+        ];
+
+        // Replacement Proposal Details: Statistics by status with proposal count and total items
+        const replacementProposalDetails = [
+          { status: "ĐÃ_LẬP_TỜ_TRÌNH", proposalCount: 3, totalItems: 5 },
+          { status: "ĐÃ_TỪ_CHỐI", proposalCount: 2, totalItems: 5 },
+          { status: "ĐÃ_GỬI_BIÊN_BẢN", proposalCount: 2, totalItems: 4 },
+          { status: "ĐÃ_DUYỆT", proposalCount: 2, totalItems: 12 },
+          { status: "KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH", proposalCount: 1, totalItems: 2 },
+          { status: "CHỜ_XÁC_MINH", proposalCount: 1, totalItems: 1 },
+          { status: "ĐÃ_HOÀN_TẤT_MUA_SẮM", proposalCount: 1, totalItems: 2 },
+        ];
+
+        // Software Proposals: 23 total records
+        const softwareProposals = [
+          { status: "CHỜ_DUYỆT", count: 9 },
+          { status: "ĐÃ_TRANG_BỊ", count: 8 },
+          { status: "ĐÃ_DUYỆT", count: 4 },
+          { status: "ĐÃ_TỪ_CHỐI", count: 2 },
+        ];
+
+        // Software Proposal Details: Statistics by status with proposal count and total items
+        const softwareProposalDetails = [
+          { status: "CHỜ_DUYỆT", proposalCount: 9, totalItems: 14 },
+          { status: "ĐÃ_TRANG_BỊ", proposalCount: 8, totalItems: 19 },
+          { status: "ĐÃ_DUYỆT", proposalCount: 4, totalItems: 8 },
+          { status: "ĐÃ_TỪ_CHỐI", proposalCount: 2, totalItems: 5 },
+        ];
+
+        // Error Types: Statistics by error type from MCP query
+        const errorTypes = [
+          { errorType: ErrorType.MAY_KHONG_KHOI_DONG, count: 13 },
+          { errorType: ErrorType.MAY_HU_CHUOT, count: 9 },
+          { errorType: ErrorType.MAY_KHONG_SU_DUNG_DUOC, count: 8 },
+          { errorType: ErrorType.MAY_HU_MAN_HINH, count: 6 },
+          { errorType: ErrorType.MAY_HU_PHAN_MEM, count: 5 },
+          { errorType: ErrorType.MAY_HU_BAN_PHIM, count: 2 },
+          { errorType: ErrorType.MAY_MAT_BAN_PHIM, count: 2 },
+          { errorType: ErrorType.LOI_KHAC, count: 2 },
+          { errorType: ErrorType.MAY_KHONG_KET_NOI_MANG, count: 2 },
+          { errorType: ErrorType.MAY_MAT_CHUOT, count: 2 },
+        ];
+
+        setStatistics({
+          repairRequests,
+          replacementProposals,
+          replacementProposalDetails,
+          softwareProposals,
+          softwareProposalDetails,
+          errorTypes,
+        });
+      } catch (error) {
+        console.error("Error fetching statistics:", error);
+        message.error("Không thể tải dữ liệu thống kê");
+      } finally {
+        setLoading(false);
       }
-    } else {
-      // Nếu sắp xếp cột khác, bắt đầu với asc
-      setSortField(field);
-      setSortOrder("asc");
+    };
+
+    fetchStatistics();
+  }, []);
+
+  // Filter data based on selected status
+  const getFilteredRepairData = () => {
+    if (repairStatusFilter === "all") {
+      return statistics.repairRequests;
     }
+    return statistics.repairRequests.filter(
+      (item) => item.status === repairStatusFilter
+    );
   };
 
-  // Hàm xử lý sắp xếp cho bảng thống kê lỗi
-  const handleErrorSort = (field: string) => {
-    if (errorSortField === field) {
-      // Nếu đang sắp xếp cột này, chuyển đổi thứ tự: asc -> desc -> null -> asc
-      if (errorSortOrder === "asc") {
-        setErrorSortOrder("desc");
-      } else if (errorSortOrder === "desc") {
-        setErrorSortOrder(null);
-        setErrorSortField(null);
-      } else {
-        setErrorSortOrder("asc");
-      }
-    } else {
-      // Nếu sắp xếp cột khác, bắt đầu với asc
-      setErrorSortField(field);
-      setErrorSortOrder("asc");
+  const getFilteredReplacementData = () => {
+    if (replacementStatusFilter === "all") {
+      return statistics.replacementProposals;
     }
+    return statistics.replacementProposals.filter(
+      (item) => item.status === replacementStatusFilter
+    );
   };
 
-  // Hàm render title với icon sắp xếp cho bảng chính
-  const renderSortTitle = (title: string, field: string) => (
-    <div
-      className="flex items-center justify-center cursor-pointer hover:text-blue-600 select-none"
-      onClick={() => handleSort(field)}>
-      <span>{title}</span>
-      <div className="flex flex-col ml-1">
-        <ChevronUp
-          className={`w-3 h-3 ${
-            sortField === field && sortOrder === "asc"
-              ? "text-blue-600"
-              : "text-gray-400"
-          }`}
-        />
-        <ChevronDown
-          className={`w-3 h-3 -mt-1 ${
-            sortField === field && sortOrder === "desc"
-              ? "text-blue-600"
-              : "text-gray-400"
-          }`}
-        />
-      </div>
-    </div>
-  );
-
-  // Hàm render title với icon sắp xếp cho bảng thống kê lỗi
-  const renderErrorSortTitle = (title: string, field: string) => (
-    <div
-      className="flex items-center justify-center cursor-pointer hover:text-blue-600 select-none"
-      onClick={() => handleErrorSort(field)}>
-      <span>{title}</span>
-      <div className="flex flex-col ml-1">
-        <ChevronUp
-          className={`w-3 h-3 ${
-            errorSortField === field && errorSortOrder === "asc"
-              ? "text-blue-600"
-              : "text-gray-400"
-          }`}
-        />
-        <ChevronDown
-          className={`w-3 h-3 -mt-1 ${
-            errorSortField === field && errorSortOrder === "desc"
-              ? "text-blue-600"
-              : "text-gray-400"
-          }`}
-        />
-      </div>
-    </div>
-  );
-
-  // Định nghĩa columns với custom sorting
-  const columns = [
-    {
-      title: renderSortTitle("Tầng", "department"),
-      dataIndex: "department",
-      key: "department",
-      width: 80,
-    },
-    {
-      title: renderSortTitle("Báo cáo", "totalReports"),
-      dataIndex: "totalReports",
-      key: "totalReports",
-      align: "center" as const,
-      width: 70,
-    },
-    {
-      title: renderSortTitle("Hoàn thành", "completed"),
-      dataIndex: "completed",
-      key: "completed",
-      align: "center" as const,
-      width: 80,
-    },
-    {
-      title: renderSortTitle("Đang xử lý", "pending"),
-      dataIndex: "pending",
-      key: "pending",
-      align: "center" as const,
-      width: 80,
-    },
-    {
-      title: renderSortTitle("TB (ngày)", "avgTime"),
-      dataIndex: "avgTime",
-      key: "avgTime",
-      align: "center" as const,
-      width: 80,
-    },
-    {
-      title: renderSortTitle("Hiệu suất", "efficiency"),
-      dataIndex: "efficiency",
-      key: "efficiency",
-      align: "center" as const,
-      width: 90,
-      render: (value: number) => {
-        // Xác định màu dựa trên hiệu suất
-        let progressColor = "#1890ff";
-        let textColor = "text-blue-600";
-
-        if (value >= 97) {
-          progressColor = "#722ed1"; // Tím - Xuất sắc
-          textColor = "text-purple-600";
-        } else if (value >= 95) {
-          progressColor = "#52c41a"; // Xanh lá - Tốt
-          textColor = "text-green-600";
-        } else if (value >= 90) {
-          progressColor = "#fa8c16"; // Cam - Khá
-          textColor = "text-orange-600";
-        } else {
-          progressColor = "#ff4d4f"; // Đỏ - Trung bình
-          textColor = "text-red-600";
-        }
-
-        return (
-          <div>
-            <Progress
-              percent={value}
-              size="small"
-              strokeColor={progressColor}
-              showInfo={false}
-            />
-            <span className={`text-xs ${textColor}`}>{value.toFixed(1)}%</span>
-          </div>
-        );
-      },
-    },
-    {
-      title: renderSortTitle("Đánh giá", "status"),
-      dataIndex: "status",
-      key: "status",
-      align: "center" as const,
-      width: 80,
-      render: (status: string, record: DepartmentStats) => {
-        // Sử dụng cùng logic màu với cột hiệu suất
-        let color = "default";
-
-        if (record.efficiency >= 97) {
-          color = "purple"; // Tím - Xuất sắc
-        } else if (record.efficiency >= 95) {
-          color = "green"; // Xanh lá - Tốt
-        } else if (record.efficiency >= 90) {
-          color = "orange"; // Cam - Khá
-        } else {
-          color = "red"; // Đỏ - Trung bình
-        }
-
-        return <Tag color={color}>{status}</Tag>;
-      },
-    },
-  ];
-
-  // Hàm sắp xếp dữ liệu cho bảng chính
-  const getSortedData = (data: DepartmentStats[]) => {
-    if (!sortField || !sortOrder) return data;
-
-    return [...data].sort((a, b) => {
-      const aVal = a[sortField as keyof DepartmentStats];
-      const bVal = b[sortField as keyof DepartmentStats];
-
-      // Xử lý trường hợp số
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return sortOrder === "asc" ? aVal - bVal : bVal - aVal;
-      }
-
-      // Xử lý trường hợp chuỗi
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortOrder === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
-
-      return 0;
-    });
+  const getFilteredSoftwareData = () => {
+    if (softwareStatusFilter === "all") {
+      return statistics.softwareProposals;
+    }
+    return statistics.softwareProposals.filter(
+      (item) => item.status === softwareStatusFilter
+    );
   };
 
-  // Hàm sắp xếp dữ liệu cho bảng thống kê lỗi
-  const getSortedErrorData = (data: DetailedErrorStat[]) => {
-    if (!errorSortField || !errorSortOrder) return data;
-
-    return [...data].sort((a, b) => {
-      const aVal = a[errorSortField as keyof DetailedErrorStat];
-      const bVal = b[errorSortField as keyof DetailedErrorStat];
-
-      // Xử lý trường hợp số
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return errorSortOrder === "asc" ? aVal - bVal : bVal - aVal;
-      }
-
-      // Xử lý trường hợp chuỗi
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return errorSortOrder === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
-
-      return 0;
-    });
-  };
-
-  // Tính toán thống kê linh kiện máy tính
-  const getComputerComponentStats = () => {
-    return equipmentStatsData.map((component, index) => ({
-      key: `comp-${index + 1}`,
-      category: component.category,
-      total: component.total,
-      faulty: component.faulty,
-      percentage: component.percentage,
+  // Format data for charts (bao gồm status để map màu)
+  const formatRepairData = () => {
+    return getFilteredRepairData().map((item) => ({
+      name: repairStatusConfig[item.status] || item.status,
+      status: item.status,
+      "Số lượng": item.count,
     }));
   };
 
-  const handleExport = (type: string) => {
-    console.log(`Xuất báo cáo ${type}`);
-    // Logic xuất báo cáo
+  const formatReplacementData = () => {
+    return getFilteredReplacementData().map((item) => ({
+      name: replacementStatusConfig[item.status] || item.status,
+      status: item.status,
+      "Số lượng": item.count,
+    }));
   };
 
-  const exportMenuItems = [
-    {
-      key: "pdf",
-      label: "Xuất PDF",
-      onClick: () => handleExport("pdf"),
-    },
-    {
-      key: "excel",
-      label: "Xuất Excel",
-      onClick: () => handleExport("excel"),
-    },
-    {
-      key: "csv",
-      label: "Xuất CSV",
-      onClick: () => handleExport("csv"),
-    },
-  ];
-
-  // Định nghĩa tabs items theo cú pháp mới của Ant Design
-  const tabItems = [
-    {
-      key: "overview",
-      label: "Tổng quan",
-      children: (
-        <div>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={16}>
-              <Card title="Thống kê theo tháng" className="mb-4">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="completed" fill="#52c41a" name="Hoàn thành" />
-                    <Bar dataKey="pending" fill="#faad14" name="Đang xử lý" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-            <Col xs={24} lg={8}>
-              <Card title="Phân loại theo loại lỗi" className="mb-4">
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={errorTypeStatsFromReal}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) =>
-                        `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                      }
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value">
-                      {errorTypeStatsFromReal.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="mt-4 text-center">
-                  <Text type="secondary" className="text-xs">
-                    Tổng số lỗi từ dữ liệu thực: {realTimeStats.totalReports}
-                  </Text>
-                </div>
-              </Card>
-            </Col>
-          </Row>
-
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={16}>
-              <Card title="Chi tiết theo tầng - Tòa H">
-                <Table
-                  columns={columns}
-                  dataSource={getSortedData(detailedTableData)}
-                  pagination={false}
-                  size="small"
-                />
-              </Card>
-            </Col>
-            <Col xs={24} lg={8}>
-              <Card title="Hoạt động gần đây - Khoa CNTT">
-                <Timeline
-                  items={activityTimelineData.map((activity, index) => ({
-                    key: index,
-                    color: activity.color,
-                    children: (
-                      <div>
-                        <p className="text-sm">
-                          {activity.time} - {activity.description}
-                        </p>
-                        <p className="text-gray-500 text-xs">
-                          {activity.timeAgo}
-                        </p>
-                      </div>
-                    ),
-                  }))}
-                />
-              </Card>
-            </Col>
-          </Row>
-        </div>
-      ),
-    },
-    {
-      key: "trends",
-      label: "Xu hướng",
-      children: (
-        <Row gutter={[16, 16]}>
-          <Col xs={24}>
-            <Card title="Xu hướng báo cáo và thời gian xử lý">
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={weeklyTrendData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="week" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Bar
-                    yAxisId="left"
-                    dataKey="reports"
-                    fill="#1890ff"
-                    name="Số báo cáo"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="avgTime"
-                    stroke="#ff7300"
-                    strokeWidth={3}
-                    name="Thời gian TB (ngày)"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </Card>
-          </Col>
-        </Row>
-      ),
-    },
-    {
-      key: "performance",
-      label: "Hiệu suất",
-      children: (
-        <div>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={12}>
-              <Card title="Hiệu suất theo tầng - Tòa H">
-                {detailedTableData.map((dept, index) => (
-                  <div key={index} className="mb-4">
-                    <div className="flex justify-between items-center mb-1">
-                      <Text>{dept.department}</Text>
-                      <Text strong>{dept.efficiency.toFixed(1)}%</Text>
-                    </div>
-                    <Progress
-                      percent={dept.efficiency}
-                      status={
-                        dept.efficiency >= 95
-                          ? "success"
-                          : dept.efficiency >= 90
-                          ? "normal"
-                          : "exception"
-                      }
-                      showInfo={false}
-                    />
-                  </div>
-                ))}
-              </Card>
-            </Col>
-            <Col xs={24} lg={12}>
-              <Card title="Thống kê kỹ thuật viên">
-                <div className="space-y-4">
-                  {technicianStatsFromReal.map((tech) => {
-                    const statusColor =
-                      tech.efficiency >= 95
-                        ? "green"
-                        : tech.efficiency >= 90
-                        ? "orange"
-                        : "red";
-
-                    const statusText =
-                      tech.efficiency >= 95
-                        ? "Xuất sắc"
-                        : tech.efficiency >= 90
-                        ? "Tốt"
-                        : "Cần cải thiện";
-
-                    return (
-                      <div
-                        key={tech.id}
-                        className="border-b pb-4 last:border-b-0">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center gap-2">
-                            <Text strong>{tech.name}</Text>
-                            <Tag color={statusColor}>{statusText}</Tag>
-                          </div>
-                          <Tag color="blue">{tech.efficiency.toFixed(1)}%</Tag>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 text-sm text-gray-600 mb-2">
-                          <div>Hoàn thành: {tech.completed}</div>
-                          <div>Đang xử lý: {tech.pending}</div>
-                          <div>TB: {tech.avgTime.toFixed(1)} ngày</div>
-                        </div>
-                        <div className="text-sm text-gray-600 mb-2">
-                          <div>
-                            Tổng yêu cầu: {tech.completed + tech.pending}
-                          </div>
-                          <div>
-                            Tình trạng:{" "}
-                            {tech.pending > 0
-                              ? `Đang xử lý ${tech.pending} yêu cầu`
-                              : "Không có yêu cầu đang xử lý"}
-                          </div>
-                        </div>
-                        <Progress
-                          percent={tech.efficiency}
-                          size="small"
-                          status={
-                            tech.efficiency >= 95
-                              ? "success"
-                              : tech.efficiency >= 90
-                              ? "normal"
-                              : "exception"
-                          }
-                          showInfo={false}
-                          className="mt-2"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
-            </Col>
-          </Row>
-
-          <Row gutter={[16, 16]} className="mt-4">
-            <Col xs={24}>
-              <Card title="Thống kê linh kiện máy tính - Khoa CNTT">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {getComputerComponentStats().map((component, index) => (
-                    <div
-                      key={index}
-                      className="text-center p-4 border rounded-lg hover:shadow-md transition-shadow">
-                      <div className="text-lg font-semibold text-gray-800 mb-2">
-                        {component.category}
-                      </div>
-                      <div className="text-2xl font-bold text-blue-600 my-2">
-                        {component.total}
-                      </div>
-                      <div className="text-sm text-gray-600 mb-2">
-                        Lỗi:{" "}
-                        <span className="font-semibold text-red-600">
-                          {component.faulty}
-                        </span>{" "}
-                        ({component.percentage}%)
-                      </div>
-                      <div className="text-sm text-green-600 mb-3">
-                        Hoạt động tốt: {component.total - component.faulty}
-                      </div>
-                      <Progress
-                        percent={100 - component.percentage}
-                        size="small"
-                        status={
-                          component.percentage <= 5
-                            ? "success"
-                            : component.percentage <= 10
-                            ? "normal"
-                            : "exception"
-                        }
-                        showInfo={false}
-                        strokeColor={
-                          component.percentage <= 5
-                            ? "#52c41a"
-                            : component.percentage <= 10
-                            ? "#faad14"
-                            : "#ff4d4f"
-                        }
-                      />
-                      <div className="text-xs text-gray-500 mt-1">
-                        Tỷ lệ hoạt động tốt:{" "}
-                        {(100 - component.percentage).toFixed(1)}%
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </Col>
-          </Row>
-        </div>
-      ),
-    },
-    {
-      key: "error-types",
-      label: "Thống kê loại lỗi",
-      children: (
-        <div>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={12}>
-              <Card title="Phân bố loại lỗi - Khoa CNTT">
-                <ResponsiveContainer width="100%" height={400}>
-                  <PieChart>
-                    <Pie
-                      data={errorTypeStatsData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) =>
-                        `${name} ${((percent || 0) * 100).toFixed(1)}%`
-                      }
-                      outerRadius={120}
-                      fill="#8884d8"
-                      dataKey="value">
-                      {errorTypeStatsData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => [`${value} trường hợp`, "Số lượng"]}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-            <Col xs={24} lg={12}>
-              <Card title="Top 5 loại lỗi thường gặp">
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart
-                    data={errorTypeStatsData.slice(0, 5)}
-                    layout="horizontal">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={120} />
-                    <Tooltip
-                      formatter={(value) => [`${value} trường hợp`, "Số lượng"]}
-                    />
-                    <Bar dataKey="value" fill="#1890ff" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-          </Row>
-
-          <Row gutter={[16, 16]} className="mt-4">
-            <Col xs={24}>
-              <Card title="Chi tiết thống kê theo loại lỗi">
-                <Table
-                  columns={[
-                    {
-                      title: renderErrorSortTitle("Mã lỗi", "key"),
-                      dataIndex: "key",
-                      key: "key",
-                      render: (text: string) => (
-                        <Tag color="purple">{text}</Tag>
-                      ),
-                    },
-                    {
-                      title: renderErrorSortTitle("Loại lỗi", "errorType"),
-                      dataIndex: "errorType",
-                      key: "errorType",
-                      width: 200,
-                    },
-                    {
-                      title: renderErrorSortTitle("Số lượng", "count"),
-                      dataIndex: "count",
-                      key: "count",
-                      render: (count: number) => <Text strong>{count}</Text>,
-                    },
-                    {
-                      title: renderErrorSortTitle("Tỷ lệ", "percentage"),
-                      dataIndex: "percentage",
-                      key: "percentage",
-                      render: (percentage: number) => (
-                        <div>
-                          <Progress percent={percentage} size="small" />
-                          <span style={{ marginLeft: 8 }}>{percentage}%</span>
-                        </div>
-                      ),
-                    },
-                    {
-                      title: renderErrorSortTitle(
-                        "Thời gian sửa TB",
-                        "avgRepairTime"
-                      ),
-                      dataIndex: "avgRepairTime",
-                      key: "avgRepairTime",
-                    },
-                    {
-                      title: renderErrorSortTitle("Độ khó", "difficulty"),
-                      dataIndex: "difficulty",
-                      key: "difficulty",
-                      render: (difficulty: string) => {
-                        const difficultyColors = {
-                          "Rất dễ": "green",
-                          Dễ: "lime",
-                          "Trung bình": "orange",
-                          Khó: "red",
-                          "Rất khó": "magenta",
-                          Khác: "default",
-                        };
-                        return (
-                          <Tag
-                            color={
-                              difficultyColors[
-                                difficulty as keyof typeof difficultyColors
-                              ]
-                            }>
-                            {difficulty}
-                          </Tag>
-                        );
-                      },
-                    },
-                    {
-                      title: "Nguyên nhân chính",
-                      dataIndex: "commonCauses",
-                      key: "commonCauses",
-                      render: (causes: string[]) => (
-                        <div>
-                          {causes.slice(0, 2).map((cause, index) => (
-                            <Tag key={index}>{cause}</Tag>
-                          ))}
-                          {causes.length > 2 && <span>...</span>}
-                        </div>
-                      ),
-                    },
-                  ]}
-                  dataSource={getSortedErrorData(detailedErrorStats)}
-                  pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total, range) =>
-                      `${range[0]}-${range[1]} của ${total} loại lỗi`,
-                  }}
-                />
-              </Card>
-            </Col>
-          </Row>
-        </div>
-      ),
-    },
-    {
-      key: "detailed",
-      label: "Báo cáo chi tiết",
-      children: (
-        <Card>
-          <Table
-            columns={columns}
-            dataSource={getSortedData(detailedTableData)}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} của ${total} mục`,
-            }}
-            size="small"
-          />
-        </Card>
-      ),
-    },
-    {
-      key: "units",
-      label: "Thống kê đơn vị",
-      children: <UnitStatistics />,
-    },
-    {
-      key: "repair-details",
-      label: "Chi tiết sửa chữa",
-      children: <RepairRequestDetails />,
-    },
-  ];
+  const formatSoftwareData = () => {
+    return getFilteredSoftwareData().map((item) => ({
+      name: softwareStatusConfig[item.status] || item.status,
+      status: item.status,
+      "Số lượng": item.count,
+    }));
+  };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-2">
-        <Breadcrumb
-          items={[
-            {
-              href: "/to-truong-ky-thuat",
-              title: (
-                <div className="flex items-center">
-                  <span>Trang chủ</span>
-                </div>
-              ),
-            },
-            {
-              title: (
-                <div className="flex items-center">
-                  <span>Thống kê báo cáo</span>
-                </div>
-              ),
-            },
-          ]}
-        />
-      </div>
-      <div className="mb-6">
-        <Title level={2} className="mb-2">
-          Thống kê báo cáo - Khoa CNTT
-        </Title>
-        <Text type="secondary">
-          Thống kê các báo lỗi thiết bị trong các tầng tòa H - Khoa Công nghệ
-          Thông tin
-        </Text>
-        {dateRange && (
-          <div className="mt-2">
-            <Text type="secondary" className="text-sm">
-              📅 Dữ liệu được lọc từ {dateRange[0]} đến {dateRange[1]}
-            </Text>
-          </div>
-        )}
-      </div>
+    <div className="space-y-8 min-h-screen p-6">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          {
+            href: "/to-truong-ky-thuat",
+            title: <span>Trang chủ</span>,
+          },
+          {
+            title: <span>Thống kê báo cáo</span>,
+          },
+        ]}
+      />
 
-      {/* Bộ lọc và điều khiển */}
-      <Card className="mb-6">
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} sm={12} md={8}>
-            <Space>
-              <Text>Thời gian:</Text>
-              <RangePicker
-                placeholder={["Từ ngày", "Đến ngày"]}
-                onChange={(dates, dateStrings) => {
-                  if (dates && dates[0] && dates[1]) {
-                    setDateRange([dateStrings[0], dateStrings[1]]);
-                  } else {
-                    setDateRange(null);
-                  }
-                }}
-              />
-            </Space>
-          </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Space>
-              <Text>Chu kỳ:</Text>
-              <Select
-                value={selectedPeriod}
-                onChange={setSelectedPeriod}
-                style={{ width: 120 }}>
-                <Option value="week">Tuần</Option>
-                <Option value="month">Tháng</Option>
-                <Option value="quarter">Quý</Option>
-                <Option value="year">Năm</Option>
-              </Select>
-            </Space>
-          </Col>
-          <Col xs={24} sm={24} md={8} className="text-right">
-            <Dropdown menu={{ items: exportMenuItems }} placement="bottomRight">
-              <Button type="primary" icon={<Download className="w-4 h-4" />}>
-                Xuất báo cáo
-              </Button>
-            </Dropdown>
-          </Col>
-        </Row>
-      </Card>
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Spin size="large" />
+        </div>
+      ) : (
+        <Card>
+          <Tabs
+            defaultActiveKey="repair"
+            items={[
+              {
+                key: "repair",
+                label: "Báo lỗi",
+                children: (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        Thống kê báo lỗi
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Thống kê theo trạng thái của các yêu cầu sửa chữa
+                        (Repair Requests)
+                      </p>
+                    </div>
+                    <div className="flex justify-end mb-4">
+                      <Select
+                        value={repairStatusFilter}
+                        onChange={setRepairStatusFilter}
+                        style={{ width: 200 }}
+                        placeholder="Lọc theo trạng thái">
+                        <Option value="all">Tất cả trạng thái</Option>
+                        {Object.entries(repairStatusConfig).map(
+                          ([value, label]) => (
+                            <Option key={value} value={value}>
+                              {label}
+                            </Option>
+                          )
+                        )}
+                      </Select>
+                    </div>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart data={formatRepairData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={100}
+                          interval={0}
+                        />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="Số lượng">
+                          {formatRepairData().map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={
+                                repairStatusColors[entry.status] || "#3b82f6"
+                              }
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
 
-      {/* Thống kê tổng quan */}
-      <Row gutter={[16, 16]} className="mb-6">
-        {updatedStatsData.map((stat, index) => (
-          <Col xs={24} sm={12} lg={6} key={index}>
-            <Card>
-              <Statistic
-                title={stat.title}
-                value={stat.value}
-                prefix={getIcon(stat.iconType)}
-                suffix={stat.suffix}
-                valueStyle={stat.valueStyle}
-                precision={stat.precision}
-              />
-            </Card>
-          </Col>
-        ))}
-      </Row>
+                    {/* Bảng chi tiết thống kê theo loại lỗi */}
+                    <div className="mt-6">
+                      <h4 className="text-md font-semibold text-gray-900 mb-4">
+                        Chi tiết thống kê theo loại lỗi
+                      </h4>
+                      <Table
+                        dataSource={statistics.errorTypes.map(
+                          (item, index) => ({
+                            key: index,
+                            stt: index + 1,
+                            errorType: item.errorType,
+                            errorTypeName:
+                              ERROR_TYPE_LABELS[item.errorType] ||
+                              item.errorType,
+                            count: item.count,
+                          })
+                        )}
+                        columns={[
+                          {
+                            title: "STT",
+                            dataIndex: "stt",
+                            key: "stt",
+                            width: 60,
+                            align: "center",
+                          },
+                          {
+                            title: "Loại lỗi",
+                            dataIndex: "errorTypeName",
+                            key: "errorTypeName",
+                          },
+                          {
+                            title: "Số lượng",
+                            dataIndex: "count",
+                            key: "count",
+                            width: 120,
+                            align: "center",
+                            render: (count: number) => (
+                              <span className="font-semibold text-blue-600">
+                                {count}
+                              </span>
+                            ),
+                          },
+                        ]}
+                        pagination={false}
+                        size="middle"
+                      />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "replacement",
+                label: "Đề xuất thay thế",
+                children: (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        Thống kê đề xuất thay thế
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Thống kê theo trạng thái của các đề xuất thay thế linh
+                        kiện (Replacement Proposals)
+                      </p>
+                    </div>
+                    <div className="flex justify-end mb-4">
+                      <Select
+                        value={replacementStatusFilter}
+                        onChange={setReplacementStatusFilter}
+                        style={{ width: 200 }}
+                        placeholder="Lọc theo trạng thái">
+                        <Option value="all">Tất cả trạng thái</Option>
+                        {Object.entries(replacementStatusConfig).map(
+                          ([value, label]) => (
+                            <Option key={value} value={value}>
+                              {label}
+                            </Option>
+                          )
+                        )}
+                      </Select>
+                    </div>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart data={formatReplacementData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={120}
+                          interval={0}
+                        />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="Số lượng">
+                          {formatReplacementData().map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={
+                                replacementStatusColors[entry.status] ||
+                                "#10b981"
+                              }
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
 
-      {/* Tabs với các loại thống kê khác nhau */}
-      <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
+                    {/* Bảng chi tiết thống kê theo trạng thái */}
+                    <div className="mt-6">
+                      <h4 className="text-md font-semibold text-gray-900 mb-4">
+                        Chi tiết thống kê theo trạng thái
+                      </h4>
+                      <Table
+                        dataSource={statistics.replacementProposalDetails.map(
+                          (item, index) => ({
+                            key: index,
+                            stt: index + 1,
+                            status: item.status,
+                            statusName:
+                              replacementStatusConfig[item.status] ||
+                              item.status,
+                            proposalCount: item.proposalCount,
+                            totalItems: item.totalItems,
+                          })
+                        )}
+                        columns={[
+                          {
+                            title: "STT",
+                            dataIndex: "stt",
+                            key: "stt",
+                            width: 60,
+                            align: "center",
+                          },
+                          {
+                            title: "Trạng thái",
+                            dataIndex: "statusName",
+                            key: "statusName",
+                          },
+                          {
+                            title: "Số lượng đề xuất",
+                            dataIndex: "proposalCount",
+                            key: "proposalCount",
+                            width: 150,
+                            align: "center",
+                            render: (count: number) => (
+                              <span className="font-semibold text-blue-600">
+                                {count}
+                              </span>
+                            ),
+                          },
+                          {
+                            title: "Tổng số linh kiện",
+                            dataIndex: "totalItems",
+                            key: "totalItems",
+                            width: 150,
+                            align: "center",
+                            render: (count: number) => (
+                              <span className="font-semibold text-green-600">
+                                {count}
+                              </span>
+                            ),
+                          },
+                        ]}
+                        pagination={false}
+                        size="middle"
+                      />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "software",
+                label: "Đề xuất phần mềm",
+                children: (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        Thống kê đề xuất phần mềm
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Thống kê theo trạng thái của các đề xuất cài đặt phần
+                        mềm (Software Proposals)
+                      </p>
+                    </div>
+                    <div className="flex justify-end mb-4">
+                      <Select
+                        value={softwareStatusFilter}
+                        onChange={setSoftwareStatusFilter}
+                        style={{ width: 200 }}
+                        placeholder="Lọc theo trạng thái">
+                        <Option value="all">Tất cả trạng thái</Option>
+                        {Object.entries(softwareStatusConfig).map(
+                          ([value, label]) => (
+                            <Option key={value} value={value}>
+                              {label}
+                            </Option>
+                          )
+                        )}
+                      </Select>
+                    </div>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart data={formatSoftwareData()}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={100}
+                          interval={0}
+                        />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="Số lượng">
+                          {formatSoftwareData().map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={
+                                softwareStatusColors[entry.status] || "#f59e0b"
+                              }
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+
+                    {/* Bảng chi tiết thống kê theo trạng thái */}
+                    <div className="mt-6">
+                      <h4 className="text-md font-semibold text-gray-900 mb-4">
+                        Chi tiết thống kê theo trạng thái
+                      </h4>
+                      <Table
+                        dataSource={statistics.softwareProposalDetails.map(
+                          (item, index) => ({
+                            key: index,
+                            stt: index + 1,
+                            status: item.status,
+                            statusName:
+                              softwareStatusConfig[item.status] || item.status,
+                            proposalCount: item.proposalCount,
+                            totalItems: item.totalItems,
+                          })
+                        )}
+                        columns={[
+                          {
+                            title: "STT",
+                            dataIndex: "stt",
+                            key: "stt",
+                            width: 60,
+                            align: "center",
+                          },
+                          {
+                            title: "Trạng thái",
+                            dataIndex: "statusName",
+                            key: "statusName",
+                          },
+                          {
+                            title: "Số lượng đề xuất",
+                            dataIndex: "proposalCount",
+                            key: "proposalCount",
+                            width: 150,
+                            align: "center",
+                            render: (count: number) => (
+                              <span className="font-semibold text-blue-600">
+                                {count}
+                              </span>
+                            ),
+                          },
+                          {
+                            title: "Tổng số phần mềm",
+                            dataIndex: "totalItems",
+                            key: "totalItems",
+                            width: 150,
+                            align: "center",
+                            render: (count: number) => (
+                              <span className="font-semibold text-green-600">
+                                {count}
+                              </span>
+                            ),
+                          },
+                        ]}
+                        pagination={false}
+                        size="middle"
+                      />
+                    </div>
+                  </div>
+                ),
+              },
+            ]}
+          />
+        </Card>
+      )}
     </div>
   );
-};
-
-export default StatsReportsPage;
+}

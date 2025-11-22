@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -20,11 +20,14 @@ import {
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
 import SignConfirmModal from "@/components/modal/SignConfirmModal";
+import { SubmissionPreviewModal } from "@/components/modal";
 import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { ReplacementProposalStatus } from "@/types/repair";
+import { ReplacementProposalStatus, SubmissionFormData } from "@/types";
+import { getFileNameFromUrl } from "@/lib/utils";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
 
 export default function XuLyToTrinhDetailPage() {
   const params = useParams();
@@ -38,10 +41,28 @@ export default function XuLyToTrinhDetailPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
 
   // Fetch proposal data từ API
   const { data: proposal, loading, error } = useReplacementProposal(id);
   const { updateStatus } = useUpdateReplacementProposalStatus();
+
+  // Default form data for preview modal
+  const defaultSubmissionFormData: SubmissionFormData = useMemo(
+    () => ({
+      recipientDepartment: "Ban Giám hiệu",
+      submittedBy: "Giảng Thanh Trọn",
+      position: "Tổ trưởng Kỹ thuật",
+      department: "Phòng Quản trị",
+      subject: proposal?.title || "",
+      attachments: "Biên bản kiểm tra kỹ thuật",
+      content: proposal?.description || "",
+      director: "TS. Lê Nhất Duy",
+      rector: "TS. Phan Hồng Hải",
+    }),
+    [proposal?.title, proposal?.description]
+  );
 
   // Loading state
   if (loading) {
@@ -119,7 +140,7 @@ export default function XuLyToTrinhDetailPage() {
       case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-lime-100 text-lime-800 border-lime-200";
       case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-lime-100 text-lime-800 border-lime-200";
       case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
         return "bg-red-100 text-red-800 border-red-200";
       default:
@@ -190,14 +211,52 @@ export default function XuLyToTrinhDetailPage() {
     }
   };
 
+  // Hàm xử lý khi chuyển sang B8 (CHỜ_XÁC_MINH)
+  const handleVerificationRequest = async () => {
+    if (!proposal) return;
+
+    setIsProcessing(true);
+
+    try {
+      // Chuyển sang trạng thái CHỜ_XÁC_MINH (B8)
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
+      });
+
+      setIsProcessing(false);
+      setShowVerificationModal(false);
+
+      Modal.success({
+        title: "Yêu cầu xác minh thành công",
+        content: `Tờ trình ${proposal.proposalCode} đã được chuyển sang trạng thái "Chờ xác minh".`,
+        okText: "Đóng",
+        onOk: () => {
+          router.push("/phong-quan-tri/xu-ly-to-trinh");
+        },
+      });
+    } catch (error) {
+      console.error("Error requesting verification:", error);
+      setIsProcessing(false);
+      setShowVerificationModal(false);
+
+      Modal.error({
+        title: "Lỗi",
+        content: "Có lỗi xảy ra khi yêu cầu xác minh. Vui lòng thử lại.",
+        okText: "Đóng",
+      });
+    }
+  };
+
   const handleSignConfirm = async () => {
     if (!proposal) return;
 
     setIsProcessing(true);
 
     try {
+      // Khi Phòng Quản trị xác minh tờ trình,
+      // chuyển sang trạng thái ĐÃ_XÁC_MINH (B9)
       await updateStatus(proposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+        status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
       });
 
       setIsProcessing(false);
@@ -206,14 +265,179 @@ export default function XuLyToTrinhDetailPage() {
       // Chuyển hướng đến trang lập biên bản
       router.push("/phong-quan-tri/lap-bien-ban");
     } catch (error) {
-      console.error("Error approving proposal:", error);
+      console.error("Error verifying proposal:", error);
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
       Modal.error({
         title: "Lỗi",
-        content: "Có lỗi xảy ra khi duyệt tờ trình. Vui lòng thử lại.",
+        content: "Có lỗi xảy ra khi xác minh tờ trình. Vui lòng thử lại.",
         okText: "Đóng",
+      });
+    }
+  };
+
+  // Hàm generate HTML cho tờ trình
+  const generateSubmissionHTML = (
+    formData: SubmissionFormData,
+    proposal: ReplacementProposal
+  ): string => {
+    // Ensure formData.submittedBy is always "Giảng Thanh Trọn"
+    const fixedFormData = {
+      ...formData,
+      submittedBy: "Giảng Thanh Trọn",
+      position: "Tổ trưởng Kỹ thuật",
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: 'Times New Roman', Times, serif; font-size: 13pt; line-height: 1.5; margin: 40px; }
+          .header-table { width: 100%; border: none; margin-bottom: 10px; }
+          .header-table td { border: none; padding: 0; vertical-align: top; font-size: 11pt; }
+          .header-left { text-align: center; width: 50%; }
+          .header-right { text-align: center; width: 50%; }
+          .title { text-align: center; font-weight: bold; font-size: 14pt; margin: 20px 0; }
+          .subtitle { text-align: center; font-size: 13pt; margin-bottom: 20px; }
+          .content { margin: 20px 0; }
+          table.items { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          table.items th, table.items td { border: 1px solid black; padding: 8px; text-align: left; }
+          .signature-table { width: 100%; border: none; margin-top: 30px; }
+          .signature-table td { border: none; text-align: center; vertical-align: top; }
+        </style>
+      </head>
+      <body>
+        <table class="header-table">
+          <tr>
+            <td class="header-left">
+              <strong>TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP</strong><br>
+              <strong>THÀNH PHỐ HỒ CHÍ MINH</strong><br>
+              <strong>${fixedFormData.department?.toUpperCase()}</strong>
+            </td>
+            <td class="header-right">
+              <strong>CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</strong><br>
+              <strong>Độc lập - Tự do - Hạnh phúc</strong>
+            </td>
+          </tr>
+        </table>
+        <p style="text-align: right; margin: 20px 0;">
+          <em>Thành phố Hồ Chí Minh, ngày ___ tháng ___ năm 2025</em>
+        </p>
+        <h2 class="title">PHIẾU ĐỀ NGHỊ GIẢI QUYẾT CÔNG VIỆC</h2>
+        <h3 class="subtitle">${fixedFormData.subject}</h3>
+        <div class="content">
+          <p><strong>Kính gửi:</strong> ${fixedFormData.recipientDepartment}</p>
+          <p><strong>Người đề nghị:</strong> ${
+            fixedFormData.submittedBy
+          } &nbsp;&nbsp;&nbsp;&nbsp; <strong>Chức vụ:</strong> ${
+      fixedFormData.position
+    }</p>
+          <p><strong>Đơn vị:</strong> ${fixedFormData.department}</p>
+          <p><strong>Đề nghị:</strong> ${fixedFormData.subject}</p>
+          <p><strong>Văn bản kèm theo:</strong> ${fixedFormData.attachments}</p>
+          <h4 style="text-align: center; margin: 20px 0;">NỘI DUNG</h4>
+          <p style="text-align: justify;">${fixedFormData.content}</p>
+          ${
+            proposal.items && proposal.items.length > 0
+              ? `
+            <p><strong>Danh sách linh kiện đề xuất thay thế:</strong></p>
+            <table class="items">
+              <thead>
+                <tr>
+                  <th>STT</th>
+                  <th>Linh kiện cũ</th>
+                  <th>Vị trí</th>
+                  <th>SL</th>
+                  <th>Lý do</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${proposal.items
+                  .map(
+                    (item, index) => `
+                  <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td>${
+                      item.oldComponent?.name || "Không xác định"
+                    }<br><small>${
+                      item.oldComponent?.componentSpecs || ""
+                    }</small></td>
+                    <td>${
+                      item.oldComponent?.roomLocation || "Chưa xác định"
+                    }</td>
+                    <td style="text-align: center;">${item.quantity}</td>
+                    <td>${item.reason || "Cần thay thế"}</td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          `
+              : ""
+          }
+          <p style="margin-top: 20px;">${
+            fixedFormData.department
+          } kính trình Ban Giám hiệu xem xét và phê duyệt.</p>
+          <table class="signature-table">
+            <tr>
+              <td style="width: 33%;">
+                <strong>Trưởng phòng</strong><br><br><br><br><br>
+                ${fixedFormData.director}
+              </td>
+              <td style="width: 33%;">
+                <strong>Hiệu trưởng</strong><br><br><br><br><br>
+                ${fixedFormData.rector}
+              </td>
+              <td style="width: 33%;">
+                <strong>${fixedFormData.position}</strong><br>
+                <em>(Ký và ghi rõ họ tên)</em><br><br><br><br>
+                ${fixedFormData.submittedBy}
+              </td>
+            </tr>
+          </table>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // Hàm xử lý export tờ trình
+  const handleExportSubmissionDocx = () => {
+    if (!proposal) return;
+
+    try {
+      const htmlContent = generateSubmissionHTML(
+        defaultSubmissionFormData,
+        proposal
+      );
+
+      const blob = new Blob([htmlContent], {
+        type: "application/vnd.ms-word",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `To_trinh_${proposal.proposalCode}_${
+        new Date().toISOString().split("T")[0]
+      }.doc`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      Modal.success({
+        title: "Xuất file thành công!",
+        content: `File tờ trình đã được tải xuống.`,
+        centered: true,
+      });
+    } catch (error) {
+      console.error("Lỗi xuất file:", error);
+      Modal.error({
+        title: "Lỗi",
+        content: "Không thể xuất file. Vui lòng thử lại.",
+        centered: true,
       });
     }
   };
@@ -287,8 +511,9 @@ export default function XuLyToTrinhDetailPage() {
               <h3 className="text-lg font-medium text-gray-900">
                 Thông tin cơ bản
               </h3>
-              {proposal.status ===
-                ReplacementProposalStatus.CHỜ_XÁC_MINH && (
+              {(proposal.status === ReplacementProposalStatus.CHỜ_XÁC_MINH ||
+                proposal.status ===
+                  ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH) && (
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
@@ -298,11 +523,24 @@ export default function XuLyToTrinhDetailPage() {
                     className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500">
                     Từ chối
                   </button>
-                  <button
-                    onClick={() => setShowSignConfirmModal(true)}
-                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500">
-                    Duyệt
-                  </button>
+                  {/* Nút chuyển sang B8 - chỉ hiển thị khi status là B6 */}
+                  {proposal.status ===
+                    ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
+                    <button
+                      onClick={() => setShowVerificationModal(true)}
+                      className="inline-flex items-center px-3 py-1 border border-yellow-300 text-xs font-medium rounded text-yellow-700 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-yellow-500">
+                      Yêu cầu xác minh
+                    </button>
+                  )}
+                  {/* Nút xác minh (B9) - chỉ hiển thị khi status là B8 (CHỜ_XÁC_MINH) */}
+                  {proposal.status ===
+                    ReplacementProposalStatus.CHỜ_XÁC_MINH && (
+                    <button
+                      onClick={() => setShowSignConfirmModal(true)}
+                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500">
+                      Duyệt
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -477,32 +715,31 @@ export default function XuLyToTrinhDetailPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Tài liệu đính kèm
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4 bg-blue-50">
               {proposal.submissionFormUrl && (
                 <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
                   <div className="flex items-center space-x-3">
                     <FileText className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        Tờ trình đề xuất
+                        {getFileNameFromUrl(proposal.submissionFormUrl)}
                       </p>
-                      <p className="text-xs text-gray-500">PDF Document</p>
+                      <p className="text-xs text-gray-500">DOC Document</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <a
-                      href={proposal.submissionFormUrl}
-                      className="text-blue-600 hover:text-blue-900"
+                    <button
+                      onClick={() => setShowSubmissionPreview(true)}
+                      className="text-blue-600 hover:bg-blue-100 rounded transition-colors"
                       title="Xem tài liệu">
-                      <Eye className="w-4 h-4" />
-                    </a>
-                    <a
-                      href={proposal.submissionFormUrl}
-                      download
-                      className="text-gray-600 hover:text-gray-900"
+                      <Eye className="w-4 h-4 text-blue-600" />
+                    </button>
+                    <button
+                      onClick={handleExportSubmissionDocx}
+                      className="text-gray-600 hover:bg-blue-100 rounded transition-colors"
                       title="Tải xuống">
-                      <Download className="w-4 h-4" />
-                    </a>
+                      <Download className="w-4 h-4 text-blue-600" />
+                    </button>
                   </div>
                 </div>
               )}
@@ -553,7 +790,63 @@ export default function XuLyToTrinhDetailPage() {
         </div>
       )}
 
-      {/* SignConfirmModal cho duyệt tờ trình */}
+      {/* Verification Request Modal - Chuyển sang B8 */}
+      <Modal
+        open={showVerificationModal}
+        onCancel={() => setShowVerificationModal(false)}
+        footer={[
+          <button
+            key="cancel"
+            onClick={() => setShowVerificationModal(false)}
+            disabled={isProcessing}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
+            Hủy
+          </button>,
+          <button
+            key="confirm"
+            onClick={handleVerificationRequest}
+            disabled={isProcessing}
+            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            {isProcessing ? "Đang xử lý..." : "Xác nhận yêu cầu xác minh"}
+          </button>,
+        ]}
+        centered
+        width={500}
+        title="Yêu cầu xác minh tờ trình">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <AlertTriangle className="h-8 w-8 text-yellow-600" />
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                Bạn có chắc chắn muốn yêu cầu xác minh tờ trình sau?
+              </h3>
+              <p className="text-sm text-yellow-600 mt-1 font-medium">
+                Sau khi yêu cầu, trạng thái tờ trình sẽ được chuyển thành
+                &ldquo;Chờ xác minh&rdquo; (B8).
+              </p>
+            </div>
+          </div>
+
+          {proposal && (
+            <div className="bg-gray-50 p-4 rounded-md">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-600">Mã tờ trình:</div>
+                <div className="font-medium">{proposal.proposalCode}</div>
+
+                <div className="text-gray-600">Tiêu đề:</div>
+                <div className="font-medium">{proposal.title}</div>
+
+                <div className="text-gray-600">Thời gian yêu cầu:</div>
+                <div className="font-medium">
+                  {new Date().toLocaleString("vi-VN")}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* SignConfirmModal cho duyệt/xác minh tờ trình */}
       <SignConfirmModal
         isOpen={showSignConfirmModal}
         onClose={() => setShowSignConfirmModal(false)}
@@ -562,7 +855,31 @@ export default function XuLyToTrinhDetailPage() {
         reportNumber={proposal.proposalCode}
         isLoading={isProcessing}
         actionType="approve"
+        customTitle={
+          proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
+            ? "Xác nhận xác minh tờ trình"
+            : "Xác nhận duyệt tờ trình"
+        }
+        customDescription={
+          proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
+            ? `Bạn có chắc chắn muốn xác minh tờ trình ${proposal.proposalCode}?`
+            : `Bạn có chắc chắn muốn duyệt tờ trình ${proposal.proposalCode}?`
+        }
+        customWarning="Sau khi xác minh, trạng thái tờ trình sẽ được chuyển thành 'Đã xác minh' (B9) và không thể hoàn tác."
       />
+
+      {/* Submission Preview Modal */}
+      {proposal && (
+        <SubmissionPreviewModal
+          isOpen={showSubmissionPreview}
+          onClose={() => setShowSubmissionPreview(false)}
+          formData={defaultSubmissionFormData}
+          proposal={proposal}
+          onExport={handleExportSubmissionDocx}
+          onSubmit={() => {}}
+          showSubmitButton={false}
+        />
+      )}
     </div>
   );
 }

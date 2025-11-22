@@ -60,7 +60,7 @@ export default function BienBanPage() {
     useState<InspectionReport | null>(null);
   const [isSigningInProgress, setIsSigningInProgress] = useState(false);
 
-  // Memoize query params
+  // Memoize query params - lấy tất cả rồi filter ở frontend để lấy cả B10 và B11
   const queryParams = useMemo(() => {
     const mappedSortBy =
       sortField === "reportNumber"
@@ -72,10 +72,10 @@ export default function BienBanPage() {
         : sortField || "createdAt";
 
     return {
-      status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
+      status: undefined, // Không filter ở API, sẽ filter ở frontend
       search: searchTerm || undefined,
-      page: currentPage,
-      limit: pageSize,
+      page: 1,
+      limit: 1000, // Lấy tất cả để xử lý phân trang và sort trên client
       sortBy: mappedSortBy as
         | "createdAt"
         | "updatedAt"
@@ -83,31 +83,48 @@ export default function BienBanPage() {
         | "status",
       sortOrder: sortDirection.toUpperCase() as "ASC" | "DESC",
     };
-  }, [searchTerm, currentPage, pageSize, sortField, sortDirection]);
+  }, [searchTerm, sortField, sortDirection]);
 
   // Fetch data from API
   const {
     data: apiData,
     loading,
     error,
+    refetch,
   } = useReplacementProposals(queryParams);
 
   // Transform API data to InspectionReport format
   const inspectionReports = useMemo(() => {
     if (!apiData?.data) return [];
 
-    return apiData.data.map((proposal) => ({
+    // Filter chỉ lấy B10 (ĐÃ_GỬI_BIÊN_BẢN) và B11 (ĐÃ_KÝ_BIÊN_BẢN)
+    const ALLOWED_STATUSES = [
+      ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN, // B10
+      ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN, // B11
+    ];
+
+    const filteredProposals = apiData.data.filter((proposal) =>
+      ALLOWED_STATUSES.includes(proposal.status)
+    );
+
+    return filteredProposals.map((proposal) => ({
       id: proposal.id,
       reportNumber: proposal.proposalCode,
       title: `Biên bản kiểm tra - ${proposal.title || "Không có tiêu đề"}`,
       relatedReportTitle: proposal.submissionFormUrl
-        ? `Tờ trình: ${proposal.submissionFormUrl.split("/").pop()}`
+        ? `${proposal.submissionFormUrl.split("/").pop()}`
         : proposal.title || "Không có tờ trình liên quan",
       createdBy: proposal.proposer?.fullName || "Unknown",
       inspectionDate: new Date(proposal.createdAt).toISOString().split("T")[0],
-      status: "pending" as const, // Tất cả đều pending vì đang ở trạng thái ĐÃ_GỬI_BIÊN_BẢN
+      status:
+        proposal.status === ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN
+          ? ("signed" as const)
+          : ("pending" as const), // B10 = pending, B11 = signed
       leaderSignature: proposal.teamLeadApprover?.fullName,
-      leaderSignedAt: proposal.updatedAt,
+      leaderSignedAt:
+        proposal.status === ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN
+          ? proposal.updatedAt
+          : undefined,
     }));
   }, [apiData]);
 
@@ -135,9 +152,9 @@ export default function BienBanPage() {
     };
   }, []);
 
-  // Client-side filtering (API already filters by status ĐÃ_GỬI_BIÊN_BẢN)
+  // Client-side filtering (đã filter B10 và B11 trong inspectionReports)
   const filteredReports = useMemo(() => {
-    // Data is already filtered by API
+    // Data đã được filter B10 và B11 trong inspectionReports
     return inspectionReports;
   }, [inspectionReports]);
 
@@ -219,11 +236,22 @@ export default function BienBanPage() {
         newStatus: ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
       });
 
-      // Đóng modal - list sẽ tự động refresh do API call
+      // Đóng modal
       setShowSignModal(false);
+      setSelectedReportForSign(null);
 
-      // Reload data by resetting current page to trigger refetch
-      setCurrentPage((prev) => prev);
+      // Refresh danh sách để cập nhật trạng thái
+      refetch();
+
+      // Hiển thị thông báo thành công
+      Modal.success({
+        title: "Ký biên bản thành công!",
+        content: `Biên bản ${selectedReportForSign.reportNumber} đã được ký thành công. Trạng thái đã chuyển sang "Đã ký".`,
+        centered: true,
+        onOk: () => {
+          // Sau khi ký, item vẫn hiển thị trong danh sách với trạng thái "Đã ký" (B11)
+        },
+      });
     } catch (error) {
       console.error("❌ Error signing report:", error);
       alert(
@@ -243,12 +271,15 @@ export default function BienBanPage() {
     console.log("Send back functionality has been removed:", reportId);
   };
 
-  // Pagination logic - API handles pagination
-  const getCurrentData = () => {
-    return sortedReports;
-  };
+  // Pagination logic - Client-side pagination (vì đã filter ở frontend)
+  const totalFiltered = sortedReports.length;
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedReports = sortedReports.slice(startIndex, endIndex);
 
-  const totalFiltered = apiData?.total || 0;
+  const getCurrentData = () => {
+    return paginatedReports;
+  };
 
   // Selection handlers
   const handleSelectAll = (checked: boolean) => {
