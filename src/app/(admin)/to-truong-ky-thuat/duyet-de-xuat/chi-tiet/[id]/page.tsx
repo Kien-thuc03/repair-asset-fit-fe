@@ -12,7 +12,6 @@ import {
   Alert,
   Table,
   Modal,
-  Input,
   Spin,
 } from "antd";
 import {
@@ -369,6 +368,12 @@ export default function ChiTietDuyetDeXuatPage() {
       return;
     }
 
+    // Guard: Nếu modal đã mở, không mở lại
+    if (showSubmissionModal) {
+      console.log("Submission modal already open, skipping...");
+      return;
+    }
+
     // Auto-generate content based on the proposal
     const proposerName = proposal.proposer?.fullName || "Không xác định";
     const componentsList =
@@ -442,23 +447,61 @@ Trân trọng kính trình.`;
         throw new Error(uploadResult.error || "Upload file thất bại");
       }
 
-      // 3. Cập nhật trạng thái với URL file và teamLeadApproverId
-      await updateStatus(proposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
-        submissionFormUrl: uploadResult.url,
-        teamLeadApproverId: TEAM_LEAD_APPROVER_ID,
+      console.log("✅ File uploaded successfully:", {
+        url: uploadResult.url,
+        proposalId: proposal.id,
+        proposalCode: proposal.proposalCode,
       });
+
+      // Validate URL
+      if (!uploadResult.url || uploadResult.url.trim() === "") {
+        throw new Error("URL file tờ trình không hợp lệ");
+      }
+
+      // 3. Cập nhật trạng thái với URL file và teamLeadApproverId
+      const updateData = {
+        status: ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+        submissionFormUrl: uploadResult.url.trim(),
+        teamLeadApproverId: TEAM_LEAD_APPROVER_ID,
+      };
+
+      console.log("📤 Sending update request with data:", {
+        ...updateData,
+        submissionFormUrl:
+          updateData.submissionFormUrl.substring(0, 100) + "...", // Log một phần URL để debug
+      });
+
+      const updatedProposal = await updateStatus(proposal.id, updateData);
+
+      // Verify that submissionFormUrl was saved
+      if (updatedProposal.submissionFormUrl) {
+        console.log(
+          "✅ submissionFormUrl saved successfully:",
+          updatedProposal.submissionFormUrl.substring(0, 100) + "..."
+        );
+      } else {
+        console.warn(
+          "⚠️ Warning: submissionFormUrl not found in response:",
+          updatedProposal
+        );
+      }
+
+      console.log(
+        "✅ Status updated successfully with submissionFormUrl:",
+        uploadResult.url
+      );
 
       // Update local status
       setCurrentRequestStatus("ĐÃ_LẬP_TỜ_TRÌNH");
       console.log("Status updated to ĐÃ_LẬP_TỜ_TRÌNH");
 
+      // Refetch để lấy dữ liệu mới nhất (bao gồm submissionFormUrl)
+      await refetch();
+      console.log("✅ Data refetched after status update");
+
       // Close modal and reset state
       setShowSubmissionModal(false);
       setShowSubmissionPreview(false);
-
-      // Redirect immediately
-      router.push("/to-truong-ky-thuat/lap-to-trinh");
 
       // Show success message
       Modal.success({
@@ -467,9 +510,11 @@ Trân trọng kính trình.`;
         centered: true,
         mask: false,
         keyboard: false,
+        onOk: () => {
+          // Redirect sau khi đóng modal
+          router.push("/to-truong-ky-thuat/lap-to-trinh");
+        },
       });
-
-      refetch();
     } catch (err) {
       console.error("Error creating submission:", err);
       Modal.error({
@@ -992,7 +1037,10 @@ Trân trọng kính trình.`;
             type="primary"
             onClick={() => {
               setShowApprovalConfirmModal(false);
-              handleCreateSubmissionForm();
+              // Đợi một chút để modal approval đóng hoàn toàn trước khi mở modal submission
+              setTimeout(() => {
+                handleCreateSubmissionForm();
+              }, 100);
             }}
             size="middle"
             className="text-xs sm:text-sm">
@@ -1032,194 +1080,6 @@ Trân trọng kính trình.`;
         <p className="text-gray-600 text-xs sm:text-sm">
           Bạn có chắc chắn muốn từ chối đề xuất này không?
         </p>
-      </Modal>
-
-      {/* Modal lập tờ trình */}
-      <Modal
-        title={
-          <div className="flex items-center space-x-2">
-            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-            <span className="text-sm sm:text-base">Lập tờ trình đề xuất</span>
-          </div>
-        }
-        open={showSubmissionModal}
-        onCancel={() => setShowSubmissionModal(false)}
-        width="95%"
-        style={{ maxWidth: "800px", top: 20 }}
-        destroyOnClose={false}
-        maskClosable={false}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={() => setShowSubmissionModal(false)}
-            className="text-xs sm:text-sm"
-            size="middle">
-            Hủy
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleSubmitSubmission}
-            className="bg-purple-600 hover:bg-purple-700 text-xs sm:text-sm"
-            size="middle">
-            Gửi tờ trình
-          </Button>,
-        ]}>
-        <div className="space-y-3 sm:space-y-4 max-h-[70vh] overflow-y-auto px-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Người đề nghị
-              </label>
-              <Input
-                value={submissionFormData.submittedBy}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    submittedBy: e.target.value,
-                  }))
-                }
-                className="text-xs sm:text-sm"
-                size="middle"
-              />
-            </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Chức vụ
-              </label>
-              <Input
-                value={submissionFormData.position}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    position: e.target.value,
-                  }))
-                }
-                className="text-xs sm:text-sm"
-                size="middle"
-              />
-            </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Đơn vị đề nghị
-              </label>
-              <Input
-                value={submissionFormData.department}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    department: e.target.value,
-                  }))
-                }
-                className="text-xs sm:text-sm"
-                size="middle"
-              />
-            </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Đơn vị tiếp nhận
-              </label>
-              <Input
-                value={submissionFormData.recipientDepartment}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    recipientDepartment: e.target.value,
-                  }))
-                }
-                className="text-xs sm:text-sm"
-                size="middle"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Đề nghị
-            </label>
-            <Input
-              value={submissionFormData.subject}
-              onChange={(e) =>
-                setSubmissionFormData((prev) => ({
-                  ...prev,
-                  subject: e.target.value,
-                }))
-              }
-              className="text-xs sm:text-sm"
-              size="middle"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Nội dung tờ trình
-            </label>
-            <Input.TextArea
-              rows={6}
-              value={submissionFormData.content}
-              onChange={(e) =>
-                setSubmissionFormData((prev) => ({
-                  ...prev,
-                  content: e.target.value,
-                }))
-              }
-              placeholder="Nội dung chi tiết của tờ trình..."
-              className="text-xs sm:text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-              Văn bản kèm theo
-            </label>
-            <Input
-              value={submissionFormData.attachments}
-              onChange={(e) =>
-                setSubmissionFormData((prev) => ({
-                  ...prev,
-                  attachments: e.target.value,
-                }))
-              }
-              className="text-xs sm:text-sm"
-              size="middle"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Giám đốc
-              </label>
-              <Input
-                value={submissionFormData.director}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    director: e.target.value,
-                  }))
-                }
-                className="text-xs sm:text-sm"
-                size="middle"
-              />
-            </div>
-            <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-                Hiệu trưởng
-              </label>
-              <Input
-                value={submissionFormData.rector}
-                onChange={(e) =>
-                  setSubmissionFormData((prev) => ({
-                    ...prev,
-                    rector: e.target.value,
-                  }))
-                }
-                className="text-xs sm:text-sm"
-                size="middle"
-              />
-            </div>
-          </div>
-        </div>
       </Modal>
 
       {/* Modal lập tờ trình */}
