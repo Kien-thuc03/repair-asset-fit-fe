@@ -121,17 +121,11 @@ export default function RequestDetailPage() {
       }
 
       // 3. Cập nhật trạng thái theo workflow
-      // Workflow: KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH → ĐÃ_DUYỆT_TỜ_TRÌNH → CHỜ_XÁC_MINH → ĐÃ_XÁC_MINH → ĐÃ_GỬI_BIÊN_BẢN
+      // Workflow: KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH → ĐÃ_DUYỆT_TỜ_TRÌNH → CHỜ_XÁC_MINH → ĐÃ_XÁC_MINH → ĐÃ_GỬI_BIÊN_BẢN (B10)
 
-      // Chuyển từ ĐÃ_XÁC_MINH sang ĐÃ_GỬI_BIÊN_BẢN sau khi lập biên bản
-      if (proposal.status === ReplacementProposalStatus.ĐÃ_XÁC_MINH) {
-        await updateStatus(proposal.id, {
-          status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
-          verificationReportUrl: uploadResult.url,
-        });
-      }
+      // Chuyển từ ĐÃ_XÁC_MINH (B9) sang ĐÃ_GỬI_BIÊN_BẢN (B10) sau khi lập biên bản
       await updateStatus(proposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
+        status: ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN, // B10
         verificationReportUrl: uploadResult.url,
       });
 

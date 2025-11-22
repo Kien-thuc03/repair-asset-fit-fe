@@ -194,6 +194,7 @@ export default function InspectionTable({
                           title="Xem chi tiết">
                           <Eye className="h-4 w-4" />
                         </button>
+                        {/* Chỉ hiển thị nút "Ký" cho status pending (B10) */}
                         {report.status === "pending" && (
                           <button
                             onClick={() => onSignReport(report)}
@@ -203,15 +204,7 @@ export default function InspectionTable({
                             <span className="ml-1 hidden xl:inline">Ký</span>
                           </button>
                         )}
-                        {report.status === "signed" && (
-                          <button
-                            onClick={() => onSendBack(report.id)}
-                            className="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
-                            title="Gửi lại">
-                            <Send className="h-3 w-3" />
-                            <span className="ml-1 hidden xl:inline">Gửi</span>
-                          </button>
-                        )}
+                        {/* Status "signed" (B11) chỉ có nút xem chi tiết, không có nút gửi lại */}
                       </div>
                     </td>
                   </tr>
