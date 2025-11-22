@@ -18,10 +18,8 @@ import {
 import { Breadcrumb, Modal, Button } from "antd";
 import { SortableHeader } from "@/components/common";
 import { useReplacementProposals } from "@/hooks";
-import {
-  ReplacementProposal,
-  ReplacementProposalStatus,
-} from "@/lib/api/replacement-proposals";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types";
 
 type SortField = keyof ReplacementProposal;
 type SortDirection = "asc" | "desc" | null;
@@ -42,7 +40,7 @@ export default function LapBienBanPage() {
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
 
-  // Fetch proposals với status ĐÃ_XÁC_MINH (sau khi Phòng Quản trị đã xác minh)
+  // Fetch proposals với status ĐÃ_XÁC_MINH (B9 - Phòng Quản trị đã xác nhận và xác minh thực tế xong)
   const {
     data: apiData,
     loading,
@@ -73,7 +71,7 @@ export default function LapBienBanPage() {
 
   const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_XÁC_MINH:
         return "bg-green-100 text-green-800 border-green-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -82,7 +80,7 @@ export default function LapBienBanPage() {
 
   const getStatusIcon = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_XÁC_MINH:
         return <CheckCircle className="w-4 h-4" />;
       default:
         return <FileText className="w-4 h-4" />;
@@ -189,11 +187,11 @@ export default function LapBienBanPage() {
           STT: index + 1,
           "Mã tờ trình": proposal.proposalCode,
           "Tiêu đề": proposal.title || "",
-          "Người tạo": proposal.proposer?.fullName || "Chưa xác định",
+          "Người tạo": proposal.teamLeadApprover?.fullName || "Chưa xác định",
           "Tổng số phòng": stats.totalRooms,
           "Tổng loại linh kiện": stats.totalComponents,
           "Tổng số lượng": stats.totalQuantity,
-          "Trạng thái": "Đã duyệt",
+          "Trạng thái": "Đã xác minh",
           "Ngày tạo": new Date(proposal.createdAt).toLocaleDateString("vi-VN"),
           "Ngày cập nhật": new Date(proposal.updatedAt).toLocaleDateString(
             "vi-VN"
@@ -300,7 +298,9 @@ export default function LapBienBanPage() {
               Danh sách biên bản kiểm tra
             </h1>
             <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Quản lý các biên bản kiểm tra thực tế đã được tạo
+              Danh sách các tờ trình đã được Phòng Quản trị xác minh (trạng thái
+              &ldquo;Đã xác minh&rdquo; - B9). Bạn có thể lập biên bản kiểm tra
+              cho các tờ trình này.
             </p>
           </div>
         </div>
@@ -500,7 +500,7 @@ export default function LapBienBanPage() {
                                 proposal.status
                               )}`}>
                               {getStatusIcon(proposal.status)}
-                              <span className="ml-1 truncate">Đã duyệt</span>
+                              <span className="ml-1 truncate">Đã xác minh</span>
                             </span>
                           </td>
                           <td className="px-2 py-4">
@@ -646,7 +646,7 @@ export default function LapBienBanPage() {
                           proposal.status
                         )}`}>
                         {getStatusIcon(proposal.status)}
-                        <span className="ml-1">Đã duyệt</span>
+                        <span className="ml-1">Đã xác minh</span>
                       </span>
                       <button
                         onClick={() => handleViewReport(proposal.id)}

@@ -112,6 +112,7 @@ export default function InspectionMobileView({
                     <Eye className="h-4 w-4" />
                     <span>Xem</span>
                   </button>
+                  {/* Chỉ hiển thị nút "Ký" cho status pending (B10) */}
                   {report.status === "pending" && (
                     <button
                       onClick={() => onSignReport(report)}
@@ -119,13 +120,7 @@ export default function InspectionMobileView({
                       Ký
                     </button>
                   )}
-                  {report.status === "signed" && (
-                    <button
-                      onClick={() => onSendBack(report.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                      Gửi lại
-                    </button>
-                  )}
+                  {/* Status "signed" (B11) chỉ có nút xem chi tiết, không có nút gửi lại */}
                 </div>
               </div>
             </div>

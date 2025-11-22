@@ -63,7 +63,7 @@ export default function SubmissionFormModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Người đề nghị
+              Người đề nghị <span className="text-red-500">*</span>
             </label>
             <Input
               value={formData.submittedBy}
@@ -73,6 +73,7 @@ export default function SubmissionFormModal({
                   submittedBy: e.target.value,
                 })
               }
+              placeholder="Ví dụ: Giảng Thanh Trọn"
             />
           </div>
           <div>
