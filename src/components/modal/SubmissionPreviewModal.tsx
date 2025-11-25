@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal } from "antd";
+import { Modal, Button } from "antd";
 import { Download } from "lucide-react";
 import { SubmissionFormData } from "@/types";
 import { ReplacementProposal } from "@/lib/api/replacement-proposals";
@@ -13,6 +13,7 @@ interface SubmissionPreviewModalProps {
   onExport: () => void;
   onSubmit: () => void;
   showSubmitButton?: boolean; // Optional prop to show/hide submit button
+  isSubmitting?: boolean;
 }
 
 export default function SubmissionPreviewModal({
@@ -23,6 +24,7 @@ export default function SubmissionPreviewModal({
   onExport,
   onSubmit,
   showSubmitButton = true, // Default to true for backward compatibility
+  isSubmitting = false,
 }: SubmissionPreviewModalProps) {
   // Early return if no proposal or formData
   if (!proposal || !formData) return null;
@@ -34,28 +36,29 @@ export default function SubmissionPreviewModal({
       onCancel={onClose}
       footer={
         <div className="flex flex-row justify-end gap-2 sm:gap-3">
-          <button
-            onClick={onClose}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+          <Button onClick={onClose} size="small" className="text-xs sm:text-sm">
             Đóng
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={onExport}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2">
-            <Download className="w-4 h-4" />
+            size="small"
+            icon={<Download className="w-4 h-4" />}
+            className="text-xs sm:text-sm">
             Xuất file
-          </button>
+          </Button>
           {showSubmitButton && (
-            <button
-              type="button"
+            <Button
+              type="primary"
               onClick={() => {
                 onClose();
                 onSubmit();
               }}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
+              loading={isSubmitting}
+              disabled={isSubmitting}
+              size="small"
+              className="bg-purple-600 hover:bg-purple-700 text-xs sm:text-sm">
               Gửi tờ trình
-            </button>
+            </Button>
           )}
         </div>
       }

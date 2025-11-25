@@ -12,6 +12,7 @@ interface SubmissionFormModalProps {
   onExport: () => void;
   onPreview: () => void;
   onSubmit: () => void;
+  isSubmitting?: boolean;
 }
 
 export default function SubmissionFormModal({
@@ -22,6 +23,7 @@ export default function SubmissionFormModal({
   onExport,
   onPreview,
   onSubmit,
+  isSubmitting = false,
 }: SubmissionFormModalProps) {
   return (
     <Modal
@@ -55,6 +57,8 @@ export default function SubmissionFormModal({
           key="submit"
           type="primary"
           onClick={onSubmit}
+          loading={isSubmitting}
+          disabled={isSubmitting}
           className="bg-purple-600 hover:bg-purple-700">
           Gửi tờ trình
         </Button>,

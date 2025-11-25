@@ -51,6 +51,7 @@ export default function ChiTietDuyetDeXuatPage() {
   // State for submission flow
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionFormData, setSubmissionFormData] =
     useState<SubmissionFormData>({
       submittedBy: "Giảng Thanh Trọn",
@@ -422,6 +423,7 @@ Trân trọng kính trình.`;
   const handleSubmitSubmission = async () => {
     if (!proposal) return;
 
+    setIsSubmitting(true);
     try {
       // 1. Tạo file DOCX từ HTML content
       const htmlContent = generateSubmissionHTML(submissionFormData, proposal);
@@ -522,6 +524,8 @@ Trân trọng kính trình.`;
         content: err instanceof Error ? err.message : "Không thể lập tờ trình.",
         centered: true,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1091,6 +1095,7 @@ Trân trọng kính trình.`;
         onExport={handleExportSubmissionDocx}
         onPreview={() => setShowSubmissionPreview(true)}
         onSubmit={handleSubmitSubmission}
+        isSubmitting={isSubmitting}
       />
 
       {/* Modal xem trước tờ trình */}
@@ -1101,6 +1106,7 @@ Trân trọng kính trình.`;
         proposal={proposal}
         onExport={handleExportSubmissionDocx}
         onSubmit={handleSubmitSubmission}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

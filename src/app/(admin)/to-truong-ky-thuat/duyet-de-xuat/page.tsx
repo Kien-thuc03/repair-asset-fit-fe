@@ -66,6 +66,7 @@ export default function DuyetDeXuatPage() {
   // Submission modal state
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRequestForSubmission, setSelectedRequestForSubmission] =
     useState<ReplacementProposal | null>(null);
   const [submissionFormData, setSubmissionFormData] =
@@ -233,6 +234,7 @@ Trân trọng kính trình.`;
   const handleSubmitSubmission = async () => {
     if (!selectedRequestForSubmission) return;
 
+    setIsSubmitting(true);
     try {
       // 1. Tạo file DOCX từ HTML content
       const htmlContent = generateSubmissionHTML(
@@ -293,6 +295,8 @@ Trân trọng kính trình.`;
         content: err instanceof Error ? err.message : "Không thể lập tờ trình.",
         centered: true,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -721,6 +725,7 @@ Trân trọng kính trình.`;
         onExport={handleExportSubmissionDocx}
         onPreview={() => setShowSubmissionPreview(true)}
         onSubmit={handleSubmitSubmission}
+        isSubmitting={isSubmitting}
       />
 
       {/* Modal xem trước tờ trình */}
@@ -731,6 +736,7 @@ Trân trọng kính trình.`;
         proposal={selectedRequestForSubmission}
         onExport={handleExportSubmissionDocx}
         onSubmit={handleSubmitSubmission}
+        isSubmitting={isSubmitting}
       />
     </>
   );
