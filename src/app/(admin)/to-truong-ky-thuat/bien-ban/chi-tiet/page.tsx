@@ -489,6 +489,7 @@ export default function ChiTietBienBanPage() {
         proposal={proposal}
         onExport={handleExportSubmissionDocx}
         onSubmit={() => {}}
+        showSubmitButton={false}
       />
 
       <InspectionPreviewModal
@@ -498,6 +499,7 @@ export default function ChiTietBienBanPage() {
         proposal={proposal}
         onExport={handleExportInspectionDocx}
         onSubmit={() => {}}
+        showSubmitButton={false}
       />
 
       <SignConfirmModal
