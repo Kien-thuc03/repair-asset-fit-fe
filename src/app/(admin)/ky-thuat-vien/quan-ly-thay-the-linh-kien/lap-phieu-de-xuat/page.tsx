@@ -163,13 +163,15 @@ export default function CreateProposalPage() {
       );
 
       // Tạo payload theo format API
+      // Lưu ý: newItemName và newItemSpecs để trống ở phía kỹ thuật viên
+      // Phòng quản trị sẽ cập nhật thông tin này sau
       const proposalData = {
         title: values.title,
         description: values.description,
         items: selectedComponents.map((component) => ({
           oldComponentId: component.componentId,
-          newItemName: component.componentName,
-          newItemSpecs: component.componentSpecs || "",
+          newItemName: "",
+          newItemSpecs: "", // Để trống, phòng quản trị sẽ cập nhật sau
           quantity: component.quantity || 1, // Đảm bảo có quantity
           reason: component.reason || component.repairDescription || "", // Dùng reason hoặc repairDescription
         })),
