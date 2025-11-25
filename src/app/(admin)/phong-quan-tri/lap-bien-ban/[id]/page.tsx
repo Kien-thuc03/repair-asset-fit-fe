@@ -33,6 +33,7 @@ export default function RequestDetailPage() {
   const { user } = useAuth();
   const [showInspectionForm, setShowInspectionForm] = useState(false);
   const [showInspectionPreview, setShowInspectionPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [inspectionFormData, setInspectionFormData] =
     useState<InspectionFormData>({
       requestedBy: "Khoa CNTT",
@@ -123,6 +124,7 @@ export default function RequestDetailPage() {
     if (!proposal) return;
 
     try {
+      setIsSubmitting(true);
       // 1. Tạo file DOCX từ HTML content
       const htmlContent = generateInspectionHTML(inspectionFormData, proposal);
 
@@ -756,6 +758,7 @@ export default function RequestDetailPage() {
           onExport={handleExportInspectionDocx}
           onPreview={() => setShowInspectionPreview(true)}
           onSubmit={handleSubmitInspectionReport}
+          isLoading={isSubmitting}
         />
 
         {/* Modal xem trước biên bản */}
@@ -766,6 +769,7 @@ export default function RequestDetailPage() {
           proposal={proposal}
           onExport={handleExportInspectionDocx}
           onSubmit={handleSubmitInspectionReport}
+          isLoading={isSubmitting}
         />
       </div>
     </div>
