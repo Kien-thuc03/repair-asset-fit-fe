@@ -99,6 +99,14 @@ export default function XuLyToTrinhPage() {
             aValue = a.status;
             bValue = b.status;
             break;
+          case "itemsCount":
+            aValue = a.itemsCount || 0;
+            bValue = b.itemsCount || 0;
+            break;
+          case "proposer":
+            aValue = a.proposer?.fullName?.toLowerCase() || "";
+            bValue = b.proposer?.fullName?.toLowerCase() || "";
+            break;
           default:
             return 0;
         }
@@ -429,12 +437,22 @@ export default function XuLyToTrinhPage() {
                     className="w-[22%]">
                     Tiêu đề
                   </SortableHeader>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[17%]">
+                  <SortableHeader<ReplacementProposal>
+                    field="proposer"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    className="w-[17%]">
                     Người tạo
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                  </SortableHeader>
+                  <SortableHeader<ReplacementProposal>
+                    field="itemsCount"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    className="w-[8%]">
                     Số lượng
-                  </th>
+                  </SortableHeader>
                   <SortableHeader<ReplacementProposal>
                     field="status"
                     sortField={sortField}
