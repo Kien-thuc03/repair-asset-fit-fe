@@ -16,7 +16,7 @@ import {
   Trash2,
   Wrench,
 } from "lucide-react";
-import { Breadcrumb } from "antd";
+import { Breadcrumb, Steps, Divider, Alert } from "antd";
 import { SoftwareProposalStatus, SoftwareProposal } from "@/types/software";
 import {
   CancelConfirmModal,
@@ -56,6 +56,11 @@ const softwareProposalStatusConfig = {
     label: "Đã từ chối",
     color: "text-red-600 bg-red-50 border-red-200",
     icon: XCircle,
+  },
+  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
+    label: "Đang trang bị",
+    color: "text-orange-600 bg-orange-50 border-orange-200",
+    icon: Wrench,
   },
   [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
     label: "Đã trang bị",
@@ -143,7 +148,25 @@ export default function SoftwareProposalDetailPage() {
     );
   }
 
-  const StatusIcon = softwareProposalStatusConfig[proposal.status].icon;
+  const StatusIcon =
+    softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
+
+  // Helper function to get status step
+  const getStatusStep = (status: SoftwareProposalStatus) => {
+    // Xử lý trường hợp từ chối - hiển thị ở bước 1 (Đã duyệt) với status error
+    if (status === SoftwareProposalStatus.ĐÃ_TỪ_CHỐI) {
+      return 1; // Bước "Đã duyệt" nhưng với status error
+    }
+
+    const steps = [
+      SoftwareProposalStatus.CHỜ_DUYỆT,
+      SoftwareProposalStatus.ĐÃ_DUYỆT,
+      SoftwareProposalStatus.ĐANG_TRANG_BỊ,
+      SoftwareProposalStatus.ĐÃ_TRANG_BỊ,
+    ];
+    const currentIndex = steps.indexOf(status);
+    return currentIndex >= 0 ? currentIndex : 0;
+  };
 
   return (
     <div className="space-y-6">
@@ -176,51 +199,159 @@ export default function SoftwareProposalDetailPage() {
         ]}
       />
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      {/* Header with Status */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Monitor className="h-6 w-6 text-blue-600" />
-              Chi tiết đề xuất phần mềm
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <Monitor className="w-8 h-8 text-blue-600" />
+              {proposal.proposalCode}
             </h1>
-            <p className="mt-1 text-gray-600">
-              Mã đề xuất:{" "}
-              <span className="font-medium">{proposal.proposalCode}</span>
+            <p className="mt-2 text-gray-600 flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Chi tiết đề xuất phần mềm
             </p>
+          </div>
+          <div className="flex flex-col items-start lg:items-end gap-2">
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${
+                softwareProposalStatusConfig[proposal.status]?.color ||
+                "text-gray-600 bg-gray-50 border-gray-200"
+              }`}>
+              <StatusIcon className="h-4 w-4 mr-1" />
+              {softwareProposalStatusConfig[proposal.status]?.label ||
+                proposal.status}
+            </span>
+            <div className="text-sm text-gray-500 flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              Tạo lúc: {new Date(proposal.createdAt).toLocaleString("vi-VN")}
+            </div>
           </div>
         </div>
 
         {/* Nút hủy đề xuất - chỉ hiển thị khi trạng thái là Chờ duyệt */}
         {proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT && (
-          <button
-            onClick={handleOpenCancelModal}
-            disabled={isDeleting}
-            className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Hủy đề xuất
-          </button>
+          <>
+            <Divider />
+            <div className="flex items-center justify-end">
+              <button
+                onClick={handleOpenCancelModal}
+                disabled={isDeleting}
+                className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Hủy đề xuất
+              </button>
+            </div>
+          </>
         )}
+
+        {/* Status Progress */}
+        <Divider />
+        <div className="mt-4">
+          <h3 className="text-sm font-medium text-gray-900 mb-3">
+            Tiến độ xử lý
+          </h3>
+          <Steps
+            current={getStatusStep(proposal.status)}
+            status={
+              proposal.status === SoftwareProposalStatus.ĐÃ_TỪ_CHỐI
+                ? "error"
+                : "process"
+            }
+            size="small"
+            items={[
+              {
+                title: "Chờ duyệt",
+                icon: <Clock className="w-4 h-4" />,
+                description:
+                  proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT
+                    ? "Hiện tại"
+                    : "",
+              },
+              {
+                title: "Đã duyệt",
+                icon: <CheckCircle className="w-4 h-4" />,
+                description:
+                  proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT &&
+                  proposal.approverId
+                    ? `Bởi: ${
+                        proposal.approver?.fullName || proposal.approverId
+                      }`
+                    : proposal.approverId
+                    ? new Date(proposal.updatedAt).toLocaleDateString("vi-VN")
+                    : "",
+              },
+              {
+                title: "Đang trang bị",
+                icon: <Wrench className="w-4 h-4" />,
+                description:
+                  proposal.status === SoftwareProposalStatus.ĐANG_TRANG_BỊ
+                    ? proposal.technician
+                      ? `Kỹ thuật viên: ${proposal.technician.fullName}`
+                      : "Hiện tại"
+                    : "",
+              },
+              {
+                title: "Đã trang bị",
+                icon: <Package className="w-4 h-4" />,
+                description:
+                  proposal.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ
+                    ? proposal.technician
+                      ? `Hoàn thành bởi: ${proposal.technician.fullName}`
+                      : new Date(proposal.updatedAt).toLocaleDateString("vi-VN")
+                    : "",
+              },
+            ]}
+          />
+          {/* Status-specific alerts */}
+          {proposal.status === SoftwareProposalStatus.ĐÃ_TỪ_CHỐI && (
+            <Alert
+              className="mt-4"
+              message="Đề xuất đã bị từ chối"
+              description={
+                proposal.approverId
+                  ? `Đề xuất đã bị từ chối bởi ${
+                      proposal.approver?.fullName || proposal.approverId
+                    } lúc ${new Date(proposal.updatedAt).toLocaleString(
+                      "vi-VN"
+                    )}.`
+                  : `Đề xuất đã bị từ chối lúc ${new Date(
+                      proposal.updatedAt
+                    ).toLocaleString("vi-VN")}.`
+              }
+              type="error"
+              icon={<XCircle />}
+              showIcon
+            />
+          )}
+          {proposal.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ && (
+            <Alert
+              className="mt-4"
+              message="Đề xuất đã hoàn thành"
+              description={`Phần mềm đã được trang bị thành công lúc ${new Date(
+                proposal.updatedAt
+              ).toLocaleString("vi-VN")}.${
+                proposal.technician
+                  ? ` Hoàn thành bởi: ${proposal.technician.fullName}.`
+                  : ""
+              }`}
+              type="success"
+              icon={<CheckCircle />}
+              showIcon
+            />
+          )}
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid  gap-6">
         {/* Left Column - Thông tin chính */}
         <div className="lg:col-span-2 space-y-6">
           {/* Thông tin cơ bản */}
           <div className="bg-white shadow rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Thông tin cơ bản
-              </h2>
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${
-                  softwareProposalStatusConfig[proposal.status].color
-                }`}>
-                <StatusIcon className="h-4 w-4 mr-1" />
-                {softwareProposalStatusConfig[proposal.status].label}
-              </span>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              Thông tin cơ bản
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-3">
@@ -327,90 +458,6 @@ export default function SoftwareProposalDetailPage() {
               ) : (
                 <div className="text-center py-4 text-gray-500">
                   Chưa có phần mềm nào trong đề xuất này.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Timeline & Actions */}
-        <div className="space-y-6">
-          {/* Timeline */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Tiến trình xử lý
-            </h2>
-
-            <div className="space-y-4">
-              {/* Tạo đề xuất */}
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <FileText className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Tạo đề xuất</p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(proposal.createdAt).toLocaleString("vi-VN")}
-                  </p>
-                </div>
-              </div>
-
-              {/* Duyệt đề xuất */}
-              {proposal.approverId &&
-                proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT && (
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Đã duyệt</p>
-                      <p className="text-sm text-gray-500">
-                        Bởi:{" "}
-                        {proposal.approver?.fullName || proposal.approverId}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(proposal.updatedAt).toLocaleString("vi-VN")}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-              {/* Từ chối */}
-              {proposal.status === SoftwareProposalStatus.ĐÃ_TỪ_CHỐI && (
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                    <XCircle className="h-4 w-4 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Đã từ chối</p>
-                    {proposal.approverId && (
-                      <p className="text-sm text-gray-500">
-                        Bởi:{" "}
-                        {proposal.approver?.fullName || proposal.approverId}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-400">
-                      {new Date(proposal.updatedAt).toLocaleString("vi-VN")}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Hoàn thành */}
-              {proposal.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ && (
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Package className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Đã trang bị</p>
-                    <p className="text-sm text-gray-500">
-                      Hoàn thành cài đặt phần mềm
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {new Date(proposal.updatedAt).toLocaleString("vi-VN")}
-                    </p>
-                  </div>
                 </div>
               )}
             </div>
