@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -21,12 +21,20 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { SignConfirmModal } from "@/components/modal";
+import {
+  SignConfirmModal,
+  SubmissionPreviewModal,
+  InspectionPreviewModal,
+} from "@/components/modal";
 import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { ReplacementProposalStatus } from "@/types";
+import {
+  ReplacementProposalStatus,
+  SubmissionFormData,
+  InspectionFormData,
+} from "@/types";
 
 const { Title } = Typography;
 
@@ -76,6 +84,8 @@ export default function ChiTietDeXuatThayThePage() {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
+  const [showInspectionPreview, setShowInspectionPreview] = useState(false);
 
   // Xử lý mở modal xác nhận gửi đề xuất
   const handleOpenConfirmModal = () => {
@@ -85,6 +95,106 @@ export default function ChiTietDeXuatThayThePage() {
   // Xử lý đóng modal
   const handleCloseModal = () => {
     setShowConfirmModal(false);
+  };
+
+  // Helper function to extract filename from URL
+  const getFileNameFromUrl = (url: string): string => {
+    try {
+      const urlParts = url.split("/");
+      const filename = urlParts[urlParts.length - 1];
+      // Decode URL encoding (e.g., %20 to space)
+      return decodeURIComponent(filename);
+    } catch {
+      return url;
+    }
+  };
+
+  // Handler để download file
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      // Fetch the file from URL
+      const response = await fetch(url);
+      const blob = await response.blob();
+
+      // Create download link
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      // Fallback: open in new tab
+      window.open(url, "_blank");
+    }
+  };
+
+  // Default form data for preview modals
+  const defaultSubmissionFormData: SubmissionFormData = useMemo(
+    () => ({
+      recipientDepartment: "Ban Giám hiệu",
+      submittedBy: "Giảng Thanh Trọn",
+      position: "Tổ trưởng Kỹ thuật",
+      department: "Phòng Quản trị",
+      subject: proposal?.title || "",
+      attachments: "Biên bản kiểm tra kỹ thuật",
+      content: proposal?.description || "",
+      director: "TS. Lê Nhất Duy",
+      rector: "TS. Phan Hồng Hải",
+    }),
+    [proposal?.title, proposal?.description]
+  );
+
+  const defaultInspectionFormData: InspectionFormData = useMemo(
+    () => ({
+      requestedBy: "Khoa CNTT",
+      year: new Date().getFullYear().toString(),
+      inspectionDay: new Date().getDate().toString(),
+      inspectionMonth: (new Date().getMonth() + 1).toString(),
+      inspectionYear: new Date().getFullYear().toString(),
+      location: "Phòng máy H1",
+      departmentRep: "Giảng Thanh Trọn",
+      departmentName: "Khoa CNTT",
+      adminRep: proposal?.adminVerifier?.fullName || "",
+      adminDepartment: "Phòng Quản trị",
+      notes: "",
+    }),
+    [proposal?.adminVerifier?.fullName]
+  );
+
+  // Export handlers for downloading DOCX files
+  const handleExportSubmissionDocx = () => {
+    if (!proposal) return;
+
+    try {
+      // Use the same logic as in chi-tiet page
+      message.info({
+        content: "Chức năng xuất file đang được phát triển.",
+        duration: 2,
+      });
+    } catch (error) {
+      console.error("Lỗi xuất file:", error);
+      message.error("Không thể xuất file. Vui lòng thử lại.");
+    }
+  };
+
+  const handleExportInspectionDocx = () => {
+    if (!proposal) return;
+
+    try {
+      message.info({
+        content: "Chức năng xuất file đang được phát triển.",
+        duration: 2,
+      });
+    } catch (error) {
+      console.error("Lỗi xuất file:", error);
+      message.error("Không thể xuất file. Vui lòng thử lại.");
+    }
   };
 
   // Xử lý xác nhận hoàn tất mua sắm
@@ -389,57 +499,71 @@ export default function ChiTietDeXuatThayThePage() {
           <Card title="Tài liệu đính kèm">
             <div className="space-y-3">
               {proposal.submissionFormUrl && (
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="font-medium">Tờ trình</p>
-                      <p className="text-sm text-gray-500">
-                        {proposal.submissionFormUrl.split("/").pop()}
-                      </p>
+                <div className="bg-blue-50 px-3 py-2 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-blue-600">Tờ trình</p>
+                        <p className="text-sm text-blue-500 truncate">
+                          {getFileNameFromUrl(proposal.submissionFormUrl)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="link"
-                      icon={<Eye className="h-4 w-4" />}
-                      href={proposal.submissionFormUrl}
-                      target="_blank"
-                      className="text-blue-600 hover:text-blue-800"></Button>
-                    <Button
-                      type="link"
-                      icon={<Download className="h-4 w-4" />}
-                      href={proposal.submissionFormUrl}
-                      target="_blank"
-                      download></Button>
+                    <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                      <button
+                        onClick={() =>
+                          handleDownload(
+                            proposal.submissionFormUrl!,
+                            getFileNameFromUrl(proposal.submissionFormUrl!)
+                          )
+                        }
+                        className="p-1 hover:bg-blue-100 rounded transition-colors"
+                        title="Tải xuống">
+                        <Download className="h-4 w-4 text-blue-600" />
+                      </button>
+                      <button
+                        onClick={() => setShowSubmissionPreview(true)}
+                        className="p-1 hover:bg-blue-100 rounded transition-colors"
+                        title="Xem trước">
+                        <Eye className="h-4 w-4 text-blue-600" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {proposal.verificationReportUrl && (
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-green-500" />
-                    <div>
-                      <p className="font-medium">Biên bản</p>
-                      <p className="text-sm text-gray-500">
-                        {proposal.verificationReportUrl.split("/").pop()}
-                      </p>
+                <div className="bg-green-50 px-3 py-2 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileText className="h-5 w-5 text-green-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-green-600">Biên bản</p>
+                        <p className="text-sm text-green-500 truncate">
+                          {getFileNameFromUrl(proposal.verificationReportUrl)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="link"
-                      icon={<Eye className="h-4 w-4" />}
-                      href={proposal.verificationReportUrl}
-                      target="_blank"
-                      className="text-blue-600 hover:text-blue-800"></Button>
-                    <Button
-                      type="link"
-                      icon={<Download className="h-4 w-4" />}
-                      href={proposal.verificationReportUrl}
-                      target="_blank"
-                      download></Button>
+                    <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                      <button
+                        onClick={() =>
+                          handleDownload(
+                            proposal.verificationReportUrl!,
+                            getFileNameFromUrl(proposal.verificationReportUrl!)
+                          )
+                        }
+                        className="p-1 hover:bg-green-100 rounded transition-colors"
+                        title="Tải xuống">
+                        <Download className="h-4 w-4 text-green-600" />
+                      </button>
+                      <button
+                        onClick={() => setShowInspectionPreview(true)}
+                        className="p-1 hover:bg-green-100 rounded transition-colors"
+                        title="Xem trước">
+                        <Eye className="h-4 w-4 text-green-600" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -477,6 +601,27 @@ export default function ChiTietDeXuatThayThePage() {
         customDescription="Bạn có chắc chắn muốn xác nhận đã hoàn tất mua sắm cho đề xuất thay thế này?"
         customWarning="Sau khi xác nhận, trạng thái đề xuất sẽ được cập nhật thành ĐÃ HOÀN TẤT MUA SẮM và bạn sẽ được chuyển về trang danh sách."
         icon={PlaneLanding}
+      />
+
+      {/* Preview Modals */}
+      <SubmissionPreviewModal
+        isOpen={showSubmissionPreview}
+        onClose={() => setShowSubmissionPreview(false)}
+        formData={defaultSubmissionFormData}
+        proposal={proposal}
+        onExport={handleExportSubmissionDocx}
+        onSubmit={() => {}}
+        showSubmitButton={false}
+      />
+
+      <InspectionPreviewModal
+        isOpen={showInspectionPreview}
+        onClose={() => setShowInspectionPreview(false)}
+        formData={defaultInspectionFormData}
+        proposal={proposal}
+        onExport={handleExportInspectionDocx}
+        onSubmit={() => {}}
+        showSubmitButton={false}
       />
     </div>
   );
