@@ -691,7 +691,7 @@ export default function GhiNhanXuLyLoiPage() {
                     );
                   })}
               </Select>
-              {filteredComputers.some(
+              {/* {filteredComputers.some(
                 (computer) => computer.asset?.id && computersWithActiveRepairs.has(computer.asset.id)
               ) && (
                 <Alert
@@ -701,7 +701,7 @@ export default function GhiNhanXuLyLoiPage() {
                   showIcon
                   className="mt-2"
                 />
-              )}
+              )} */}
             </Form.Item>
           </div>
 

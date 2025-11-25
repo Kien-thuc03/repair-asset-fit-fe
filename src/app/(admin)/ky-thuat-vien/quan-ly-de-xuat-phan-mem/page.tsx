@@ -599,7 +599,7 @@ export default function SoftwareProposalsPage() {
           </tbody>
         </table>
         
-        {paginatedData.length === 0 && (
+        {!loading && !error && paginatedData.length === 0 && (
           <div className="text-center py-12">
             <Monitor className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">

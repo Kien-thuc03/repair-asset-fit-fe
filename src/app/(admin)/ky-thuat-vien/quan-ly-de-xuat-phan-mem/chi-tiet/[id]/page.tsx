@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { 
   ArrowLeft,
@@ -23,8 +23,6 @@ import { useUpdateSoftwareProposalStatus } from '@/hooks/useSoftwareProposals';
 import { completeSoftwareProposal, CompleteSoftwareProposalRequest } from '@/lib/api/software-proposals';
 import { getComputersByRoomId } from '@/lib/api/computers';
 import { useAuth } from '@/contexts/AuthContext';
-
-const { TextArea } = Input;
 
 
 
@@ -65,9 +63,7 @@ export default function SoftwareProposalDetailPage() {
   const { user } = useAuth();
   
   // State
-  const [isStartSetupModalOpen, setIsStartSetupModalOpen] = useState(false);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
-  const [setupForm] = Form.useForm();
   const [completeForm] = Form.useForm();
   const [computersCount, setComputersCount] = useState<number>(0);
   const [loadingComputers, setLoadingComputers] = useState(false);
@@ -75,6 +71,34 @@ export default function SoftwareProposalDetailPage() {
   // Lấy dữ liệu đề xuất từ API
   const { data: proposal, loading, error, refetch } = useSoftwareProposalDetail(proposalId);
   const { updateStatus, loading: updateLoading } = useUpdateSoftwareProposalStatus();
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
+
+  // Tự động chuyển trạng thái sang ĐANG_TRANG_BỊ khi xem chi tiết nếu đang ở ĐÃ_DUYỆT
+  useEffect(() => {
+    const autoStartSetup = async () => {
+      // Chỉ thực hiện 1 lần và khi proposal đã load xong
+      if (hasAutoStarted || loading || !proposal || !user?.id) return;
+      
+      // Chỉ tự động chuyển nếu đang ở trạng thái ĐÃ_DUYỆT
+      if (proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT) {
+        try {
+          setHasAutoStarted(true);
+          await updateStatus(proposalId, {
+            status: SoftwareProposalStatus.ĐANG_TRANG_BỊ,
+            technicianId: user.id,
+          });
+          message.success('Đã tự động chuyển sang trạng thái "Đang trang bị"');
+          refetch();
+        } catch (error) {
+          console.error('Error auto-starting setup:', error);
+          // Không hiển thị lỗi cho user vì đây là tính năng tự động
+          setHasAutoStarted(false);
+        }
+      }
+    };
+
+    autoStartSetup();
+  }, [proposal, loading, user?.id, proposalId, updateStatus, refetch, hasAutoStarted]);
 
   // Helper functions
   const getUserName = (proposal: SoftwareProposal | null): string => {
@@ -118,29 +142,6 @@ export default function SoftwareProposalDetailPage() {
   const StatusIcon = softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
   const proposalItems = proposal.items || [];
 
-  // Handlers
-  const handleStartSetup = async () => {
-    try {
-      // Cập nhật trạng thái đề xuất
-      await updateStatus(proposalId, {
-        status: SoftwareProposalStatus.ĐANG_TRANG_BỊ,
-        technicianId: user?.id,
-      });
-      
-      // Lưu ý: Publisher info từ form không được gửi lên API vì API update status không nhận thông tin này
-      // Thông tin publisher sẽ được cập nhật khi hoàn thành đề xuất (trong modal hoàn thành)
-      
-      message.success('Đã bắt đầu thiết lập phần mềm!');
-      setIsStartSetupModalOpen(false);
-      setupForm.resetFields();
-      refetch();
-    } catch (error) {
-      console.error('Error starting setup:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi bắt đầu thiết lập!';
-      message.error(errorMessage);
-    }
-  };
-
   // Lấy số lượng máy tính trong phòng khi mở modal
   const fetchComputersCount = async () => {
     if (!proposal?.roomId) return;
@@ -169,7 +170,6 @@ export default function SoftwareProposalDetailPage() {
       version?: string; 
       publisher?: string;
     }>; 
-    completionNotes?: string;
   }) => {
     if (!proposal || !proposal.items || proposal.items.length === 0) {
       message.error('Không có phần mềm nào trong đề xuất!');
@@ -200,14 +200,18 @@ export default function SoftwareProposalDetailPage() {
             throw new Error(`Phần mềm ${index + 1} thiếu tên phần mềm. Vui lòng nhập tên phần mềm!`);
           }
           
+          // Validate: publisher là required (không cho phép rỗng)
+          if (!publisher || publisher.trim() === '') {
+            throw new Error(`Phần mềm ${index + 1} thiếu nhà sản xuất. Vui lòng nhập nhà sản xuất!`);
+          }
+          
           return {
             itemId: info.itemId,
             name: name,
             version: version || undefined,
-            publisher: publisher || undefined,
+            publisher: publisher,
           };
         }),
-        completionNotes: values.completionNotes,
       };
 
       await completeSoftwareProposal(proposalId, completeData);
@@ -228,7 +232,7 @@ export default function SoftwareProposalDetailPage() {
   };
 
   // Check quyền thao tác theo trạng thái
-  const canStartSetup = proposal.status === SoftwareProposalStatus.ĐÃ_DUYỆT;
+  // Không cần nút "Bắt đầu thiết lập" nữa vì tự động chuyển khi xem chi tiết
   const canComplete = proposal.status === SoftwareProposalStatus.ĐANG_TRANG_BỊ;
 
   return (
@@ -284,15 +288,6 @@ export default function SoftwareProposalDetailPage() {
           >
             Quay lại
           </Button>
-          {canStartSetup && (
-            <Button 
-              type="primary"
-              icon={<Wrench className="h-4 w-4" />}
-              onClick={() => setIsStartSetupModalOpen(true)}
-            >
-              Bắt đầu thiết lập
-            </Button>
-          )}
           {canComplete && (
             <Button 
               type="primary"
@@ -507,159 +502,6 @@ export default function SoftwareProposalDetailPage() {
         </div>
       </div>
 
-      {/* Modal Bắt đầu thiết lập */}
-      <Modal
-        title={
-          <div className="flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-orange-600" />
-            <span>Bắt đầu thiết lập phần mềm</span>
-          </div>
-        }
-        open={isStartSetupModalOpen}
-        onCancel={() => {
-          setIsStartSetupModalOpen(false);
-          setupForm.resetFields();
-        }}
-        footer={null}
-        width={700}
-      >
-        <Form
-          form={setupForm}
-          layout="vertical"
-          onFinish={handleStartSetup}
-          initialValues={{
-            publisherInfo: proposalItems.map(item => ({
-              itemId: item.id,
-              publisher: item.publisher || '',
-            }))
-          }}
-        >
-          {/* Thông báo */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm text-blue-800">
-                  Bạn đang bắt đầu quá trình thiết lập phần mềm. Thông tin phần mềm sẽ được lấy từ phiếu đề xuất.
-                  Vui lòng bổ sung <strong>Nhà sản xuất (Publisher)</strong> nếu còn thiếu.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Danh sách phần mềm */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Danh sách phần mềm cần thiết lập
-            </h3>
-            
-            <Form.List name="publisherInfo">
-              {(fields) => (
-                <>
-                  {fields.map((field, index) => {
-                    const item = proposalItems[index];
-                    if (!item) return null; // Safety check
-                    const hasPublisher = item.publisher && item.publisher.trim() !== '';
-                    
-                    return (
-                      <div key={`publisher-${item.id || field.key}`} className="mb-4 p-4 border border-gray-200 rounded-lg bg-white">
-                        <div className="flex items-center gap-3 mb-3">
-                          <Monitor className="h-5 w-5 text-blue-600 shrink-0" />
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900">
-                              {item.softwareName || 'Chưa có tên'}
-                            </h4>
-                            <div className="mt-1 space-y-1">
-                              {item.version && (
-                                <p className="text-sm text-gray-600">
-                                  <span className="inline-flex items-center gap-1">
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
-                                    Phiên bản: <span className="font-medium">{item.version}</span>
-                                  </span>
-                                </p>
-                              )}
-                              {hasPublisher && (
-                                <p className="text-sm text-gray-600">
-                                  <span className="inline-flex items-center gap-1">
-                                    <CheckCircle className="h-3 w-3 text-green-500" />
-                                    Nhà sản xuất: <span className="font-medium">{item.publisher}</span>
-                                  </span>
-                                </p>
-                              )}
-                              <p className="text-sm text-gray-600">
-                                Số lượng: <span className="font-medium">{item.quantity}</span> license
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <Form.Item
-                          {...field}
-                          name={[field.name, 'itemId']}
-                          hidden
-                        >
-                          <Input type="hidden" />
-                        </Form.Item>
-                        
-                        {/* Chỉ hiển thị trường publisher nếu chưa có */}
-                        {!hasPublisher && (
-                          <Form.Item
-                            {...field}
-                            name={[field.name, 'publisher']}
-                            label={
-                              <span className="font-medium">
-                                Nhà sản xuất <span className="text-xs text-gray-500">(Tùy chọn - Bổ sung nếu có)</span>
-                              </span>
-                            }
-                            rules={[
-                              { max: 255, message: 'Nhà sản xuất không được vượt quá 255 ký tự!' }
-                            ]}
-                            help="Chưa có trong đề xuất - Bổ sung nhà sản xuất phần mềm nếu có"
-                          >
-                            <Input
-                              placeholder="Ví dụ: Microsoft Corporation, Adobe Inc."
-                              className="w-full"
-                            />
-                          </Form.Item>
-                        )}
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-            </Form.List>
-          </div>
-          
-          <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-            <p className="text-sm text-gray-700">
-              <strong>Lưu ý:</strong> Sau khi bắt đầu thiết lập, trạng thái đề xuất sẽ chuyển sang <strong>&quot;Đang trang bị&quot;</strong>.
-              Bạn sẽ cần hoàn thành việc cài đặt phần mềm cho tất cả máy tính trong phòng trước khi đánh dấu hoàn thành.
-            </p>
-          </div>
-          
-          <Form.Item className="mb-0 flex justify-end gap-2 mt-6">
-            <Button 
-              onClick={() => {
-                setIsStartSetupModalOpen(false);
-                setupForm.resetFields();
-              }}
-              disabled={updateLoading}
-            >
-              Hủy
-            </Button>
-            <Button 
-              type="primary"
-              htmlType="submit"
-              loading={updateLoading}
-              icon={<Wrench className="h-4 w-4" />}
-              size="large"
-            >
-              Xác nhận bắt đầu thiết lập
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
-
       {/* Modal Hoàn thành */}
       <Modal
         title={
@@ -682,22 +524,12 @@ export default function SoftwareProposalDetailPage() {
           layout="vertical"
           onFinish={handleComplete}
           initialValues={{
-            softwareInfo: proposalItems.map(item => {
-              // Chỉ set giá trị cho các trường còn thiếu hoặc cần chỉnh sửa
-              const hasName = item.softwareName && item.softwareName.trim() !== '';
-              const hasVersion = item.version && item.version.trim() !== '';
-              const hasPublisher = item.publisher && item.publisher.trim() !== '';
-              
-              return {
-                itemId: item.id,
-                // Chỉ set name nếu chưa có hoặc để chỉnh sửa
-                ...(hasName ? {} : { name: '' }),
-                // Chỉ set version nếu chưa có
-                ...(hasVersion ? {} : { version: '' }),
-                // Chỉ set publisher nếu chưa có
-                ...(hasPublisher ? {} : { publisher: '' }),
-              };
-            })
+            softwareInfo: proposalItems.map(item => ({
+              itemId: item.id,
+              name: item.softwareName || '',
+              version: item.version || '',
+              publisher: item.publisher || '',
+            }))
           }}
         >
           {/* Thông tin phòng và số lượng máy tính */}
@@ -726,8 +558,10 @@ export default function SoftwareProposalDetailPage() {
               <div className="flex-1">
                 <p className="font-semibold text-amber-900 mb-2">Lưu ý quan trọng:</p>
                 <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
-                  <li><strong>Tên phần mềm</strong> là trường bắt buộc. Nếu đề xuất chưa có, bạn phải nhập.</li>
-                  <li><strong>Phiên bản</strong> và <strong>Nhà sản xuất</strong> là tùy chọn, chỉ hiển thị nếu đề xuất chưa có để bạn bổ sung.</li>
+                  <li><strong>Tên phần mềm</strong> là trường bắt buộc. Bạn có thể chỉnh sửa tên phần mềm nếu cần.</li>
+                  <li><strong>Phiên bản</strong> là tùy chọn, bạn có thể chỉnh sửa hoặc bổ sung.</li>
+                  <li><strong>Nhà sản xuất</strong> là trường bắt buộc, không được để trống.</li>
+                  <li>Số lượng license sẽ tự động bằng số lượng máy tính trong phòng (<strong>{computersCount} máy tính</strong>).</li>
                   <li>Hệ thống sẽ tự động tạo mới hoặc cập nhật phần mềm trong bảng <code className="bg-amber-100 px-1 rounded">Software</code> với thông tin đầy đủ.</li>
                   <li>Phần mềm sẽ được cài đặt cho <strong>TẤT CẢ {computersCount} máy tính</strong> trong phòng <strong>{getRoomName(proposal)}</strong>.</li>
                   <li>Nếu phần mềm đã tồn tại trên máy tính, hệ thống sẽ bỏ qua để tránh trùng lặp.</li>
@@ -752,14 +586,6 @@ export default function SoftwareProposalDetailPage() {
                   const item = proposalItems[index];
                   if (!item) return null; // Safety check
                   
-                  // Xác định các trường còn thiếu (null, undefined, hoặc empty string)
-                  const hasName = item.softwareName && item.softwareName.trim() !== '';
-                  const hasVersion = item.version && item.version.trim() !== '';
-                  const hasPublisher = item.publisher && item.publisher.trim() !== '';
-                  
-                  // Tên phần mềm là required trong Software entity
-                  const nameRequired = !hasName;
-                  
                   return (
                     <div key={item.id || `software-${field.key}`} className="mb-6 p-5 border-2 border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
@@ -769,7 +595,7 @@ export default function SoftwareProposalDetailPage() {
                             Phần mềm {index + 1}: {item.softwareName || 'Chưa có tên'}
                           </h4>
                           <div className="mt-2 space-y-1">
-                            {hasVersion && (
+                            {item.version && (
                               <p className="text-sm text-gray-600">
                                 <span className="inline-flex items-center gap-1">
                                   <CheckCircle className="h-3 w-3 text-green-500" />
@@ -777,7 +603,7 @@ export default function SoftwareProposalDetailPage() {
                                 </span>
                               </p>
                             )}
-                            {hasPublisher && (
+                            {item.publisher && (
                               <p className="text-sm text-gray-600">
                                 <span className="inline-flex items-center gap-1">
                                   <CheckCircle className="h-3 w-3 text-green-500" />
@@ -786,7 +612,7 @@ export default function SoftwareProposalDetailPage() {
                               </p>
                             )}
                             <p className="text-sm text-gray-600">
-                              Số lượng: <span className="font-medium">{item.quantity}</span> license
+                              Số lượng: <span className="font-medium">{computersCount}</span> máy tính
                             </p>
                           </div>
                         </div>
@@ -800,110 +626,68 @@ export default function SoftwareProposalDetailPage() {
                         <Input type="hidden" />
                       </Form.Item>
                       
-                      {/* Chỉ hiển thị các trường còn thiếu hoặc cho phép chỉnh sửa */}
+                      {/* Luôn hiển thị tất cả các trường để cho phép chỉnh sửa */}
                       <div className="space-y-4">
-                        {/* Tên phần mềm - Required nếu chưa có */}
-                        {(!hasName || nameRequired) && (
-                          <Form.Item
-                            {...field}
-                            name={[field.name, 'name']}
-                            label={
-                              <span className="font-medium">
-                                Tên phần mềm {nameRequired && <span className="text-red-500">*</span>}
-                                {hasName && <span className="text-xs text-gray-500 ml-2">(Chỉnh sửa nếu cần)</span>}
-                              </span>
-                            }
-                            initialValue={item.softwareName || ''}
-                            rules={[
-                              ...(nameRequired ? [{ required: true, message: 'Vui lòng nhập tên phần mềm!' }] : []),
-                              { max: 255, message: 'Tên phần mềm không được vượt quá 255 ký tự!' }
-                            ]}
-                            help={hasName ? 'Đã có trong đề xuất, bạn có thể chỉnh sửa nếu cần' : 'Trường bắt buộc - Vui lòng nhập tên phần mềm'}
-                          >
-                            <Input
-                              placeholder="Ví dụ: Microsoft Office 2021 Professional Plus"
-                              className="w-full"
-                            />
-                          </Form.Item>
-                        )}
+                        {/* Tên phần mềm - Required, luôn hiển thị và cho phép chỉnh sửa */}
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'name']}
+                          label={
+                            <span className="font-medium">
+                              Tên phần mềm <span className="text-red-500">*</span>
+                            </span>
+                          }
+                          initialValue={item.softwareName || ''}
+                          rules={[
+                            { required: true, message: 'Vui lòng nhập tên phần mềm!' },
+                            { max: 255, message: 'Tên phần mềm không được vượt quá 255 ký tự!' }
+                          ]}
+                        >
+                          <Input
+                            placeholder="Ví dụ: Microsoft Office 2021 Professional Plus"
+                            className="w-full"
+                          />
+                        </Form.Item>
                         
-                        {/* Phiên bản - Optional, chỉ hiển thị nếu chưa có hoặc cho phép chỉnh sửa */}
-                        {!hasVersion && (
-                          <Form.Item
-                            {...field}
-                            name={[field.name, 'version']}
-                            label={
-                              <span className="font-medium">
-                                Phiên bản <span className="text-xs text-gray-500">(Tùy chọn - Bổ sung nếu có)</span>
-                              </span>
-                            }
-                            initialValue={item.version || ''}
-                            rules={[
-                              { max: 100, message: 'Phiên bản không được vượt quá 100 ký tự!' }
-                            ]}
-                            help="Chưa có trong đề xuất - Bổ sung phiên bản phần mềm nếu có"
-                          >
-                            <Input
-                              placeholder="Ví dụ: 2021, 2024, v1.0.0"
-                              className="w-full"
-                            />
-                          </Form.Item>
-                        )}
+                        {/* Phiên bản - Optional, luôn hiển thị và cho phép chỉnh sửa */}
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'version']}
+                          label={
+                            <span className="font-medium">
+                              Phiên bản
+                            </span>
+                          }
+                          initialValue={item.version || ''}
+                          rules={[
+                            { required: true, message: 'Vui lòng nhập phiên bản phần mềm!' },
+                            { max: 100, message: 'Phiên bản không được vượt quá 100 ký tự!' }
+                          ]}                        >
+                          <Input
+                            placeholder="Ví dụ: 2021, 2024, v1.0.0"
+                            className="w-full"
+                          />
+                        </Form.Item>
                         
-                        {/* Nhà sản xuất - Optional, chỉ hiển thị nếu chưa có hoặc cho phép chỉnh sửa */}
-                        {!hasPublisher && (
-                          <Form.Item
-                            {...field}
-                            name={[field.name, 'publisher']}
-                            label={
-                              <span className="font-medium">
-                                Nhà sản xuất <span className="text-xs text-gray-500">(Tùy chọn - Bổ sung nếu có)</span>
-                              </span>
-                            }
-                            initialValue={item.publisher || ''}
-                            rules={[
-                              { max: 255, message: 'Nhà sản xuất không được vượt quá 255 ký tự!' }
-                            ]}
-                            help="Chưa có trong đề xuất - Bổ sung nhà sản xuất phần mềm nếu có"
-                          >
-                            <Input
-                              placeholder="Ví dụ: Microsoft Corporation, Adobe Inc."
-                              className="w-full"
-                            />
-                          </Form.Item>
-                        )}
-                        
-                        {/* Thông báo nếu đã có đầy đủ thông tin */}
-                        {hasName && hasVersion && hasPublisher && (
-                          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
-                              <p className="text-sm text-green-800">
-                                <strong>Đã có đầy đủ thông tin!</strong> Tất cả các trường (tên, phiên bản, nhà sản xuất) đã được điền trong đề xuất.
-                                Bạn có thể chỉnh sửa tên phần mềm nếu cần bằng cách nhập lại vào trường bên dưới.
-                              </p>
-                            </div>
-                            <Form.Item
-                              {...field}
-                              name={[field.name, 'name']}
-                              label={
-                                <span className="font-medium text-sm mt-2">
-                                  Chỉnh sửa tên phần mềm (nếu cần)
-                                </span>
-                              }
-                              initialValue={item.softwareName || ''}
-                              rules={[
-                                { max: 255, message: 'Tên phần mềm không được vượt quá 255 ký tự!' }
-                              ]}
-                              className="mt-2"
-                            >
-                              <Input
-                                placeholder={item.softwareName || "Nhập tên phần mềm nếu muốn thay đổi"}
-                                className="w-full"
-                              />
-                            </Form.Item>
-                          </div>
-                        )}
+                        {/* Nhà sản xuất - Required, luôn hiển thị và không cho phép rỗng */}
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'publisher']}
+                          label={
+                            <span className="font-medium">
+                              Nhà sản xuất <span className="text-red-500">*</span>
+                            </span>
+                          }
+                          initialValue={item.publisher || ''}
+                          rules={[
+                            { required: true, message: 'Vui lòng nhập nhà sản xuất!' },
+                            { max: 255, message: 'Nhà sản xuất không được vượt quá 255 ký tự!' }
+                          ]}                        >
+                          <Input
+                            placeholder="Ví dụ: Microsoft Corporation, Adobe Inc."
+                            className="w-full"
+                          />
+                        </Form.Item>
                       </div>
                     </div>
                   );
@@ -911,21 +695,6 @@ export default function SoftwareProposalDetailPage() {
               </>
             )}
           </Form.List>
-
-          <Form.Item
-            name="completionNotes"
-            label="Ghi chú hoàn thành (tùy chọn)"
-            rules={[
-              { max: 1000, message: 'Ghi chú không được vượt quá 1000 ký tự!' }
-            ]}
-          >
-            <TextArea
-              rows={4}
-              placeholder="Nhập ghi chú về việc hoàn thành trang bị phần mềm (ví dụ: Đã cài đặt thành công, có vấn đề gì cần lưu ý...)"
-              maxLength={1000}
-              showCount
-            />
-          </Form.Item>
           
           <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
             <p className="text-sm text-gray-700">
