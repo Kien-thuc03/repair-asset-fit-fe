@@ -1,19 +1,19 @@
 'use client'
 
-import { RepairStatus } from '@/types'
-import { ReplacementPart } from '@/lib/mockData'
-import { useState } from 'react'
-import { Button, Form, Input, Radio, Card, Alert } from 'antd'
+import { RepairStatus, Component, ComponentStatus, ComponentType } from '@/types'
+import { useState, useEffect } from 'react'
+import { Button, Form, Input, Radio, Card, Alert, Select, message } from 'antd'
 import { CheckCircle, Settings, Package, FileText } from 'lucide-react'
-import ReplacementPartsInput from './ReplacementPartsInput'
+import { getComponentsByAssetId } from '@/lib/api/components'
 
 const { TextArea } = Input
+const { Option } = Select
 
 interface Props {
 	initStatus: RepairStatus
-	assetId?: string // Thêm prop assetId
-	errorTypeName?: string // Thêm prop errorTypeName để xác định loại lỗi
-	onCreateReplacement: (parts: ReplacementPart[]) => void
+	assetId?: string // Asset ID để lấy danh sách linh kiện
+	errorTypeName?: string // Tên loại lỗi để xác định category
+	onCreateReplacement: () => void // Callback khi cần tạo đề xuất thay thế (không cần parts nữa)
 	onStatusUpdate?: (newStatus: RepairStatus, notes: string, componentIds?: string[]) => void
 }
 
@@ -21,7 +21,9 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 	const [form] = Form.useForm()
 	const [status, setStatus] = useState<RepairStatus>(initStatus)
 	const [inspectionResult, setInspectionResult] = useState<'software' | 'hardware' | 'replacement' | ''>('')
-	const [showReplacementParts, setShowReplacementParts] = useState(false)
+	const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>([])
+	const [filteredComponents, setFilteredComponents] = useState<Component[]>([])
+	const [loadingComponents, setLoadingComponents] = useState(false)
 
 	const getErrorCategory = () => {
 		if (!errorTypeName) return 'unknown'
@@ -57,38 +59,90 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 
 	const errorCategory = getErrorCategory()
 
+	// Fetch components khi assetId thay đổi
+	useEffect(() => {
+		const fetchComponents = async () => {
+			if (!assetId || errorCategory !== 'hardware') {
+				setFilteredComponents([])
+				return
+			}
+
+			setLoadingComponents(true)
+			try {
+				const components = await getComponentsByAssetId(assetId)
+				// Map ComponentResponseDto to Component interface
+				const mappedComponents: Component[] = components.map((comp) => ({
+					id: comp.id,
+					computerAssetId: assetId, // Sử dụng assetId
+					componentType: comp.componentType as unknown as ComponentType,
+					name: comp.name,
+					componentSpecs: comp.componentSpecs,
+					serialNumber: comp.serialNumber,
+					status: comp.status as unknown as ComponentStatus,
+					installedAt: comp.installedAt,
+					removedAt: comp.removedAt,
+					notes: comp.notes,
+				}))
+				setFilteredComponents(mappedComponents)
+			} catch (error) {
+				console.error('Error fetching components:', error)
+				message.error('Không thể tải danh sách linh kiện')
+				setFilteredComponents([])
+			} finally {
+				setLoadingComponents(false)
+			}
+		}
+
+		fetchComponents()
+	}, [assetId, errorCategory])
+
 	// Interface cho form values
 	interface FormValues {
 		inspectionResult: string
 		notes: string
-		replacementParts?: ReplacementPart[]
+		componentIds?: string[]
 	}
 
-	const onFinish = (values: FormValues) => {
+	const onFinish = async (values: FormValues) => {
 		console.log('Form values:', values)
 		
-		// Xử lý trực tiếp không cần modal xác nhận
 		// Xác định trạng thái mới dựa trên kết quả kiểm tra
 		let newStatus = status
 		let componentIds: string[] | undefined = undefined
 		
 		if (values.inspectionResult === 'software') {
 			newStatus = RepairStatus.ĐÃ_HOÀN_THÀNH
+			// Lỗi phần mềm không cần componentIds
 		} else if (values.inspectionResult === 'hardware') {
 			newStatus = RepairStatus.ĐÃ_HOÀN_THÀNH
+			// Lỗi phần cứng đã sửa được - bắt buộc phải có componentIds
+			if (selectedComponentIds.length === 0) {
+				message.error('Vui lòng chọn ít nhất 1 linh kiện bị lỗi')
+				return
+			}
+			componentIds = selectedComponentIds
 		} else if (values.inspectionResult === 'replacement') {
 			newStatus = RepairStatus.CHỜ_THAY_THẾ
-			// Nếu có linh kiện cần thay thế, tạo đề xuất
-			if (values.replacementParts && values.replacementParts.length > 0) {
-				onCreateReplacement(values.replacementParts)
-				// Extract component IDs để đánh dấu FAULTY
-				componentIds = values.replacementParts.map(part => part.componentId)
+			// Cần thay thế linh kiện - bắt buộc phải có componentIds
+			if (selectedComponentIds.length === 0) {
+				message.error('Vui lòng chọn ít nhất 1 linh kiện cần thay thế')
+				return
 			}
+			componentIds = selectedComponentIds
 		}
 		
 		// Gọi callback để cập nhật trạng thái với componentIds
 		if (onStatusUpdate) {
-			onStatusUpdate(newStatus, values.notes || '', componentIds)
+			try {
+				await onStatusUpdate(newStatus, values.notes || '', componentIds)
+				// Nếu là replacement và cập nhật thành công, chuyển đến trang tạo đề xuất
+				if (values.inspectionResult === 'replacement') {
+					onCreateReplacement()
+				}
+			} catch (error) {
+				// Error đã được xử lý trong onStatusUpdate callback
+				console.error('Update status error:', error)
+			}
 		}
 	}
 
@@ -160,7 +214,10 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 					>
 						<Radio.Group onChange={(e) => {
 							setInspectionResult(e.target.value)
-							setShowReplacementParts(e.target.value === 'replacement')
+							// Reset componentIds khi thay đổi kết quả
+							if (e.target.value !== 'replacement' && e.target.value !== 'hardware') {
+								setSelectedComponentIds([])
+							}
 						}}>
 							<div className="space-y-3">
 								{/* Hiển thị option phần mềm chỉ khi errorCategory là software */}
@@ -218,6 +275,53 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 						</Radio.Group>
 					</Form.Item>
 
+					{/* Chọn linh kiện cho lỗi phần cứng - luôn hiển thị khi errorCategory là hardware */}
+					{errorCategory === 'hardware' && (
+						<Form.Item 
+							label="Linh kiện cụ thể" 
+							required
+							help="Vui lòng chọn ít nhất 1 linh kiện bị lỗi"
+							rules={[
+								{ 
+									validator: () => {
+										if (selectedComponentIds.length === 0) {
+											return Promise.reject('Vui lòng chọn ít nhất 1 linh kiện')
+										}
+										return Promise.resolve()
+									}
+								}
+							]}
+						>
+							<Select
+								mode="multiple"
+								placeholder={
+									!assetId 
+										? "Không thể xác định thiết bị" 
+										: loadingComponents
+											? "Đang tải danh sách linh kiện..."
+											: filteredComponents.length === 0
+												? "Không có linh kiện nào"
+												: "Chọn linh kiện bị lỗi"
+								}
+								value={selectedComponentIds}
+								onChange={setSelectedComponentIds}
+								disabled={!assetId || loadingComponents || filteredComponents.length === 0}
+								loading={loadingComponents}
+								notFoundContent={
+									filteredComponents.length === 0 && assetId && !loadingComponents
+										? "Không có linh kiện nào trong thiết bị này"
+										: "Không có dữ liệu"
+								}
+							>
+								{filteredComponents.map(component => (
+									<Option key={component.id} value={component.id}>
+										{component.name} ({component.componentType})
+									</Option>
+								))}
+							</Select>
+						</Form.Item>
+					)}
+
 					<Form.Item
 						name="notes"
 						label="Mô tả chi tiết quá trình xử lý"
@@ -229,13 +333,52 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 						/>
 					</Form.Item>
 
-					{showReplacementParts && (
-						<Form.Item 
-							name="replacementParts" 
-							label="Linh kiện cần thay thế"
-						>
-							<ReplacementPartsInput assetId={assetId} />
-						</Form.Item>
+					{/* Cảnh báo khi chưa chọn linh kiện cho lỗi phần cứng */}
+					{errorCategory === 'hardware' && 
+					 inspectionResult && 
+					 inspectionResult !== 'software' &&
+					 selectedComponentIds.length === 0 && (
+						<Alert
+							message="⚠️ Chưa chọn linh kiện"
+							description="Vui lòng chọn ít nhất 1 linh kiện bị lỗi ở trên."
+							type="warning"
+							showIcon
+							className="mb-4"
+						/>
+					)}
+
+					{/* Hiển thị phần chọn linh kiện thay thế nếu cần */}
+					{errorCategory === 'hardware' && inspectionResult === 'replacement' && (
+						<div className="mt-4 p-4 border rounded-lg bg-orange-50 border-orange-200">
+							<h4 className="text-md font-semibold text-orange-800 mb-3">Linh kiện cần thay thế</h4>
+							{selectedComponentIds.length === 0 ? (
+								<Alert
+									message="⚠️ Bắt buộc: Chọn linh kiện cần thay thế"
+									description="Bạn đã chọn 'Cần thay thế linh kiện'. Vui lòng chọn linh kiện cụ thể ở trên."
+									type="error"
+									showIcon
+								/>
+							) : (
+								<Alert
+									message={`Đã chọn ${selectedComponentIds.length} linh kiện để thay thế`}
+									description={
+										<div className="mt-2">
+											<div className="text-sm">Linh kiện được chọn:</div>
+											<ul className="mt-1 list-disc list-inside text-sm">
+												{selectedComponentIds.map(id => {
+													const component = filteredComponents.find(c => c.id === id);
+													return component ? (
+														<li key={id}>{component.name} ({component.componentType})</li>
+													) : null;
+												})}
+											</ul>
+										</div>
+									}
+									type="info"
+									showIcon
+								/>
+							)}
+						</div>
 					)}
 
 					{/* Thông báo trạng thái sẽ được cập nhật */}
@@ -268,7 +411,17 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 					)}
 
 					<Form.Item>
-						<Button type="primary" htmlType="submit" icon={<FileText />}>
+						<Button 
+							type="primary" 
+							htmlType="submit" 
+							icon={<FileText />}
+							disabled={
+								errorCategory === 'hardware' && 
+								inspectionResult !== '' && 
+								inspectionResult !== 'software' &&
+								selectedComponentIds.length === 0
+							}
+						>
 							Cập nhật kết quả xử lý
 						</Button>
 					</Form.Item>

@@ -783,3 +783,51 @@ export const getRepairLogs = async (
     );
   }
 };
+
+/**
+ * Interface cho tầng được phân công
+ */
+export interface AssignedFloor {
+  building: string;
+  floor: string;
+  pendingRequests?: number;
+  inProgressRequests?: number;
+  waitingReplacementRequests?: number;
+}
+
+/**
+ * Interface cho response lấy danh sách tầng được phân công
+ */
+export interface GetAssignedFloorsResponse {
+  assignedFloors: AssignedFloor[];
+  totalAssignedFloors: number;
+  totalPendingRequests?: number;
+}
+
+/**
+ * Lấy danh sách tầng được phân công cho kỹ thuật viên hiện tại
+ * Endpoint: GET /api/v1/repairs/technician/assigned-floors
+ * 
+ * @returns Promise với danh sách tầng được phân công
+ * 
+ * @example
+ * ```typescript
+ * const floors = await getAssignedFloors();
+ * console.log(floors.assignedFloors); // [{ building: "B", floor: "1", ... }, ...]
+ * ```
+ */
+export const getAssignedFloors = async (): Promise<GetAssignedFloorsResponse> => {
+  try {
+    const response = await api.get<GetAssignedFloorsResponse>(
+      "/api/v1/repairs/technician/assigned-floors"
+    );
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as {
+      response?: { data?: { message?: string }; status?: number };
+    };
+    throw new Error(
+      err.response?.data?.message || "Lấy danh sách tầng được phân công thất bại."
+    );
+  }
+};

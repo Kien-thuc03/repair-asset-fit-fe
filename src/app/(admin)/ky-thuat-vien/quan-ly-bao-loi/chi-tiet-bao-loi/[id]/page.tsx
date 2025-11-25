@@ -334,10 +334,10 @@ export default function RepairDetailPage() {
 
 					<ActionPanel
 						initStatus={currentRequest.status}
-						assetId={currentRequest.computerAssetId} // Truyền computerAssetId
+						assetId={currentRequest.computerAssetId} // Truyền computerAssetId (assetId)
 						errorTypeName={currentRequest.errorTypeName} // Truyền errorTypeName để xác định loại lỗi
 						onCreateReplacement={() => {
-							// Xử lý tạo yêu cầu thay thế ở đây
+							// Chuyển đến trang tạo đề xuất thay thế
 							router.push('/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat')
 						}}
 						onStatusUpdate={async (newStatus: RepairStatus, notes: string, componentIds?: string[]) => {
