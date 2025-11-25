@@ -17,20 +17,32 @@ export default function SuccessModal({
   message = "Báo cáo lỗi của bạn đã được gửi thành công. Chúng tôi sẽ xử lý và phản hồi trong thời gian sớm nhất.",
 }: SuccessModalProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true);
+      // Bắt đầu animation progress bar sau một chút delay để đảm bảo DOM đã render
+      setTimeout(() => {
+        setShouldAnimate(true);
+      }, 50);
+
       // Auto close after 5 seconds
       const timer = setTimeout(() => {
         setIsVisible(false);
+        setShouldAnimate(false);
         setTimeout(() => {
           onClose();
         }, 200);
       }, 5000);
-      return () => clearTimeout(timer);
+      
+      return () => {
+        clearTimeout(timer);
+        setShouldAnimate(false);
+      };
     } else {
       setIsVisible(false);
+      setShouldAnimate(false);
     }
   }, [isOpen, onClose]);
 
@@ -94,11 +106,11 @@ export default function SuccessModal({
           <p className="text-xs text-center text-gray-400">
             Tự động đóng sau 5 giây...
           </p>
-          <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
+          <div className="w-full bg-gray-200 rounded-full h-1 mt-2 overflow-hidden">
             <div
               className="bg-green-600 h-1 rounded-full transition-all duration-[5000ms] ease-linear"
               style={{
-                width: isVisible ? "0%" : "100%",
+                width: shouldAnimate ? "100%" : "0%",
               }}
             />
           </div>
