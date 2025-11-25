@@ -15,11 +15,12 @@ import {
   AlertCircle,
   Wrench,
 } from "lucide-react";
-import { Breadcrumb, Modal, message } from "antd";
+import { Breadcrumb, message } from "antd";
 import { SoftwareProposalStatus, SoftwareProposal } from "@/types/software";
 import { useSoftwareProposalDetail } from "@/hooks/useSoftwareProposals";
 import { useUpdateSoftwareProposalStatus } from "@/hooks/useSoftwareProposals";
 import { useAuth } from "@/contexts/AuthContext";
+import { SoftwareProposalConfirmModal } from "@/components/modal";
 
 // Helper functions to get names from nested objects
 const getUserName = (proposal: SoftwareProposal): string => {
@@ -77,7 +78,11 @@ export default function SoftwareProposalDetailPage() {
   const { user } = useAuth();
   const proposalId = params.id as string;
 
-  const [isProcessing, setIsProcessing] = useState(false);
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalActionType, setModalActionType] = useState<"approve" | "reject">(
+    "approve"
+  );
 
   // Use API hook to fetch proposal details
   const {
@@ -88,71 +93,79 @@ export default function SoftwareProposalDetailPage() {
   } = useSoftwareProposalDetail(proposalId);
 
   // Update status hook
-  const { updateStatus } = useUpdateSoftwareProposalStatus();
+  const { updateStatus, loading: isUpdatingStatus } =
+    useUpdateSoftwareProposalStatus();
 
   // Handle approve
-  const handleApprove = async () => {
-    if (!proposal) return;
+  const handleApproveClick = () => {
+    if (!user?.id) {
+      message.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
 
-    Modal.confirm({
-      title: "Xác nhận duyệt đề xuất",
-      content: "Bạn có chắc chắn muốn duyệt đề xuất phần mềm này?",
-      okText: "Đồng ý",
-      cancelText: "Hủy",
-      centered: true,
-      onOk: async () => {
-        try {
-          setIsProcessing(true);
-          await updateStatus(proposalId, {
-            status: SoftwareProposalStatus.ĐÃ_DUYỆT,
-            approverId: user?.id,
-          });
-          message.success("Đã duyệt đề xuất phần mềm thành công!");
-          refetch();
-        } catch (error) {
-          console.error("Error approving proposal:", error);
-          message.error(
-            error instanceof Error ? error.message : "Không thể duyệt đề xuất."
-          );
-        } finally {
-          setIsProcessing(false);
-        }
-      },
-    });
+    setModalActionType("approve");
+    setIsModalOpen(true);
   };
 
   // Handle reject
-  const handleReject = async () => {
-    if (!proposal) return;
+  const handleRejectClick = () => {
+    if (!user?.id) {
+      message.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
 
-    Modal.confirm({
-      title: "Xác nhận từ chối đề xuất",
-      content: "Bạn có chắc chắn muốn từ chối đề xuất phần mềm này?",
-      okText: "Đồng ý",
-      cancelText: "Hủy",
-      okButtonProps: { danger: true },
-      centered: true,
-      onOk: async () => {
-        try {
-          setIsProcessing(true);
-          await updateStatus(proposalId, {
-            status: SoftwareProposalStatus.ĐÃ_TỪ_CHỐI,
-            approverId: user?.id,
-          });
-          message.success("Đã từ chối đề xuất phần mềm!");
-          refetch();
-        } catch (error) {
-          console.error("Error rejecting proposal:", error);
-          message.error(
-            error instanceof Error
-              ? error.message
-              : "Không thể từ chối đề xuất."
-          );
-        } finally {
-          setIsProcessing(false);
-        }
-      },
-    });
+    setModalActionType("reject");
+    setIsModalOpen(true);
+  };
+
+  // Handle modal confirm
+  const handleModalConfirm = async () => {
+    if (!proposal || !user?.id) {
+      message.error("Không thể xác định thông tin. Vui lòng thử lại.");
+      return;
+    }
+
+    try {
+      const status =
+        modalActionType === "approve"
+          ? SoftwareProposalStatus.ĐÃ_DUYỆT
+          : SoftwareProposalStatus.ĐÃ_TỪ_CHỐI;
+
+      await updateStatus(proposalId, {
+        status,
+        approverId: user.id,
+      });
+
+      message.success(
+        modalActionType === "approve"
+          ? "Đã duyệt đề xuất phần mềm thành công!"
+          : "Đã từ chối đề xuất phần mềm!"
+      );
+      refetch();
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error(
+        `Error ${
+          modalActionType === "approve" ? "approving" : "rejecting"
+        } proposal:`,
+        error
+      );
+      message.error(
+        error instanceof Error
+          ? error.message
+          : `Không thể ${
+              modalActionType === "approve" ? "duyệt" : "từ chối"
+            } đề xuất.`
+      );
+      throw error; // Re-throw để modal không đóng khi có lỗi
+    }
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    if (!isUpdatingStatus) {
+      setIsModalOpen(false);
+    }
   };
 
   // Loading state
@@ -235,15 +248,15 @@ export default function SoftwareProposalDetailPage() {
         {canApprove && (
           <div className="flex items-center gap-3">
             <button
-              onClick={handleApprove}
-              disabled={isProcessing}
+              onClick={handleApproveClick}
+              disabled={isUpdatingStatus}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed">
               <CheckCircle className="h-4 w-4 mr-2" />
               Duyệt đề xuất
             </button>
             <button
-              onClick={handleReject}
-              disabled={isProcessing}
+              onClick={handleRejectClick}
+              disabled={isUpdatingStatus}
               className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
               <XCircle className="h-4 w-4 mr-2" />
               Từ chối
@@ -496,6 +509,18 @@ export default function SoftwareProposalDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Software Proposal Confirm Modal */}
+      {proposal && (
+        <SoftwareProposalConfirmModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          onConfirm={handleModalConfirm}
+          proposalCode={proposal.proposalCode}
+          actionType={modalActionType}
+          isLoading={isUpdatingStatus}
+        />
+      )}
     </div>
   );
 }
