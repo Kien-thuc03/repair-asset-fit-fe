@@ -665,7 +665,7 @@ export default function LapToTrinhPage() {
                               </td>
                               <td className="px-2 py-4 whitespace-nowrap text-center w-[8%]">
                                 <div
-                                  className="text-xs text-gray-900 "
+                                  className="text-sm text-gray-900 "
                                   title={
                                     request.proposer?.fullName ||
                                     "Không xác định"
@@ -683,7 +683,7 @@ export default function LapToTrinhPage() {
                                 </span>
                               </td>
                               <td className="hidden lg:table-cell px-2 py-4 whitespace-nowrap text-center w-[10%]">
-                                <div className="text-xs text-gray-900">
+                                <div className="text-sm text-gray-900">
                                   {new Date(
                                     request.createdAt
                                   ).toLocaleDateString("vi-VN", {

@@ -52,7 +52,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: LayoutDashboard,
       },
       {
-        name: "Quản lý báo lỗi",
+        name: "Quản lý báo hỏng thiết bị",
         href: "/giang-vien/bao-cao-loi",
         icon: TriangleAlert,
       },
@@ -66,7 +66,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: TimerReset,
         children: [
           {
-            name: "Danh sách yêu cầu sửa chữa",
+            name: "Danh sách báo hỏng thiết bị",
             href: "/giang-vien/danh-sach-yeu-cau-sua-chua",
             icon: Clock,
           },
@@ -170,7 +170,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: MapPin,
       },
       {
-        name: "Quản lý báo lỗi",
+        name: "Quản lý báo hỏng thiết bị",
         href: "/to-truong-ky-thuat/danh-sach-bao-loi",
         icon: ClipboardList,
       },

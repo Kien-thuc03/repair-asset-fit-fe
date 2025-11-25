@@ -488,7 +488,7 @@ export default function BaoCaoLoiPage() {
               title: <span>Trang chủ</span>,
             },
             {
-              title: <span>Báo cáo lỗi</span>,
+              title: <span>Quản lý báo hỏng thiết bị</span>,
             },
           ]}
         />
@@ -497,7 +497,7 @@ export default function BaoCaoLoiPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-blue-900 mb-2">
-          Báo cáo lỗi thiết bị
+          Quản lý báo hỏng thiết bị
         </h1>
         <p className="text-sm sm:text-base text-gray-600">
           Báo cáo sự cố và lỗi thiết bị máy tính trong phòng học

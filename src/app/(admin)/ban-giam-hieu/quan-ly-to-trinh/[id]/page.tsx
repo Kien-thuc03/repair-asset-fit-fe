@@ -616,7 +616,9 @@ export default function ChiTietQuanLyToTrinhPage() {
                 linh kiện)
               </h3>
             </div>
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
@@ -707,6 +709,97 @@ export default function ChiTietQuanLyToTrinhPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile/Tablet Card View */}
+            <div className="md:hidden space-y-4">
+              {proposal.items?.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="bg-white border border-gray-200 rounded-lg shadow-sm p-4 space-y-3">
+                  {/* Header with STT */}
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                    <div className="flex items-center space-x-2">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                        {index + 1}
+                      </span>
+                      <span className="text-sm font-medium text-gray-900">
+                        Linh kiện #{index + 1}
+                      </span>
+                    </div>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {item.quantity} {item.quantity > 1 ? "cái" : "cái"}
+                    </span>
+                  </div>
+
+                  {/* Vị trí */}
+                  <div>
+                    <div className="flex items-center space-x-2 mb-1">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs font-medium text-gray-500">
+                        Vị trí
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-900 ml-6">
+                      {item.oldComponent?.roomLocation || "Chưa xác định"}
+                    </p>
+                  </div>
+
+                  {/* Linh kiện hiện tại */}
+                  <div>
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="flex-shrink-0">
+                        {getComponentIcon(
+                          item.oldComponent?.componentType || "UNKNOWN"
+                        )}
+                      </div>
+                      <span className="text-xs font-medium text-gray-500">
+                        Linh kiện hiện tại
+                      </span>
+                    </div>
+                    <div className="ml-6 space-y-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {item.oldComponent?.name || "Không xác định"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {item.oldComponent?.componentType || "N/A"}
+                      </p>
+                      {item.oldComponent?.componentSpecs && (
+                        <p className="text-xs text-gray-500">
+                          {item.oldComponent.componentSpecs}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Linh kiện thay thế */}
+                  <div>
+                    <span className="text-xs font-medium text-gray-500 block mb-1">
+                      Linh kiện thay thế
+                    </span>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {item.newItemName}
+                      </p>
+                      {item.newItemSpecs && (
+                        <p className="text-xs text-gray-500">
+                          {item.newItemSpecs}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Lý do thay thế */}
+                  <div>
+                    <span className="text-xs font-medium text-gray-500 block mb-1">
+                      Lý do thay thế
+                    </span>
+                    <p className="text-sm text-gray-900">
+                      {item.reason || "Không có lý do"}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
