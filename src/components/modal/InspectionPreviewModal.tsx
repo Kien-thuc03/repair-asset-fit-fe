@@ -119,9 +119,15 @@ export default function InspectionPreviewModal({
               </div>
               <div className="mb-2">
                 <span className="font-medium">2. Ông: </span>
-                <span className="underline">{formData.adminRep}</span>
+                <span className="underline">
+                  {proposal?.adminVerifier?.fullName ||
+                    formData.adminRep ||
+                    "Chưa xác định"}
+                </span>
                 <span className="ml-4 sm:ml-8 font-medium">đại diện: </span>
-                <span className="underline">{formData.adminDepartment}</span>
+                <span className="underline">
+                  {formData.adminDepartment || "Phòng Quản trị"}
+                </span>
               </div>
             </div>
             <div className="col-span-1 sm:col-span-2">
@@ -223,7 +229,7 @@ export default function InspectionPreviewModal({
                   {formData.departmentName}
                 </div>
                 <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
-                 Tổ trưởng Kỹ thuật
+                  Tổ trưởng Kỹ thuật
                 </div>
                 <div className="text-center">
                   <div className="font-medium text-xs sm:text-sm">
@@ -233,14 +239,16 @@ export default function InspectionPreviewModal({
               </div>
               <div className="text-center">
                 <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
-                  {formData.adminDepartment}
+                  {formData.adminDepartment || "Phòng Quản trị"}
                 </div>
                 <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
                   Người thực hiện
                 </div>
                 <div className="text-center">
                   <div className="font-medium text-xs sm:text-sm">
-                    {formData.adminRep}
+                    {proposal?.adminVerifier?.fullName ||
+                      formData.adminRep ||
+                      "Chưa xác định"}
                   </div>
                 </div>
               </div>

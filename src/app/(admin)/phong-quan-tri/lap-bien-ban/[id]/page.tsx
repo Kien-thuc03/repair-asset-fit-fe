@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   FileText,
@@ -24,11 +24,13 @@ import {
 } from "@/hooks";
 import { InspectionFormData, ReplacementProposalStatus } from "@/types";
 import { uploadFile } from "@/lib/api/upload";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RequestDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const { user } = useAuth();
   const [showInspectionForm, setShowInspectionForm] = useState(false);
   const [showInspectionPreview, setShowInspectionPreview] = useState(false);
   const [inspectionFormData, setInspectionFormData] =
@@ -41,7 +43,7 @@ export default function RequestDetailPage() {
       location: "",
       departmentRep: "Giang Thanh Trọn",
       departmentName: "Khoa CNTT",
-      adminRep: "Nguyễn Văn Ngã",
+      adminRep: "",
       adminDepartment: "Phòng Quản trị",
       notes: "",
     });
@@ -56,6 +58,20 @@ export default function RequestDetailPage() {
 
   // Update status hook
   const { updateStatus } = useUpdateReplacementProposalStatus();
+
+  // Tự động điền thông tin người quản trị từ proposal hoặc user hiện tại
+  useEffect(() => {
+    if (proposal) {
+      setInspectionFormData((prev) => ({
+        ...prev,
+        adminRep:
+          proposal.adminVerifier?.fullName ||
+          user?.fullName ||
+          prev.adminRep ||
+          "",
+      }));
+    }
+  }, [proposal, user]);
 
   const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
@@ -85,6 +101,17 @@ export default function RequestDetailPage() {
   };
 
   const handleCreateInspectionReport = () => {
+    // Đảm bảo thông tin người quản trị được điền trước khi mở form
+    if (proposal) {
+      setInspectionFormData((prev) => ({
+        ...prev,
+        adminRep:
+          proposal.adminVerifier?.fullName ||
+          user?.fullName ||
+          prev.adminRep ||
+          "",
+      }));
+    }
     setShowInspectionForm(true);
   };
 
@@ -236,9 +263,9 @@ export default function RequestDetailPage() {
           </p>
           <p style="margin-left: 20px;">
             <strong>2. Ông:</strong> ${
-              formData.adminRep
+              proposalData?.adminVerifier?.fullName || formData.adminRep || "Chưa xác định"
             } &nbsp;&nbsp;&nbsp;&nbsp; <strong>đại diện:</strong> ${
-      formData.adminDepartment
+      formData.adminDepartment || "Phòng Quản trị"
     }
           </p>
           
@@ -306,11 +333,11 @@ export default function RequestDetailPage() {
                   <p>${formData.departmentRep}</p>
                 </td>
                 <td width="50%">
-                  <p><strong>${formData.adminDepartment}</strong></p>
+                  <p><strong>${formData.adminDepartment || "Phòng Quản trị"}</strong></p>
                   <br><br><br>
                   <p><strong>Người thực hiện</strong></p>
                   <br><br>
-                  <p>${formData.adminRep}</p>
+                  <p>${proposalData?.adminVerifier?.fullName || formData.adminRep || "Chưa xác định"}</p>
                 </td>
               </tr>
             </table>
