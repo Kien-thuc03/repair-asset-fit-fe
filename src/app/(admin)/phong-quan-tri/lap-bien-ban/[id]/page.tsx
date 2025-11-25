@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   FileText,
@@ -12,17 +12,24 @@ import {
   FileCheck,
   Loader2,
   AlertCircle,
+  Eye,
+  Download,
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
 import {
   InspectionFormModal,
   InspectionPreviewModal,
+  SubmissionPreviewModal,
 } from "@/components/modal";
 import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { InspectionFormData, ReplacementProposalStatus } from "@/types";
+import {
+  InspectionFormData,
+  SubmissionFormData,
+  ReplacementProposalStatus,
+} from "@/types";
 import { uploadFile } from "@/lib/api/upload";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -33,6 +40,7 @@ export default function RequestDetailPage() {
   const { user } = useAuth();
   const [showInspectionForm, setShowInspectionForm] = useState(false);
   const [showInspectionPreview, setShowInspectionPreview] = useState(false);
+  const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inspectionFormData, setInspectionFormData] =
     useState<InspectionFormData>({
@@ -73,6 +81,63 @@ export default function RequestDetailPage() {
       }));
     }
   }, [proposal, user]);
+
+  // Helper function to extract filename from URL
+  const getFileNameFromUrl = (url: string): string => {
+    try {
+      const urlParts = url.split("/");
+      const filename = urlParts[urlParts.length - 1];
+      // Decode URL encoding (e.g., %20 to space)
+      return decodeURIComponent(filename);
+    } catch {
+      return url;
+    }
+  };
+
+  // Default form data for submission preview modal
+  const defaultSubmissionFormData: SubmissionFormData = useMemo(
+    () => ({
+      recipientDepartment: "Ban Giám hiệu",
+      submittedBy: "Giảng Thanh Trọn",
+      position: "Tổ trưởng Kỹ thuật",
+      department: "Phòng Quản trị",
+      subject: proposal?.title || "",
+      attachments: "Biên bản kiểm tra kỹ thuật",
+      content: proposal?.description || "",
+      director: "TS. Lê Nhất Duy",
+      rector: "TS. Phan Hồng Hải",
+    }),
+    [proposal?.title, proposal?.description]
+  );
+
+  // Handler để export submission docx
+  const handleExportSubmissionDocx = () => {
+    if (!proposal || !proposal.submissionFormUrl) return;
+
+    try {
+      // Tạo download link
+      const link = document.createElement("a");
+      link.href = proposal.submissionFormUrl;
+      link.download = getFileNameFromUrl(proposal.submissionFormUrl);
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Modal.success({
+        title: "Xuất file thành công!",
+        content: `File tờ trình đã được tải xuống.`,
+        centered: true,
+      });
+    } catch (error) {
+      console.error("Lỗi xuất file:", error);
+      Modal.error({
+        title: "Lỗi",
+        content: "Không thể xuất file. Vui lòng thử lại.",
+        centered: true,
+      });
+    }
+  };
 
   const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
@@ -265,7 +330,9 @@ export default function RequestDetailPage() {
           </p>
           <p style="margin-left: 20px;">
             <strong>2. Ông:</strong> ${
-              proposalData?.adminVerifier?.fullName || formData.adminRep || "Chưa xác định"
+              proposalData?.adminVerifier?.fullName ||
+              formData.adminRep ||
+              "Chưa xác định"
             } &nbsp;&nbsp;&nbsp;&nbsp; <strong>đại diện:</strong> ${
       formData.adminDepartment || "Phòng Quản trị"
     }
@@ -335,11 +402,17 @@ export default function RequestDetailPage() {
                   <p>${formData.departmentRep}</p>
                 </td>
                 <td width="50%">
-                  <p><strong>${formData.adminDepartment || "Phòng Quản trị"}</strong></p>
+                  <p><strong>${
+                    formData.adminDepartment || "Phòng Quản trị"
+                  }</strong></p>
                   <br><br><br>
                   <p><strong>Người thực hiện</strong></p>
                   <br><br>
-                  <p>${proposalData?.adminVerifier?.fullName || formData.adminRep || "Chưa xác định"}</p>
+                  <p>${
+                    proposalData?.adminVerifier?.fullName ||
+                    formData.adminRep ||
+                    "Chưa xác định"
+                  }</p>
                 </td>
               </tr>
             </table>
@@ -746,6 +819,42 @@ export default function RequestDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* Documents */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Tài liệu đính kèm
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 bg-blue-50">
+                {proposal.submissionFormUrl && (
+                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-md">
+                    <div className="flex items-center space-x-3">
+                      <FileText className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {getFileNameFromUrl(proposal.submissionFormUrl)}
+                        </p>
+                        <p className="text-xs text-gray-500">DOC Document</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => setShowSubmissionPreview(true)}
+                        className="text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                        title="Xem tài liệu">
+                        <Eye className="w-4 h-4 text-blue-600" />
+                      </button>
+                      <button
+                        onClick={handleExportSubmissionDocx}
+                        className="text-gray-600 hover:bg-blue-100 rounded transition-colors"
+                        title="Tải xuống">
+                        <Download className="w-4 h-4 text-blue-600" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -770,6 +879,17 @@ export default function RequestDetailPage() {
           onExport={handleExportInspectionDocx}
           onSubmit={handleSubmitInspectionReport}
           isLoading={isSubmitting}
+        />
+
+        {/* Modal xem trước tờ trình */}
+        <SubmissionPreviewModal
+          isOpen={showSubmissionPreview}
+          onClose={() => setShowSubmissionPreview(false)}
+          formData={defaultSubmissionFormData}
+          proposal={proposal}
+          onExport={handleExportSubmissionDocx}
+          onSubmit={() => {}}
+          showSubmitButton={false}
         />
       </div>
     </div>
