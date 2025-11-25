@@ -506,7 +506,7 @@ export default function LapBienBanPage() {
                           <td className="px-2 py-4">
                             <button
                               onClick={() => handleViewReport(proposal.id)}
-                              className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                              className="text-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                               <Eye className="w-3 h-3 mr-1" />
                             </button>
                           </td>

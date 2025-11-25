@@ -41,12 +41,7 @@ export default function XuLyToTrinhDetailPage() {
   );
 
   // Fetch proposal data từ API
-  const {
-    data: proposal,
-    loading,
-    error,
-    refetch,
-  } = useReplacementProposal(id);
+  const { data: proposal, loading, error } = useReplacementProposal(id);
   const { updateStatus } = useUpdateReplacementProposalStatus();
 
   // Default form data for preview modal
@@ -178,18 +173,11 @@ export default function XuLyToTrinhDetailPage() {
         status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
       });
 
-      await refetch();
       setIsProcessing(false);
       setActionType(null);
 
-      Modal.success({
-        title: "Xác minh tờ trình thành công",
-        content: `Tờ trình ${proposal.proposalCode} đã được xác minh thành công.`,
-        okText: "Đóng",
-        onOk: () => {
-          router.push("/phong-quan-tri/lap-bien-ban");
-        },
-      });
+      // Redirect ngay sau khi update thành công
+      router.push("/phong-quan-tri/lap-bien-ban");
     } catch (error) {
       console.error("Error approving proposal:", error);
       setIsProcessing(false);
@@ -213,18 +201,11 @@ export default function XuLyToTrinhDetailPage() {
         status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
       });
 
-      await refetch();
       setIsProcessing(false);
       setActionType(null);
 
-      Modal.success({
-        title: "Từ chối tờ trình thành công",
-        content: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công.`,
-        okText: "Đóng",
-        onOk: () => {
-          router.push("/phong-quan-tri/xu-ly-to-trinh");
-        },
-      });
+      // Redirect ngay sau khi update thành công
+      router.push("/phong-quan-tri/xu-ly-to-trinh");
     } catch (error) {
       console.error("Error rejecting proposal:", error);
       setIsProcessing(false);

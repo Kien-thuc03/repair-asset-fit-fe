@@ -665,7 +665,7 @@ export default function LapToTrinhPage() {
                               </td>
                               <td className="px-2 py-4 whitespace-nowrap text-center w-[8%]">
                                 <div
-                                  className="text-xs text-gray-900 truncate"
+                                  className="text-xs text-gray-900 "
                                   title={
                                     request.proposer?.fullName ||
                                     "Không xác định"
