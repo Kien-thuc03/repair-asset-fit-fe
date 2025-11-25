@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Breadcrumb, message } from "antd";
 import Pagination from "@/components/common/Pagination";
@@ -11,6 +11,7 @@ import {
 } from "@/components/assetsManagement";
 import { useComputers } from "@/hooks";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
+import { getAssignedFloors, AssignedFloor } from "@/lib/api/repairs";
 import type { Computer, DeviceAsset } from "@/types/computer";
 
 /**
@@ -72,8 +73,77 @@ export default function TechnicianDeviceManagementContainer() {
   const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
 
+  // State for technician assignments (only for technicians)
+  const [assignedFloors, setAssignedFloors] = useState<AssignedFloor[]>([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(false);
+
+  // Check if current user is a technician (not team lead)
+  const isTechnician = pathname.includes("/ky-thuat-vien/") && !pathname.includes("/to-truong-ky-thuat/");
+  const isTeamLead = pathname.includes("/to-truong-ky-thuat/");
+  const hasAssignments = isTechnician && assignedFloors.length > 0;
+
+  const technicianRooms = useMemo(() => {
+    if (!hasAssignments) return [];
+    return rooms.filter((room) =>
+      assignedFloors.some(
+        (assigned) =>
+          assigned.building === room.building && assigned.floor === room.floor
+      )
+    );
+  }, [rooms, assignedFloors, hasAssignments]);
+
   // Convert computers to device assets for display
-  const deviceAssets: DeviceAsset[] = computers.map(convertComputerToDeviceAsset);
+  const allDeviceAssets: DeviceAsset[] = computers.map(convertComputerToDeviceAsset);
+
+  // Filter device assets based on technician assignments (only for technicians)
+  const filteredDeviceAssets: DeviceAsset[] = hasAssignments
+    ? allDeviceAssets.filter((asset) => {
+        // Check if asset's building/floor is in assigned floors
+        return assignedFloors.some(
+          (assigned) =>
+            assigned.building === asset.building &&
+            assigned.floor === asset.floor
+        );
+      })
+    : allDeviceAssets;
+
+  // Calculate pagination for filtered results (for technicians with assignments)
+  // For team leads, use API pagination
+  const totalFiltered = hasAssignments 
+    ? filteredDeviceAssets.length 
+    : (pagination?.total || 0);
+
+  // Apply frontend pagination for technicians (since we filter after fetching)
+  const startIndex = hasAssignments 
+    ? (currentPage - 1) * pageSize 
+    : 0;
+  const endIndex = hasAssignments
+    ? startIndex + pageSize
+    : filteredDeviceAssets.length;
+
+  const deviceAssets: DeviceAsset[] = hasAssignments
+    ? filteredDeviceAssets.slice(startIndex, endIndex)
+    : filteredDeviceAssets;
+
+  // Calculate pagination info for display
+  const displayPagination = hasAssignments
+    ? {
+        total: totalFiltered,
+        page: currentPage,
+        limit: pageSize,
+        totalPages: Math.ceil(totalFiltered / pageSize),
+      }
+    : pagination;
+
+  const hasActiveFilters =
+    !!searchTerm.trim() ||
+    !!statusFilter ||
+    !!buildingFilter ||
+    !!floorFilter ||
+    !!roomFilter;
+
+  const statsAssets = hasAssignments ? filteredDeviceAssets : deviceAssets;
+  const statsSummary = !hasAssignments && !hasActiveFilters ? summary : null;
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -122,8 +192,77 @@ export default function TechnicianDeviceManagementContainer() {
     fetchRooms();
   }, []);
 
-  // Fetch computers when filters or pagination change
+  // Reset invalid filters when technician assignments change
   useEffect(() => {
+    if (!hasAssignments) return;
+
+    if (
+      buildingFilter &&
+      !assignedFloors.some((af) => af.building === buildingFilter)
+    ) {
+      setBuildingFilter("");
+      setFloorFilter("");
+      setRoomFilter("");
+      setFilteredFloors([]);
+      setFilteredRooms([]);
+      setCurrentPage(1);
+      return;
+    }
+
+    if (
+      floorFilter &&
+      !assignedFloors.some(
+        (af) => af.building === buildingFilter && af.floor === floorFilter
+      )
+    ) {
+      setFloorFilter("");
+      setRoomFilter("");
+      setFilteredRooms([]);
+      setCurrentPage(1);
+    }
+  }, [assignedFloors, hasAssignments, buildingFilter, floorFilter]);
+
+  // Fetch assigned floors for technicians (only if user is a technician)
+  useEffect(() => {
+    if (!isTechnician) {
+      // Team lead can see all devices, no need to fetch assignments
+      setAssignedFloors([]);
+      return;
+    }
+
+    const fetchAssignedFloors = async () => {
+      try {
+        setLoadingAssignments(true);
+        const response = await getAssignedFloors();
+        setAssignedFloors(response.assignedFloors || []);
+      } catch (err) {
+        console.error("Error fetching assigned floors:", err);
+        // Don't show error message, just log it
+        // If assignment fetch fails, technician will see no devices (which is correct behavior)
+        setAssignedFloors([]);
+      } finally {
+        setLoadingAssignments(false);
+      }
+    };
+
+    fetchAssignedFloors();
+  }, [isTechnician]);
+
+  // Fetch computers when filters or pagination change
+  // For technicians with assigned floors, we fetch a larger dataset and filter/paginate in frontend
+  // For team leads, use normal API pagination
+  useEffect(() => {
+    // Skip fetch if technician is still loading assignments
+    if (isTechnician && loadingAssignments) {
+      return;
+    }
+
+    // For technicians with assigned floors, fetch larger dataset (we'll filter and paginate in frontend)
+    // For team leads or technicians without assignments, use normal pagination
+    const shouldFetchAll = isTechnician && assignedFloors.length > 0;
+    const effectivePageSize = shouldFetchAll ? 1000 : pageSize; // Fetch up to 1000 items for technicians
+    const effectivePage = shouldFetchAll ? 1 : currentPage;
+
     const params: {
       page: number;
       limit: number;
@@ -133,8 +272,8 @@ export default function TechnicianDeviceManagementContainer() {
       floor?: string;
       roomName?: string;
     } = {
-      page: currentPage,
-      limit: pageSize,
+      page: effectivePage,
+      limit: effectivePageSize,
     };
 
     // Add search filter (only if not empty)
@@ -147,14 +286,19 @@ export default function TechnicianDeviceManagementContainer() {
       params.status = [statusFilter];
     }
 
-    // Add building filter (only if not empty)
-    if (buildingFilter && buildingFilter.trim()) {
-      params.building = buildingFilter;
-    }
+    // For technicians with assigned floors, don't add building/floor filters here
+    // We'll filter by assigned floors in frontend
+    // For team leads, use normal filters
+    if (!shouldFetchAll) {
+      // Add building filter (only if not empty)
+      if (buildingFilter && buildingFilter.trim()) {
+        params.building = buildingFilter;
+      }
 
-    // Add floor filter (only if not empty)
-    if (floorFilter && floorFilter.trim()) {
-      params.floor = floorFilter;
+      // Add floor filter (only if not empty)
+      if (floorFilter && floorFilter.trim()) {
+        params.floor = floorFilter;
+      }
     }
 
     // Add room filter (only if not empty)
@@ -162,10 +306,9 @@ export default function TechnicianDeviceManagementContainer() {
       params.roomName = roomFilter;
     }
 
-    // Always fetch when dependencies change (including when filters are cleared)
     fetchComputers(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, statusFilter, floorFilter, buildingFilter, roomFilter, currentPage, pageSize]);
+  }, [searchTerm, statusFilter, floorFilter, buildingFilter, roomFilter, currentPage, pageSize, isTechnician, assignedFloors.length, loadingAssignments]);
 
   // Show error message if API call fails
   useEffect(() => {
@@ -218,20 +361,33 @@ export default function TechnicianDeviceManagementContainer() {
     setCurrentPage(1);
 
     if (value) {
-      // Filter floors by building
-      const floorsInBuilding = Array.from(
-        new Set(
-          rooms
-            .filter((room) => room.building === value)
-            .map((room) => room.floor)
-            .filter(Boolean)
-        )
-      ).sort();
+      const sourceRooms = hasAssignments ? technicianRooms : rooms;
+      const floorsInBuilding = hasAssignments
+        ? Array.from(
+            new Set(
+              assignedFloors
+                .filter((floor) => floor.building === value)
+                .map((floor) => floor.floor)
+                .filter(Boolean)
+            )
+          ).sort()
+        : Array.from(
+            new Set(
+              sourceRooms
+                .filter((room) => room.building === value)
+                .map((room) => room.floor)
+                .filter(Boolean)
+            )
+          ).sort();
       setFilteredFloors(floorsInBuilding);
+      const roomsInBuilding = sourceRooms.filter(
+        (room) => room.building === value
+      );
+      setFilteredRooms(roomsInBuilding);
     } else {
       setFilteredFloors([]);
+      setFilteredRooms([]);
     }
-    setFilteredRooms([]);
   };
 
   // Handle floor change - cascade filter
@@ -241,8 +397,8 @@ export default function TechnicianDeviceManagementContainer() {
     setCurrentPage(1);
 
     if (value && buildingFilter) {
-      // Filter rooms by building and floor
-      const roomsInFloor = rooms.filter(
+      const sourceRooms = hasAssignments ? technicianRooms : rooms;
+      const roomsInFloor = sourceRooms.filter(
         (room) => room.building === buildingFilter && room.floor === value
       );
       setFilteredRooms(roomsInFloor);
@@ -270,14 +426,25 @@ export default function TechnicianDeviceManagementContainer() {
   };
 
   // Extract unique buildings from rooms
-  const buildings = Array.from(
-    new Set(rooms.map((room) => room.building).filter(Boolean))
-  ).sort();
+  const buildings = hasAssignments
+    ? Array.from(
+        new Set(assignedFloors.map((floor) => floor.building).filter(Boolean))
+      ).sort()
+    : Array.from(
+        new Set(rooms.map((room) => room.building).filter(Boolean))
+      ).sort();
 
   // Use filteredFloors if building is selected, otherwise show all unique floors
-  const floors = filteredFloors.length > 0 ? filteredFloors : Array.from(
-    new Set(rooms.map((room) => room.floor).filter(Boolean))
-  ).sort();
+  const floors =
+    filteredFloors.length > 0
+      ? filteredFloors
+      : hasAssignments
+      ? Array.from(
+          new Set(assignedFloors.map((floor) => floor.floor).filter(Boolean))
+        ).sort()
+      : Array.from(
+          new Set(rooms.map((room) => room.floor).filter(Boolean))
+        ).sort();
 
   return (
     <div className="space-y-6 main-content">
@@ -306,11 +473,11 @@ export default function TechnicianDeviceManagementContainer() {
       {/* Header */}
       <DeviceManagementHeader isMobile={isMobile} onQRScan={simulateQRScan} />
 
-      {/* Quick Stats - Use summary from API */}
+      {/* Quick Stats */}
       <DeviceStatsCards 
-        assets={deviceAssets} 
-        summary={summary}
-        loading={loading}
+        assets={statsAssets} 
+        summary={statsSummary}
+        loading={loading || loadingAssignments}
       />
 
       {/* Filters */}
@@ -332,14 +499,14 @@ export default function TechnicianDeviceManagementContainer() {
       />
 
       {/* Loading State */}
-      {loading && (
+      {(loading || loadingAssignments) && (
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       )}
 
       {/* Error State */}
-      {error && !loading && (
+      {error && !loading && !loadingAssignments && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-600">{error}</p>
           <button
@@ -351,18 +518,27 @@ export default function TechnicianDeviceManagementContainer() {
         </div>
       )}
 
+      {/* Info message for technicians when no assigned floors */}
+      {isTechnician && !loadingAssignments && assignedFloors.length === 0 && !loading && !error && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800">
+            Bạn chưa được phân công quản lý tầng nào. Vui lòng liên hệ tổ trưởng kỹ thuật để được phân công.
+          </p>
+        </div>
+      )}
+
       {/* Device Grid */}
-      {!loading && !error && (
+      {!loading && !loadingAssignments && !error && (
         <DeviceGrid assets={deviceAssets} onViewDetail={handleViewDetail} />
       )}
 
       {/* Pagination */}
-      {!loading && !error && pagination && pagination.total > 0 && (
+      {!loading && !loadingAssignments && !error && displayPagination && displayPagination.total > 0 && (
         <div className="bg-white shadow rounded-lg">
           <Pagination
-            currentPage={pagination.page}
-            pageSize={pagination.limit}
-            total={pagination.total}
+            currentPage={displayPagination.page}
+            pageSize={displayPagination.limit}
+            total={displayPagination.total}
             onPageChange={handlePageChange}
             onPageSizeChange={handlePageSizeChange}
             showSizeChanger={true}
