@@ -26,7 +26,7 @@ import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { ReplacementProposalStatus } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types";
 
 const { Title } = Typography;
 

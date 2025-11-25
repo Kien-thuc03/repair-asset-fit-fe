@@ -22,8 +22,8 @@ import {
 } from "@/hooks";
 import {
   ReplacementProposal,
-  ReplacementProposalStatus,
 } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types";
 
 type SortField = keyof ReplacementProposal;
 type SortDirection = "asc" | "desc" | null;
