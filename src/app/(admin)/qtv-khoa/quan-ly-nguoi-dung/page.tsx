@@ -7,11 +7,12 @@ import { SearchOutlined, SyncOutlined } from '@ant-design/icons';
 import { useUsersManagement } from '@/hooks/useUsersManagement';
 import { useRoles } from '@/hooks/useRoles';
 import { useUnits } from '@/hooks/useUnits';
+import { getUsers } from '@/lib/api/users';
 import type { UnitResponseDto } from '@/lib/api/units';
 import type { RoleResponseDto } from '@/lib/api/roles';
 import { IUserWithRoles, UserStatus } from '@/types';
 import { UserTable, UserConfirmModal } from '@/components/qtvKhoa';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 
 export default function UsersManagementPage() {
   const router = useRouter();
@@ -63,12 +64,102 @@ export default function UsersManagementPage() {
     return selectedCampus?.childUnits || [];
   }, [filters.campusId, campuses]);
 
-  // Tính toán stats từ danh sách users
+  // State cho stats tổng thể (không phụ thuộc vào filter)
+  const [allUsersStats, setAllUsersStats] = useState<{
+    total: number;
+    active: number;
+    inactive: number;
+    byUnit: { unitName: string; count: number }[];
+  }>({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    byUnit: [],
+  });
+
+  // Fetch stats tổng thể (tất cả users, không filter)
+  const fetchAllUsersStats = useCallback(async () => {
+    try {
+      // Backend giới hạn limit tối đa là 100, nên cần gọi nhiều lần nếu có nhiều users
+      // Bước 1: Lấy tổng số users
+      const firstResponse = await getUsers({
+        page: 1,
+        limit: 100, // Limit tối đa theo backend
+      });
+
+      const totalUsers = firstResponse.total;
+      let allUsers = [...firstResponse.data];
+
+      // Nếu có nhiều hơn 100 users, gọi thêm các trang tiếp theo
+      if (totalUsers > 100) {
+        const totalPages = Math.ceil(totalUsers / 100);
+        const promises = [];
+        
+        // Gọi các trang từ 2 đến totalPages
+        for (let page = 2; page <= totalPages; page++) {
+          promises.push(
+            getUsers({
+              page,
+              limit: 100,
+            })
+          );
+        }
+
+        // Chờ tất cả các request hoàn thành
+        const responses = await Promise.all(promises);
+        
+        // Gộp tất cả users lại
+        responses.forEach(response => {
+          allUsers = [...allUsers, ...response.data];
+        });
+      }
+
+      // Tính toán stats
+      const activeUsers = allUsers.filter(u => u.status === UserStatus.ACTIVE);
+      const inactiveUsers = allUsers.filter(u => u.status === UserStatus.INACTIVE);
+      
+      // Group by unit
+      const byUnit = allUsers.reduce((acc, user) => {
+        const unitName = user.unit?.name || 'Chưa phân công';
+        const existing = acc.find(item => item.unitName === unitName);
+        if (existing) {
+          existing.count++;
+        } else {
+          acc.push({ unitName, count: 1 });
+        }
+        return acc;
+      }, [] as { unitName: string; count: number }[]);
+
+      setAllUsersStats({
+        total: totalUsers,
+        active: activeUsers.length,
+        inactive: inactiveUsers.length,
+        byUnit,
+      });
+    } catch (err) {
+      console.error('Error fetching all users stats:', err);
+      // Không set state nếu có lỗi, để fallback về tính từ users hiện tại
+    }
+  }, []);
+
+  // Fetch stats khi component mount
+  useEffect(() => {
+    fetchAllUsersStats();
+  }, [fetchAllUsersStats]);
+
+  // Tính toán stats - ưu tiên allUsersStats, fallback về users hiện tại
   const stats = useMemo(() => {
+    // Nếu đã có allUsersStats với dữ liệu hợp lệ (total > 0 hoặc đã có active/inactive), sử dụng nó
+    if (allUsersStats.total > 0) {
+      return allUsersStats;
+    }
+
+    // Fallback: tính từ users hiện tại và total từ API
+    // Đây là dữ liệu từ trang hiện tại, sẽ được thay thế khi allUsersStats fetch xong
     const activeUsers = users.filter(u => u.status === UserStatus.ACTIVE);
     const inactiveUsers = users.filter(u => u.status === UserStatus.INACTIVE);
     
-    // Group by unit
+    // Group by unit từ users hiện tại
     const byUnit = users.reduce((acc, user) => {
       const unitName = user.unit?.name || 'Chưa phân công';
       const existing = acc.find(item => item.unitName === unitName);
@@ -81,12 +172,12 @@ export default function UsersManagementPage() {
     }, [] as { unitName: string; count: number }[]);
 
     return {
-      total: total,
+      total: total || 0,
       active: activeUsers.length,
       inactive: inactiveUsers.length,
       byUnit,
     };
-  }, [users, total]);
+  }, [allUsersStats, users, total]);
 
   // Navigation handlers
   const handleCreateUser = () => {
@@ -141,6 +232,10 @@ export default function UsersManagementPage() {
           message.success(
             `${newStatus === UserStatus.ACTIVE ? 'Mở khóa' : 'Khóa'} tài khoản thành công!`
           );
+          // Refetch stats sau khi toggle status thành công
+          setTimeout(() => {
+            fetchAllUsersStats();
+          }, 500);
         } else {
           message.error('Có lỗi xảy ra khi thay đổi trạng thái tài khoản');
         }
@@ -148,6 +243,10 @@ export default function UsersManagementPage() {
         const success = await deleteUser(confirmModal.user.id, false); // Soft delete
         if (success) {
           message.success('Xóa tài khoản thành công!');
+          // Refetch stats sau khi delete thành công
+          setTimeout(() => {
+            fetchAllUsersStats();
+          }, 500);
         } else {
           message.error('Có lỗi xảy ra khi xóa tài khoản');
         }
