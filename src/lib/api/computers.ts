@@ -89,15 +89,15 @@ export const getComputersByRoomId = async (
 /**
  * Get computers with filters and pagination
  * Endpoint: GET /computer
- * 
+ *
  * @param params Query parameters for filtering, pagination, and sorting
  * @returns Promise with computers list, pagination, and summary
- * 
+ *
  * @example
  * ```typescript
  * // Get all computers (first page)
  * const result = await getComputers();
- * 
+ *
  * // Search and filter
  * const result = await getComputers({
  *   search: "Dell",
@@ -114,7 +114,7 @@ export const getComputers = async (
   try {
     // Destructure to separate status from other params
     const { status, ...otherParams } = params || {};
-    
+
     const response = await api.get<GetComputersResponse>("/computer", {
       params: {
         ...otherParams,
@@ -135,15 +135,15 @@ export const getComputers = async (
 /**
  * Get computer detail by ID
  * Endpoint: GET /computer/:id
- * 
+ *
  * @param computerId Computer ID hoặc Asset ID (UUID)
  * @returns Promise with full computer details
- * 
+ *
  * @example
  * ```typescript
  * // Get by computer ID
  * const computer = await getComputerDetail('uuid-computer-id');
- * 
+ *
  * // Get by asset ID (also works)
  * const computer = await getComputerDetail('uuid-asset-id');
  * ```
@@ -152,9 +152,9 @@ export const getComputerDetail = async (
   computerId: string
 ): Promise<import("@/types/computer").ComputerDetail> => {
   try {
-    const response = await api.get<ApiResponse<import("@/types/computer").ComputerDetail>>(
-      `/computer/${computerId}`
-    );
+    const response = await api.get<
+      ApiResponse<import("@/types/computer").ComputerDetail>
+    >(`/computer/${computerId}`);
     return response.data.data;
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
@@ -168,3 +168,84 @@ export const getComputerDetail = async (
  * @deprecated Use getComputerDetail instead
  */
 export const getComputerById = getComputerDetail;
+
+/**
+ * Get computer repair info from QR code
+ * Endpoint: GET /computer/:computerId/repair-info
+ *
+ * @param computerId Computer ID (UUID) from QR code
+ * @returns Promise with computer information for creating repair request
+ *
+ * @example
+ * ```typescript
+ * const qrData = JSON.parse(scannedQRCode);
+ * const repairInfo = await getComputerRepairInfo(qrData.computerId);
+ * // Auto-fill form with repairInfo.data
+ * ```
+ */
+export interface ComputerRepairInfoResponse {
+  success: boolean;
+  message: string;
+  data: {
+    computer: {
+      id: string;
+      machineLabel: string;
+      notes?: string;
+    };
+    asset: {
+      id: string; // This is computerAssetId for repair request
+      ktCode: string;
+      fixedCode?: string;
+      name: string;
+      specs?: string;
+      status: string;
+      categoryName?: string;
+    };
+    room: {
+      id: string;
+      name: string;
+      roomNumber?: string;
+      roomCode?: string;
+      building: string;
+      floor: string;
+      unitName?: string;
+    };
+    availableComponents: Array<{
+      id: string;
+      componentType: string;
+      name: string;
+      componentSpecs?: string;
+      serialNumber?: string;
+    }>;
+    installedSoftware: Array<{
+      id: string;
+      name: string;
+      version?: string;
+      publisher?: string;
+      installationDate?: string;
+    }>;
+    hasActiveRepair: boolean;
+    activeRepairInfo?: {
+      requestCode: string;
+      status: string;
+      createdAt: string;
+    };
+  };
+}
+
+export const getComputerRepairInfo = async (
+  computerId: string
+): Promise<ComputerRepairInfoResponse> => {
+  try {
+    const response = await api.get<ComputerRepairInfoResponse>(
+      `/computer/${computerId}/repair-info`
+    );
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message ||
+        "Lấy thông tin máy tính từ QR code thất bại."
+    );
+  }
+};

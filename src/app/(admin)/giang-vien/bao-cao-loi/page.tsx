@@ -15,6 +15,10 @@ import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
 import { getComponentsByComputerId } from "@/lib/api/components";
 import { getSoftwareByAssetId } from "@/lib/api/asset-software";
 import { createRepair, CreateRepairRequest } from "@/lib/api/repairs";
+import {
+  getComputerRepairInfo,
+  ComputerRepairInfoResponse,
+} from "@/lib/api/computers";
 import { useProfile } from "@/hooks";
 import {
   getHardwareErrorTypes,
@@ -22,6 +26,7 @@ import {
   canSelectComponents as canSelectComponentsByErrorType,
   ErrorType,
 } from "@/lib/constants/errorTypes";
+import QRScanner from "@/components/common/QRScanner";
 import {
   Breadcrumb,
   Card,
@@ -95,6 +100,8 @@ export default function BaoCaoLoiPage() {
     "hardware" | "software" | ""
   >(""); // Phân loại lỗi phần cứng/phần mềm
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [isLoadingQRData, setIsLoadingQRData] = useState(false);
 
   // Kiểm tra xem loại lỗi hiện tại có cho phép chọn linh kiện không
   const canSelectComponents =
@@ -477,6 +484,128 @@ export default function BaoCaoLoiPage() {
     router.push("/giang-vien/danh-sach-yeu-cau-sua-chua");
   };
 
+  // Handle QR scan success
+  const handleQRScanSuccess = async (decodedText: string) => {
+    try {
+      setIsLoadingQRData(true);
+
+      // Parse QR code data
+      let qrData: { type: string; computerId: string; timestamp?: string };
+      try {
+        qrData = JSON.parse(decodedText);
+      } catch {
+        message.error("Mã QR không hợp lệ. Vui lòng quét lại.");
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Validate QR data
+      if (qrData.type !== "REPAIR_REQUEST" || !qrData.computerId) {
+        message.error(
+          "Mã QR không phải là mã QR của thiết bị. Vui lòng quét đúng mã QR."
+        );
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Fetch computer repair info from API
+      const repairInfo: ComputerRepairInfoResponse =
+        await getComputerRepairInfo(qrData.computerId);
+
+      if (!repairInfo.success) {
+        message.error(repairInfo.message || "Không thể lấy thông tin thiết bị");
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      const { data } = repairInfo;
+
+      // Check if computer has active repair
+      if (data.hasActiveRepair) {
+        message.warning(
+          `Máy này đang có yêu cầu sửa chữa chưa hoàn thành (${data.activeRepairInfo?.requestCode}). Vui lòng chọn máy khác.`
+        );
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Auto-fill form with QR data
+      setFormData((prev) => ({
+        ...prev,
+        building: data.room.building,
+        floor: data.room.floor,
+        roomId: data.room.id,
+        assetId: data.asset.id, // This is computerAssetId for repair request
+      }));
+
+      // Store computer ID for loading components
+      setSelectedComputerId(data.computer.id);
+
+      // Update filtered data
+      // 1. Set floors for the building
+      const floorsInBuilding = Array.from(
+        new Set(
+          rooms
+            .filter((room) => room.building === data.room.building)
+            .map((room) => room.floor)
+            .filter(Boolean)
+        )
+      );
+      setFilteredFloors(floorsInBuilding);
+
+      // 2. Set rooms for the floor
+      const roomsOnFloor = rooms.filter(
+        (room) =>
+          room.building === data.room.building && room.floor === data.room.floor
+      );
+      setFilteredRooms(roomsOnFloor);
+
+      // 3. Set computers for the room
+      try {
+        const computers = await getComputersByRoomId(data.room.id);
+        setFilteredComputers(Array.isArray(computers) ? computers : []);
+      } catch {
+        setFilteredComputers([]);
+      }
+
+      // 4. Set components
+      const mappedComponents: Component[] = data.availableComponents.map(
+        (comp) => ({
+          id: comp.id,
+          computerAssetId: data.computer.id,
+          componentType: comp.componentType as unknown as ComponentType,
+          name: comp.name,
+          componentSpecs: comp.componentSpecs,
+          serialNumber: comp.serialNumber,
+          status: "INSTALLED" as ComponentStatus, // Available components are installed
+          installedAt: new Date().toISOString(),
+          removedAt: undefined,
+          notes: undefined,
+        })
+      );
+      setFilteredComponents(mappedComponents);
+
+      // 5. Set software
+      const mappedSoftware: Software[] = data.installedSoftware.map((sw) => ({
+        id: sw.id,
+        name: sw.name,
+        version: sw.version || "",
+        publisher: sw.publisher || "",
+        createdAt: sw.installationDate || new Date().toISOString(),
+      }));
+      setFilteredSoftware(mappedSoftware);
+
+      setIsLoadingQRData(false);
+      message.success(
+        `Đã tự động điền thông tin từ mã QR: ${data.asset.name} (${data.asset.ktCode})`
+      );
+    } catch (error) {
+      console.error("QR scan error:", error);
+      message.error("Không thể tải thông tin từ mã QR. Vui lòng thử lại.");
+      setIsLoadingQRData(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -549,8 +678,12 @@ export default function BaoCaoLoiPage() {
               size="large"
               icon={<ScanOutlined />}
               className="mb-3 w-full sm:w-auto"
-              style={{ height: "48px", fontSize: "16px" }}>
-              Quét mã QR thiết bị
+              style={{ height: "48px", fontSize: "16px" }}
+              onClick={() => setShowQRScanner(true)}
+              loading={isLoadingQRData}>
+              {isLoadingQRData
+                ? "Đang tải thông tin..."
+                : "Quét mã QR thiết bị"}
             </Button>
             <p className="text-sm text-gray-600">
               Quét mã QR trên thiết bị để tự động điền thông tin
@@ -1029,6 +1162,13 @@ export default function BaoCaoLoiPage() {
           </div>
         </div>
       </Modal>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        open={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScanSuccess={handleQRScanSuccess}
+      />
     </div>
   );
 }
