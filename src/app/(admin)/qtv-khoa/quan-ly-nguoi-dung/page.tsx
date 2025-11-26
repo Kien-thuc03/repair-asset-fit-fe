@@ -426,7 +426,12 @@ export default function UsersManagementPage() {
                   Khoa CNTT
                 </div>
                 <div className="text-lg font-medium text-gray-900">
-                  {stats.byUnit.find(u => u.unitName.includes('Công nghệ Thông tin'))?.count || 0}
+                  {stats.byUnit
+                    .filter(u => {
+                      const name = u.unitName.toLowerCase();
+                      return name.includes('công nghệ thông tin') || name.includes('cntt');
+                    })
+                    .reduce((sum, u) => sum + u.count, 0)}
                 </div>
               </div>
             </div>
