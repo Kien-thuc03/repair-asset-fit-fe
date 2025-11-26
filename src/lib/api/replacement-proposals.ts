@@ -319,3 +319,53 @@ export const getReplacementProposalsByProposer = async (
   }
 };
 
+/**
+ * Interface cho request cập nhật replacement item
+ */
+export interface UpdateReplacementItemRequest {
+  newlyPurchasedComponentId?: string;
+}
+
+/**
+ * Cập nhật replacement item (ví dụ: cập nhật newlyPurchasedComponentId sau khi thay thế linh kiện)
+ * @param proposalId ID của replacement proposal
+ * @param itemId ID của replacement item
+ * @param data Dữ liệu cập nhật
+ * @returns Promise với replacement proposal đã cập nhật
+ */
+export const updateReplacementItem = async (
+  proposalId: string,
+  itemId: string,
+  data: UpdateReplacementItemRequest
+): Promise<ReplacementProposal> => {
+  try {
+    console.log(
+      `🌐 API Call: PATCH /api/v1/replacement-proposals/${proposalId}/items/${itemId}`,
+      data
+    );
+    const response = await api.patch<ReplacementProposal>(
+      `/api/v1/replacement-proposals/${proposalId}/items/${itemId}`,
+      data
+    );
+    console.log("✅ API Response:", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    console.error("❌ Update replacement item error:", error);
+    const err = error as {
+      response?: { data?: { message?: string | string[] }; status?: number };
+    };
+    console.error("❌ Error details:", {
+      status: err.response?.status,
+      message: err.response?.data?.message,
+    });
+
+    const errorMessage = Array.isArray(err.response?.data?.message)
+      ? err.response.data.message.join(", ")
+      : err.response?.data?.message;
+
+    throw new Error(
+      errorMessage || "Cập nhật replacement item thất bại."
+    );
+  }
+};
+

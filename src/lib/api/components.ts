@@ -163,3 +163,139 @@ export const getComponentsByAssetId = async (
     );
   }
 };
+
+/**
+ * Get components by asset ID with computer info
+ * @param assetId Asset ID (UUID)
+ * @returns Promise with components and computer info
+ */
+export const getComponentsByAssetIdWithComputer = async (
+  assetId: string
+): Promise<{ components: ComponentResponseDto[]; computer: ComputerInfo }> => {
+  try {
+    const response = await api.get<ApiResponse<GetComponentsByComputerData>>(
+      `/computer/asset/${assetId}/components`
+    );
+
+    return {
+      components: response.data.data.components,
+      computer: response.data.data.computer,
+    };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy danh sách linh kiện thất bại."
+    );
+  }
+};
+
+/**
+ * Interface cho request thay thế linh kiện
+ */
+export interface ReplaceComponentRequest {
+  oldComponentId: string;
+  newItemName: string;
+  newItemSpecs: string;
+  serialNumber?: string;
+  notes?: string;
+}
+
+/**
+ * Interface cho response thay thế linh kiện
+ */
+export interface ReplaceComponentResponse {
+  computer: {
+    id: string;
+    machineLabel: string;
+    assetName: string;
+  };
+  oldComponent: {
+    id: string;
+    name: string;
+    componentType: string;
+    componentSpecs: string;
+    status: string;
+    removedAt: string;
+  };
+  newComponent: ComponentResponseDto;
+}
+
+/**
+ * Thay thế một linh kiện trong máy tính
+ * @param computerId Computer ID (UUID) - KHÔNG PHẢI Asset ID
+ * @param data Dữ liệu thay thế linh kiện
+ * @returns Promise với thông tin linh kiện cũ và mới
+ */
+export const replaceComponent = async (
+  computerId: string,
+  data: ReplaceComponentRequest
+): Promise<ReplaceComponentResponse> => {
+  try {
+    const response = await api.patch<ApiResponse<ReplaceComponentResponse>>(
+      `/computer/${computerId}/replace-component`,
+      data
+    );
+
+    return response.data.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Thay thế linh kiện thất bại."
+    );
+  }
+};
+
+/**
+ * Interface cho response khi lấy component detail
+ */
+interface GetComponentDetailData {
+  component: ComponentResponseDto;
+  computer: ComputerInfo;
+}
+
+/**
+ * Lấy chi tiết một linh kiện theo ID
+ * @param componentId Component ID (UUID)
+ * @returns Promise với thông tin component và computer
+ */
+export const getComponentById = async (
+  componentId: string
+): Promise<{ component: ComponentResponseDto; computer: ComputerInfo }> => {
+  try {
+    const response = await api.get<ApiResponse<GetComponentDetailData>>(
+      `/computer/component/${componentId}`
+    );
+
+    return {
+      component: response.data.data.component,
+      computer: response.data.data.computer,
+    };
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy chi tiết linh kiện thất bại."
+    );
+  }
+};
+
+/**
+ * Lấy computerId từ componentId bằng cách tìm trong danh sách components của asset
+ * @param componentId Component ID (UUID)
+ * @param assetId Asset ID (UUID) - từ repairRequests
+ * @returns Promise với computerId
+ */
+export const getComputerIdFromComponent = async (
+  componentId: string,
+  assetId: string
+): Promise<string> => {
+  try {
+    // Lấy danh sách components của asset
+    const { computer } = await getComponentsByAssetIdWithComputer(assetId);
+    return computer.id;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy thông tin máy tính thất bại."
+    );
+  }
+};
