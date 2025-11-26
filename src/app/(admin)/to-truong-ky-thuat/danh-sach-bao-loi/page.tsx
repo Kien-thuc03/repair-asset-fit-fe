@@ -261,7 +261,7 @@ export default function DanhSachBaoLoiPage() {
             {
               title: (
                 <div className="flex items-center">
-                  <span>Quản lý báo lỗi</span>
+                  <span>Quản lý báo hỏng thiết bị</span>
                 </div>
               ),
             },
@@ -272,7 +272,7 @@ export default function DanhSachBaoLoiPage() {
       {/* Header */}
       <div className="bg-white shadow rounded-lg p-4 sm:p-6">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-          Quản lý báo lỗi
+          Quản lý báo hỏng thiết bị
         </h1>
         <p className="mt-2 text-sm sm:text-base text-gray-600">
           Theo dõi và quản lý các báo cáo lỗi từ giảng viên và kỹ thuật viên.
@@ -343,7 +343,7 @@ export default function DanhSachBaoLoiPage() {
       <div className="bg-white shadow rounded-lg hidden lg:block">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Quản lý báo lỗi ({meta.total})
+            Danh sách báo hỏng thiết bị ({meta.total})
           </h2>
         </div>
         <div className="min-h-[500px]">
@@ -391,7 +391,7 @@ export default function DanhSachBaoLoiPage() {
                     </div>
                   </th>
                   <th
-                    className="px-2 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-[10%]"
+                    className="px-2 py-3 text-center text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group w-[10%]"
                     onClick={() => handleSort("requestCode")}>
                     <div className="flex items-center uppercase space-x-1">
                       <span>Mã YC</span>
@@ -476,7 +476,7 @@ export default function DanhSachBaoLoiPage() {
                         </div>
                       </td>
                       <td className="px-2 py-3 text-sm font-medium text-blue-600">
-                        <div className="truncate" title={record.requestCode}>
+                        <div className="text-center" title={record.requestCode}>
                           {record.requestCode}
                         </div>
                       </td>

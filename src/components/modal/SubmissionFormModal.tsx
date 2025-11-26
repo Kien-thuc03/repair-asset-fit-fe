@@ -12,6 +12,7 @@ interface SubmissionFormModalProps {
   onExport: () => void;
   onPreview: () => void;
   onSubmit: () => void;
+  isSubmitting?: boolean;
 }
 
 export default function SubmissionFormModal({
@@ -22,6 +23,7 @@ export default function SubmissionFormModal({
   onExport,
   onPreview,
   onSubmit,
+  isSubmitting = false,
 }: SubmissionFormModalProps) {
   return (
     <Modal
@@ -33,29 +35,33 @@ export default function SubmissionFormModal({
       }
       open={isOpen}
       onCancel={onClose}
-      width="90%"
-      style={{ maxWidth: "800px" }}
+      width="100%"
+      style={{ maxWidth: "900px" }}
       footer={[
-        <Button key="cancel" onClick={onClose}>
+        <Button key="cancel" onClick={onClose}
+        className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
           Hủy
         </Button>,
         <Button
           key="export"
           icon={<Download className="w-4 h-4" />}
-          onClick={onExport}>
+          onClick={onExport}
+          className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
           Xuất file
         </Button>,
         <Button
           key="preview"
           onClick={onPreview}
-          className="bg-green-600 hover:bg-green-700 text-white">
+          className="px-2 sm:px-3 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
           Xem trước
         </Button>,
         <Button
           key="submit"
           type="primary"
           onClick={onSubmit}
-          className="bg-purple-600 hover:bg-purple-700">
+          loading={isSubmitting}
+          disabled={isSubmitting}
+          className="px-2 sm:px-3 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
           Gửi tờ trình
         </Button>,
       ]}>

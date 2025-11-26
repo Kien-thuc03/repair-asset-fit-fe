@@ -123,6 +123,14 @@ export default function LapBienBanPage() {
           case "title":
             compareValue = (a.title || "").localeCompare(b.title || "");
             break;
+          case "proposer":
+            compareValue = (a.proposer?.fullName || "").localeCompare(
+              b.proposer?.fullName || ""
+            );
+            break;
+          case "itemsCount":
+            compareValue = (a.itemsCount || 0) - (b.itemsCount || 0);
+            break;
           default:
             compareValue = 0;
         }
@@ -348,7 +356,7 @@ export default function LapBienBanPage() {
       {/* Desktop Table View */}
       <div className="hidden lg:block bg-white rounded-lg shadow">
         {/* Table Header */}
-        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 ">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             Danh sách biên bản ({filteredReports.length})
           </h2>
@@ -404,12 +412,22 @@ export default function LapBienBanPage() {
                         className="w-[12%] px-2">
                         Ngày lập
                       </SortableHeader>
-                      <th className="w-[15%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <SortableHeader<ReplacementProposal>
+                        field="proposer"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                        className="w-[15%] px-2">
                         Người tạo
-                      </th>
-                      <th className="w-[25%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      </SortableHeader>
+                      <SortableHeader<ReplacementProposal>
+                        field="itemsCount"
+                        sortField={sortField}
+                        sortDirection={sortDirection}
+                        onSort={handleSort}
+                        className="w-[25%] px-2">
                         Phòng/Linh kiện
-                      </th>
+                      </SortableHeader>
                       <SortableHeader<ReplacementProposal>
                         field="status"
                         sortField={sortField}
@@ -506,7 +524,7 @@ export default function LapBienBanPage() {
                           <td className="px-2 py-4">
                             <button
                               onClick={() => handleViewReport(proposal.id)}
-                              className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                              className="text-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                               <Eye className="w-3 h-3 mr-1" />
                             </button>
                           </td>
@@ -536,7 +554,7 @@ export default function LapBienBanPage() {
       {/* Mobile View */}
       <div className="lg:hidden bg-white shadow rounded-lg">
         {/* Header */}
-        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b">
+        <div className="px-3 sm:px-6 py-3 sm:py-4 ">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             Danh sách biên bản ({filteredReports.length})
           </h2>

@@ -6,13 +6,12 @@ import {
   Breadcrumb,
   Card,
   Tag,
-  Descriptions,
   Button,
-  Timeline,
   Alert,
   Table,
   Modal,
   Spin,
+  Steps,
 } from "antd";
 import {
   Clock,
@@ -51,6 +50,7 @@ export default function ChiTietDuyetDeXuatPage() {
   // State for submission flow
   const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionFormData, setSubmissionFormData] =
     useState<SubmissionFormData>({
       submittedBy: "Giảng Thanh Trọn",
@@ -422,6 +422,7 @@ Trân trọng kính trình.`;
   const handleSubmitSubmission = async () => {
     if (!proposal) return;
 
+    setIsSubmitting(true);
     try {
       // 1. Tạo file DOCX từ HTML content
       const htmlContent = generateSubmissionHTML(submissionFormData, proposal);
@@ -522,6 +523,8 @@ Trân trọng kính trình.`;
         content: err instanceof Error ? err.message : "Không thể lập tờ trình.",
         centered: true,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -725,76 +728,17 @@ Trân trọng kính trình.`;
   // Show "Lập tờ trình" button for ĐÃ_DUYỆT status
   const canCreateSubmission = displayStatus === "ĐÃ_DUYỆT";
 
-  // Timeline items
-  const timelineItems = [
-    {
-      color: "blue",
-      children: (
-        <div>
-          <p className="font-medium">Tạo đề xuất thay thế</p>
-          <p className="text-sm text-gray-500">
-            {new Date(proposal.createdAt).toLocaleString("vi-VN")}
-          </p>
-        </div>
-      ),
-    },
-    ...(displayStatus !== "CHỜ_TỔ_TRƯỞNG_DUYỆT"
-      ? [
-          {
-            color: displayStatus === "ĐÃ_TỪ_CHỐI" ? "red" : "green",
-            children: (
-              <div>
-                <p className="font-medium">
-                  {displayStatus === "ĐÃ_TỪ_CHỐI"
-                    ? "Từ chối đề xuất"
-                    : "Chấp thuận đề xuất"}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {teamLeadApproverName &&
-                    `Người duyệt: ${teamLeadApproverName}`}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {new Date().toLocaleString("vi-VN")}
-                </p>
-              </div>
-            ),
-          },
-        ]
-      : []),
-    ...(displayStatus === "ĐÃ_DUYỆT"
-      ? [
-          {
-            color: "green",
-            children: (
-              <div>
-                <p className="font-medium">Hoàn tất duyệt đề xuất</p>
-                <p className="text-sm text-gray-500">
-                  Đề xuất đã được phê duyệt và chuyển đi xử lý
-                </p>
-              </div>
-            ),
-          },
-        ]
-      : []),
-    ...(displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
-      ? [
-          {
-            color: "blue",
-            children: (
-              <div>
-                <p className="font-medium">Đã lập tờ trình</p>
-                <p className="text-sm text-gray-500">
-                  Tờ trình đã được tạo và gửi tới Phòng Quản trị
-                </p>
-                <p className="text-sm text-gray-500">
-                  {new Date().toLocaleString("vi-VN")}
-                </p>
-              </div>
-            ),
-          },
-        ]
-      : []),
-  ];
+  // Helper function to get status step
+  const getStatusStep = (status: string) => {
+    // Xử lý trường hợp từ chối - hiển thị ở bước 1 (Đã duyệt) với status error
+    if (status === "ĐÃ_TỪ_CHỐI") {
+      return 1; // Bước "Đã duyệt" nhưng với status error
+    }
+
+    const steps = ["CHỜ_TỔ_TRƯỞNG_DUYỆT", "ĐÃ_DUYỆT", "ĐÃ_LẬP_TỜ_TRÌNH"];
+    const currentIndex = steps.indexOf(status);
+    return currentIndex >= 0 ? currentIndex : 0;
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -831,134 +775,219 @@ Trân trọng kính trình.`;
         </div>
       </div>
 
-      {/* Status Alert */}
-      {proposal.status === "ĐÃ_TỪ_CHỐI" && (
-        <Alert
-          message="Đề xuất đã bị từ chối"
-          description="Đề xuất này đã bị từ chối bởi tổ trưởng kỹ thuật"
-          type="error"
-          showIcon
-          className="text-xs sm:text-sm"
-        />
-      )}
-
-      {proposal.status === "ĐÃ_DUYỆT" && (
-        <Alert
-          message="Đề xuất đã được phê duyệt"
-          description="Đề xuất này đã được phê duyệt và chuyển tiếp để xử lý."
-          type="success"
-          showIcon
-          className="text-xs sm:text-sm"
-        />
-      )}
-
-      {/* Action Buttons */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Main Info */}
-        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-          {/* Basic Info */}
+      {/* Basic Info and Status Progress - 2 columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Basic Info */}
+        <div>
           <Card title="Thông tin cơ bản" className="shadow">
-            <Descriptions
-              column={{ xs: 1, sm: 1, md: 2 }}
-              bordered
+            <Table
+              dataSource={[
+                {
+                  key: "1",
+                  field: "Mã đề xuất",
+                  value: (
+                    <span className="font-mono font-medium text-blue-600 text-xs sm:text-sm">
+                      {proposal.proposalCode}
+                    </span>
+                  ),
+                },
+                {
+                  key: "2",
+                  field: "Trạng thái",
+                  value: (
+                    <Tag
+                      color={currentStatus.color}
+                      icon={<currentStatus.icon className="w-3 h-3" />}
+                      className="text-xs">
+                      {currentStatus.text}
+                    </Tag>
+                  ),
+                },
+                {
+                  key: "3",
+                  field: "Người đề xuất",
+                  value: (
+                    <div className="font-medium text-xs sm:text-sm">
+                      {proposerName}
+                    </div>
+                  ),
+                },
+                {
+                  key: "4",
+                  field: "Ngày tạo",
+                  value: (
+                    <div className="text-xs sm:text-sm">
+                      {new Date(proposal.createdAt).toLocaleDateString(
+                        "vi-VN",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  key: "5",
+                  field: "Số lượng linh kiện",
+                  value: (
+                    <span className="font-medium text-blue-600 text-xs sm:text-sm">
+                      {replacementItems.length} linh kiện
+                    </span>
+                  ),
+                },
+                ...(canApproveOrReject
+                  ? [
+                      {
+                        key: "6",
+                        field: "Hành động",
+                        value: (
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Button
+                              type="primary"
+                              icon={<CheckCircle className="h-4 w-4" />}
+                              onClick={() => setShowApproveModal(true)}
+                              className="w-full sm:w-auto text-sm"
+                              size="middle">
+                              Phê duyệt
+                            </Button>
+                            <Button
+                              danger
+                              icon={<XCircle className="h-4 w-4" />}
+                              onClick={() => setShowRejectModal(true)}
+                              className="w-full sm:w-auto text-sm"
+                              size="middle">
+                              Từ chối
+                            </Button>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(canCreateSubmission
+                  ? [
+                      {
+                        key: "7",
+                        field: "Hành động",
+                        value: (
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Button
+                              type="primary"
+                              icon={<FileText className="h-4 w-4" />}
+                              onClick={handleCreateSubmissionForm}
+                              className="w-full sm:w-auto text-sm bg-purple-600 hover:bg-purple-700"
+                              size="middle">
+                              Lập tờ trình
+                            </Button>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+              columns={[
+                {
+                  title: "Trường",
+                  dataIndex: "field",
+                  key: "field",
+                  width: "30%",
+                  className: "font-medium",
+                },
+                {
+                  title: "Giá trị",
+                  dataIndex: "value",
+                  key: "value",
+                },
+              ]}
+              pagination={false}
               size="small"
-              labelStyle={{ fontWeight: 500 }}>
-              <Descriptions.Item
-                label="Mã đề xuất"
-                span={{ xs: 1, sm: 1, md: 1 }}>
-                <span className="font-mono font-medium text-blue-600 text-xs sm:text-sm">
-                  {proposal.proposalCode}
-                </span>
-              </Descriptions.Item>
-              <Descriptions.Item
-                label="Trạng thái"
-                span={{ xs: 1, sm: 1, md: 1 }}>
-                <Tag
-                  color={currentStatus.color}
-                  icon={<currentStatus.icon className="w-3 h-3" />}
-                  className="text-xs">
-                  {currentStatus.text}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item
-                label="Người đề xuất"
-                span={{ xs: 1, sm: 1, md: 1 }}>
-                <div className="font-medium text-xs sm:text-sm">
-                  {proposerName}
-                </div>
-              </Descriptions.Item>
-              <Descriptions.Item
-                label="Ngày tạo"
-                span={{ xs: 1, sm: 1, md: 1 }}>
-                <div className="text-xs sm:text-sm">
-                  {new Date(proposal.createdAt).toLocaleDateString("vi-VN", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
-              </Descriptions.Item>
-              <Descriptions.Item
-                label="Số lượng linh kiện"
-                span={{ xs: 1, sm: 1, md: 2 }}>
-                <span className="font-medium text-blue-600 text-xs sm:text-sm">
-                  {replacementItems.length} linh kiện
-                </span>
-              </Descriptions.Item>
-              {canApproveOrReject && (
-                <Descriptions.Item
-                  label="Hành động"
-                  span={{ xs: 1, sm: 1, md: 2 }}>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      type="primary"
-                      icon={<CheckCircle className="h-4 w-4" />}
-                      onClick={() => setShowApproveModal(true)}
-                      className="w-full sm:w-auto text-sm"
-                      size="middle">
-                      Phê duyệt
-                    </Button>
-                    <Button
-                      danger
-                      icon={<XCircle className="h-4 w-4" />}
-                      onClick={() => setShowRejectModal(true)}
-                      className="w-full sm:w-auto text-sm"
-                      size="middle">
-                      Từ chối
-                    </Button>
-                  </div>
-                </Descriptions.Item>
-              )}
-              {canCreateSubmission && (
-                <Descriptions.Item
-                  label="Hành động"
-                  span={{ xs: 1, sm: 1, md: 2 }}>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Button
-                      type="primary"
-                      icon={<FileText className="h-4 w-4" />}
-                      onClick={handleCreateSubmissionForm}
-                      className="w-full sm:w-auto text-sm bg-purple-600 hover:bg-purple-700"
-                      size="middle">
-                      Lập tờ trình
-                    </Button>
-                  </div>
-                </Descriptions.Item>
-              )}
-            </Descriptions>
+              bordered
+              showHeader={true}
+            />
           </Card>
         </div>
 
-        {/* Timeline */}
-        <div className="lg:col-span-1">
+        {/* Status Progress */}
+        <div>
           <Card
             title={
               <span className="text-sm sm:text-base">Tiến trình xử lý</span>
             }
             className="shadow">
-            <Timeline items={timelineItems} className="text-xs sm:text-sm" />
+            <div className="mt-4">
+              <Steps
+                current={getStatusStep(displayStatus)}
+                status={displayStatus === "ĐÃ_TỪ_CHỐI" ? "error" : "process"}
+                size="small"
+                items={[
+                  {
+                    title: "Tạo đề xuất",
+                    icon: <Clock className="w-4 h-4" />,
+                    description:
+                      displayStatus === "CHỜ_TỔ_TRƯỞNG_DUYỆT"
+                        ? "Hiện tại"
+                        : new Date(proposal.createdAt).toLocaleDateString(
+                            "vi-VN"
+                          ),
+                  },
+                  {
+                    title: "Đã duyệt",
+                    icon: <CheckCircle className="w-4 h-4" />,
+                    description:
+                      displayStatus === "ĐÃ_DUYỆT" ||
+                      displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
+                        ? teamLeadApproverName
+                          ? `Bởi: ${teamLeadApproverName}`
+                          : new Date(proposal.updatedAt).toLocaleDateString(
+                              "vi-VN"
+                            )
+                        : "",
+                  },
+                  {
+                    title: "Đã lập tờ trình",
+                    icon: <FileText className="w-4 h-4" />,
+                    description:
+                      displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
+                        ? "Đã tạo và gửi tờ trình"
+                        : "",
+                  },
+                ]}
+              />
+              {/* Status-specific alerts */}
+              {displayStatus === "ĐÃ_TỪ_CHỐI" && (
+                <Alert
+                  className="mt-4"
+                  message="Đề xuất đã bị từ chối"
+                  description={
+                    teamLeadApproverName
+                      ? `Đề xuất đã bị từ chối bởi ${teamLeadApproverName} lúc ${new Date(
+                          proposal.updatedAt
+                        ).toLocaleString("vi-VN")}.`
+                      : `Đề xuất đã bị từ chối lúc ${new Date(
+                          proposal.updatedAt
+                        ).toLocaleString("vi-VN")}.`
+                  }
+                  type="error"
+                  icon={<XCircle />}
+                  showIcon
+                />
+              )}
+              {displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH" && (
+                <Alert
+                  className="mt-4"
+                  message="Đã lập tờ trình thành công"
+                  description={`Tờ trình đã được tạo và gửi tới Phòng Quản trị lúc ${new Date(
+                    proposal.updatedAt
+                  ).toLocaleString("vi-VN")}.`}
+                  type="success"
+                  icon={<CheckCircle />}
+                  showIcon
+                />
+              )}
+            </div>
           </Card>
         </div>
       </div>
@@ -1091,6 +1120,7 @@ Trân trọng kính trình.`;
         onExport={handleExportSubmissionDocx}
         onPreview={() => setShowSubmissionPreview(true)}
         onSubmit={handleSubmitSubmission}
+        isSubmitting={isSubmitting}
       />
 
       {/* Modal xem trước tờ trình */}
@@ -1101,6 +1131,7 @@ Trân trọng kính trình.`;
         proposal={proposal}
         onExport={handleExportSubmissionDocx}
         onSubmit={handleSubmitSubmission}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

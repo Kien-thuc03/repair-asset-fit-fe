@@ -1,6 +1,6 @@
 "use client";
 
-import { Modal } from "antd";
+import { Modal, Button } from "antd";
 import { Download } from "lucide-react";
 import { SubmissionFormData } from "@/types";
 import { ReplacementProposal } from "@/lib/api/replacement-proposals";
@@ -13,6 +13,7 @@ interface SubmissionPreviewModalProps {
   onExport: () => void;
   onSubmit: () => void;
   showSubmitButton?: boolean; // Optional prop to show/hide submit button
+  isSubmitting?: boolean;
 }
 
 export default function SubmissionPreviewModal({
@@ -23,6 +24,7 @@ export default function SubmissionPreviewModal({
   onExport,
   onSubmit,
   showSubmitButton = true, // Default to true for backward compatibility
+  isSubmitting = false,
 }: SubmissionPreviewModalProps) {
   // Early return if no proposal or formData
   if (!proposal || !formData) return null;
@@ -33,33 +35,33 @@ export default function SubmissionPreviewModal({
       open={isOpen}
       onCancel={onClose}
       footer={
-        <div className="flex flex-row justify-end gap-2 sm:gap-3">
-          <button
-            onClick={onClose}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+        <div className="flex flex-nowrap justify-end gap-2 items-center">
+          <Button onClick={onClose} 
+          className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
             Đóng
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             onClick={onExport}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2">
-            <Download className="w-4 h-4" />
+            icon={<Download className="w-4 h-4" />}
+            className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
             Xuất file
-          </button>
+          </Button>
           {showSubmitButton && (
-            <button
-              type="button"
+            <Button
+              type="primary"
               onClick={() => {
                 onClose();
                 onSubmit();
               }}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700">
+              loading={isSubmitting}
+              disabled={isSubmitting}
+              className="px-2 sm:px-3 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
               Gửi tờ trình
-            </button>
+            </Button>
           )}
         </div>
       }
-      width="90%"
+      width="100%"
       style={{ maxWidth: 1000 }}
       centered>
       <div className="space-y-4 sm:space-y-6 max-h-[80vh] overflow-y-auto px-2 sm:px-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Card,
@@ -8,9 +8,10 @@ import {
   Tag,
   Typography,
   Descriptions,
-  Timeline,
   message,
   Breadcrumb,
+  Steps,
+  Alert,
 } from "antd";
 import {
   CheckCircle,
@@ -20,13 +21,24 @@ import {
   Eye,
   Loader2,
   AlertCircle,
+  Clock,
+  XCircle,
+  Package,
 } from "lucide-react";
-import { SignConfirmModal } from "@/components/modal";
+import {
+  SignConfirmModal,
+  SubmissionPreviewModal,
+  InspectionPreviewModal,
+} from "@/components/modal";
 import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import { ReplacementProposalStatus } from "@/types";
+import {
+  ReplacementProposalStatus,
+  SubmissionFormData,
+  InspectionFormData,
+} from "@/types";
 
 const { Title } = Typography;
 
@@ -76,6 +88,8 @@ export default function ChiTietDeXuatThayThePage() {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
+  const [showInspectionPreview, setShowInspectionPreview] = useState(false);
 
   // Xử lý mở modal xác nhận gửi đề xuất
   const handleOpenConfirmModal = () => {
@@ -85,6 +99,106 @@ export default function ChiTietDeXuatThayThePage() {
   // Xử lý đóng modal
   const handleCloseModal = () => {
     setShowConfirmModal(false);
+  };
+
+  // Helper function to extract filename from URL
+  const getFileNameFromUrl = (url: string): string => {
+    try {
+      const urlParts = url.split("/");
+      const filename = urlParts[urlParts.length - 1];
+      // Decode URL encoding (e.g., %20 to space)
+      return decodeURIComponent(filename);
+    } catch {
+      return url;
+    }
+  };
+
+  // Handler để download file
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      // Fetch the file from URL
+      const response = await fetch(url);
+      const blob = await response.blob();
+
+      // Create download link
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      // Fallback: open in new tab
+      window.open(url, "_blank");
+    }
+  };
+
+  // Default form data for preview modals
+  const defaultSubmissionFormData: SubmissionFormData = useMemo(
+    () => ({
+      recipientDepartment: "Ban Giám hiệu",
+      submittedBy: "Giảng Thanh Trọn",
+      position: "Tổ trưởng Kỹ thuật",
+      department: "Phòng Quản trị",
+      subject: proposal?.title || "",
+      attachments: "Biên bản kiểm tra kỹ thuật",
+      content: proposal?.description || "",
+      director: "TS. Lê Nhất Duy",
+      rector: "TS. Phan Hồng Hải",
+    }),
+    [proposal?.title, proposal?.description]
+  );
+
+  const defaultInspectionFormData: InspectionFormData = useMemo(
+    () => ({
+      requestedBy: "Khoa CNTT",
+      year: new Date().getFullYear().toString(),
+      inspectionDay: new Date().getDate().toString(),
+      inspectionMonth: (new Date().getMonth() + 1).toString(),
+      inspectionYear: new Date().getFullYear().toString(),
+      location: "Phòng máy H1",
+      departmentRep: "Giảng Thanh Trọn",
+      departmentName: "Khoa CNTT",
+      adminRep: proposal?.adminVerifier?.fullName || "",
+      adminDepartment: "Phòng Quản trị",
+      notes: "",
+    }),
+    [proposal?.adminVerifier?.fullName]
+  );
+
+  // Export handlers for downloading DOCX files
+  const handleExportSubmissionDocx = () => {
+    if (!proposal) return;
+
+    try {
+      // Use the same logic as in chi-tiet page
+      message.info({
+        content: "Chức năng xuất file đang được phát triển.",
+        duration: 2,
+      });
+    } catch (error) {
+      console.error("Lỗi xuất file:", error);
+      message.error("Không thể xuất file. Vui lòng thử lại.");
+    }
+  };
+
+  const handleExportInspectionDocx = () => {
+    if (!proposal) return;
+
+    try {
+      message.info({
+        content: "Chức năng xuất file đang được phát triển.",
+        duration: 2,
+      });
+    } catch (error) {
+      console.error("Lỗi xuất file:", error);
+      message.error("Không thể xuất file. Vui lòng thử lại.");
+    }
   };
 
   // Xử lý xác nhận hoàn tất mua sắm
@@ -121,75 +235,28 @@ export default function ChiTietDeXuatThayThePage() {
     }
   };
 
-  // Tạo timeline dựa trên trạng thái hiện tại
-  const getTimelineItems = () => {
-    if (!proposal) return [];
+  // Helper function to get status step
+  const getStatusStep = (status: ReplacementProposalStatus) => {
+    if (!proposal) return 0;
 
-    const items = [
-      {
-        color: "green",
-        children: (
-          <div>
-            <p className="font-medium">Tạo đề xuất</p>
-            <p className="text-sm text-gray-500">
-              {new Date(proposal.createdAt).toLocaleString("vi-VN")}
-            </p>
-            <p className="text-sm">
-              Bởi: {proposal.proposer?.fullName || "Không xác định"}
-            </p>
-          </div>
-        ),
-      },
-    ];
+    // Xử lý trường hợp từ chối
+    if (
+      status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ||
+      status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
+    ) {
+      return 1; // Bước "Đã duyệt" nhưng với status error
+    }
 
-    const statusOrder = [
+    const steps = [
       ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT,
       ReplacementProposalStatus.ĐÃ_DUYỆT,
-      ReplacementProposalStatus.CHỜ_XÁC_MINH,
       ReplacementProposalStatus.ĐÃ_XÁC_MINH,
-      ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN,
       ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN,
-      ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
-      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
       ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM,
     ];
 
-    const currentStatusIndex = statusOrder.indexOf(proposal.status);
-
-    statusOrder.forEach((status, index) => {
-      if (index === 0) return; // Skip CHỜ_TỔ_TRƯỞNG_DUYỆT vì đã có "Tạo đề xuất"
-
-      const isPassed = index <= currentStatusIndex;
-      const isCurrent = index === currentStatusIndex;
-      const isRejected =
-        proposal.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ||
-        proposal.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH;
-
-      let color = "gray";
-      if (isRejected && isCurrent) {
-        color = "red";
-      } else if (isPassed) {
-        color = "green";
-      } else if (isCurrent) {
-        color = "blue";
-      }
-
-      items.push({
-        color,
-        children: (
-          <div>
-            <p className="font-medium">{getStatusConfig(status).text}</p>
-            {isPassed && (
-              <p className="text-sm text-gray-500">
-                {new Date(proposal.updatedAt).toLocaleString("vi-VN")}
-              </p>
-            )}
-          </div>
-        ),
-      });
-    });
-
-    return items;
+    const currentIndex = steps.indexOf(status);
+    return currentIndex >= 0 ? currentIndex : 0;
   };
 
   if (loading) {
@@ -288,7 +355,135 @@ export default function ChiTietDeXuatThayThePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Timeline và thao tác */}
+      <div className="space-y-6">
+        {/* Status Progress */}
+        <Card title="Tiến trình xử lý">
+          <div className="mt-4">
+            <Steps
+              current={getStatusStep(proposal.status)}
+              status={
+                proposal.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ||
+                proposal.status ===
+                  ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
+                  ? "error"
+                  : "process"
+              }
+              size="small"
+              items={[
+                {
+                  title: "Tạo đề xuất",
+                  icon: <Clock className="w-4 h-4" />,
+                  description:
+                    proposal.status ===
+                    ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT
+                      ? "Hiện tại"
+                      : new Date(proposal.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        ),
+                },
+                {
+                  title: "Đã duyệt",
+                  icon: <CheckCircle className="w-4 h-4" />,
+                  description:
+                    proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT ||
+                    proposal.status ===
+                      ReplacementProposalStatus.CHỜ_XÁC_MINH ||
+                    proposal.status === ReplacementProposalStatus.ĐÃ_XÁC_MINH ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
+                      ? new Date(proposal.updatedAt).toLocaleDateString("vi-VN")
+                      : "",
+                },
+                {
+                  title: "Đã xác minh",
+                  icon: <CheckCircle className="w-4 h-4" />,
+                  description:
+                    proposal.status === ReplacementProposalStatus.ĐÃ_XÁC_MINH ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
+                      ? proposal.adminVerifier
+                        ? `Bởi: ${proposal.adminVerifier.fullName}`
+                        : new Date(proposal.updatedAt).toLocaleDateString(
+                            "vi-VN"
+                          )
+                      : "",
+                },
+                {
+                  title: "Đã ký biên bản",
+                  icon: <FileText className="w-4 h-4" />,
+                  description:
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH ||
+                    proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
+                      ? new Date(proposal.updatedAt).toLocaleDateString("vi-VN")
+                      : "",
+                },
+                {
+                  title: "Đã hoàn tất mua sắm",
+                  icon: <Package className="w-4 h-4" />,
+                  description:
+                    proposal.status ===
+                    ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
+                      ? new Date(proposal.updatedAt).toLocaleDateString("vi-VN")
+                      : "",
+                },
+              ]}
+            />
+            {/* Status-specific alerts */}
+            {(proposal.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ||
+              proposal.status ===
+                ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH) && (
+              <Alert
+                className="mt-4"
+                message="Đề xuất đã bị từ chối"
+                description={`Đề xuất đã bị từ chối lúc ${new Date(
+                  proposal.updatedAt
+                ).toLocaleString("vi-VN")}.`}
+                type="error"
+                icon={<XCircle />}
+                showIcon
+              />
+            )}
+            {proposal.status ===
+              ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
+              <Alert
+                className="mt-4"
+                message="Đề xuất đã hoàn thành"
+                description={`Mua sắm đã được hoàn tất lúc ${new Date(
+                  proposal.updatedAt
+                ).toLocaleString("vi-VN")}.`}
+                type="success"
+                icon={<CheckCircle />}
+                showIcon
+              />
+            )}
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-6">
         {/* Thông tin chính */}
         <div className="lg:col-span-2 space-y-6">
           {/* Thông tin cơ bản */}
@@ -360,8 +555,8 @@ export default function ChiTietDeXuatThayThePage() {
                       </h5>
                       <div className="space-y-1 text-sm">
                         <p>
-                          <strong>Linh kiện ID:</strong>{" "}
-                          {item.oldComponent?.id || "Không xác định"}
+                          <strong>Tên linh kiện:</strong>{" "}
+                          {item.oldComponent?.name || "Không xác định"}
                         </p>
                         <p>
                           <strong>Trạng thái:</strong>{" "}
@@ -389,57 +584,71 @@ export default function ChiTietDeXuatThayThePage() {
           <Card title="Tài liệu đính kèm">
             <div className="space-y-3">
               {proposal.submissionFormUrl && (
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="font-medium">Tờ trình</p>
-                      <p className="text-sm text-gray-500">
-                        {proposal.submissionFormUrl.split("/").pop()}
-                      </p>
+                <div className="bg-blue-50 px-3 py-2 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-blue-600">Tờ trình</p>
+                        <p className="text-sm text-blue-500 truncate">
+                          {getFileNameFromUrl(proposal.submissionFormUrl)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="link"
-                      icon={<Eye className="h-4 w-4" />}
-                      href={proposal.submissionFormUrl}
-                      target="_blank"
-                      className="text-blue-600 hover:text-blue-800"></Button>
-                    <Button
-                      type="link"
-                      icon={<Download className="h-4 w-4" />}
-                      href={proposal.submissionFormUrl}
-                      target="_blank"
-                      download></Button>
+                    <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                      <button
+                        onClick={() =>
+                          handleDownload(
+                            proposal.submissionFormUrl!,
+                            getFileNameFromUrl(proposal.submissionFormUrl!)
+                          )
+                        }
+                        className="p-1 hover:bg-blue-100 rounded transition-colors"
+                        title="Tải xuống">
+                        <Download className="h-4 w-4 text-blue-600" />
+                      </button>
+                      <button
+                        onClick={() => setShowSubmissionPreview(true)}
+                        className="p-1 hover:bg-blue-100 rounded transition-colors"
+                        title="Xem trước">
+                        <Eye className="h-4 w-4 text-blue-600" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {proposal.verificationReportUrl && (
-                <div className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-green-500" />
-                    <div>
-                      <p className="font-medium">Biên bản</p>
-                      <p className="text-sm text-gray-500">
-                        {proposal.verificationReportUrl.split("/").pop()}
-                      </p>
+                <div className="bg-green-50 px-3 py-2 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <FileText className="h-5 w-5 text-green-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-green-600">Biên bản</p>
+                        <p className="text-sm text-green-500 truncate">
+                          {getFileNameFromUrl(proposal.verificationReportUrl)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="link"
-                      icon={<Eye className="h-4 w-4" />}
-                      href={proposal.verificationReportUrl}
-                      target="_blank"
-                      className="text-blue-600 hover:text-blue-800"></Button>
-                    <Button
-                      type="link"
-                      icon={<Download className="h-4 w-4" />}
-                      href={proposal.verificationReportUrl}
-                      target="_blank"
-                      download></Button>
+                    <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                      <button
+                        onClick={() =>
+                          handleDownload(
+                            proposal.verificationReportUrl!,
+                            getFileNameFromUrl(proposal.verificationReportUrl!)
+                          )
+                        }
+                        className="p-1 hover:bg-green-100 rounded transition-colors"
+                        title="Tải xuống">
+                        <Download className="h-4 w-4 text-green-600" />
+                      </button>
+                      <button
+                        onClick={() => setShowInspectionPreview(true)}
+                        className="p-1 hover:bg-green-100 rounded transition-colors"
+                        title="Xem trước">
+                        <Eye className="h-4 w-4 text-green-600" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -451,14 +660,6 @@ export default function ChiTietDeXuatThayThePage() {
                   </p>
                 )}
             </div>
-          </Card>
-        </div>
-
-        {/* Timeline và thao tác */}
-        <div className="space-y-6">
-          {/* Timeline trạng thái */}
-          <Card title="Tiến trình xử lý">
-            <Timeline items={getTimelineItems()} />
           </Card>
         </div>
       </div>
@@ -477,6 +678,27 @@ export default function ChiTietDeXuatThayThePage() {
         customDescription="Bạn có chắc chắn muốn xác nhận đã hoàn tất mua sắm cho đề xuất thay thế này?"
         customWarning="Sau khi xác nhận, trạng thái đề xuất sẽ được cập nhật thành ĐÃ HOÀN TẤT MUA SẮM và bạn sẽ được chuyển về trang danh sách."
         icon={PlaneLanding}
+      />
+
+      {/* Preview Modals */}
+      <SubmissionPreviewModal
+        isOpen={showSubmissionPreview}
+        onClose={() => setShowSubmissionPreview(false)}
+        formData={defaultSubmissionFormData}
+        proposal={proposal}
+        onExport={handleExportSubmissionDocx}
+        onSubmit={() => {}}
+        showSubmitButton={false}
+      />
+
+      <InspectionPreviewModal
+        isOpen={showInspectionPreview}
+        onClose={() => setShowInspectionPreview(false)}
+        formData={defaultInspectionFormData}
+        proposal={proposal}
+        onExport={handleExportInspectionDocx}
+        onSubmit={() => {}}
+        showSubmitButton={false}
       />
     </div>
   );

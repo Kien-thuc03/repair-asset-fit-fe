@@ -8,7 +8,6 @@ import {
   CheckSquare,
   Square,
   Search,
-  Send,
 } from "lucide-react";
 
 interface InspectionReport {
@@ -46,7 +45,6 @@ export default function InspectionTable({
   onSort,
   onViewDetail,
   onSignReport,
-  onSendBack,
 }: InspectionTableProps) {
   const getSortIcon = (field: string) => {
     return (
@@ -171,9 +169,9 @@ export default function InspectionTable({
                     <td className="px-2 py-3">
                       <div className="flex items-center">
                         <User className="h-3 w-3 text-gray-400 mr-1" />
-                        <span className="text-sm text-gray-900 truncate">
-                          {report.createdBy.length > 12
-                            ? `${report.createdBy.substring(0, 12)}...`
+                        <span className="text-sm text-gray-900 ">
+                          {report.createdBy.length > 20
+                            ? `${report.createdBy.substring(0, 20)}...`
                             : report.createdBy}
                         </span>
                       </div>

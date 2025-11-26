@@ -13,6 +13,7 @@ import {
   Calendar,
   User,
   Building,
+  Wrench,
 } from "lucide-react";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import { Pagination, SortableHeader } from "@/components/common";
@@ -41,6 +42,11 @@ const softwareProposalStatusConfig = {
     label: "Đã từ chối",
     color: "text-red-600 bg-red-50 border-red-200",
     icon: XCircle,
+  },
+  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
+    label: "Đang trang bị",
+    color: "text-orange-600 bg-orange-50 border-orange-200",
+    icon: Wrench,
   },
   [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
     label: "Đã trang bị",
@@ -132,6 +138,7 @@ export default function DanhSachDeXuatPhanMemPage() {
       SoftwareProposalStatus.CHỜ_DUYỆT,
       SoftwareProposalStatus.ĐÃ_DUYỆT,
       SoftwareProposalStatus.ĐÃ_TỪ_CHỐI,
+      SoftwareProposalStatus.ĐANG_TRANG_BỊ,
       SoftwareProposalStatus.ĐÃ_TRANG_BỊ,
     ];
 
@@ -414,6 +421,9 @@ export default function DanhSachDeXuatPhanMemPage() {
             <Option value={SoftwareProposalStatus.ĐÃ_DUYỆT}>Đã duyệt</Option>
             <Option value={SoftwareProposalStatus.ĐÃ_TỪ_CHỐI}>
               Đã từ chối
+            </Option>
+            <Option value={SoftwareProposalStatus.ĐANG_TRANG_BỊ}>
+              Đang trang bị
             </Option>
             <Option value={SoftwareProposalStatus.ĐÃ_TRANG_BỊ}>
               Đã trang bị

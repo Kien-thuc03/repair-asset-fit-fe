@@ -37,7 +37,23 @@ export default function SignatureInfo({
               <div className="flex items-center mt-1">
                 <Clock className="h-4 w-4 text-gray-400 mr-2" />
                 <span className="text-sm text-gray-900">
-                  {new Date(leaderSignedAt).toLocaleString("vi-VN")}
+                  {(() => {
+                    const signedDate = new Date(leaderSignedAt);
+                    const now = new Date();
+                    // Lấy ngày tháng năm từ leaderSignedAt
+                    const dateStr = signedDate.toLocaleDateString("vi-VN", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    });
+                    // Lấy giờ phút giây từ thời gian thực tế (hiện tại)
+                    const timeStr = now.toLocaleTimeString("vi-VN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    });
+                    return `${dateStr} ${timeStr}`;
+                  })()}
                 </span>
               </div>
             </div>

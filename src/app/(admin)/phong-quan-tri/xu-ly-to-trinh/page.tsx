@@ -11,7 +11,6 @@ import {
   XCircle,
   Loader2,
   AlertCircle,
-  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb, Button, Modal } from "antd";
@@ -36,27 +35,23 @@ export default function XuLyToTrinhPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
-  const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [selectedProposal, setSelectedProposal] =
-    useState<ReplacementProposal | null>(null);
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const itemsPerPage = 10;
+
+  const { updateStatus } = useUpdateReplacementProposalStatus();
 
   // Fetch data từ API - lấy tất cả rồi filter ở frontend để lấy cả B6 và B8
   const {
     data: apiData,
     loading,
     error,
-    refetch,
   } = useReplacementProposals({
     status: undefined, // Không filter ở API, sẽ filter ở frontend
     page: 1,
     limit: 1000, // Lấy tất cả để xử lý phân trang và sort trên client
   });
-
-  const { updateStatus } = useUpdateReplacementProposalStatus();
 
   const filteredData = useMemo(() => {
     const proposals = apiData?.data || [];
@@ -103,6 +98,14 @@ export default function XuLyToTrinhPage() {
           case "status":
             aValue = a.status;
             bValue = b.status;
+            break;
+          case "itemsCount":
+            aValue = a.itemsCount || 0;
+            bValue = b.itemsCount || 0;
+            break;
+          case "proposer":
+            aValue = a.proposer?.fullName?.toLowerCase() || "";
+            bValue = b.proposer?.fullName?.toLowerCase() || "";
             break;
           default:
             return 0;
@@ -163,64 +166,6 @@ export default function XuLyToTrinhPage() {
         return "Chờ xác minh";
       default:
         return status;
-    }
-  };
-
-  // Hàm xử lý khi nhấn nút duyệt/xác minh tờ trình
-  const handleApproveClick = (proposal: ReplacementProposal) => {
-    setSelectedProposal(proposal);
-    setShowApprovalModal(true);
-  };
-
-  // Hàm xử lý khi nhấn nút chuyển sang B8 (CHỜ_XÁC_MINH)
-  const handleRequestVerificationClick = (proposal: ReplacementProposal) => {
-    setSelectedProposal(proposal);
-    setShowVerificationModal(true);
-  };
-
-  // Hàm xử lý khi xác nhận chuyển sang B8 (CHỜ_XÁC_MINH)
-  const handleVerificationConfirm = async () => {
-    if (!selectedProposal) return;
-
-    try {
-      // Chuyển sang trạng thái CHỜ_XÁC_MINH (B8)
-      await updateStatus(selectedProposal.id, {
-        status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
-      });
-
-      // Đóng modal
-      setShowVerificationModal(false);
-
-      // Refetch data
-      refetch();
-    } catch (error) {
-      console.error("Error requesting verification:", error);
-      setShowExportErrorModal(true);
-    }
-  };
-
-  // Hàm xử lý khi xác nhận xác minh tờ trình (từ B6 hoặc B8 -> B9)
-  const handleApproveConfirm = async () => {
-    if (!selectedProposal) return;
-
-    try {
-      // Khi Phòng Quản trị xác minh tờ trình,
-      // chuyển sang trạng thái ĐÃ_XÁC_MINH (B9)
-      await updateStatus(selectedProposal.id, {
-        status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
-      });
-
-      // Đóng modal
-      setShowApprovalModal(false);
-
-      // Refetch data
-      refetch();
-
-      // Chuyển hướng đến trang lập biên bản
-      router.push("/phong-quan-tri/lap-bien-ban");
-    } catch (error) {
-      console.error("Error verifying proposal:", error);
-      setShowExportErrorModal(true);
     }
   };
 
@@ -311,6 +256,36 @@ export default function XuLyToTrinhPage() {
     }
   };
 
+  // Hàm xử lý khi click xem chi tiết
+  const handleViewDetail = async (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    item: ReplacementProposal
+  ) => {
+    // Nếu status là ĐÃ_DUYỆT_TỜ_TRÌNH (B6), tự động chuyển sang CHỜ_XÁC_MINH (B8) trước
+    if (item.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH) {
+      e.preventDefault();
+      setProcessingId(item.id);
+
+      try {
+        await updateStatus(item.id, {
+          status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
+        });
+        // Chuyển hướng sau khi update thành công
+        router.push(`/phong-quan-tri/xu-ly-to-trinh/${item.id}`);
+      } catch (error) {
+        console.error("Error updating status:", error);
+        Modal.error({
+          title: "Lỗi",
+          content: "Không thể chuyển trạng thái tờ trình. Vui lòng thử lại.",
+          okText: "Đóng",
+        });
+      } finally {
+        setProcessingId(null);
+      }
+    }
+    // Nếu status khác, cho phép navigate bình thường
+  };
+
   return (
     <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
@@ -351,8 +326,8 @@ export default function XuLyToTrinhPage() {
         </h1>
         <p className="mt-2 text-sm sm:text-base text-gray-600">
           Danh sách các tờ trình đã được Ban giám hiệu duyệt (B6) hoặc đang chờ
-          xác minh (B8). Phòng Quản trị có thể yêu cầu xác minh hoặc xác minh và
-          xử lý các tờ trình này.
+          xác minh (B8). Khi xem chi tiết tờ trình ở trạng thái B6, hệ thống sẽ
+          tự động chuyển sang B8.
         </p>
       </div>
 
@@ -462,12 +437,22 @@ export default function XuLyToTrinhPage() {
                     className="w-[22%]">
                     Tiêu đề
                   </SortableHeader>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[17%]">
+                  <SortableHeader<ReplacementProposal>
+                    field="proposer"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    className="w-[17%]">
                     Người tạo
-                  </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                  </SortableHeader>
+                  <SortableHeader<ReplacementProposal>
+                    field="itemsCount"
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    className="w-[8%]">
                     Số lượng
-                  </th>
+                  </SortableHeader>
                   <SortableHeader<ReplacementProposal>
                     field="status"
                     sortField={sortField}
@@ -566,31 +551,16 @@ export default function XuLyToTrinhPage() {
                     </td>
                     <td className="px-2 py-3 text-center">
                       <div className="flex items-center justify-center space-x-1">
-                        <Link
-                          href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
-                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          title="Xem chi tiết">
-                          <Eye className="w-3 h-3" />
-                        </Link>
-                        {/* Nút chuyển sang B8 - chỉ hiển thị khi status là B6 */}
-                        {item.status ===
-                          ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
-                          <button
-                            onClick={() => handleRequestVerificationClick(item)}
-                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                            title="Yêu cầu xác minh">
-                            <AlertTriangle className="w-3 h-3" />
-                          </button>
-                        )}
-                        {/* Nút xác minh (B9) - chỉ hiển thị khi status là B8 (CHỜ_XÁC_MINH) */}
-                        {item.status ===
-                          ReplacementProposalStatus.CHỜ_XÁC_MINH && (
-                          <button
-                            onClick={() => handleApproveClick(item)}
-                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                            title="Xác minh">
-                            <CheckCircle className="w-3 h-3" />
-                          </button>
+                        {processingId === item.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                        ) : (
+                          <Link
+                            href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
+                            onClick={(e) => handleViewDetail(e, item)}
+                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            title="Xem chi tiết">
+                            <Eye className="w-3 h-3" />
+                          </Link>
                         )}
                       </div>
                     </td>
@@ -706,30 +676,19 @@ export default function XuLyToTrinhPage() {
 
                   {/* Footer with Actions */}
                   <div className="space-y-2 pt-2">
-                    <Link
-                      href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
-                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
-                      <Eye className="h-3.5 w-3.5" />
-                      <span>Xem chi tiết</span>
-                    </Link>
-                    {/* Nút yêu cầu xác minh - chỉ hiển thị khi status là B6 (ĐÃ_DUYỆT_TỜ_TRÌNH) */}
-                    {item.status ===
-                      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
-                      <button
-                        onClick={() => handleRequestVerificationClick(item)}
-                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-yellow-600 text-white text-xs font-medium rounded-md hover:bg-yellow-700">
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        <span>Yêu cầu xác minh</span>
-                      </button>
-                    )}
-                    {/* Nút xác minh (B9) - chỉ hiển thị khi status là B8 (CHỜ_XÁC_MINH) */}
-                    {item.status === ReplacementProposalStatus.CHỜ_XÁC_MINH && (
-                      <button
-                        onClick={() => handleApproveClick(item)}
-                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        <span>Xác minh</span>
-                      </button>
+                    {processingId === item.id ? (
+                      <div className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-100 text-blue-600 text-xs font-medium rounded-md">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Đang xử lý...</span>
+                      </div>
+                    ) : (
+                      <Link
+                        href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
+                        onClick={(e) => handleViewDetail(e, item)}
+                        className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
+                        <Eye className="h-3.5 w-3.5" />
+                        <span>Xem chi tiết</span>
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -815,129 +774,6 @@ export default function XuLyToTrinhPage() {
               một tờ trình và thử lại.
             </p>
           </div>
-        </div>
-      </Modal>
-
-      {/* Verification Request Modal - Chuyển sang B8 */}
-      <Modal
-        open={showVerificationModal}
-        onCancel={() => setShowVerificationModal(false)}
-        footer={[
-          <button
-            key="cancel"
-            onClick={() => setShowVerificationModal(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
-            Hủy
-          </button>,
-          <button
-            key="confirm"
-            onClick={handleVerificationConfirm}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2">
-            Xác nhận yêu cầu xác minh
-          </button>,
-        ]}
-        centered
-        width={500}
-        title="Yêu cầu xác minh tờ trình">
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3">
-            <AlertTriangle className="h-8 w-8 text-yellow-600" />
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">
-                Bạn có chắc chắn muốn yêu cầu xác minh tờ trình sau?
-              </h3>
-              <p className="text-sm text-yellow-600 mt-1 font-medium">
-                Sau khi yêu cầu, trạng thái tờ trình sẽ được chuyển thành
-                &ldquo;Chờ xác minh&rdquo; (B8).
-              </p>
-            </div>
-          </div>
-
-          {selectedProposal && (
-            <div className="bg-gray-50 p-4 rounded-md">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-gray-600">Mã tờ trình:</div>
-                <div className="font-medium">
-                  {selectedProposal.proposalCode}
-                </div>
-
-                <div className="text-gray-600">Tiêu đề:</div>
-                <div className="font-medium">{selectedProposal.title}</div>
-
-                <div className="text-gray-600">Thời gian yêu cầu:</div>
-                <div className="font-medium">
-                  {new Date().toLocaleString("vi-VN")}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </Modal>
-
-      {/* Approval Confirmation Modal - Chuyển sang B9 */}
-      <Modal
-        open={showApprovalModal}
-        onCancel={() => setShowApprovalModal(false)}
-        footer={[
-          <button
-            key="cancel"
-            onClick={() => setShowApprovalModal(false)}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
-            Hủy
-          </button>,
-          <button
-            key="confirm"
-            onClick={handleApproveConfirm}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-            {selectedProposal?.status ===
-            ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-              ? "Xác nhận xác minh"
-              : "Xác nhận duyệt"}
-          </button>,
-        ]}
-        centered
-        width={500}
-        title={
-          selectedProposal?.status ===
-          ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-            ? "Xác nhận xác minh tờ trình"
-            : "Xác nhận duyệt tờ trình"
-        }>
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3">
-            <CheckCircle className="h-8 w-8 text-green-600" />
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">
-                {selectedProposal?.status ===
-                ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-                  ? "Bạn có chắc chắn muốn xác minh tờ trình sau?"
-                  : "Bạn có chắc chắn muốn duyệt tờ trình sau?"}
-              </h3>
-              <p className="text-sm text-red-500 mt-1 font-medium">
-                Sau khi xác minh, trạng thái tờ trình sẽ được chuyển thành
-                &ldquo;Đã xác minh&rdquo; (B9) và không thể hoàn tác.
-              </p>
-            </div>
-          </div>
-
-          {selectedProposal && (
-            <div className="bg-gray-50 p-4 rounded-md">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-gray-600">Mã tờ trình:</div>
-                <div className="font-medium">
-                  {selectedProposal.proposalCode}
-                </div>
-
-                <div className="text-gray-600">Tiêu đề:</div>
-                <div className="font-medium">{selectedProposal.title}</div>
-
-                <div className="text-gray-600">Thời gian xử lý:</div>
-                <div className="font-medium">
-                  {new Date().toLocaleString("vi-VN")}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </Modal>
     </div>

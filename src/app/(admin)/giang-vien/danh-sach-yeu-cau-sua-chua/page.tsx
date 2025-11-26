@@ -20,7 +20,7 @@ export default function DanhSachYeuCauSuaChuaPage() {
             {
               title: (
                 <div className="flex items-center">
-                  <span>Danh sách yêu cầu sửa chữa</span>
+                  <span>Danh sách báo hỏng thiết bị</span>
                 </div>
               ),
             },

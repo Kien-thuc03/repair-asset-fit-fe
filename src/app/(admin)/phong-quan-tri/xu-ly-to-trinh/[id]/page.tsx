@@ -19,7 +19,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
-import SignConfirmModal from "@/components/modal/SignConfirmModal";
 import { SubmissionPreviewModal } from "@/components/modal";
 import {
   useReplacementProposal,
@@ -34,15 +33,12 @@ export default function XuLyToTrinhDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "reject" | null>(
     null
   );
-  const [adminNotes, setAdminNotes] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
-  const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
 
   // Fetch proposal data từ API
   const { data: proposal, loading, error } = useReplacementProposal(id);
@@ -165,7 +161,8 @@ export default function XuLyToTrinhDetailPage() {
     }
   };
 
-  const handleConfirmAction = async () => {
+  // Hàm xử lý duyệt tờ trình
+  const handleApprove = async () => {
     if (!proposal) return;
 
     setIsProcessing(true);
@@ -173,105 +170,48 @@ export default function XuLyToTrinhDetailPage() {
 
     try {
       await updateStatus(proposal.id, {
-        status:
-          actionType === "approve"
-            ? ReplacementProposalStatus.ĐÃ_XÁC_MINH
-            : ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
-      });
-
-      setIsProcessing(false);
-      setActionType(null);
-      setAdminNotes("");
-
-      // Hiển thị thông báo thành công
-      if (actionType === "reject") {
-        Modal.success({
-          title: "Từ chối tờ trình thành công",
-          content: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công.`,
-          okText: "Đóng",
-          onOk: () => {
-            router.push("/phong-quan-tri/xu-ly-to-trinh?success=rejected");
-          },
-        });
-      } else {
-        router.push(
-          "/phong-quan-tri/xu-ly-to-trinh?success=" +
-            (actionType === "approve" ? "approved" : "rejected")
-        );
-      }
-    } catch (error) {
-      console.error("Error processing proposal:", error);
-      setIsProcessing(false);
-
-      Modal.error({
-        title: "Lỗi",
-        content: "Có lỗi xảy ra khi xử lý tờ trình. Vui lòng thử lại.",
-        okText: "Đóng",
-      });
-    }
-  };
-
-  // Hàm xử lý khi chuyển sang B8 (CHỜ_XÁC_MINH)
-  const handleVerificationRequest = async () => {
-    if (!proposal) return;
-
-    setIsProcessing(true);
-
-    try {
-      // Chuyển sang trạng thái CHỜ_XÁC_MINH (B8)
-      await updateStatus(proposal.id, {
-        status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
-      });
-
-      setIsProcessing(false);
-      setShowVerificationModal(false);
-
-      Modal.success({
-        title: "Yêu cầu xác minh thành công",
-        content: `Tờ trình ${proposal.proposalCode} đã được chuyển sang trạng thái "Chờ xác minh".`,
-        okText: "Đóng",
-        onOk: () => {
-          router.push("/phong-quan-tri/xu-ly-to-trinh");
-        },
-      });
-    } catch (error) {
-      console.error("Error requesting verification:", error);
-      setIsProcessing(false);
-      setShowVerificationModal(false);
-
-      Modal.error({
-        title: "Lỗi",
-        content: "Có lỗi xảy ra khi yêu cầu xác minh. Vui lòng thử lại.",
-        okText: "Đóng",
-      });
-    }
-  };
-
-  const handleSignConfirm = async () => {
-    if (!proposal) return;
-
-    setIsProcessing(true);
-
-    try {
-      // Khi Phòng Quản trị xác minh tờ trình,
-      // chuyển sang trạng thái ĐÃ_XÁC_MINH (B9)
-      await updateStatus(proposal.id, {
         status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
       });
 
       setIsProcessing(false);
-      setShowSignConfirmModal(false);
+      setActionType(null);
 
-      // Chuyển hướng đến trang lập biên bản
+      // Redirect ngay sau khi update thành công
       router.push("/phong-quan-tri/lap-bien-ban");
     } catch (error) {
-      console.error("Error verifying proposal:", error);
+      console.error("Error approving proposal:", error);
       setIsProcessing(false);
-      setShowSignConfirmModal(false);
-
       Modal.error({
         title: "Lỗi",
         content: "Có lỗi xảy ra khi xác minh tờ trình. Vui lòng thử lại.",
+        okText: "Đóng",
+      });
+    }
+  };
+
+  // Hàm xử lý từ chối tờ trình
+  const handleReject = async () => {
+    if (!proposal) return;
+
+    setIsProcessing(true);
+    setShowConfirmModal(false);
+
+    try {
+      await updateStatus(proposal.id, {
+        status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+      });
+
+      setIsProcessing(false);
+      setActionType(null);
+
+      // Redirect ngay sau khi update thành công
+      router.push("/phong-quan-tri/xu-ly-to-trinh");
+    } catch (error) {
+      console.error("Error rejecting proposal:", error);
+      setIsProcessing(false);
+      Modal.error({
+        title: "Lỗi",
+        content: "Có lỗi xảy ra khi từ chối tờ trình. Vui lòng thử lại.",
         okText: "Đóng",
       });
     }
@@ -511,36 +451,32 @@ export default function XuLyToTrinhDetailPage() {
               <h3 className="text-lg font-medium text-gray-900">
                 Thông tin cơ bản
               </h3>
-              {(proposal.status === ReplacementProposalStatus.CHỜ_XÁC_MINH ||
-                proposal.status ===
-                  ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH) && (
+              {proposal.status === ReplacementProposalStatus.CHỜ_XÁC_MINH && (
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
                       setActionType("reject");
                       setShowConfirmModal(true);
                     }}
-                    className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500">
+                    disabled={isProcessing}
+                    className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
                     Từ chối
                   </button>
-                  {/* Nút chuyển sang B8 - chỉ hiển thị khi status là B6 */}
-                  {proposal.status ===
-                    ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
-                    <button
-                      onClick={() => setShowVerificationModal(true)}
-                      className="inline-flex items-center px-3 py-1 border border-yellow-300 text-xs font-medium rounded text-yellow-700 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-yellow-500">
-                      Yêu cầu xác minh
-                    </button>
-                  )}
-                  {/* Nút xác minh (B9) - chỉ hiển thị khi status là B8 (CHỜ_XÁC_MINH) */}
-                  {proposal.status ===
-                    ReplacementProposalStatus.CHỜ_XÁC_MINH && (
-                    <button
-                      onClick={() => setShowSignConfirmModal(true)}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500">
-                      Duyệt
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setActionType("approve");
+                      setShowConfirmModal(true);
+                    }}
+                    disabled={isProcessing}
+                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Duyệt
+                  </button>
+                </div>
+              )}
+              {isProcessing && (
+                <div className="flex items-center space-x-2 text-sm text-blue-600">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Đang xử lý...</span>
                 </div>
               )}
             </div>
@@ -748,125 +684,86 @@ export default function XuLyToTrinhDetailPage() {
         </div>
       </div>
 
-      {/* Confirmation Modal - Chỉ cho từ chối */}
-      {showConfirmModal && actionType === "reject" && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
-                <AlertTriangle className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div className="mt-2 px-4 py-3 text-center">
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <Modal
+          open={showConfirmModal}
+          onCancel={() => {
+            setShowConfirmModal(false);
+            setActionType(null);
+          }}
+          footer={[
+            <button
+              key="cancel"
+              onClick={() => {
+                setShowConfirmModal(false);
+                setActionType(null);
+              }}
+              disabled={isProcessing}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2 disabled:opacity-50 disabled:cursor-not-allowed">
+              Hủy
+            </button>,
+            <button
+              key="confirm"
+              onClick={actionType === "approve" ? handleApprove : handleReject}
+              disabled={isProcessing}
+              className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                actionType === "approve"
+                  ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
+                  : "bg-red-600 hover:bg-red-700 focus:ring-red-500"
+              }`}>
+              {isProcessing
+                ? "Đang xử lý..."
+                : actionType === "approve"
+                ? "Xác nhận duyệt"
+                : "Xác nhận từ chối"}
+            </button>,
+          ]}
+          centered
+          width={500}
+          title={
+            actionType === "approve"
+              ? "Xác nhận duyệt tờ trình"
+              : "Xác nhận từ chối tờ trình"
+          }>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              {actionType === "approve" ? (
+                <AlertTriangle className="h-8 w-8 text-green-600" />
+              ) : (
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+              )}
+              <div>
                 <h3 className="text-lg font-medium text-gray-900">
-                  Xác nhận từ chối tờ trình
+                  {actionType === "approve"
+                    ? "Bạn có chắc chắn muốn duyệt tờ trình này?"
+                    : "Bạn có chắc chắn muốn từ chối tờ trình này?"}
                 </h3>
-                <div className="mt-2 px-2 py-2">
-                  <p className="text-sm text-gray-500">
-                    Bạn có chắc chắn muốn từ chối tờ trình
-                    <strong> {proposal.proposalCode}</strong>?
-                  </p>
-                  {adminNotes && (
-                    <div className="mt-3 p-2 bg-gray-50 rounded text-left">
-                      <p className="text-xs text-gray-600">Ghi chú:</p>
-                      <p className="text-sm text-gray-800">{adminNotes}</p>
-                    </div>
-                  )}
-                </div>
-                <div className="items-center px-4 py-3 flex justify-center space-x-4">
-                  <button
-                    onClick={() => setShowConfirmModal(false)}
-                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600">
-                    Hủy
-                  </button>
-                  <button
-                    onClick={handleConfirmAction}
-                    className="px-4 py-2 text-white text-base font-medium rounded-md shadow-sm bg-red-600 hover:bg-red-700">
-                    Từ chối
-                  </button>
-                </div>
+                <p
+                  className={`text-sm mt-1 font-medium ${
+                    actionType === "approve" ? "text-green-600" : "text-red-600"
+                  }`}>
+                  {actionType === "approve"
+                    ? "Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành 'Đã xác minh' (B9) và không thể hoàn tác."
+                    : "Sau khi từ chối, trạng thái tờ trình sẽ được chuyển thành 'Đã từ chối' và không thể hoàn tác."}
+                </p>
               </div>
             </div>
+
+            {proposal && (
+              <div className="bg-gray-50 p-4 rounded-md">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-gray-600">Mã tờ trình:</div>
+                  <div className="font-medium">{proposal.proposalCode}</div>
+
+                  <div className="text-gray-600">Tiêu đề:</div>
+                  <div className="font-medium">{proposal.title}</div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        </Modal>
       )}
-
-      {/* Verification Request Modal - Chuyển sang B8 */}
-      <Modal
-        open={showVerificationModal}
-        onCancel={() => setShowVerificationModal(false)}
-        footer={[
-          <button
-            key="cancel"
-            onClick={() => setShowVerificationModal(false)}
-            disabled={isProcessing}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
-            Hủy
-          </button>,
-          <button
-            key="confirm"
-            onClick={handleVerificationRequest}
-            disabled={isProcessing}
-            className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
-            {isProcessing ? "Đang xử lý..." : "Xác nhận yêu cầu xác minh"}
-          </button>,
-        ]}
-        centered
-        width={500}
-        title="Yêu cầu xác minh tờ trình">
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3">
-            <AlertTriangle className="h-8 w-8 text-yellow-600" />
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">
-                Bạn có chắc chắn muốn yêu cầu xác minh tờ trình sau?
-              </h3>
-              <p className="text-sm text-yellow-600 mt-1 font-medium">
-                Sau khi yêu cầu, trạng thái tờ trình sẽ được chuyển thành
-                &ldquo;Chờ xác minh&rdquo; (B8).
-              </p>
-            </div>
-          </div>
-
-          {proposal && (
-            <div className="bg-gray-50 p-4 rounded-md">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-gray-600">Mã tờ trình:</div>
-                <div className="font-medium">{proposal.proposalCode}</div>
-
-                <div className="text-gray-600">Tiêu đề:</div>
-                <div className="font-medium">{proposal.title}</div>
-
-                <div className="text-gray-600">Thời gian yêu cầu:</div>
-                <div className="font-medium">
-                  {new Date().toLocaleString("vi-VN")}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </Modal>
-
-      {/* SignConfirmModal cho duyệt/xác minh tờ trình */}
-      <SignConfirmModal
-        isOpen={showSignConfirmModal}
-        onClose={() => setShowSignConfirmModal(false)}
-        onConfirm={handleSignConfirm}
-        reportTitle={proposal.title || "Tờ trình thay thế"}
-        reportNumber={proposal.proposalCode}
-        isLoading={isProcessing}
-        actionType="approve"
-        customTitle={
-          proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-            ? "Xác nhận xác minh tờ trình"
-            : "Xác nhận duyệt tờ trình"
-        }
-        customDescription={
-          proposal.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH
-            ? `Bạn có chắc chắn muốn xác minh tờ trình ${proposal.proposalCode}?`
-            : `Bạn có chắc chắn muốn duyệt tờ trình ${proposal.proposalCode}?`
-        }
-        customWarning="Sau khi xác minh, trạng thái tờ trình sẽ được chuyển thành 'Đã xác minh' (B9) và không thể hoàn tác."
-      />
 
       {/* Submission Preview Modal */}
       {proposal && (

@@ -148,14 +148,14 @@ export default function RequestTable({
                 </td>
                 <td className="px-2 py-4 text-sm text-gray-500 align-middle">
                   <div
-                    className="max-w-[80px] truncate"
+                    className="max-w-[80px] "
                     title={request.roomName}>
                     {request.roomName}
                   </div>
                 </td>
                 <td className="px-2 py-4 text-sm text-gray-500 align-middle">
                   <div
-                    className="max-w-[100px] truncate"
+                    className="max-w-[100px] "
                     title={request.errorTypeName || "Chưa phân loại"}>
                     {request.errorTypeName || "Chưa phân loại"}
                   </div>
@@ -171,7 +171,7 @@ export default function RequestTable({
                 </td>
                 <td className="px-2 py-4 text-sm text-gray-500 align-middle">
                   <div
-                    className="max-w-[100px] truncate"
+                    className="max-w-[100px] "
                     title={request.assignedTechnicianName || "Chưa phân công"}>
                     {request.assignedTechnicianName || "Chưa phân công"}
                   </div>

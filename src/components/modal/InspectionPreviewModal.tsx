@@ -10,6 +10,8 @@ interface InspectionPreviewModalProps {
   proposal: ReplacementProposal | null;
   onExport: () => void;
   onSubmit: () => void;
+  isLoading?: boolean;
+  showSubmitButton?: boolean; // Optional prop to show/hide submit button
 }
 
 export default function InspectionPreviewModal({
@@ -19,6 +21,8 @@ export default function InspectionPreviewModal({
   proposal,
   onExport,
   onSubmit,
+  isLoading = false,
+  showSubmitButton = true, // Default to true for backward compatibility
 }: InspectionPreviewModalProps) {
   if (!proposal) return null;
 
@@ -28,22 +32,46 @@ export default function InspectionPreviewModal({
       open={isOpen}
       onCancel={onClose}
       footer={
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-nowrap justify-end gap-2 items-center">
           <button
             onClick={onClose}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
             Đóng
           </button>
           <button
             onClick={onExport}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
             Xuất file
           </button>
-          <button
-            onClick={onSubmit}
-            className="px-3 sm:px-4 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-            Gửi biên bản
-          </button>
+          {showSubmitButton && (
+            <button
+              onClick={onSubmit}
+              disabled={isLoading}
+              className="px-2 sm:px-3 py-1.5 sm:py-2 border border-transparent rounded-md text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
+              {isLoading && (
+                <svg
+                  className="animate-spin h-3 w-3 sm:h-4 sm:w-4 text-white flex-shrink-0"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              <span className="whitespace-nowrap">
+                {isLoading ? "Đang xử lý..." : "Gửi biên bản"}
+              </span>
+            </button>
+          )}
         </div>
       }
       width="90%"
@@ -119,9 +147,15 @@ export default function InspectionPreviewModal({
               </div>
               <div className="mb-2">
                 <span className="font-medium">2. Ông: </span>
-                <span className="underline">{formData.adminRep}</span>
+                <span className="underline">
+                  {proposal?.adminVerifier?.fullName ||
+                    formData.adminRep ||
+                    "Chưa xác định"}
+                </span>
                 <span className="ml-4 sm:ml-8 font-medium">đại diện: </span>
-                <span className="underline">{formData.adminDepartment}</span>
+                <span className="underline">
+                  {formData.adminDepartment || "Phòng Quản trị"}
+                </span>
               </div>
             </div>
             <div className="col-span-1 sm:col-span-2">
@@ -223,7 +257,7 @@ export default function InspectionPreviewModal({
                   {formData.departmentName}
                 </div>
                 <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
-                 Tổ trưởng Kỹ thuật
+                  Tổ trưởng Kỹ thuật
                 </div>
                 <div className="text-center">
                   <div className="font-medium text-xs sm:text-sm">
@@ -233,14 +267,16 @@ export default function InspectionPreviewModal({
               </div>
               <div className="text-center">
                 <div className="font-medium mb-12 sm:mb-16 text-xs sm:text-sm">
-                  {formData.adminDepartment}
+                  {formData.adminDepartment || "Phòng Quản trị"}
                 </div>
                 <div className="font-medium mb-3 sm:mb-4 text-xs sm:text-sm">
                   Người thực hiện
                 </div>
                 <div className="text-center">
                   <div className="font-medium text-xs sm:text-sm">
-                    {formData.adminRep}
+                    {proposal?.adminVerifier?.fullName ||
+                      formData.adminRep ||
+                      "Chưa xác định"}
                   </div>
                 </div>
               </div>
