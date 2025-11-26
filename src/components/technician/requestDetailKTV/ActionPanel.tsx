@@ -3,7 +3,7 @@
 import { RepairStatus, Component, ComponentStatus, ComponentType } from '@/types'
 import { useState, useEffect } from 'react'
 import { Button, Form, Input, Radio, Card, Alert, Select, message } from 'antd'
-import { CheckCircle, Settings, Package, FileText } from 'lucide-react'
+import { CheckCircle, Settings, Package, FileText, Link } from 'lucide-react'
 import { getComponentsByAssetId } from '@/lib/api/components'
 
 const { TextArea } = Input
@@ -335,9 +335,9 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 
 					{/* Cảnh báo khi chưa chọn linh kiện cho lỗi phần cứng */}
 					{errorCategory === 'hardware' && 
-					 inspectionResult && 
-					 inspectionResult !== 'software' &&
-					 selectedComponentIds.length === 0 && (
+					inspectionResult && 
+					inspectionResult !== 'software' &&
+					selectedComponentIds.length === 0 && (
 						<Alert
 							message="⚠️ Chưa chọn linh kiện"
 							description="Vui lòng chọn ít nhất 1 linh kiện bị lỗi ở trên."
@@ -434,19 +434,10 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 				<Card>
 					<Alert
 						message="Đang chờ thay thế linh kiện"
-						description="Đã tạo đề xuất thay thế linh kiện. Vui lòng theo dõi tiến độ tại trang 'Quản lý thay thế linh kiện'."
+						description="Đã tạo đề xuất thay thế linh kiện. Vui lòng theo dõi tiến độ tại phần 'Quản lý thay thế linh kiện'."
 						type="warning"
 						icon={<Package />}
 						showIcon
-						action={
-							<Button 
-								size="small" 
-								type="link"
-								onClick={() => window.open('/ky-thuat-vien/quan-ly-thay-the-linh-kien', '_blank')}
-							>
-								Xem danh sách
-							</Button>
-						}
 					/>
 				</Card>
 			)

@@ -247,7 +247,6 @@ export interface SoftwareInfoRequest {
  */
 export interface CompleteSoftwareProposalRequest {
   softwareInfo: SoftwareInfoRequest[];
-  completionNotes?: string;
 }
 
 /**

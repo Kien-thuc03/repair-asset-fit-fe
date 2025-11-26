@@ -11,11 +11,12 @@ import {
   ComponentStatus,
   ComponentType,
 } from "@/types";
+import { AlertCircle } from "lucide-react";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
 import { getComponentsByComputerId } from "@/lib/api/components";
 import { getSoftwareByAssetId } from "@/lib/api/asset-software";
-import { createAndProcessRepair, CreateAndProcessRepairRequest, getAssignedFloors, AssignedFloor } from "@/lib/api/repairs";
+import { createAndProcessRepair, CreateAndProcessRepairRequest, getAssignedFloors, AssignedFloor, getRepairs } from "@/lib/api/repairs";
 import { useProfile } from "@/hooks";
 import {
   getHardwareErrorTypes,
@@ -83,6 +84,7 @@ export default function GhiNhanXuLyLoiPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
   const [assignedFloors, setAssignedFloors] = useState<AssignedFloor[]>([]);
+  const [computersWithActiveRepairs, setComputersWithActiveRepairs] = useState<Set<string>>(new Set());
 
   // Extract unique buildings from rooms - chỉ lấy buildings được phân công
   const buildings = assignedFloors.length > 0
@@ -235,6 +237,41 @@ export default function GhiNhanXuLyLoiPage() {
     setFilteredSoftware([]);
   };
 
+  // Fetch active repair requests để kiểm tra máy đang bị lỗi
+  const fetchActiveRepairs = async () => {
+    try {
+      // Lấy tất cả repair requests đang xử lý (không phải ĐÃ_HOÀN_THÀNH hoặc ĐÃ_HỦY)
+      const response = await getRepairs({
+        status: undefined, // Không filter theo status, sẽ lấy tất cả
+        limit: 1000, // Lấy nhiều để đảm bảo không bỏ sót
+      });
+
+      // Tạo Set các computerAssetId đang có repair request đang xử lý
+      const activeRepairAssetIds = new Set<string>();
+      
+      response.data.forEach((repair) => {
+        // Chỉ lấy các repair request đang xử lý (không phải ĐÃ_HOÀN_THÀNH hoặc ĐÃ_HỦY)
+        if (
+          repair.status !== RepairStatus.ĐÃ_HOÀN_THÀNH &&
+          repair.status !== RepairStatus.ĐÃ_HỦY &&
+          repair.computerAssetId
+        ) {
+          activeRepairAssetIds.add(repair.computerAssetId);
+        }
+      });
+
+      setComputersWithActiveRepairs(activeRepairAssetIds);
+    } catch (error) {
+      console.error("Error fetching active repairs:", error);
+      // Không hiển thị lỗi cho user vì đây là tính năng phụ
+    }
+  };
+
+  // Fetch active repairs khi component mount và khi room thay đổi
+  useEffect(() => {
+    fetchActiveRepairs();
+  }, []);
+
   // Handle room change
   const handleRoomChange = async (roomId: string) => {
     setFormData(prev => ({ 
@@ -260,6 +297,8 @@ export default function GhiNhanXuLyLoiPage() {
       const computers = await getComputersByRoomId(roomId);
       if (Array.isArray(computers)) {
         setFilteredComputers(computers);
+        // Refresh active repairs để cập nhật danh sách máy đang bị lỗi
+        await fetchActiveRepairs();
       } else {
         setFilteredComputers([]);
         message.error("Dữ liệu máy tính không đúng định dạng");
@@ -434,6 +473,9 @@ export default function GhiNhanXuLyLoiPage() {
 
       setIsSubmitting(false);
       setShowSuccessModal(true);
+
+      // Refresh active repairs để cập nhật danh sách máy đang bị lỗi
+      await fetchActiveRepairs();
 
       // Reset form
       setFormData({
@@ -623,14 +665,43 @@ export default function GhiNhanXuLyLoiPage() {
                 value={selectedComputerId}
                 onChange={handleAssetChange}
                 disabled={!formData.roomId}
+                notFoundContent="Không có máy tính nào trong phòng này"
               >
                 {Array.isArray(filteredComputers) &&
-                  filteredComputers.map((computer) => (
-                    <Option key={computer.id} value={computer.id}>
-                      Máy {computer.machineLabel} - {computer.asset?.name || "N/A"}
-                    </Option>
-                  ))}
+                  filteredComputers.map((computer) => {
+                    const isActiveRepair = computer.asset?.id && computersWithActiveRepairs.has(computer.asset.id);
+                    return (
+                      <Option 
+                        key={computer.id} 
+                        value={computer.id}
+                        disabled={isActiveRepair}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span>
+                            Máy {computer.machineLabel} - {computer.asset?.name || "N/A"}
+                          </span>
+                          {isActiveRepair && (
+                            <span className="ml-2 text-red-600 text-xs flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" />
+                              Đang bị lỗi
+                            </span>
+                          )}
+                        </div>
+                      </Option>
+                    );
+                  })}
               </Select>
+              {/* {filteredComputers.some(
+                (computer) => computer.asset?.id && computersWithActiveRepairs.has(computer.asset.id)
+              ) && (
+                <Alert
+                  message="Lưu ý"
+                  description="Các máy đang có lỗi đang được xử lý không thể báo lỗi mới. Vui lòng hoàn thành xử lý lỗi hiện tại trước."
+                  type="warning"
+                  showIcon
+                  className="mt-2"
+                />
+              )} */}
             </Form.Item>
           </div>
 

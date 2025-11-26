@@ -3,9 +3,10 @@
 import { useParams, useRouter } from 'next/navigation'
 import { Breadcrumb, Steps, Tag, Card, Divider, Spin, Alert, message } from 'antd'
 import { Clock, User, MapPin, Wrench, Calendar, FileText, AlertCircle, CheckCircle, Settings, Package, Monitor, Info } from 'lucide-react'
-import { repairRequestStatusConfig, calculateProcessingTime, getStatusStep } from '@/lib/constants/repairStatus'
+import { repairRequestStatusConfig, calculateProcessingTime } from '@/lib/constants/repairStatus'
 import { RepairStatus } from '@/types'
-import { ActionPanel, HistoryCard } from '@/components/technician/requestDetailKTV'
+import { ActionPanel } from '@/components/technician/requestDetailKTV'
+import RepairRequestHistoryCard from '@/components/technician/requestDetailKTV/RepairRequestHistoryCard'
 import ImageViewer from '@/components/ui/ImageViewer'
 import { useRepairDetailPage } from '@/hooks/useRepairs'
 
@@ -82,6 +83,26 @@ export default function RepairDetailPage() {
 
 	const statusConfig = repairRequestStatusConfig[currentRequest.status as RepairStatus]
 
+	// Helper function để tính bước hiện tại bao gồm cả CHỜ_THAY_THẾ
+	const getCurrentStep = (status: RepairStatus): number => {
+		const stepMap: Record<RepairStatus, number> = {
+			[RepairStatus.CHỜ_TIẾP_NHẬN]: 0,
+			[RepairStatus.ĐÃ_TIẾP_NHẬN]: 1,
+			[RepairStatus.ĐANG_XỬ_LÝ]: 2,
+			[RepairStatus.CHỜ_THAY_THẾ]: 3,
+			[RepairStatus.ĐÃ_HOÀN_THÀNH]: 4,
+			[RepairStatus.ĐÃ_HỦY]: 0, // Nếu hủy ở bước đầu
+		}
+		return stepMap[status] ?? 0
+	}
+
+	// Xác định status của Steps
+	const getStepsStatus = (): 'wait' | 'process' | 'finish' | 'error' => {
+		if (currentRequest.status === RepairStatus.ĐÃ_HỦY) return 'error'
+		if (currentRequest.status === RepairStatus.ĐÃ_HOÀN_THÀNH) return 'finish'
+		return 'process'
+	}
+
 	return (
 		<div className="space-y-6">
 			{/* Breadcrumb */}
@@ -148,29 +169,50 @@ export default function RepairDetailPage() {
 				<div className="mt-4">
 					<h3 className="text-sm font-medium text-gray-900 mb-3">Tiến độ xử lý</h3>
 					<Steps
-						current={getStatusStep(currentRequest.status)}
-						status={currentRequest.status === RepairStatus.ĐÃ_HỦY ? 'error' : 'process'}
+						current={getCurrentStep(currentRequest.status)}
+						status={getStepsStatus()}
 						size="small"
 						items={[
 							{
 								title: 'Chờ tiếp nhận',
 								icon: <Clock className="w-4 h-4" />,
-								description: currentRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN ? 'Hiện tại' : ''
+								description: currentRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN 
+									? 'Hiện tại' 
+									: currentRequest.status === RepairStatus.ĐÃ_HỦY && !currentRequest.acceptedAt
+									? 'Đã hủy'
+									: '',
+								status: currentRequest.status === RepairStatus.ĐÃ_HỦY && !currentRequest.acceptedAt ? 'error' : undefined
 							},
 							{
 								title: 'Đã tiếp nhận',
 								icon: <CheckCircle className="w-4 h-4" />,
-								description: currentRequest.acceptedAt ? new Date(currentRequest.acceptedAt).toLocaleDateString('vi-VN') : ''
+								description: currentRequest.acceptedAt 
+									? new Date(currentRequest.acceptedAt).toLocaleDateString('vi-VN')
+									: currentRequest.status === RepairStatus.ĐÃ_HỦY && currentRequest.acceptedAt
+									? 'Đã hủy'
+									: '',
+								status: currentRequest.status === RepairStatus.ĐÃ_HỦY && currentRequest.acceptedAt && !currentRequest.completedAt ? 'error' : undefined
 							},
 							{
 								title: 'Đang xử lý',
 								icon: <Settings className="w-4 h-4" />,
-								description: currentRequest.status === RepairStatus.ĐANG_XỬ_LÝ ? 'Hiện tại' : ''
+								description: currentRequest.status === RepairStatus.ĐANG_XỬ_LÝ 
+									? 'Hiện tại' 
+									: ''
+							},
+							{
+								title: 'Chờ thay thế',
+								icon: <Package className="w-4 h-4" />,
+								description: currentRequest.status === RepairStatus.CHỜ_THAY_THẾ 
+									? 'Hiện tại' 
+									: ''
 							},
 							{
 								title: 'Hoàn thành',
 								icon: <CheckCircle className="w-4 h-4" />,
-								description: currentRequest.completedAt ? new Date(currentRequest.completedAt).toLocaleDateString('vi-VN') : ''
+								description: currentRequest.completedAt 
+									? new Date(currentRequest.completedAt).toLocaleDateString('vi-VN') 
+									: ''
 							}
 						]}
 					/>
@@ -355,7 +397,7 @@ export default function RepairDetailPage() {
 					/>
 				</div>
 				<div className="xl:col-span-1">
-					<HistoryCard assetId={currentRequest.computerAssetId} />
+					<RepairRequestHistoryCard repairRequestId={currentRequest.id} />
 				</div>
 			</div>
 		</div>
