@@ -152,8 +152,8 @@ export default function QRScanner({
               hỏi
             </li>
             <li>
-              <strong>Điện thoại:</strong> Vào Settings → Chrome/Safari →
-              Camera → Allow
+              <strong>Điện thoại:</strong> Vào Settings → Chrome/Safari → Camera
+              → Allow
             </li>
             <li>Nếu đã từ chối, nhấn biểu tượng khóa trên thanh địa chỉ</li>
           </ul>
