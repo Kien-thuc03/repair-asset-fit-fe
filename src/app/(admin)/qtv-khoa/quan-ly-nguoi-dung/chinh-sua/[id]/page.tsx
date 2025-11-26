@@ -1,21 +1,23 @@
 'use client';
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { Breadcrumb } from 'antd';
+import { Breadcrumb, message } from 'antd';
 import { IUpdateUserRequest } from "@/types";
 import { useUsersManagement } from "@/hooks/useUsersManagement";
+import { updateUser as updateUserApi } from "@/lib/api/users";
 import { useRoles } from "@/hooks/useRoles";
 import { useUnits } from "@/hooks/useUnits";
 import type { UnitResponseDto } from "@/lib/api/units";
+import SuccessModal from "@/components/modal/SuccessModal";
 
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
   
-  const { currentUser, updateUser, loading } = useUsersManagement({ userId });
+  const { currentUser, loading } = useUsersManagement({ userId });
   const { roles, loading: rolesLoading } = useRoles();
   const { units, campuses, loading: unitsLoading, getUnitById } = useUnits();
   const [selectedCampusId, setSelectedCampusId] = useState<string>("");
@@ -33,6 +35,103 @@ export default function EditUserPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  /**
+   * Cuộn đến input đầu tiên có lỗi
+   */
+  const scrollToFirstError = useCallback(() => {
+    // Thứ tự ưu tiên các trường có lỗi (trang chỉnh sửa không có username và password)
+    const errorFieldOrder = [
+      'fullName',
+      'email',
+      'phoneNumber',
+      'birthDate',
+      'unitId',
+      'roles',
+    ];
+
+    // Tìm trường đầu tiên có lỗi theo thứ tự ưu tiên
+    const firstErrorField = errorFieldOrder.find(field => errors[field]);
+
+    if (firstErrorField) {
+      // Tìm input element tương ứng
+      let inputElement: HTMLElement | null = null;
+
+      if (firstErrorField === 'fullName') {
+        // Tìm input fullName
+        const inputs = document.querySelectorAll('input[type="text"]');
+        inputElement = Array.from(inputs).find(input => {
+          const placeholder = (input as HTMLInputElement).placeholder?.toLowerCase() || '';
+          return placeholder.includes('nguyễn văn a') || placeholder.includes('họ và tên');
+        }) as HTMLElement;
+      } else if (firstErrorField === 'email') {
+        inputElement = document.querySelector('input[type="email"]') as HTMLElement;
+      } else if (firstErrorField === 'phoneNumber') {
+        inputElement = document.querySelector('input[type="tel"]') as HTMLElement;
+      } else if (firstErrorField === 'birthDate') {
+        inputElement = document.querySelector('input[type="date"]') as HTMLElement;
+      } else if (firstErrorField === 'unitId') {
+        // Tìm select đơn vị - tìm select thứ 2 (sau select cơ sở)
+        const selects = document.querySelectorAll('select');
+        if (selects.length >= 2) {
+          inputElement = selects[1] as HTMLElement;
+        } else {
+          inputElement = document.querySelector('select[title*="đơn vị"]') as HTMLElement;
+        }
+      } else if (firstErrorField === 'roles') {
+        // Cuộn đến phần roles - tìm container chứa checkboxes
+        const roleSection = document.querySelector('label[class*="cursor-pointer"]')?.closest('div');
+        if (roleSection) {
+          inputElement = roleSection as HTMLElement;
+        } else {
+          inputElement = document.querySelector('input[type="checkbox"]')?.closest('div') as HTMLElement;
+        }
+      }
+
+      // Nếu vẫn không tìm thấy, tìm element có class chứa error (border-red-500)
+      if (!inputElement) {
+        const errorElements = document.querySelectorAll('.border-red-500');
+        if (errorElements.length > 0) {
+          inputElement = errorElements[0] as HTMLElement;
+        }
+      }
+
+      if (inputElement) {
+        // Cuộn đến element với smooth behavior
+        inputElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+
+        // Focus vào input sau một chút delay để đảm bảo scroll đã hoàn thành
+        setTimeout(() => {
+          if (inputElement) {
+            if (inputElement.tagName === 'INPUT' || inputElement.tagName === 'SELECT') {
+              (inputElement as HTMLInputElement | HTMLSelectElement).focus();
+            } else {
+              // Nếu là container, tìm input bên trong
+              const innerInput = inputElement.querySelector('input, select') as HTMLInputElement | HTMLSelectElement | null;
+              if (innerInput) {
+                innerInput.focus();
+              }
+            }
+          }
+        }, 300);
+      }
+    }
+  }, [errors]);
+
+  // Tự động cuộn đến input có lỗi khi errors thay đổi
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      // Delay một chút để đảm bảo DOM đã render xong
+      const timer = setTimeout(() => {
+        scrollToFirstError();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [errors, scrollToFirstError]);
 
   // Lấy thông tin chi tiết của đơn vị người dùng để tìm campus
   useEffect(() => {
@@ -176,6 +275,8 @@ export default function EditUserPage() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setErrors({}); // Clear previous errors
+    
     try {
       // Clean and prepare data before sending
       const cleanedData: IUpdateUserRequest = {
@@ -200,9 +301,78 @@ export default function EditUserPage() {
         cleanedData.birthDate = birthDate;
       }
 
-      const success = await updateUser(userId, cleanedData);
-      if (success) {
-        router.push('/qtv-khoa/quan-ly-nguoi-dung');
+      await updateUserApi(userId, cleanedData);
+      
+      // Hiển thị modal thành công
+      setShowSuccessModal(true);
+    } catch (err: unknown) {
+      const error = err as Error & { statusCode?: number };
+      const errorStatus = error.statusCode;
+      const errorMessage = error.message || 'Có lỗi xảy ra khi cập nhật người dùng';
+
+      console.log('Error caught in handleSubmit:', { errorStatus, errorMessage, error });
+
+      // Xử lý lỗi conflict (409) - Username hoặc Email đã tồn tại
+      if (errorStatus === 409) {
+        const fieldErrors: Record<string, string> = {};
+        
+        // Kiểm tra message để xác định field bị lỗi
+        const lowerMessage = errorMessage.toLowerCase();
+        if (errorMessage.includes('Tên đăng nhập') || lowerMessage.includes('username') || lowerMessage.includes('tên đăng nhập')) {
+          fieldErrors.username = errorMessage;
+          setErrors(fieldErrors);
+          message.error(errorMessage, 5); // Hiển thị 5 giây
+        } else if (errorMessage.includes('Email') || lowerMessage.includes('email')) {
+          fieldErrors.email = errorMessage;
+          setErrors(fieldErrors);
+          message.error(errorMessage, 5); // Hiển thị 5 giây
+        } else {
+          // Nếu không xác định được field, hiển thị lỗi chung
+          message.error(errorMessage, 5);
+        }
+      } 
+      // Xử lý lỗi validation (400) - Dữ liệu không hợp lệ
+      else if (errorStatus === 400) {
+        // Nếu error message chứa thông tin về các trường cụ thể, có thể parse và hiển thị
+        const fieldErrors: Record<string, string> = {};
+        
+        // Kiểm tra các trường phổ biến trong validation errors
+        if (errorMessage.toLowerCase().includes('username')) {
+          fieldErrors.username = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('email')) {
+          fieldErrors.email = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('password')) {
+          fieldErrors.password = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('fullname') || errorMessage.toLowerCase().includes('full name')) {
+          fieldErrors.fullName = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('phone')) {
+          fieldErrors.phoneNumber = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('birth') || errorMessage.toLowerCase().includes('birthdate')) {
+          fieldErrors.birthDate = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('role')) {
+          fieldErrors.roles = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('unit')) {
+          fieldErrors.unitId = errorMessage;
+        }
+
+        // Nếu có field errors cụ thể, set vào errors state
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors(prev => ({ ...prev, ...fieldErrors }));
+        }
+        
+        message.error(errorMessage);
+      } 
+      // Xử lý các lỗi khác
+      else {
+        message.error(errorMessage);
+        console.error('Error updating user:', err);
       }
     } finally {
       setIsSubmitting(false);
@@ -502,6 +672,18 @@ export default function EditUserPage() {
           </div>
         </form>
       </div>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          // Chuyển hướng sau khi đóng modal
+          router.push('/qtv-khoa/quan-ly-nguoi-dung');
+        }}
+        title="Cập nhật người dùng thành công!"
+        message="Thông tin người dùng đã được cập nhật thành công trong hệ thống."
+      />
     </div>
   );
 }
