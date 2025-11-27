@@ -39,6 +39,10 @@ import {
   SubmissionFormData,
   InspectionFormData,
 } from "@/types";
+import { replaceComponent, getComponentById } from "@/lib/api/components";
+import { getComputerDetail } from "@/lib/api/computers";
+import { ReplacementItem } from "@/lib/api/replacement-proposals";
+import { RefreshCw, CheckCircle2 } from "lucide-react";
 
 const { Title } = Typography;
 
@@ -90,6 +94,7 @@ export default function ChiTietDeXuatThayThePage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
   const [showInspectionPreview, setShowInspectionPreview] = useState(false);
+  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
 
   // Xử lý mở modal xác nhận gửi đề xuất
   const handleOpenConfirmModal = () => {
@@ -232,6 +237,97 @@ export default function ChiTietDeXuatThayThePage() {
       console.error(error);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Xử lý cập nhật linh kiện cho một item
+  const handleUpdateComponent = async (item: ReplacementItem) => {
+    if (!proposal) {
+      message.error("Thiếu thông tin đề xuất");
+      return;
+    }
+
+    if (!item.oldComponentId) {
+      message.error("Thiếu thông tin linh kiện cần thay thế");
+      return;
+    }
+
+    // Kiểm tra nếu oldComponent đã bị REMOVED (đã được thay thế)
+    if (item.oldComponent?.status === "REMOVED") {
+      message.info("Linh kiện này đã được thay thế");
+      return;
+    }
+
+    try {
+      setUpdatingItemId(item.id);
+
+      // Lấy computerId từ componentId - cách chính xác nhất
+      let computerId: string | null = null;
+
+      try {
+        // Sử dụng getComponentById để lấy computerId trực tiếp từ componentId
+        const componentInfo = await getComponentById(item.oldComponentId);
+
+        if (componentInfo?.computer?.id) {
+          computerId = componentInfo.computer.id;
+        } else {
+          throw new Error("Không tìm thấy thông tin máy tính từ linh kiện");
+        }
+      } catch {
+        // Fallback: Thử lấy từ repairRequest nếu có
+        const repairRequest = proposal.repairRequests?.[0];
+        if (repairRequest) {
+          const { getRepairById } = await import("@/lib/api/repairs");
+          const repairDetail = await getRepairById(repairRequest.id);
+
+          if (repairDetail?.computerAssetId) {
+            // Lấy computerId từ assetId
+            const computerDetail = await getComputerDetail(
+              repairDetail.computerAssetId
+            );
+            if (computerDetail?.id) {
+              computerId = computerDetail.id;
+            }
+          }
+        }
+
+        if (!computerId) {
+          throw new Error(
+            "Không thể xác định máy tính chứa linh kiện này. Vui lòng kiểm tra lại thông tin."
+          );
+        }
+      }
+
+      // Đảm bảo có computerId trước khi gọi API
+      if (!computerId) {
+        throw new Error("Không thể xác định máy tính để thay thế linh kiện");
+      }
+
+      // Gọi API thay thế linh kiện
+      await replaceComponent(computerId, {
+        oldComponentId: item.oldComponentId,
+        newItemName: item.newItemName,
+        newItemSpecs: item.newItemSpecs || "",
+        notes: `Thay thế từ đề xuất ${proposal.proposalCode}: ${
+          item.reason || "Không có lý do"
+        }`,
+      });
+
+      message.success(
+        `Đã cập nhật linh kiện "${item.newItemName}" thành công!`
+      );
+
+      // Refetch để lấy dữ liệu mới (oldComponent.status sẽ là REMOVED)
+      await refetch();
+    } catch (error) {
+      console.error("Error updating component:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Có lỗi xảy ra khi cập nhật linh kiện!";
+      message.error(errorMessage);
+    } finally {
+      setUpdatingItemId(null);
     }
   };
 
@@ -525,7 +621,7 @@ export default function ChiTietDeXuatThayThePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <h5 className="font-medium text-blue-600 mb-2">
-                        Linh kiện #{index + 1}
+                        Linh kiện cũ #{index + 1}
                       </h5>
                       <div className="space-y-1 text-sm">
                         <p>
@@ -533,30 +629,13 @@ export default function ChiTietDeXuatThayThePage() {
                           {item.oldComponent?.componentType || "Không xác định"}
                         </p>
                         <p>
-                          <strong>Linh kiện cũ:</strong>{" "}
-                          {item.oldComponent?.name || "Không xác định"}
-                        </p>
-                        <p>
-                          <strong>Linh kiện mới:</strong>{" "}
-                          {item.newItemName || "Không xác định"}
-                        </p>
-                        <p>
-                          <strong>Thông số mới:</strong>{" "}
-                          {item.newItemSpecs || "Không xác định"}
-                        </p>
-                        <p>
-                          <strong>Số lượng:</strong> {item.quantity || 1}
-                        </p>
-                      </div>
-                    </div>
-                    <div>
-                      <h5 className="font-medium text-green-600 mb-2">
-                        Thông tin tài sản
-                      </h5>
-                      <div className="space-y-1 text-sm">
-                        <p>
                           <strong>Tên linh kiện:</strong>{" "}
                           {item.oldComponent?.name || "Không xác định"}
+                        </p>
+                        <p>
+                          <strong>Thông số:</strong>{" "}
+                          {item.oldComponent?.componentSpecs ||
+                            "Không xác định"}
                         </p>
                         <p>
                           <strong>Trạng thái:</strong>{" "}
@@ -568,12 +647,73 @@ export default function ChiTietDeXuatThayThePage() {
                         </p>
                       </div>
                     </div>
+                    <div>
+                      <h5 className="font-medium text-green-600 mb-2">
+                        Linh kiện mới
+                      </h5>
+                      <div className="space-y-1 text-sm">
+                        <p>
+                          <strong>Tên linh kiện mới:</strong>{" "}
+                          {item.newItemName || "Không xác định"}
+                        </p>
+                        <p>
+                          <strong>Thông số mới:</strong>{" "}
+                          {item.newItemSpecs || "Không xác định"}
+                        </p>
+                        <p>
+                          <strong>Số lượng:</strong> {item.quantity || 1}
+                        </p>
+                        {item.newlyPurchasedComponentId && (
+                          <p>
+                            <strong>ID linh kiện đã mua:</strong>{" "}
+                            <span className="font-mono text-xs">
+                              {item.newlyPurchasedComponentId}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
                     <div className="md:col-span-2">
-                      <p>
+                      <p className="text-sm">
                         <strong>Lý do thay thế:</strong>{" "}
                         {item.reason || "Không có lý do"}
                       </p>
                     </div>
+                    {/* Nút cập nhật linh kiện - chỉ hiển thị khi status là ĐÃ_HOÀN_TẤT_MUA_SẮM */}
+                    {proposal.status ===
+                      ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
+                      <div className="md:col-span-2 flex justify-end pt-2 border-t">
+                        {item.oldComponent?.status === "REMOVED" ? (
+                          <Button
+                            type="default"
+                            icon={<CheckCircle2 className="w-4 h-4" />}
+                            disabled
+                            className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
+                            Đã cập nhật
+                          </Button>
+                        ) : (
+                          <Button
+                            type="primary"
+                            icon={<RefreshCw className="w-4 h-4" />}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleUpdateComponent(item);
+                            }}
+                            loading={updatingItemId === item.id}
+                            disabled={
+                              !item.oldComponentId ||
+                              item.oldComponent?.status === "REMOVED" ||
+                              (updatingItemId !== null &&
+                                updatingItemId !== item.id)
+                            }>
+                            {updatingItemId === item.id
+                              ? "Đang cập nhật..."
+                              : "Cập nhật linh kiện"}
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </Card>
               ))}
