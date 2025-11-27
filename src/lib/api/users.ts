@@ -74,12 +74,58 @@ export const getUserById = async (id: string): Promise<IUserWithRoles> => {
  * 
  * @param userData - Thông tin người dùng cần tạo
  * @returns Promise<IUserWithRoles> - Người dùng vừa được tạo
+ * @throws Error với statusCode và message từ backend
  *                         
  */
 export const createUser = async (
   userData: ICreateUserRequest
 ): Promise<IUserWithRoles> => {
-  return apiClient.post<IUserWithRoles>('/api/v1/users', userData);
+  try {
+    return await apiClient.post<IUserWithRoles>('/api/v1/users', userData);
+  } catch (error: unknown) {
+    const err = error as {
+      response?: {
+        data?: {
+          message?: string | string[];
+        };
+        status?: number;
+      };
+    };
+
+    const errorStatus = err.response?.status;
+
+    // Handle array of error messages (NestJS validation errors)
+    const errorMessage = Array.isArray(err.response?.data?.message)
+      ? err.response.data.message.join(", ")
+      : err.response?.data?.message;
+
+    // Create error with status code information
+    const finalErrorMessage = errorMessage || "Tạo người dùng thất bại.";
+    const errorWithStatus = new Error(finalErrorMessage) as Error & {
+      statusCode?: number;
+    };
+    errorWithStatus.statusCode = errorStatus;
+
+    // Log error based on status code
+    // 409 Conflict is expected and handled by UI, so log as warning instead of error
+    if (errorStatus === 409) {
+      console.warn("⚠️ Conflict (409):", {
+        status: errorStatus,
+        message: errorMessage,
+        note: "This error is handled by UI",
+      });
+    } else {
+      // Log other errors as errors for debugging
+      console.error("❌ Create user error:", error);
+      console.error("❌ Error details:", {
+        status: errorStatus,
+        message: errorMessage,
+      });
+    }
+
+    // Throw error with backend message and status code
+    throw errorWithStatus;
+  }
 };
 
 /**
@@ -88,13 +134,59 @@ export const createUser = async (
  * @param id - ID của người dùng cần cập nhật
  * @param updateData - Thông tin cần cập nhật
  * @returns Promise<IUserWithRoles> - Người dùng sau khi cập nhật
+ * @throws Error với statusCode và message từ backend
  * 
  */
 export const updateUser = async (
   id: string,
   updateData: IUpdateUserRequest
 ): Promise<IUserWithRoles> => {
-  return apiClient.put<IUserWithRoles>(`/api/v1/users/${id}`, updateData);
+  try {
+    return await apiClient.put<IUserWithRoles>(`/api/v1/users/${id}`, updateData);
+  } catch (error: unknown) {
+    const err = error as {
+      response?: {
+        data?: {
+          message?: string | string[];
+        };
+        status?: number;
+      };
+    };
+
+    const errorStatus = err.response?.status;
+
+    // Handle array of error messages (NestJS validation errors)
+    const errorMessage = Array.isArray(err.response?.data?.message)
+      ? err.response.data.message.join(", ")
+      : err.response?.data?.message;
+
+    // Create error with status code information
+    const finalErrorMessage = errorMessage || "Cập nhật người dùng thất bại.";
+    const errorWithStatus = new Error(finalErrorMessage) as Error & {
+      statusCode?: number;
+    };
+    errorWithStatus.statusCode = errorStatus;
+
+    // Log error based on status code
+    // 409 Conflict is expected and handled by UI, so log as warning instead of error
+    if (errorStatus === 409) {
+      console.warn("⚠️ Conflict (409):", {
+        status: errorStatus,
+        message: errorMessage,
+        note: "This error is handled by UI",
+      });
+    } else {
+      // Log other errors as errors for debugging
+      console.error("❌ Update user error:", error);
+      console.error("❌ Error details:", {
+        status: errorStatus,
+        message: errorMessage,
+      });
+    }
+
+    // Throw error with backend message and status code
+    throw errorWithStatus;
+  }
 };
 
 /**

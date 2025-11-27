@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, FileUp } from "lucide-react";
 import { Breadcrumb, Button, message } from 'antd';
 import { ICreateUserRequest } from "@/types";
 import { useUsersManagement } from "@/hooks/useUsersManagement";
+import { createUser as createUserApi } from "@/lib/api/users";
 import { useRoles } from "@/hooks/useRoles";
 import { useUnits } from "@/hooks/useUnits";
 import { UserExcelImportModal } from "@/components/qtvKhoa";
+import SuccessModal from "@/components/modal/SuccessModal";
 
 export default function CreateUserPage() {
   const router = useRouter();
@@ -32,6 +34,123 @@ export default function CreateUserPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  /**
+   * Cuộn đến input đầu tiên có lỗi
+   */
+  const scrollToFirstError = useCallback(() => {
+    // Thứ tự ưu tiên các trường có lỗi
+    const errorFieldOrder = [
+      'username',
+      'password',
+      'fullName',
+      'email',
+      'phoneNumber',
+      'birthDate',
+      'unitId',
+      'roles',
+    ];
+
+    // Tìm trường đầu tiên có lỗi theo thứ tự ưu tiên
+    const firstErrorField = errorFieldOrder.find(field => errors[field]);
+
+    if (firstErrorField) {
+      // Tìm input element tương ứng
+      let inputElement: HTMLElement | null = null;
+
+      if (firstErrorField === 'username') {
+        // Tìm input username - có thể tìm bằng placeholder hoặc vị trí trong form
+        const inputs = document.querySelectorAll('input[type="text"]');
+        inputElement = Array.from(inputs).find(input => {
+          const placeholder = (input as HTMLInputElement).placeholder?.toLowerCase() || '';
+          return placeholder.includes('nguyenvana') || placeholder.includes('tên đăng nhập');
+        }) as HTMLElement;
+      } else if (firstErrorField === 'password') {
+        // Tìm input password
+        inputElement = document.querySelector('input[type="password"]') as HTMLElement;
+        if (!inputElement) {
+          // Nếu đang hiển thị password, tìm input text có placeholder chứa "mật khẩu"
+          const textInputs = document.querySelectorAll('input[type="text"]');
+          inputElement = Array.from(textInputs).find(input => {
+            const placeholder = (input as HTMLInputElement).placeholder?.toLowerCase() || '';
+            return placeholder.includes('mật khẩu');
+          }) as HTMLElement;
+        }
+      } else if (firstErrorField === 'fullName') {
+        // Tìm input fullName
+        const inputs = document.querySelectorAll('input[type="text"]');
+        inputElement = Array.from(inputs).find(input => {
+          const placeholder = (input as HTMLInputElement).placeholder?.toLowerCase() || '';
+          return placeholder.includes('nguyễn văn a') || placeholder.includes('họ và tên');
+        }) as HTMLElement;
+      } else if (firstErrorField === 'email') {
+        inputElement = document.querySelector('input[type="email"]') as HTMLElement;
+      } else if (firstErrorField === 'phoneNumber') {
+        inputElement = document.querySelector('input[type="tel"]') as HTMLElement;
+      } else if (firstErrorField === 'birthDate') {
+        inputElement = document.querySelector('input[type="date"]') as HTMLElement;
+      } else if (firstErrorField === 'unitId') {
+        // Tìm select đơn vị - tìm select thứ 2 (sau select cơ sở)
+        const selects = document.querySelectorAll('select');
+        if (selects.length >= 2) {
+          inputElement = selects[1] as HTMLElement;
+        } else {
+          inputElement = document.querySelector('select[title*="đơn vị"]') as HTMLElement;
+        }
+      } else if (firstErrorField === 'roles') {
+        // Cuộn đến phần roles - tìm container chứa checkboxes
+        const roleSection = document.querySelector('label[class*="cursor-pointer"]')?.closest('div');
+        if (roleSection) {
+          inputElement = roleSection as HTMLElement;
+        } else {
+          inputElement = document.querySelector('input[type="checkbox"]')?.closest('div') as HTMLElement;
+        }
+      }
+
+      // Nếu vẫn không tìm thấy, tìm element có class chứa error (border-red-500)
+      if (!inputElement) {
+        const errorElements = document.querySelectorAll('.border-red-500');
+        if (errorElements.length > 0) {
+          inputElement = errorElements[0] as HTMLElement;
+        }
+      }
+
+      if (inputElement) {
+        // Cuộn đến element với smooth behavior
+        inputElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+
+        // Focus vào input sau một chút delay để đảm bảo scroll đã hoàn thành
+        setTimeout(() => {
+          if (inputElement) {
+            if (inputElement.tagName === 'INPUT' || inputElement.tagName === 'SELECT') {
+              (inputElement as HTMLInputElement | HTMLSelectElement).focus();
+            } else {
+              // Nếu là container, tìm input bên trong
+              const innerInput = inputElement.querySelector('input, select') as HTMLInputElement | HTMLSelectElement | null;
+              if (innerInput) {
+                innerInput.focus();
+              }
+            }
+          }
+        }, 300);
+      }
+    }
+  }, [errors]);
+
+  // Tự động cuộn đến input có lỗi khi errors thay đổi
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      // Delay một chút để đảm bảo DOM đã render xong
+      const timer = setTimeout(() => {
+        scrollToFirstError();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [errors, scrollToFirstError]);
 
   // Filter units based on selected campus
   const filteredUnits = selectedCampusId 
@@ -65,7 +184,7 @@ export default function CreateUserPage() {
       newErrors.username = "Tên đăng nhập chỉ được chứa chữ cái, số và các ký tự . _ -";
     }
 
-    // Password validation
+    // Password validation - Khớp với BE: ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt (@$!%*?&)
     if (!formData.password) {
       newErrors.password = "Mật khẩu là bắt buộc";
     } else if (formData.password.length < 6) {
@@ -73,16 +192,17 @@ export default function CreateUserPage() {
     } else if (formData.password.length > 50) {
       newErrors.password = "Mật khẩu không được vượt quá 50 ký tự";
     } else {
-      // Check password strength
+      // Check password strength - Khớp với BE validation
       const hasUppercase = /[A-Z]/.test(formData.password);
       const hasLowercase = /[a-z]/.test(formData.password);
       const hasNumber = /[0-9]/.test(formData.password);
+      const hasSpecialChar = /[@$!%*?&]/.test(formData.password); // Ký tự đặc biệt theo BE: @$!%*?&
       const hasWhitespace = /\s/.test(formData.password);
 
       if (hasWhitespace) {
         newErrors.password = "Mật khẩu không được chứa khoảng trắng";
-      } else if (!hasUppercase || !hasLowercase || !hasNumber) {
-        newErrors.password = "Mật khẩu phải chứa chữ hoa, chữ thường và số";
+      } else if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
+        newErrors.password = "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt (@$!%*?&)";
       }
 
       // Check if password contains username
@@ -168,6 +288,8 @@ export default function CreateUserPage() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setErrors({}); // Clear previous errors
+    
     try {
       // Clean and prepare data before sending
       const cleanedData: ICreateUserRequest = {
@@ -194,9 +316,79 @@ export default function CreateUserPage() {
         cleanedData.birthDate = birthDate;
       }
 
-      const success = await createUser(cleanedData);
-      if (success) {
-        router.push('/qtv-khoa/quan-ly-nguoi-dung');
+      await createUserApi(cleanedData);
+      
+      // Hiển thị modal thành công
+      setShowSuccessModal(true);
+    } catch (err: unknown) {
+      const error = err as Error & { statusCode?: number };
+      const errorStatus = error.statusCode;
+      const errorMessage = error.message || 'Có lỗi xảy ra khi tạo người dùng';
+
+      console.log('Error caught in handleSubmit:', { errorStatus, errorMessage, error });
+
+      // Xử lý lỗi conflict (409) - Username hoặc Email đã tồn tại
+      if (errorStatus === 409) {
+        const fieldErrors: Record<string, string> = {};
+        
+        // Kiểm tra message để xác định field bị lỗi
+        const lowerMessage = errorMessage.toLowerCase();
+        if (errorMessage.includes('Tên đăng nhập') || lowerMessage.includes('username') || lowerMessage.includes('tên đăng nhập')) {
+          fieldErrors.username = errorMessage;
+          setErrors(fieldErrors);
+          message.error(errorMessage, 5); // Hiển thị 5 giây
+        } else if (errorMessage.includes('Email') || lowerMessage.includes('email')) {
+          fieldErrors.email = errorMessage;
+          setErrors(fieldErrors);
+          message.error(errorMessage, 5); // Hiển thị 5 giây
+        } else {
+          // Nếu không xác định được field, hiển thị lỗi chung
+          message.error(errorMessage, 5);
+        }
+      } 
+      // Xử lý lỗi validation (400) - Dữ liệu không hợp lệ
+      else if (errorStatus === 400) {
+        // Nếu error message chứa thông tin về các trường cụ thể, có thể parse và hiển thị
+        // Ví dụ: "username must be longer than or equal to 3 characters"
+        const fieldErrors: Record<string, string> = {};
+        
+        // Kiểm tra các trường phổ biến trong validation errors
+        if (errorMessage.toLowerCase().includes('username')) {
+          fieldErrors.username = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('email')) {
+          fieldErrors.email = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('password')) {
+          fieldErrors.password = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('fullname') || errorMessage.toLowerCase().includes('full name')) {
+          fieldErrors.fullName = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('phone')) {
+          fieldErrors.phoneNumber = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('birth') || errorMessage.toLowerCase().includes('birthdate')) {
+          fieldErrors.birthDate = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('role')) {
+          fieldErrors.roles = errorMessage;
+        }
+        if (errorMessage.toLowerCase().includes('unit')) {
+          fieldErrors.unitId = errorMessage;
+        }
+
+        // Nếu có field errors cụ thể, set vào errors state
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors(prev => ({ ...prev, ...fieldErrors }));
+        }
+        
+        message.error(errorMessage);
+      } 
+      // Xử lý các lỗi khác
+      else {
+        message.error(errorMessage);
+        console.error('Error creating user:', err);
       }
     } finally {
       setIsSubmitting(false);
@@ -293,7 +485,7 @@ export default function CreateUserPage() {
                 placeholder="VD: nguyenvana"
                 minLength={3}
                 maxLength={50}
-                pattern="[a-zA-Z0-9._-]+"
+                pattern="^[a-zA-Z0-9._-]+$"
                 title="Chỉ được chứa chữ cái, số và các ký tự . _ -"
               />
               <p className="mt-1 text-xs text-gray-500">Từ 3-50 ký tự, chỉ chữ cái, số và . _ -</p>
@@ -332,7 +524,7 @@ export default function CreateUserPage() {
                   )}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">Tối thiểu 6 ký tự, bao gồm chữ hoa, chữ thường và số</p>
+              <p className="mt-1 text-xs text-gray-500">Tối thiểu 6 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&)</p>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600">{errors.password}</p>
               )}
@@ -536,6 +728,18 @@ export default function CreateUserPage() {
         isOpen={showImportModal}
         onClose={() => setShowImportModal(false)}
         onImport={handleBulkImport}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          // Chuyển hướng sau khi đóng modal
+          router.push('/qtv-khoa/quan-ly-nguoi-dung');
+        }}
+        title="Tạo người dùng thành công!"
+        message="Người dùng mới đã được tạo thành công trong hệ thống."
       />
     </div>
   );

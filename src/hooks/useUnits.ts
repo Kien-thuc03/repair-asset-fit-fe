@@ -20,28 +20,7 @@ export const useUnits = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Tạo viết tắt từ tên cơ sở
-   * Ví dụ: "Phạm Văn Chiêu" -> "PVC", "Thanh Hóa" -> "TH"
-   */
-  const createCampusAcronym = (campusName: string): string => {
-    // Loại bỏ các từ phổ biến không cần thiết
-    const cleanName = campusName
-      .replace(/Cơ sở/gi, '')
-      .replace(/Campus/gi, '')
-      .replace(/Đại học Công nghiệp/gi, '')
-      .replace(/TP\.HCM/gi, '')
-      .replace(/Thành phố Hồ Chí Minh/gi, '')
-      .trim();
 
-    // Lấy chữ cái đầu của mỗi từ
-    const words = cleanName.split(/\s+/);
-    const acronym = words
-      .map(word => word.charAt(0).toUpperCase())
-      .join('');
-
-    return acronym || campusName.substring(0, 3).toUpperCase();
-  };
 
   const fetchUnits = useCallback(async () => {
     setLoading(true);
@@ -86,8 +65,8 @@ export const useUnits = () => {
           );
 
           if (parentCampus) {
-            const acronym = createCampusAcronym(parentCampus.name);
-            displayName = `(${acronym}) ${unit.name}`;
+            
+            displayName = `${unit.name}`;
           }
         }
 
