@@ -1,4 +1,5 @@
 import { Breadcrumb } from "antd";
+import { Calendar, CheckCircle, FileText } from "lucide-react";
 
 export default function InspectionHeader() {
   return (
@@ -25,13 +26,18 @@ export default function InspectionHeader() {
         />
       </div>
 
-      <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+      <div className="bg-white shadow rounded-lg p-6 mt-2 mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900">
               Xác nhận biên bản
             </h1>
-            <p className="text-sm sm:text-base text-gray-600">
+            <p className="text-gray-600">
               Xem và ký xác nhận các biên bản kiểm tra do Phòng Quản trị gửi đến
             </p>
           </div>

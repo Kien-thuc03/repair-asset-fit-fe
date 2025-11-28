@@ -382,17 +382,23 @@ export default function DanhSachDeXuatPhanMemPage() {
           },
         ]}
       />
+      {/* Header*/}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Monitor className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-            Danh sách đề xuất phần mềm
-          </h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-            Duyệt các đề xuất cài đặt phần mềm từ giảng viên.
-          </p>
+      <div className="bg-white shadow rounded-lg p-6 mt-2 mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Danh sách đề xuất phần mềm
+            </h1>
+            <p className="text-gray-600">
+              Quản lý các đề xuất phần mềm đã được giảng viên gửi đến.
+            </p>
+          </div>
         </div>
       </div>
 
