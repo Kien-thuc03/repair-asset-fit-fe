@@ -514,7 +514,7 @@ export default function QuanLyToTrinhPage() {
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}
-                    className="w-[12%]">
+                    className="w-[15%]">
                     Mã ĐX
                   </SortableHeader>
                   <SortableHeader<ReplacementProposal>
@@ -525,7 +525,7 @@ export default function QuanLyToTrinhPage() {
                     className="w-[22%]">
                     Tiêu đề
                   </SortableHeader>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[17%]">
+                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
                     Người tạo
                   </th>
                   <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
@@ -572,26 +572,31 @@ export default function QuanLyToTrinhPage() {
                       </div>
                     </td>
                     <td className="px-2 py-3">
-                      <div className="text-xs font-medium text-gray-900 truncate">
+                      <div
+                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-all duration-150"
+                        onClick={() =>
+                          (window.location.href = `/ban-giam-hieu/quan-ly-to-trinh/${item.id}`)
+                        }
+                        title="Click để xem chi tiết tờ trình">
                         {item.proposalCode}
                       </div>
                     </td>
                     <td className="px-2 py-3">
                       <div
-                        className="text-xs text-gray-900 font-medium truncate"
+                        className="text-sm text-gray-900 font-medium truncate"
                         title={item.title || ""}>
                         {item.title || "Không có tiêu đề"}
                       </div>
                       <div
-                        className="text-xs text-gray-500 truncate"
+                        className="text-sm text-gray-500 truncate"
                         title={item.description || ""}>
                         {item.description || "Không có mô tả"}
                       </div>
                     </td>
                     <td className="px-2 py-3">
-                      <div className="text-xs text-gray-900">
+                      <div className="text-sm text-gray-900">
                         <div className="flex items-center space-x-1">
-                          <span className="truncate text-xs font-medium">
+                          <span className="truncate text-sm font-medium">
                             {item.proposer?.fullName || "Chưa xác định"}
                           </span>
                         </div>
@@ -605,7 +610,7 @@ export default function QuanLyToTrinhPage() {
                     <td className="px-2 py-3">
                       <span
                         className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor()}`}>
-                        <span className="hidden lg:inline text-xs">
+                        <span className="hidden lg:inline text-xs text-center">
                           {getStatusText()}
                         </span>
                       </span>
@@ -613,7 +618,7 @@ export default function QuanLyToTrinhPage() {
                     <td className="px-2 py-3">
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                        <span className="text-xs text-gray-500">
+                        <span className="text-sm text-gray-500">
                           {new Date(item.createdAt).toLocaleDateString(
                             "vi-VN",
                             {
