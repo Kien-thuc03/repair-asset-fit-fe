@@ -361,7 +361,7 @@ export default function DanhSachDeXuatPhanMemPage() {
   }
 
   return (
-    <div className="space-y-6 min-h-screen">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -403,7 +403,7 @@ export default function DanhSachDeXuatPhanMemPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-3 sm:p-4 rounded-lg shadow space-y-3 sm:space-y-4">
+      <div className="bg-white p-3 sm:p-4 rounded-lg shadow space-y-3 sm:space-y-4 mb-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <Input
             className="col-span-1 sm:col-span-2 lg:col-span-1"
