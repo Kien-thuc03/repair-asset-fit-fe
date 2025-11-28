@@ -433,19 +433,25 @@ export default function QuanLyToTrinhPage() {
         />
       </div>
 
-      {/* Header */}
-      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-          Quản lý tờ trình thay thế
-        </h1>
-        <p className="mt-2 text-sm sm:text-base text-gray-600">
-          Quản lý các tờ trình thay thế linh kiện. Sử dụng bộ lọc trạng thái để
-          xem các tờ trình đã được khoa duyệt, đã được ban giám hiệu duyệt, hoặc
-          đã bị từ chối. Bạn có thể phê duyệt, từ chối hoặc yêu cầu xác minh
-          tình trạng linh kiện.
-        </p>
-      </div>
+            {/* Header */}
 
+      <div className="bg-white shadow rounded-lg p-6 mt-2">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Quản lý tờ trình thay thế thiết bị
+            </h1>
+            <p className="text-gray-600">
+              Theo dõi tiến độ xử lý các tờ trình thay thế thiết bị.
+            </p>
+          </div>
+        </div>
+      </div>
       {/* Search và Bộ lọc */}
       <div className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6">
 
