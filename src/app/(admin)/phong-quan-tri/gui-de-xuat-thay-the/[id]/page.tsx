@@ -39,7 +39,11 @@ import {
   SubmissionFormData,
   InspectionFormData,
 } from "@/types";
-import { replaceComponent, getComponentById } from "@/lib/api/components";
+import {
+  replaceComponent,
+  getComponentById,
+  addStockFromProposal,
+} from "@/lib/api/components";
 import { getComputerDetail } from "@/lib/api/computers";
 import { ReplacementItem } from "@/lib/api/replacement-proposals";
 import { RefreshCw, CheckCircle2 } from "lucide-react";
@@ -94,7 +98,7 @@ export default function ChiTietDeXuatThayThePage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
   const [showInspectionPreview, setShowInspectionPreview] = useState(false);
-  const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   // Xử lý mở modal xác nhận gửi đề xuất
   const handleOpenConfirmModal = () => {
@@ -240,94 +244,56 @@ export default function ChiTietDeXuatThayThePage() {
     }
   };
 
-  // Xử lý cập nhật linh kiện cho một item
-  const handleUpdateComponent = async (item: ReplacementItem) => {
+  // Xử lý cập nhật hàng loạt tất cả linh kiện trong đề xuất
+  const handleBulkUpdateComponents = async () => {
     if (!proposal) {
       message.error("Thiếu thông tin đề xuất");
       return;
     }
 
-    if (!item.oldComponentId) {
-      message.error("Thiếu thông tin linh kiện cần thay thế");
-      return;
-    }
+    // Kiểm tra xem có item nào chưa nhập kho không (dựa trên newlyPurchasedComponentId)
+    const pendingItems = proposal.items?.filter(
+      (item) => !item.newlyPurchasedComponentId
+    );
 
-    // Kiểm tra nếu oldComponent đã bị REMOVED (đã được thay thế)
-    if (item.oldComponent?.status === "REMOVED") {
-      message.info("Linh kiện này đã được thay thế");
+    if (!pendingItems || pendingItems.length === 0) {
+      message.info("Tất cả linh kiện đã được nhập kho");
       return;
     }
 
     try {
-      setUpdatingItemId(item.id);
+      setIsBulkUpdating(true);
 
-      // Lấy computerId từ componentId - cách chính xác nhất
-      let computerId: string | null = null;
-
-      try {
-        // Sử dụng getComponentById để lấy computerId trực tiếp từ componentId
-        const componentInfo = await getComponentById(item.oldComponentId);
-
-        if (componentInfo?.computer?.id) {
-          computerId = componentInfo.computer.id;
-        } else {
-          throw new Error("Không tìm thấy thông tin máy tính từ linh kiện");
-        }
-      } catch {
-        // Fallback: Thử lấy từ repairRequest nếu có
-        const repairRequest = proposal.repairRequests?.[0];
-        if (repairRequest) {
-          const { getRepairById } = await import("@/lib/api/repairs");
-          const repairDetail = await getRepairById(repairRequest.id);
-
-          if (repairDetail?.computerAssetId) {
-            // Lấy computerId từ assetId
-            const computerDetail = await getComputerDetail(
-              repairDetail.computerAssetId
-            );
-            if (computerDetail?.id) {
-              computerId = computerDetail.id;
-            }
-          }
-        }
-
-        if (!computerId) {
-          throw new Error(
-            "Không thể xác định máy tính chứa linh kiện này. Vui lòng kiểm tra lại thông tin."
-          );
-        }
-      }
-
-      // Đảm bảo có computerId trước khi gọi API
-      if (!computerId) {
-        throw new Error("Không thể xác định máy tính để thay thế linh kiện");
-      }
-
-      // Gọi API thay thế linh kiện
-      await replaceComponent(computerId, {
-        oldComponentId: item.oldComponentId,
-        newItemName: item.newItemName,
-        newItemSpecs: item.newItemSpecs || "",
-        notes: `Thay thế từ đề xuất ${proposal.proposalCode}: ${
-          item.reason || "Không có lý do"
-        }`,
+      // Gọi API nhập kho hàng loạt
+      const result = await addStockFromProposal({
+        proposalId: proposal.id,
+        notes: `Nhập kho hàng loạt từ đề xuất ${proposal.proposalCode}`,
       });
 
-      message.success(
-        `Đã cập nhật linh kiện "${item.newItemName}" thành công!`
-      );
+      // Hiển thị kết quả
+      if (result.successCount === result.totalItems) {
+        message.success(
+          `Đã nhập kho thành công ${result.successCount}/${result.totalItems} linh kiện!`
+        );
+      } else {
+        message.warning(
+          `Nhập kho hoàn tất: ${result.successCount}/${result.totalItems} thành công. Vui lòng kiểm tra chi tiết.`
+        );
+        // Log chi tiết để debug
+        console.log("Bulk update results:", result.details);
+      }
 
-      // Refetch để lấy dữ liệu mới (oldComponent.status sẽ là REMOVED)
+      // Refetch để lấy dữ liệu mới
       await refetch();
     } catch (error) {
-      console.error("Error updating component:", error);
+      console.error("Error bulk adding stock components:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "Có lỗi xảy ra khi cập nhật linh kiện!";
+          : "Có lỗi xảy ra khi nhập kho linh kiện!";
       message.error(errorMessage);
     } finally {
-      setUpdatingItemId(null);
+      setIsBulkUpdating(false);
     }
   };
 
@@ -611,7 +577,33 @@ export default function ChiTietDeXuatThayThePage() {
           <Card
             title={`Danh sách linh kiện cần thay thế (${
               proposal.itemsCount || 0
-            })`}>
+            })`}
+            extra={
+              proposal.status ===
+                ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (() => {
+                  const hasUnstockedItems = proposal.items?.some(
+                    (item) => !item.newlyPurchasedComponentId
+                  );
+                  
+                  return hasUnstockedItems ? (
+                    <Button
+                      type="primary"
+                      icon={<Package className="w-4 h-4" />}
+                      onClick={handleBulkUpdateComponents}
+                      loading={isBulkUpdating}>
+                      {isBulkUpdating ? "Đang nhập kho..." : "Nhập kho tất cả"}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="default"
+                      icon={<CheckCircle2 className="w-4 h-4" />}
+                      disabled
+                      className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
+                      Đã nhập kho
+                    </Button>
+                  );
+                })()
+            }>
             <div className="space-y-4">
               {proposal.items?.map((item, index) => (
                 <Card
@@ -663,14 +655,6 @@ export default function ChiTietDeXuatThayThePage() {
                         <p>
                           <strong>Số lượng:</strong> {item.quantity || 1}
                         </p>
-                        {item.newlyPurchasedComponentId && (
-                          <p>
-                            <strong>ID linh kiện đã mua:</strong>{" "}
-                            <span className="font-mono text-xs">
-                              {item.newlyPurchasedComponentId}
-                            </span>
-                          </p>
-                        )}
                       </div>
                     </div>
                     <div className="md:col-span-2">
@@ -678,42 +662,26 @@ export default function ChiTietDeXuatThayThePage() {
                         <strong>Lý do thay thế:</strong>{" "}
                         {item.reason || "Không có lý do"}
                       </p>
+                      {/* Hiển thị trạng thái nhập kho */}
+                      {proposal.status ===
+                        ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
+                        <div className="mt-2">
+                          {item.newlyPurchasedComponentId ? (
+                            <Tag
+                              color="green"
+                              icon={<CheckCircle2 className="w-3 h-3" />}>
+                              Đã nhập kho
+                            </Tag>
+                          ) : (
+                            <Tag
+                              color="orange"
+                              icon={<Clock className="w-3 h-3" />}>
+                              Chưa nhập kho
+                            </Tag>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    {/* Nút cập nhật linh kiện - chỉ hiển thị khi status là ĐÃ_HOÀN_TẤT_MUA_SẮM */}
-                    {proposal.status ===
-                      ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
-                      <div className="md:col-span-2 flex justify-end pt-2 border-t">
-                        {item.oldComponent?.status === "REMOVED" ? (
-                          <Button
-                            type="default"
-                            icon={<CheckCircle2 className="w-4 h-4" />}
-                            disabled
-                            className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
-                            Đã cập nhật
-                          </Button>
-                        ) : (
-                          <Button
-                            type="primary"
-                            icon={<RefreshCw className="w-4 h-4" />}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleUpdateComponent(item);
-                            }}
-                            loading={updatingItemId === item.id}
-                            disabled={
-                              !item.oldComponentId ||
-                              item.oldComponent?.status === "REMOVED" ||
-                              (updatingItemId !== null &&
-                                updatingItemId !== item.id)
-                            }>
-                            {updatingItemId === item.id
-                              ? "Đang cập nhật..."
-                              : "Cập nhật linh kiện"}
-                          </Button>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </Card>
               ))}

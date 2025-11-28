@@ -190,6 +190,114 @@ export const getComponentsByAssetIdWithComputer = async (
 };
 
 /**
+ * Interface cho request thêm linh kiện vào kho từ đề xuất (Bulk Action)
+ */
+export interface AddStockFromProposalRequest {
+  proposalId: string;
+  notes?: string;
+}
+
+/**
+ * Interface cho chi tiết một item được xử lý
+ */
+export interface ProcessedItem {
+  itemId: string;
+  status: "SUCCESS" | "SKIPPED" | "ERROR";
+  message?: string;
+  newComponent?: {
+    id: string;
+    name: string;
+    type: string;
+  };
+  componentId?: string; // Cho trường hợp SKIPPED
+}
+
+/**
+ * Interface cho response thêm linh kiện vào kho từ đề xuất
+ */
+export interface AddStockFromProposalResponse {
+  proposalId: string;
+  totalItems: number;
+  successCount: number;
+  details: ProcessedItem[];
+}
+
+/**
+ * Thêm linh kiện mới vào kho từ đề xuất thay thế (Bulk Action)
+ * Xử lý tất cả các items trong đề xuất cùng lúc
+ * @param data Dữ liệu chứa proposalId và notes
+ * @returns Promise với kết quả xử lý từng item
+ */
+export const addStockFromProposal = async (
+  data: AddStockFromProposalRequest
+): Promise<AddStockFromProposalResponse> => {
+  try {
+    const response = await api.patch<ApiResponse<AddStockFromProposalResponse>>(
+      `/computer/add-stock-component`,
+      data
+    );
+
+    return response.data.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Nhập kho linh kiện từ đề xuất thất bại."
+    );
+  }
+};
+
+/**
+ * Legacy interface cho backward compatibility (DEPRECATED)
+ * @deprecated Sử dụng AddStockFromProposalRequest thay thế
+ */
+export interface AddStockComponentRequest {
+  oldComponentId: string;
+  serialNumber?: string;
+  notes?: string;
+}
+
+/**
+ * Legacy interface cho backward compatibility (DEPRECATED)
+ * @deprecated Sử dụng AddStockFromProposalResponse thay thế
+ */
+export interface AddStockComponentResponse {
+  newComponent: ComponentResponseDto;
+  oldComponent: ComponentResponseDto;
+  replacementInfo: {
+    proposalCode: string;
+    proposalId: string;
+    replacementItemId: string;
+    message: string;
+    autoUpdated: boolean;
+  };
+}
+
+/**
+ * Legacy function cho backward compatibility (DEPRECATED)
+ * @deprecated Sử dụng addStockFromProposal() thay thế
+ * Thêm linh kiện mới vào kho (dựa trên đề xuất thay thế)
+ * @param data Dữ liệu thêm linh kiện
+ * @returns Promise với thông tin linh kiện mới và cũ
+ */
+export const addStockComponent = async (
+  data: AddStockComponentRequest
+): Promise<AddStockComponentResponse> => {
+  try {
+    const response = await api.patch<ApiResponse<AddStockComponentResponse>>(
+      `/computer/add-stock-component-legacy`,
+      data
+    );
+
+    return response.data.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Thêm linh kiện vào kho thất bại."
+    );
+  }
+};
+
+/**
  * Interface cho request thay thế linh kiện
  */
 export interface ReplaceComponentRequest {
