@@ -447,7 +447,7 @@ export default function TechnicianDeviceManagementContainer() {
         ).sort();
 
   return (
-    <div className="space-y-6 main-content">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen">
       <div className="mb-2">
         <Breadcrumb
           items={[
