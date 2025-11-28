@@ -333,7 +333,6 @@ export default function LapToTrinhPage() {
         </div>
         {/* Header */}
 
-        
         <div className="bg-white shadow rounded-lg p-6 mt-2 mb-4">
           <div className="flex items-center space-x-3">
             <div className="shrink-0">
@@ -351,7 +350,6 @@ export default function LapToTrinhPage() {
             </div>
           </div>
         </div>
-
 
         {/* Filters */}
         <div className="bg-white p-3 sm:p-4 lg:p-6 rounded-lg shadow mb-4 sm:mb-6">
@@ -649,8 +647,13 @@ export default function LapToTrinhPage() {
                               </td>
                               <td className="px-2 py-4 whitespace-nowrap w-[13%]">
                                 <div
-                                  className="text-sm text-blue-600 truncate font-medium"
-                                  title={request.proposalCode}>
+                                  className="text-sm text-blue-600 truncate font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                                  title={request.proposalCode}
+                                  onClick={() => {
+                                    router.push(
+                                      `/to-truong-ky-thuat/lap-to-trinh/chi-tiet/${request.id}`
+                                    );
+                                  }}>
                                   {request.proposalCode}
                                 </div>
                               </td>

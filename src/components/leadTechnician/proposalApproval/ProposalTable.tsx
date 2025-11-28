@@ -5,7 +5,7 @@ import { Tag } from "antd";
 import { Eye, ChevronUp, ChevronDown, Check, X, FileText } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ReplacementRequestItem, ReplacementProposalStatus} from "@/types";
+import { ReplacementRequestItem, ReplacementProposalStatus } from "@/types";
 import { useUpdateReplacementProposalStatus } from "@/hooks/useReplacementProposals";
 import { SuccessModal, ErrorModal } from "@/components/modal";
 
@@ -248,7 +248,15 @@ export default function ProposalTable({
                   </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-600">
-                  {record.proposalCode}
+                  <div
+                    className="cursor-pointer hover:text-blue-800 hover:underline"
+                    onClick={() =>
+                      router.push(
+                        `/to-truong-ky-thuat/duyet-de-xuat/chi-tiet/${record.id}`
+                      )
+                    }>
+                    {record.proposalCode}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-700">
                   <div>
@@ -278,7 +286,8 @@ export default function ProposalTable({
                       <Eye className="w-4 h-4" />
                     </button>
                   </Link>
-                  {record.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT && (
+                  {record.status ===
+                    ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT && (
                     <>
                       <button
                         onClick={() => handleApproveClick(record.id)}
