@@ -487,8 +487,16 @@ export default function DanhSachBaoLoiPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-2 py-3 text-sm font-medium text-blue-600">
-                        <div className="text-center" title={record.requestCode}>
+                      <td className=" py-3 text-sm font-medium text-blue-600">
+                        <div
+                          className="text-center cursor-pointer hover:text-blue-800 hover:underline"
+                          title={record.requestCode}
+                          onClick={() =>
+                            window.open(
+                              `/to-truong-ky-thuat/danh-sach-bao-loi/chi-tiet?id=${record.id}`,
+                              "_self"
+                            )
+                          }>
                           {record.requestCode}
                         </div>
                       </td>
