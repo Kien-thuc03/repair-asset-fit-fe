@@ -370,9 +370,10 @@ Trân trọng kính trình.`;
               <tr>
                 <th width="5%">STT</th>
                 <th width="25%">Linh kiện cũ</th>
-                <th width="30%">Vị trí</th>
+                <th width="25%">Linh kiện mới</th>
+                <th width="15%">Vị trí</th>
                 <th width="10%">SL</th>
-                <th width="30%">Lý do</th>
+                <th width="20%">Lý do</th>
               </tr>
             </thead>
             <tbody>
@@ -387,6 +388,10 @@ Trân trọng kính trình.`;
                       item.oldComponent?.name || "Không xác định"
                     }</strong><br>
                     <small>${item.oldComponent?.componentSpecs || ""}</small>
+                  </td>
+                  <td>
+                    <strong>${item.newItemName || "Chưa xác định"}</strong><br>
+                    <small>${item.newItemSpecs || ""}</small>
                   </td>
                   <td>${item.oldComponent?.roomLocation || "Chưa xác định"}</td>
                   <td style="text-align: center;">${item.quantity}</td>

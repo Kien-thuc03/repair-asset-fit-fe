@@ -36,8 +36,9 @@ export default function SubmissionPreviewModal({
       onCancel={onClose}
       footer={
         <div className="flex flex-nowrap justify-end gap-2 items-center">
-          <Button onClick={onClose} 
-          className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
+          <Button
+            onClick={onClose}
+            className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
             Đóng
           </Button>
           <Button
@@ -147,6 +148,9 @@ export default function SubmissionPreviewModal({
                       Linh kiện cũ
                     </th>
                     <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
+                      Linh kiện mới
+                    </th>
+                    <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
                       Vị trí
                     </th>
                     <th className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2 text-center font-medium">
@@ -169,6 +173,14 @@ export default function SubmissionPreviewModal({
                         </div>
                         <div className="text-xs text-gray-600">
                           {item.oldComponent?.componentSpecs || ""}
+                        </div>
+                      </td>
+                      <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
+                        <div className="font-medium">
+                          {item.newItemName || "Chưa xác định"}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {item.newItemSpecs || ""}
                         </div>
                       </td>
                       <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
