@@ -306,7 +306,7 @@ export default function QuanLyThayTheLinhKienPage() {
 					Danh sách đề xuất thay thế
 				</h1>
 				<p className="mt-2 text-gray-600">
-					Quản lý và theo dõi các đề xuất thay thế linh kiện đã được tạo.
+					Quản lý và theo dõi các đề xuất thay thế linh kiện đã được tạo. Đối với các đề xuất Đã hoàn tất mua sắm, bạn có thể xem chi tiết đề xuất và thực hiện thay thế linh kiện.
 				</p>
 			</div>
 
@@ -451,7 +451,7 @@ export default function QuanLyThayTheLinhKienPage() {
 								</div>
 							</th>
 							<th 
-								className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+								className="px-4 py-3 text-left uppercase text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
 								onClick={() => handleSort("createdAt")}
 							>
 								<div className="flex items-center space-x-1">

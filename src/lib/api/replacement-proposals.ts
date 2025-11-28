@@ -39,6 +39,8 @@ export interface ReplacementItem {
   reason?: string;
   newlyPurchasedComponentId?: string;
   newlyPurchasedComponent?: OldComponentInfo;
+  repairRequestId?: string;
+  requestCode?: string;
 }
 
 /**

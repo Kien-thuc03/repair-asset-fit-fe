@@ -1,18 +1,27 @@
 "use client"
 
 import { useParams } from 'next/navigation'
-import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table, Button } from 'antd'
-import { Clock, CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table, Button, Input, Form, message } from 'antd'
+import { Clock, CheckCircle, XCircle, AlertTriangle, Loader2, RefreshCw } from 'lucide-react'
 import { useReplacementProposal } from '@/hooks/useReplacementProposals'
 import { ReplacementItem } from '@/lib/api/replacement-proposals'
 import { ReplacementProposalStatus } from '@/types'
+import { replaceComponent } from '@/lib/api/components'
+import { getRepairById } from '@/lib/api/repairs'
+import { getComputerDetail } from '@/lib/api/computers'
 
 export default function ChiTietThayThePage() {
 	const params = useParams()
 	const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string)
+	const [form] = Form.useForm()
 
 	// Fetch dữ liệu từ API
 	const { data: request, loading, error, refetch } = useReplacementProposal(id)
+	
+	// State cho việc thay thế linh kiện
+	const [replacingItemId, setReplacingItemId] = useState<string | null>(null)
+	const [replaceFormVisible, setReplaceFormVisible] = useState<Record<string, boolean>>({})
 
 	// Loading State
 	if (loading) {
@@ -183,6 +192,26 @@ export default function ChiTietThayThePage() {
 			),
 		},
 		{
+			title: 'Mã YCSC',
+			key: 'requestCode',
+			width: 150,
+			render: (_: unknown, record: ReplacementItem) => {
+				// Hiển thị ID và mã YCSC từ requestCode của từng component
+				if (record.repairRequestId || record.requestCode) {
+					return (
+						<div className="space-y-1">
+							{record.requestCode && (
+								<div className="font-mono text-sm text-blue-600">
+									{record.requestCode}
+								</div>
+							)}
+						</div>
+					)
+				}
+				return <span className="text-gray-400 text-sm">N/A</span>
+			},
+		},
+		{
 			title: 'Số lượng',
 			dataIndex: 'quantity',
 			key: 'quantity',
@@ -264,6 +293,76 @@ export default function ChiTietThayThePage() {
 			),
 		}] : []),
 	]
+
+	// Hàm xử lý thay thế linh kiện
+	const handleReplaceComponent = async (item: ReplacementItem) => {
+		if (!request || !item.oldComponentId) {
+			message.error('Thiếu thông tin linh kiện cần thay thế')
+			return
+		}
+
+		try {
+			setReplacingItemId(item.id)
+			
+			// Lấy giá trị từ form
+			const formValues = form.getFieldsValue()
+			const itemKey = `item_${item.id}`
+			const newItemName = formValues[`${itemKey}_name`] || item.newItemName
+			const newItemSpecs = formValues[`${itemKey}_specs`] || item.newItemSpecs || ''
+			const serialNumber = formValues[`${itemKey}_serial`] || undefined
+			const notes = formValues[`${itemKey}_notes`] || `Thay thế từ đề xuất ${request.proposalCode}: ${item.reason || 'Không có lý do'}`
+
+			// Bước 1: Lấy computerId từ repairRequest
+			let computerId: string | null = null
+			
+			// Thử lấy từ repairRequest đầu tiên
+			if (request.repairRequests && request.repairRequests.length > 0) {
+				const repairRequest = request.repairRequests[0]
+				try {
+					const repairDetail = await getRepairById(repairRequest.id)
+					if (repairDetail?.computerAssetId) {
+						// Lấy computerId từ assetId
+						const computerDetail = await getComputerDetail(repairDetail.computerAssetId)
+						if (computerDetail?.id) {
+							computerId = computerDetail.id
+						}
+					}
+				} catch (error) {
+					console.error('Error getting repair detail:', error)
+				}
+			}
+
+			if (!computerId) {
+				throw new Error(
+					'Không thể xác định máy tính chứa linh kiện này. Vui lòng kiểm tra lại thông tin đề xuất.'
+				)
+			}
+
+			// Bước 2: Gọi API thay thế linh kiện
+			await replaceComponent(computerId, {
+				oldComponentId: item.oldComponentId,
+				newItemName,
+				newItemSpecs,
+				serialNumber,
+				notes,
+			})
+
+			message.success(`Đã thay thế linh kiện "${newItemName}" thành công!`)
+			
+			// Đóng form và refetch dữ liệu
+			setReplaceFormVisible(prev => ({ ...prev, [item.id]: false }))
+			await refetch()
+		} catch (error) {
+			console.error('Error replacing component:', error)
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: 'Có lỗi xảy ra khi thay thế linh kiện!'
+			message.error(errorMessage)
+		} finally {
+			setReplacingItemId(null)
+		}
+	}
 
 	return (
 		<div className="space-y-6">
@@ -350,6 +449,9 @@ export default function ChiTietThayThePage() {
 							<Descriptions.Item label="Tiêu đề đề xuất" span={2}>
 								<div className="font-medium">{request.title || 'N/A'}</div>
 							</Descriptions.Item>
+							<Descriptions.Item label="Mô tả chi tiết" span={2}>
+								<div className="text-gray-700 leading-relaxed">{request.description || 'Không có mô tả'}</div>
+							</Descriptions.Item>
 							<Descriptions.Item label="Người tạo" span={2}>
 								<div className="font-medium">{request.proposer?.fullName || 'N/A'}</div>
 							</Descriptions.Item>
@@ -371,46 +473,6 @@ export default function ChiTietThayThePage() {
 						</Descriptions>
 					</Card>
 
-					{/* Repair Requests Info */}
-					{request.repairRequests && request.repairRequests.length > 0 && (
-						<Card 
-							title={
-								<div className="flex items-center gap-2">
-									<span>Yêu cầu sửa chữa liên quan</span>
-									<Tag color="blue">{request.repairRequests.length}</Tag>
-								</div>
-							}
-							className="shadow"
-						>
-							<div className="space-y-2">
-								{request.repairRequests.map((rr) => (
-									<div 
-										key={rr.id} 
-										className="border-l-4 border-blue-400 bg-blue-50 p-3 rounded-r-lg hover:bg-blue-100 transition-colors"
-									>
-										<div className="flex items-start justify-between">
-											<div className="flex-1">
-												<div className="flex items-center gap-2 mb-1">
-													<span className="font-mono text-blue-700 font-semibold">
-														{rr.requestCode}
-													</span>
-													<Tag color="blue">{rr.status}</Tag>
-												</div>
-												{rr.description && (
-													<div className="text-sm text-gray-700 mt-1">
-														{rr.description}
-													</div>
-												)}
-												<div className="text-xs text-gray-500 mt-1">
-													Tạo lúc: {new Date(rr.createdAt).toLocaleString('vi-VN')}
-												</div>
-											</div>
-										</div>
-									</div>
-								))}
-							</div>
-						</Card>
-					)}
 
 					{/* Components List */}
 					<Card 
@@ -426,26 +488,140 @@ export default function ChiTietThayThePage() {
 						/>
 					</Card>
 
-					{/* Description */}
-					<Card title="Mô tả chi tiết" className="shadow">
-						<p className="text-gray-700 leading-relaxed">{request.description || 'Không có mô tả'}</p>
-					</Card>
+					{/* Component Replacement Section */}
+					{request.items && request.items.length > 0 && request.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
+						<Card 
+							title="Xử lý thay thế linh kiện" 
+							className="shadow"
+						>
+							<Alert
+								message="Linh kiện đã sẵn sàng"
+								description="Vui lòng thực hiện thay thế linh kiện cho các linh kiện trong danh sách bên dưới. Sau khi thay thế, linh kiện cũ sẽ được chuyển sang trạng thái REMOVED và linh kiện mới sẽ có trạng thái INSTALLED."
+								type="info"
+								showIcon
+								className="mb-4"
+							/>
+							<div className="space-y-4">
+								{request.items.map((item) => {
+									const isReplacing = replacingItemId === item.id
+									const showForm = replaceFormVisible[item.id]
+									const canReplace = item.oldComponentId && item.oldComponent?.status !== 'REMOVED'
 
-					{/* Component Details */}
-					{request.items && request.items.length > 0 && (
-						<Card title="Lý do thay thế từng linh kiện" className="shadow">
-							<div className="space-y-3">
-								{request.items.map((item) => (
-									<div key={item.id} className="border-l-4 border-blue-200 pl-4">
-										<div className="font-medium text-gray-900">{item.newItemName}</div>
-										<div className="text-gray-600 text-sm mt-1">{item.reason || 'N/A'}</div>
-										{item.oldComponent && (
-											<div className="text-xs text-gray-500 mt-1">
-												Thay thế cho: {item.oldComponent.name} ({item.oldComponent.componentType})
+									if (!canReplace) {
+										return (
+											<div key={item.id} className="border-l-4 border-gray-300 pl-4 py-2">
+												<div className="font-medium text-gray-900">{item.newItemName}</div>
+												<div className="text-gray-500 text-sm mt-1">
+													{item.oldComponent?.status === 'REMOVED' 
+														? '✅ Đã được thay thế' 
+														: '⚠️ Không thể thay thế (thiếu thông tin linh kiện cũ)'}
+												</div>
+												{item.oldComponent && (
+													<div className="text-xs text-gray-500 mt-1">
+														Linh kiện cũ: {item.oldComponent.name} ({item.oldComponent.componentType})
+													</div>
+												)}
 											</div>
-										)}
-									</div>
-								))}
+										)
+									}
+
+									return (
+										<div key={item.id} className="border-l-4 border-blue-400 pl-4 py-3 bg-blue-50 rounded-r-lg">
+											<div className="flex items-start justify-between mb-2">
+												<div className="flex-1">
+													<div className="font-medium text-gray-900">{item.newItemName}</div>
+													{item.newItemSpecs && (
+														<div className="text-sm text-gray-600 mt-1">{item.newItemSpecs}</div>
+													)}
+													{item.oldComponent && (
+														<div className="text-xs text-gray-500 mt-1">
+															Thay thế cho: <span className="font-medium">{item.oldComponent.name}</span> ({item.oldComponent.componentType})
+														</div>
+													)}
+												</div>
+												{!showForm && (
+													<Button
+														type="primary"
+														size="small"
+														icon={<RefreshCw className="w-4 h-4" />}
+														onClick={() => {
+															setReplaceFormVisible(prev => ({ ...prev, [item.id]: true }))
+															form.setFieldsValue({
+																[`item_${item.id}_name`]: item.newItemName,
+																[`item_${item.id}_specs`]: item.newItemSpecs || '',
+																[`item_${item.id}_serial`]: '',
+																[`item_${item.id}_notes`]: `Thay thế từ đề xuất ${request.proposalCode}: ${item.reason || 'Không có lý do'}`,
+															})
+														}}
+													>
+														Thay thế
+													</Button>
+												)}
+											</div>
+
+											{showForm && (
+												<Form
+													form={form}
+													layout="vertical"
+													className="mt-3 bg-white p-4 rounded border"
+												>
+													<Form.Item
+														label="Tên linh kiện mới"
+														name={`item_${item.id}_name`}
+														rules={[{ required: true, message: 'Vui lòng nhập tên linh kiện' }]}
+													>
+														<Input placeholder="Nhập tên linh kiện mới" />
+													</Form.Item>
+
+													<Form.Item
+														label="Thông số kỹ thuật"
+														name={`item_${item.id}_specs`}
+														rules={[{ required: true, message: 'Vui lòng nhập thông số kỹ thuật' }]}
+													>
+														<Input.TextArea 
+															rows={2} 
+															placeholder="Nhập thông số kỹ thuật linh kiện mới" 
+														/>
+													</Form.Item>
+
+													<Form.Item
+														label="Số serial (tùy chọn)"
+														name={`item_${item.id}_serial`}
+													>
+														<Input placeholder="Nhập số serial nếu có" />
+													</Form.Item>
+
+													<Form.Item
+														label="Ghi chú"
+														name={`item_${item.id}_notes`}
+													>
+														<Input.TextArea 
+															rows={2} 
+															placeholder="Ghi chú về việc thay thế" 
+														/>
+													</Form.Item>
+
+													<div className="flex gap-2">
+														<Button
+															type="primary"
+															loading={isReplacing}
+															onClick={() => handleReplaceComponent(item)}
+														>
+															{isReplacing ? 'Đang thay thế...' : 'Xác nhận thay thế'}
+														</Button>
+														<Button
+															onClick={() => {
+																setReplaceFormVisible(prev => ({ ...prev, [item.id]: false }))
+															}}
+														>
+															Hủy
+														</Button>
+													</div>
+												</Form>
+											)}
+										</div>
+									)
+								})}
 							</div>
 						</Card>
 					)}
