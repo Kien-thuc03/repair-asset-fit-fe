@@ -14,6 +14,7 @@ import {
   XCircle,
   Loader2,
   AlertCircle,
+  ClipboardList,
 } from "lucide-react";
 import { Breadcrumb, Modal, Button } from "antd";
 import { SortableHeader } from "@/components/common";
@@ -299,7 +300,7 @@ export default function LapBienBanPage() {
       </div>
 
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+      {/* <div className="bg-white shadow rounded-lg p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
@@ -312,7 +313,28 @@ export default function LapBienBanPage() {
             </p>
           </div>
         </div>
-      </div>
+      </div> */}
+
+            {/* Header */}
+      
+            <div className="bg-white shadow rounded-lg p-6 mt-2">
+              <div className="flex items-center space-x-3">
+                <div className="shrink-0">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <ClipboardList className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Danh sách biên bản kiểm tra
+                  </h1>
+                  <p className="text-gray-600">
+                    Danh sách các tờ trình đã được Phòng Quản trị xác minh. Bạn có thể lập biên bản kiểm tra
+              cho các tờ trình này.
+                  </p>
+                </div>
+              </div>
+            </div>
 
       {/* Search and Export */}
       <div className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6">
