@@ -542,7 +542,9 @@ export default function SoftwareProposalsPage() {
                       />
                     </td>
                     <td className="py-3 sm:py-4 whitespace-nowrap">
-                      <div className="text-xs  sm:text-sm font-medium text-blue-600">
+                      <div
+                        className="text-xs sm:text-sm font-medium text-blue-600 cursor-pointer hover:text-blue-800 hover:underline"
+                        onClick={() => handleViewProposal(proposal)}>
                         {proposal.proposalCode}
                       </div>
                     </td>
