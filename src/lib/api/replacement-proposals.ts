@@ -23,6 +23,7 @@ export interface OldComponentInfo {
   componentSpecs?: string;
   status: string;
   roomLocation?: string;
+  computerName?: string;
 }
 
 /**

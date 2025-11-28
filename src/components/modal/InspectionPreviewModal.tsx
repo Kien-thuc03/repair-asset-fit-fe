@@ -199,7 +199,7 @@ export default function InspectionPreviewModal({
                     </td>
                     <td className="border border-gray-400 px-1 sm:px-2 py-1 sm:py-2">
                       <div className="font-medium">
-                        {item.oldComponent?.componentType || "Không xác định"}
+                        {item.oldComponent?.computerName || "Không xác định"}
                       </div>
                       <div className="text-xs text-gray-600">
                         {item.oldComponent?.name || "N/A"}
