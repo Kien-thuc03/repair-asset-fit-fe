@@ -580,29 +580,30 @@ export default function ChiTietDeXuatThayThePage() {
             })`}
             extra={
               proposal.status ===
-                ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (() => {
-                  const hasUnstockedItems = proposal.items?.some(
-                    (item) => !item.newlyPurchasedComponentId
-                  );
-                  
-                  return hasUnstockedItems ? (
-                    <Button
-                      type="primary"
-                      icon={<Package className="w-4 h-4" />}
-                      onClick={handleBulkUpdateComponents}
-                      loading={isBulkUpdating}>
-                      {isBulkUpdating ? "Đang nhập kho..." : "Nhập kho tất cả"}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="default"
-                      icon={<CheckCircle2 className="w-4 h-4" />}
-                      disabled
-                      className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
-                      Đã nhập kho
-                    </Button>
-                  );
-                })()
+                ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM &&
+              (() => {
+                const hasUnstockedItems = proposal.items?.some(
+                  (item) => !item.newlyPurchasedComponentId
+                );
+
+                return hasUnstockedItems ? (
+                  <Button
+                    type="primary"
+                    icon={<Package className="w-4 h-4" />}
+                    onClick={handleBulkUpdateComponents}
+                    loading={isBulkUpdating}>
+                    {isBulkUpdating ? "Đang nhập kho..." : "Nhập kho tất cả"}
+                  </Button>
+                ) : (
+                  <Button
+                    type="default"
+                    icon={<CheckCircle2 className="w-4 h-4" />}
+                    disabled
+                    className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50">
+                    Đã nhập kho
+                  </Button>
+                );
+              })()
             }>
             <div className="space-y-4">
               {proposal.items?.map((item, index) => (
