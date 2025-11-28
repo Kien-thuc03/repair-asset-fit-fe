@@ -37,6 +37,15 @@ export default function QRScanner({
       setErrorMsg("");
       setIsScanning(true);
 
+      // Wait for DOM element to be ready
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Check if element exists
+      const element = document.getElementById(qrCodeRegionId);
+      if (!element) {
+        throw new Error(`Element with id "${qrCodeRegionId}" not found`);
+      }
+
       // Initialize scanner
       const html5QrCode = new Html5Qrcode(qrCodeRegionId);
       scannerRef.current = html5QrCode;
@@ -51,21 +60,83 @@ export default function QRScanner({
         },
         (decodedText) => {
           // Success callback when QR code is scanned
-          console.log("✅ QR Code scanned:", decodedText);
-          message.success("Quét mã QR thành công!");
-          onScanSuccess(decodedText);
+          try {
+            // Try to parse JSON data from QR code
+            const qrData = JSON.parse(decodedText);
+            // Check if it's a valid repair request QR code
+            // Only check type and computerId, ignore timestamp for permanent usage
+            if (qrData.type === "REPAIR_REQUEST" && qrData.computerId) {
+              // Validate computerId format
+              const uuidRegex =
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+              if (uuidRegex.test(qrData.computerId)) {
+                message.success("Quét mã QR thiết bị thành công!");
+                onScanSuccess(decodedText); // Pass original JSON text to callback
+              } else {
+                message.warning("Mã ID thiết bị không hợp lệ!");
+
+                return;
+              }
+            } else {
+              message.warning("Mã QR không phải của thiết bị trong hệ thống!");
+
+              return;
+            }
+          } catch (error) {
+            // If not JSON, treat as plain text (maybe old format)
+            // Clean the text (remove whitespace, newlines)
+            const cleanText = decodedText.trim();
+
+            // Check if it looks like a UUID (computerId)
+            const uuidRegex =
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+            if (uuidRegex.test(cleanText)) {
+              message.success("Quét mã QR thiết bị thành công!");
+              // Create JSON format for plain UUID
+              const jsonData = {
+                type: "REPAIR_REQUEST",
+                computerId: cleanText,
+                timestamp: new Date().toISOString(),
+              };
+              onScanSuccess(JSON.stringify(jsonData));
+            } else {
+              message.warning(
+                "Mã QR không hợp lệ! Vui lòng quét mã QR của thiết bị."
+              );
+              return; // Don't close scanner for invalid codes
+            }
+          }
+
           stopScanner();
           onClose();
         },
-        () => {
-          // Error callback (can be ignored for common errors during scanning)
+        (errorMessage) => {
+          // Error callback - ignore common QR scan errors
+          // These are normal when no QR code is in frame
         }
       );
     } catch (err) {
       console.error("❌ Failed to start scanner:", err);
-      setErrorMsg(
-        "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập camera trong cài đặt trình duyệt."
-      );
+
+      let errorMessage =
+        "Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập camera trong cài đặt trình duyệt.";
+
+      // Provide more specific error messages
+      if (err instanceof Error) {
+        if (err.message.includes("Permission denied")) {
+          errorMessage =
+            "Bạn chưa cấp quyền camera. Vui lòng nhấn 'Cho phép' khi trình duyệt hỏi.";
+        } else if (err.message.includes("NotFoundError")) {
+          errorMessage =
+            "Không tìm thấy camera. Vui lòng kết nối camera và thử lại.";
+        } else if (err.message.includes("NotAllowedError")) {
+          errorMessage =
+            "Quyền camera bị từ chối. Vui lòng bật quyền camera trong cài đặt trình duyệt.";
+        }
+      }
+
+      setErrorMsg(errorMessage);
       setIsScanning(false);
     }
   };
@@ -73,12 +144,22 @@ export default function QRScanner({
   const stopScanner = async () => {
     if (scannerRef.current) {
       try {
-        await scannerRef.current.stop();
+        // Check if scanner is running before stopping
+        const state = await scannerRef.current.getState();
+        if (state === 2) {
+          // SCANNING state
+          await scannerRef.current.stop();
+        }
         scannerRef.current.clear();
         scannerRef.current = null;
         setIsScanning(false);
       } catch (err) {
-        console.error("❌ Failed to stop scanner:", err);
+        // Only log if it's not the common "not running" error
+        const errorMessage = (err as Error)?.message || String(err);
+        // Ignore common stop errors (scanner already stopped)
+        // Still clean up even if stop failed
+        scannerRef.current = null;
+        setIsScanning(false);
       }
     }
   };
@@ -105,7 +186,7 @@ export default function QRScanner({
       ]}
       width={400}
       centered
-      destroyOnClose>
+      destroyOnHidden>
       <div className="py-4">
         {/* Scanner Region */}
         <div
