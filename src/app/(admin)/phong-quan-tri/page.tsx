@@ -34,31 +34,6 @@ export default function PhongQuanTriDashboard() {
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
-      {/* Breadcrumb */}
-      <div className="mb-2">
-        <Breadcrumb
-          items={[
-            {
-              href: "/",
-              title: (
-                <div className="flex items-center">
-                  <div className="w-4 h-4 mr-1" />
-                  <span>Trang chủ</span>
-                </div>
-              ),
-            },
-            {
-              title: (
-                <div className="flex items-center">
-                  <div className="w-4 h-4 mr-1" />
-                  <span>Phòng quản trị</span>
-                </div>
-              ),
-            },
-          ]}
-        />
-      </div>
-
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
