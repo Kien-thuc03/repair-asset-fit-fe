@@ -19,7 +19,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
-import { SubmissionPreviewModal } from "@/components/modal";
+import { SubmissionPreviewModal, SuccessModal } from "@/components/modal";
 import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
@@ -33,9 +33,14 @@ export default function XuLyToTrinhDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const [isProcessing, setIsProcessing] = useState(false);
+  // note: no loading spinner needed; modal handles confirmation flow
   const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({
+    title: "",
+    message: "",
+  });
   const [actionType, setActionType] = useState<"approve" | "reject" | null>(
     null
   );
@@ -165,7 +170,6 @@ export default function XuLyToTrinhDetailPage() {
   const handleApprove = async () => {
     if (!proposal) return;
 
-    setIsProcessing(true);
     setShowConfirmModal(false);
 
     try {
@@ -173,14 +177,16 @@ export default function XuLyToTrinhDetailPage() {
         status: ReplacementProposalStatus.ĐÃ_XÁC_MINH,
       });
 
-      setIsProcessing(false);
       setActionType(null);
 
-      // Redirect ngay sau khi update thành công
-      router.push("/phong-quan-tri/lap-bien-ban");
+      // Hiển thị modal thành công
+      setSuccessMessage({
+        title: "Duyệt tờ trình thành công!",
+        message: `Tờ trình ${proposal.proposalCode} đã được xác minh thành công.`,
+      });
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Error approving proposal:", error);
-      setIsProcessing(false);
       Modal.error({
         title: "Lỗi",
         content: "Có lỗi xảy ra khi xác minh tờ trình. Vui lòng thử lại.",
@@ -193,7 +199,6 @@ export default function XuLyToTrinhDetailPage() {
   const handleReject = async () => {
     if (!proposal) return;
 
-    setIsProcessing(true);
     setShowConfirmModal(false);
 
     try {
@@ -201,14 +206,16 @@ export default function XuLyToTrinhDetailPage() {
         status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
       });
 
-      setIsProcessing(false);
       setActionType(null);
 
-      // Redirect ngay sau khi update thành công
-      router.push("/phong-quan-tri/xu-ly-to-trinh");
+      // Hiển thị modal thành công
+      setSuccessMessage({
+        title: "Từ chối tờ trình thành công!",
+        message: `Tờ trình ${proposal.proposalCode} đã được từ chối.`,
+      });
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Error rejecting proposal:", error);
-      setIsProcessing(false);
       Modal.error({
         title: "Lỗi",
         content: "Có lỗi xảy ra khi từ chối tờ trình. Vui lòng thử lại.",
@@ -458,8 +465,7 @@ export default function XuLyToTrinhDetailPage() {
                       setActionType("reject");
                       setShowConfirmModal(true);
                     }}
-                    disabled={isProcessing}
-                    className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500">
                     Từ chối
                   </button>
                   <button
@@ -467,16 +473,9 @@ export default function XuLyToTrinhDetailPage() {
                       setActionType("approve");
                       setShowConfirmModal(true);
                     }}
-                    disabled={isProcessing}
-                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-1 focus:ring-green-500">
                     Duyệt
                   </button>
-                </div>
-              )}
-              {isProcessing && (
-                <div className="flex items-center space-x-2 text-sm text-blue-600">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Đang xử lý...</span>
                 </div>
               )}
             </div>
@@ -699,24 +698,18 @@ export default function XuLyToTrinhDetailPage() {
                 setShowConfirmModal(false);
                 setActionType(null);
               }}
-              disabled={isProcessing}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2 disabled:opacity-50 disabled:cursor-not-allowed">
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
               Hủy
             </button>,
             <button
               key="confirm"
               onClick={actionType === "approve" ? handleApprove : handleReject}
-              disabled={isProcessing}
-              className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 actionType === "approve"
                   ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
                   : "bg-red-600 hover:bg-red-700 focus:ring-red-500"
               }`}>
-              {isProcessing
-                ? "Đang xử lý..."
-                : actionType === "approve"
-                ? "Xác nhận duyệt"
-                : "Xác nhận từ chối"}
+              {actionType === "approve" ? "Xác nhận duyệt" : "Xác nhận từ chối"}
             </button>,
           ]}
           centered
@@ -744,7 +737,7 @@ export default function XuLyToTrinhDetailPage() {
                     actionType === "approve" ? "text-green-600" : "text-red-600"
                   }`}>
                   {actionType === "approve"
-                    ? "Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành 'Đã xác minh' (B9) và không thể hoàn tác."
+                    ? "Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành 'Đã xác minh' và không thể hoàn tác."
                     : "Sau khi từ chối, trạng thái tờ trình sẽ được chuyển thành 'Đã từ chối' và không thể hoàn tác."}
                 </p>
               </div>
@@ -777,6 +770,22 @@ export default function XuLyToTrinhDetailPage() {
           showSubmitButton={false}
         />
       )}
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          // Redirect sau khi đóng modal
+          if (successMessage.title.includes("Duyệt")) {
+            router.push("/phong-quan-tri/lap-bien-ban");
+          } else if (successMessage.title.includes("Từ chối")) {
+            router.push("/phong-quan-tri/xu-ly-to-trinh");
+          }
+        }}
+        title={successMessage.title}
+        message={successMessage.message}
+      />
     </div>
   );
 }
