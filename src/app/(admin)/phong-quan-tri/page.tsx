@@ -33,7 +33,7 @@ export default function PhongQuanTriDashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
       <div className="mb-2">
         <Breadcrumb
