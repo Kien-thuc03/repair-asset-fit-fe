@@ -494,7 +494,17 @@ export default function XuLyToTrinhPage() {
                       </div>
                     </td>
                     <td className="px-2 py-3">
-                      <div className="text-xs font-medium text-gray-900 truncate">
+                      <div
+                        className="text-xs font-medium text-blue-600 truncate cursor-pointer hover:text-blue-800 hover:underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleViewDetail(
+                            {
+                              preventDefault: () => {},
+                            } as React.MouseEvent<HTMLAnchorElement>,
+                            item
+                          );
+                        }}>
                         {item.proposalCode}
                       </div>
                     </td>
