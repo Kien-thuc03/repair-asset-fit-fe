@@ -770,11 +770,13 @@ export default function GhiNhanXuLyLoiPage() {
                       : "Không có dữ liệu"
                   }
                 >
-                  {filteredComponents.map(component => (
-                    <Option key={component.id} value={component.id}>
-                      {component.name} ({component.componentType})
-                    </Option>
-                  ))}
+                  {filteredComponents
+                    .filter(component => component.status == ComponentStatus.INSTALLED)
+                    .map(component => (
+                      <Option key={component.id} value={component.id}>
+                        {component.name} ({component.componentType})
+                      </Option>
+                    ))}
                 </Select>
               </Form.Item>
             )}

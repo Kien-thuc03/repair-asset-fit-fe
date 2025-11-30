@@ -3,7 +3,7 @@
 import { RepairStatus, Component, ComponentStatus, ComponentType } from '@/types'
 import { useState, useEffect } from 'react'
 import { Button, Form, Input, Radio, Card, Alert, Select, message } from 'antd'
-import { CheckCircle, Settings, Package, FileText, Link } from 'lucide-react'
+import { CheckCircle, Settings, Package, FileText } from 'lucide-react'
 import { getComponentsByAssetId } from '@/lib/api/components'
 
 const { TextArea } = Input
@@ -313,11 +313,13 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 										: "Không có dữ liệu"
 								}
 							>
-								{filteredComponents.map(component => (
-									<Option key={component.id} value={component.id}>
-										{component.name} ({component.componentType})
-									</Option>
-								))}
+								{filteredComponents
+									.filter(component => component.status == ComponentStatus.INSTALLED)
+									.map(component => (
+										<Option key={component.id} value={component.id}>
+											{component.name} ({component.componentType})
+										</Option>
+									))}
 							</Select>
 						</Form.Item>
 					)}
@@ -383,7 +385,7 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 
 					{/* Thông báo trạng thái sẽ được cập nhật */}
 					{inspectionResult && (
-						<div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+						<div className="my-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
 							<div className="text-sm text-blue-800">
 								<strong>💡 Trạng thái sẽ được cập nhật:</strong>
 								<div className="mt-1">
