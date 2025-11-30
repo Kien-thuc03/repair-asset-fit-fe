@@ -1,14 +1,19 @@
 "use client"
 
 import { useParams, useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { Breadcrumb, Steps, Tag, Card, Divider, Spin, Alert, message } from 'antd'
 import { Clock, User, MapPin, Wrench, Calendar, FileText, AlertCircle, CheckCircle, Settings, Package, Monitor, Info } from 'lucide-react'
 import { repairRequestStatusConfig, calculateProcessingTime } from '@/lib/constants/repairStatus'
 import { RepairStatus } from '@/types'
 import { ActionPanel } from '@/components/technician/requestDetailKTV'
 import RepairRequestHistoryCard from '@/components/technician/requestDetailKTV/RepairRequestHistoryCard'
+import ComponentReplacementSection from '@/components/technician/requestDetailKTV/ComponentReplacementSection'
 import ImageViewer from '@/components/ui/ImageViewer'
 import { useRepairDetailPage } from '@/hooks/useRepairs'
+import { getReplacementItemsByRepairRequest } from '@/lib/api/replacement-proposals'
+import { ReplacementItem } from '@/lib/api/replacement-proposals'
+import { completeRepair } from '@/lib/api/repairs'
 
 
 export default function RepairDetailPage() {
@@ -21,8 +26,66 @@ export default function RepairDetailPage() {
 		data: currentRequest,
 		loading,
 		error,
-		updateStatus
+		updateStatus,
+		refetch
 	} = useRepairDetailPage(id, true)
+
+	// State cho replacement items
+	const [replacementItems, setReplacementItems] = useState<ReplacementItem[]>([])
+	const [loadingReplacementItems, setLoadingReplacementItems] = useState(false)
+
+	// Lấy replacement items khi repair request có status CHỜ_THAY_THẾ
+	useEffect(() => {
+		const fetchReplacementItems = async () => {
+			if (currentRequest?.status === RepairStatus.CHỜ_THAY_THẾ) {
+				setLoadingReplacementItems(true)
+				try {
+					const items = await getReplacementItemsByRepairRequest(id)
+					setReplacementItems(items)
+				} catch (error) {
+					console.error('Error fetching replacement items:', error)
+					// Không hiển thị lỗi nếu không có items (có thể chưa có đề xuất)
+				} finally {
+					setLoadingReplacementItems(false)
+				}
+			} else {
+				setReplacementItems([])
+			}
+		}
+
+		if (currentRequest) {
+			fetchReplacementItems()
+		}
+	}, [id, currentRequest?.status])
+
+	// Hàm kiểm tra và cập nhật trạng thái repair request khi tất cả linh kiện đã được thay thế
+	const handleCheckAndCompleteRepair = async () => {
+		try {
+			// Refetch replacement items để cập nhật trạng thái mới nhất
+			const items = await getReplacementItemsByRepairRequest(id)
+			setReplacementItems(items)
+
+			// Kiểm tra xem tất cả linh kiện đã được thay thế chưa
+			const replaceableItems = items.filter(
+				item => item.oldComponentId && item.oldComponent?.status !== 'REMOVED'
+			)
+
+			// Nếu tất cả linh kiện đã được thay thế và repair request đang ở trạng thái CHỜ_THAY_THẾ
+			if (replaceableItems.length === 0 && currentRequest?.status === RepairStatus.CHỜ_THAY_THẾ) {
+				// Tự động cập nhật trạng thái thành ĐÃ_HOÀN_THÀNH
+				await completeRepair(id, 'Đã hoàn thành thay thế tất cả linh kiện')
+				message.success('Đã hoàn thành thay thế tất cả linh kiện. YCSC đã được cập nhật thành ĐÃ_HOÀN_THÀNH.')
+				
+				// Refetch repair request để cập nhật UI
+				if (refetch) {
+					await refetch()
+				}
+			}
+		} catch (error) {
+			console.error('Error checking and completing repair:', error)
+			// Không hiển thị lỗi để tránh làm gián đoạn quá trình thay thế
+		}
+	}
 
 	if (loading) {
 		return (
@@ -373,6 +436,15 @@ export default function RepairDetailPage() {
 							</>
 						)}
 					</Card>
+
+					{/* Component Replacement Section */}
+					{currentRequest.status === RepairStatus.CHỜ_THAY_THẾ && (
+						<ComponentReplacementSection
+							repairRequestId={id}
+							items={replacementItems}
+							onReplaced={handleCheckAndCompleteRepair}
+						/>
+					)}
 
 					<ActionPanel
 						initStatus={currentRequest.status}
