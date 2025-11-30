@@ -153,7 +153,9 @@ export default function InspectionTable({
                       <div className="flex items-start">
                         <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0 mt-0.5" />
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-gray-900 truncate">
+                          <div
+                            className="text-sm font-medium text-blue-600 truncate cursor-pointer hover:text-blue-800 hover:underline"
+                            onClick={() => onViewDetail(report)}>
                             {report.reportNumber}
                           </div>
                         </div>

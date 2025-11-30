@@ -1,8 +1,6 @@
 import { api } from "../api";
 import { ReplacementProposalStatus } from "@/types/repair";
 
-
-
 /**
  * Interface cho user info
  */
@@ -23,6 +21,7 @@ export interface OldComponentInfo {
   componentSpecs?: string;
   status: string;
   roomLocation?: string;
+  computerName?: string;
 }
 
 /**
@@ -363,9 +362,6 @@ export const updateReplacementItem = async (
       ? err.response.data.message.join(", ")
       : err.response?.data?.message;
 
-    throw new Error(
-      errorMessage || "Cập nhật replacement item thất bại."
-    );
+    throw new Error(errorMessage || "Cập nhật replacement item thất bại.");
   }
 };
-

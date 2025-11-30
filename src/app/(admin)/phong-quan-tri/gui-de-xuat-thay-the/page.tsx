@@ -11,6 +11,8 @@ import {
   XCircle,
   Loader2,
   AlertCircle,
+  Monitor,
+  FileCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb, message, Button, Modal } from "antd";
@@ -20,9 +22,7 @@ import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
-import {
-  ReplacementProposal,
-} from "@/lib/api/replacement-proposals";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
 import { ReplacementProposalStatus } from "@/types";
 
 type SortField = keyof ReplacementProposal;
@@ -298,15 +298,20 @@ export default function GuiDeXuatThayThePage() {
       </div>
 
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+
+      <div className="bg-white shadow rounded-lg p-6 mt-2">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FileCheck className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900">
               Danh sách mua sắm thiết bị
             </h1>
-            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-              Quản lý và theo dõi các đề xuất thay thế linh kiện, thiết bị đã
-              được tổ trưởng ký biên bản hoặc đã hoàn tất mua sắm.
+            <p className="text-gray-600">
+              Theo dõi tiến độ xử lý các đề xuất mua sắm thiết bị.
             </p>
           </div>
         </div>
@@ -461,26 +466,33 @@ export default function GuiDeXuatThayThePage() {
                       />
                     </td>
                     <td className="px-2 py-3">
-                      <div className="text-xs font-medium text-gray-900 truncate">
+                      <div
+                        className="text-sm font-medium text-blue-600 truncate cursor-pointer hover:text-blue-800 hover:underline"
+                        onClick={() =>
+                          window.open(
+                            `/phong-quan-tri/gui-de-xuat-thay-the/${item.id}`,
+                            "_self"
+                          )
+                        }>
                         {item.proposalCode}
                       </div>
                     </td>
                     <td className="px-2 py-3">
                       <div
-                        className="text-xs text-gray-900 font-medium truncate"
+                        className="text-sm text-gray-900 font-medium truncate"
                         title={item.title || "Không có tiêu đề"}>
                         {item.title || "Không có tiêu đề"}
                       </div>
                       <div
-                        className="text-xs text-gray-500 truncate"
+                        className="text-sm text-gray-500 truncate"
                         title={item.description || "Không có mô tả"}>
                         {item.description || "Không có mô tả"}
                       </div>
                     </td>
                     <td className="px-2 py-3">
-                      <div className="text-xs text-gray-900">
+                      <div className="text-sm text-gray-900">
                         <div className="flex items-center space-x-1">
-                          <span className="truncate text-xs font-medium">
+                          <span className="truncate text-sm font-medium">
                             {item.proposer?.fullName || "Chưa xác định"}
                           </span>
                         </div>
@@ -496,7 +508,7 @@ export default function GuiDeXuatThayThePage() {
                         className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
                           item.status
                         )}`}>
-                        <span className="hidden lg:inline text-xs">
+                        <span className="hidden lg:inline text-xs text-center items-center ">
                           {getStatusText(item.status)}
                         </span>
                       </span>
@@ -504,7 +516,7 @@ export default function GuiDeXuatThayThePage() {
                     <td className="px-2 py-3">
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                        <span className="text-xs text-gray-500">
+                        <span className="text-sm text-gray-500">
                           {new Date(item.createdAt).toLocaleDateString(
                             "vi-VN",
                             {

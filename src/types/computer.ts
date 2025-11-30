@@ -88,6 +88,7 @@ export enum ComponentStatus {
   FAULTY = "FAULTY",
   REMOVED = "REMOVED",
   IN_STOCK = "IN_STOCK",
+  PENDING_REPLACEMENT = "PENDING_REPLACEMENT",
 }
 
 /**
@@ -123,6 +124,7 @@ export const COMPONENT_STATUS_LABELS: Record<ComponentStatus, string> = {
   [ComponentStatus.FAULTY]: "Hỏng",
   [ComponentStatus.REMOVED]: "Đã tháo",
   [ComponentStatus.IN_STOCK]: "Trong kho",
+  [ComponentStatus.PENDING_REPLACEMENT]: "Chờ thay thế",
 };
 
 /**

@@ -2,7 +2,6 @@ import { Settings } from "lucide-react";
 
 interface InspectionItem {
   id: string;
-  ktCode: string;
   assetName: string;
   location: string;
   condition: string;
@@ -32,7 +31,7 @@ export default function InspectionItemsTable({
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Mã tài sản
+                  STT
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tên thiết bị
@@ -49,10 +48,10 @@ export default function InspectionItemsTable({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {items.map((item) => (
+              {items.map((item, index) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                    {item.ktCode}
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900 text-center">
+                    {index + 1}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
                     {item.assetName}
@@ -61,9 +60,7 @@ export default function InspectionItemsTable({
                     {item.location}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
-                    <span className="">
-                      {item.condition}
-                    </span>
+                    <span className="">{item.condition}</span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
                     {item.proposedSolution}

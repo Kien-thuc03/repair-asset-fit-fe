@@ -49,6 +49,7 @@ import {
   WarningOutlined,
   EditOutlined,
 } from "@ant-design/icons";
+import { FileText } from "lucide-react";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -538,9 +539,6 @@ export default function BaoCaoLoiPage() {
         assetId: data.asset.id, // This is computerAssetId for repair request
       }));
 
-      // Store computer ID for loading components
-      setSelectedComputerId(data.computer.id);
-
       // Update filtered data
       // 1. Set floors for the building
       const floorsInBuilding = Array.from(
@@ -564,6 +562,10 @@ export default function BaoCaoLoiPage() {
       try {
         const computers = await getComputersByRoomId(data.room.id);
         setFilteredComputers(Array.isArray(computers) ? computers : []);
+
+        // After computers are loaded, ensure selectedComputerId is set correctly
+        // This will make the dropdown show the selected computer
+        setSelectedComputerId(data.computer.id);
       } catch {
         setFilteredComputers([]);
       }
@@ -624,13 +626,22 @@ export default function BaoCaoLoiPage() {
       </div>
 
       {/* Header */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-blue-900 mb-2">
-          Quản lý báo hỏng thiết bị
-        </h1>
-        <p className="text-sm sm:text-base text-gray-600">
-          Báo cáo sự cố và lỗi thiết bị máy tính trong phòng học
-        </p>
+      <div className="bg-white shadow rounded-lg p-6 mt-2">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Quản lý báo hỏng thiết bị
+            </h1>
+            <p className="text-gray-600">
+              Báo cáo sự cố và lỗi thiết bị máy tính trong phòng học
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Progress Tracker Card */}
@@ -706,7 +717,7 @@ export default function BaoCaoLoiPage() {
                       (r) => r.id === formData.roomId
                     );
                     return room
-                      ? room.name || room.roomCode || room.roomNumber
+                      ? room.roomCode || room.roomNumber || room.name
                       : "N/A";
                   })()}
                 </div>
@@ -799,7 +810,7 @@ export default function BaoCaoLoiPage() {
                   disabled={!formData.floor}>
                   {filteredRooms.map((room) => (
                     <Option key={room.id} value={room.id}>
-                      {room.name || room.roomNumber}
+                      {room.roomCode || room.roomNumber || room.name}
                     </Option>
                   ))}
                 </Select>

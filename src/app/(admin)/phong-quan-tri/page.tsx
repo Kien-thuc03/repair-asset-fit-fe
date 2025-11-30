@@ -33,32 +33,7 @@ export default function PhongQuanTriDashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-8">
-      {/* Breadcrumb */}
-      <div className="mb-2">
-        <Breadcrumb
-          items={[
-            {
-              href: "/",
-              title: (
-                <div className="flex items-center">
-                  <div className="w-4 h-4 mr-1" />
-                  <span>Trang chủ</span>
-                </div>
-              ),
-            },
-            {
-              title: (
-                <div className="flex items-center">
-                  <div className="w-4 h-4 mr-1" />
-                  <span>Phòng quản trị</span>
-                </div>
-              ),
-            },
-          ]}
-        />
-      </div>
-
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">

@@ -320,15 +320,23 @@ export default function XuLyToTrinhPage() {
       </div>
 
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-          Xử lý tờ trình thay thế
-        </h1>
-        <p className="mt-2 text-sm sm:text-base text-gray-600">
-          Danh sách các tờ trình đã được Ban giám hiệu duyệt (B6) hoặc đang chờ
-          xác minh (B8). Khi xem chi tiết tờ trình ở trạng thái B6, hệ thống sẽ
-          tự động chuyển sang B8.
-        </p>
+
+      <div className="bg-white shadow rounded-lg p-6 mt-2">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Danh sách tờ trình thay thế thiết bị
+            </h1>
+            <p className="text-gray-600">
+              Theo dõi tiến độ xử lý các tờ trình thay thế thiết bị.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Search và Xuất Excel */}
@@ -494,7 +502,17 @@ export default function XuLyToTrinhPage() {
                       </div>
                     </td>
                     <td className="px-2 py-3">
-                      <div className="text-xs font-medium text-gray-900 truncate">
+                      <div
+                        className="text-xs font-medium text-blue-600 truncate cursor-pointer hover:text-blue-800 hover:underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleViewDetail(
+                            {
+                              preventDefault: () => {},
+                            } as React.MouseEvent<HTMLAnchorElement>,
+                            item
+                          );
+                        }}>
                         {item.proposalCode}
                       </div>
                     </td>

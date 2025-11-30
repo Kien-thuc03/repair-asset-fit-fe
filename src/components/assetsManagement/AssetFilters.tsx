@@ -49,7 +49,7 @@ export default function DeviceFilters({
   ].filter((val) => val && val.trim() !== "").length;
 
   return (
-    <Card>
+    <Card className="mb-4">
       <Row gutter={[16, 16]}>
         {/* Search */}
         <Col xs={24} sm={12} md={6}>

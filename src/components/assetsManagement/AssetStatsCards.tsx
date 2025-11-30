@@ -68,7 +68,7 @@ export default function DeviceStatsCards({
   ];
 
   return (
-    <Row gutter={[16, 16]}>
+    <Row gutter={[16, 16]} className="mb-4">
       {statsData.map((stat, index) => {
         const IconComponent = stat.icon;
         return (

@@ -115,7 +115,6 @@ export default function RequestTable({
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {requests.map((request) => {
-           
             return (
               <tr key={request.id} className="hover:bg-gray-50 h-16">
                 <td className="px-2 py-4 align-middle">
@@ -128,8 +127,9 @@ export default function RequestTable({
                 </td>
                 <td className="px-2 py-4 text-sm font-medium text-blue-600 align-middle">
                   <div
-                    className="max-w-[150px] truncate"
-                    title={request.requestCode}>
+                    className="max-w-[150px] truncate cursor-pointer hover:text-blue-800 hover:underline"
+                    title={request.requestCode}
+                    onClick={() => onViewDetails(request.id)}>
                     {request.requestCode}
                   </div>
                 </td>
@@ -147,9 +147,7 @@ export default function RequestTable({
                   </div>
                 </td>
                 <td className="px-2 py-4 text-sm text-gray-500 align-middle">
-                  <div
-                    className="max-w-[80px] "
-                    title={request.roomName}>
+                  <div className="max-w-[80px] " title={request.roomName}>
                     {request.roomName}
                   </div>
                 </td>
@@ -165,7 +163,6 @@ export default function RequestTable({
                     className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border whitespace-nowrap ${
                       repairRequestStatusConfig[request.status].color
                     }`}>
-                  
                     {repairRequestStatusConfig[request.status].label}
                   </div>
                 </td>

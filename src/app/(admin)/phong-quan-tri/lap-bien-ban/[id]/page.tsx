@@ -360,7 +360,7 @@ export default function RequestDetailPage() {
                   <td style="text-align: center;">${index + 1}</td>
                   <td>
                     <strong>${
-                      item.oldComponent?.componentType || "Không xác định"
+                      item.oldComponent?.computerName || "Không xác định"
                     }</strong><br>
                     <small>${item.oldComponent?.name || "N/A"}</small>
                   </td>
