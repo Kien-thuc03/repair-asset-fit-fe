@@ -1,9 +1,9 @@
 "use client"
 
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table, Button, Input, Form, message } from 'antd'
-import { Clock, CheckCircle, XCircle, AlertTriangle, Loader2, RefreshCw, Package, ArrowRight, CheckCircle2, AlertCircle, Info } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, AlertTriangle, Loader2, RefreshCw, Package, ArrowRight, CheckCircle2, AlertCircle, Info, ExternalLink } from 'lucide-react'
 import { useReplacementProposal } from '@/hooks/useReplacementProposals'
 import { ReplacementItem } from '@/lib/api/replacement-proposals'
 import { ReplacementProposalStatus } from '@/types'
@@ -11,6 +11,7 @@ import { replaceComponent, getComponentById } from '@/lib/api/components'
 
 export default function ChiTietThayThePage() {
 	const params = useParams()
+	const router = useRouter()
 	const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string)
 	const [form] = Form.useForm()
 
@@ -198,7 +199,19 @@ export default function ChiTietThayThePage() {
 				if (record.repairRequestId || record.requestCode) {
 					return (
 						<div className="space-y-1">
-							{record.requestCode && (
+							{record.requestCode && record.repairRequestId && (
+								<button
+									onClick={() => {
+										router.push(`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${record.repairRequestId}`)
+									}}
+									className="font-mono text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 transition-colors"
+									title="Xem chi tiết yêu cầu sửa chữa"
+								>
+									{record.requestCode}
+									<ExternalLink className="w-3 h-3" />
+								</button>
+							)}
+							{record.requestCode && !record.repairRequestId && (
 								<div className="font-mono text-sm text-blue-600">
 									{record.requestCode}
 								</div>
@@ -565,19 +578,21 @@ export default function ChiTietThayThePage() {
 													<div className="flex-1 min-w-0">
 														<div className="flex items-start justify-between gap-3 mb-2">
 															<div className="flex-1 min-w-0">
-																<div className="flex items-center gap-2 flex-wrap mb-1">
-																	<h4 className="font-semibold text-gray-900 text-base">{item.newItemName}</h4>
-																	{isReplaced && (
-																		<Tag color="success" icon={<CheckCircle2 className="w-3 h-3" />}>
-																			Đã thay thế
-																		</Tag>
-																	)}
-																	{item.repairRequestId && item.requestCode && (
-																		<Tag color="blue" className="font-mono text-xs">
-																			{item.requestCode}
-																		</Tag>
-																	)}
-																</div>
+															<div className="flex items-center gap-2 flex-wrap mb-1">
+																<h4 className="font-semibold text-gray-900 text-base">{item.newItemName}</h4>
+																{item.repairRequestId && item.requestCode && (
+																	<button
+																		onClick={() => {
+																			router.push(`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${item.repairRequestId}`)
+																		}}
+																		className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+																		title="Xem chi tiết yêu cầu sửa chữa"
+																	>
+																		{item.requestCode}
+																		<ExternalLink className="w-3 h-3" />
+																	</button>
+																)}
+															</div>
 																{item.newItemSpecs && (
 																	<p className="text-sm text-gray-600 mb-2">{item.newItemSpecs}</p>
 																)}
@@ -633,9 +648,16 @@ export default function ChiTietThayThePage() {
 															<div className="flex items-center gap-2 flex-wrap mb-1">
 																<h4 className="font-semibold text-gray-900 text-base">{item.newItemName}</h4>
 																{item.repairRequestId && item.requestCode && (
-																	<Tag color="blue" className="font-mono text-xs">
+																	<button
+																		onClick={() => {
+																			router.push(`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${item.repairRequestId}`)
+																		}}
+																		className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+																		title="Xem chi tiết yêu cầu sửa chữa"
+																	>
 																		{item.requestCode}
-																	</Tag>
+																		<ExternalLink className="w-3 h-3" />
+																	</button>
 																)}
 															</div>
 															{item.newItemSpecs && (
