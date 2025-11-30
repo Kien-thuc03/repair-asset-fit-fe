@@ -39,6 +39,13 @@ export default function QuanLyToTrinhPage() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStatuses, setSelectedStatuses] = useState<
+    ReplacementProposalStatus[]
+  >([
+    ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH,
+    ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
+    ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH,
+  ]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
@@ -62,14 +69,13 @@ export default function QuanLyToTrinhPage() {
   });
   const itemsPerPage = 10;
 
-  // Fetch data từ API với status KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH (đã được Quản trị viên khoa duyệt)
+  // Fetch data từ API với các trạng thái đã chọn
   const {
     data: apiData,
     loading,
     error,
     refetch,
   } = useReplacementProposals({
-    status: ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH,
     page: 1,
     limit: 1000, // Lấy tất cả để xử lý phân trang và sort trên client
   });
@@ -79,6 +85,11 @@ export default function QuanLyToTrinhPage() {
   const filteredData = useMemo(() => {
     const proposals = apiData?.data || [];
     let filtered = [...proposals];
+
+    // Apply status filter
+    filtered = filtered.filter((item) =>
+      selectedStatuses.includes(item.status)
+    );
 
     // Apply search filter
     if (searchTerm) {
@@ -124,7 +135,7 @@ export default function QuanLyToTrinhPage() {
     }
 
     return filtered;
-  }, [apiData?.data, searchTerm, sortField, sortDirection]);
+  }, [apiData?.data, searchTerm, sortField, sortDirection, selectedStatuses]);
 
   // Pagination
   const totalItems = filteredData.length;
@@ -153,14 +164,30 @@ export default function QuanLyToTrinhPage() {
     }
   };
 
-  const getStatusColor = () => {
-    // Chỉ có trạng thái KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH nên luôn hiển thị màu lime
-    return "bg-lime-100 text-lime-800 border-lime-200";
+  const getStatusColor = (status: ReplacementProposalStatus) => {
+    switch (status) {
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "bg-lime-100 text-lime-800 border-lime-200";
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "bg-green-100 text-green-800 border-green-200";
+      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+        return "bg-orange-100 text-orange-800 border-orange-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
   };
 
-  const getStatusText = () => {
-    // Chỉ có trạng thái KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH nên luôn hiển thị "Khoa đã duyệt tờ trình"
-    return "Khoa đã duyệt tờ trình";
+  const getStatusText = (status: ReplacementProposalStatus) => {
+    switch (status) {
+      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "Ban giám hiệu đã duyệt tờ trình";
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "Khoa đã duyệt tờ trình";
+      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+        return "Đã từ chối tờ trình";
+      default:
+        return status;
+    }
   };
 
   // Hàm xử lý khi nhấn nút phê duyệt tờ trình
@@ -406,21 +433,30 @@ export default function QuanLyToTrinhPage() {
         />
       </div>
 
-      {/* Header */}
-      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-          Quản lý tờ trình thay thế
-        </h1>
-        <p className="mt-2 text-sm sm:text-base text-gray-600">
-          Danh sách các tờ trình đã được Quản trị viên khoa duyệt (trạng thái
-          &ldquo;Khoa đã duyệt tờ trình&rdquo;) và đang chờ phê duyệt từ ban
-          giám hiệu. Bạn có thể phê duyệt tờ trình hoặc yêu cầu xác minh tình
-          trạng linh kiện.
-        </p>
-      </div>
+            {/* Header */}
 
-      {/* Search và Xuất Excel */}
+      <div className="bg-white shadow rounded-lg p-6 mt-2">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <FileText className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Quản lý tờ trình thay thế thiết bị
+            </h1>
+            <p className="text-gray-600">
+              Theo dõi tiến độ xử lý các tờ trình thay thế thiết bị.
+            </p>
+          </div>
+        </div>
+      </div>
+      {/* Search và Bộ lọc */}
       <div className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6">
+
+
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
           {/* Search - chiếm 3 cột */}
           <div className="md:col-span-3">
@@ -514,7 +550,7 @@ export default function QuanLyToTrinhPage() {
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}
-                    className="w-[12%]">
+                    className="w-[15%]">
                     Mã ĐX
                   </SortableHeader>
                   <SortableHeader<ReplacementProposal>
@@ -525,7 +561,7 @@ export default function QuanLyToTrinhPage() {
                     className="w-[22%]">
                     Tiêu đề
                   </SortableHeader>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[17%]">
+                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
                     Người tạo
                   </th>
                   <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
@@ -572,26 +608,31 @@ export default function QuanLyToTrinhPage() {
                       </div>
                     </td>
                     <td className="px-2 py-3">
-                      <div className="text-xs font-medium text-gray-900 truncate">
+                      <div
+                        className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-all duration-150"
+                        onClick={() =>
+                          (window.location.href = `/ban-giam-hieu/quan-ly-to-trinh/${item.id}`)
+                        }
+                        title="Click để xem chi tiết tờ trình">
                         {item.proposalCode}
                       </div>
                     </td>
                     <td className="px-2 py-3">
                       <div
-                        className="text-xs text-gray-900 font-medium truncate"
+                        className="text-sm text-gray-900 font-medium truncate"
                         title={item.title || ""}>
                         {item.title || "Không có tiêu đề"}
                       </div>
                       <div
-                        className="text-xs text-gray-500 truncate"
+                        className="text-sm text-gray-500 truncate"
                         title={item.description || ""}>
                         {item.description || "Không có mô tả"}
                       </div>
                     </td>
                     <td className="px-2 py-3">
-                      <div className="text-xs text-gray-900">
+                      <div className="text-sm text-gray-900">
                         <div className="flex items-center space-x-1">
-                          <span className="truncate text-xs font-medium">
+                          <span className="truncate text-sm font-medium">
                             {item.proposer?.fullName || "Chưa xác định"}
                           </span>
                         </div>
@@ -604,16 +645,18 @@ export default function QuanLyToTrinhPage() {
                     </td>
                     <td className="px-2 py-3">
                       <span
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor()}`}>
-                        <span className="hidden lg:inline text-xs">
-                          {getStatusText()}
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                          item.status
+                        )}`}>
+                        <span className="hidden lg:inline text-xs text-center">
+                          {getStatusText(item.status)}
                         </span>
                       </span>
                     </td>
                     <td className="px-2 py-3">
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                        <span className="text-xs text-gray-500">
+                        <span className="text-sm text-gray-500">
                           {new Date(item.createdAt).toLocaleDateString(
                             "vi-VN",
                             {
@@ -633,18 +676,23 @@ export default function QuanLyToTrinhPage() {
                           title="Xem chi tiết">
                           <Eye className="w-3 h-3" />
                         </Link>
-                        <button
-                          onClick={() => handleRejectClick(item)}
-                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                          title="Từ chối">
-                          <XCircle className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => handleApproveClick(item)}
-                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                          title="Phê duyệt">
-                          <CheckCircle className="w-3 h-3" />
-                        </button>
+                        {item.status ===
+                          ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH && (
+                          <>
+                            <button
+                              onClick={() => handleRejectClick(item)}
+                              className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                              title="Từ chối">
+                              <XCircle className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => handleApproveClick(item)}
+                              className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                              title="Phê duyệt">
+                              <CheckCircle className="w-3 h-3" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -748,8 +796,10 @@ export default function QuanLyToTrinhPage() {
                       <span className="text-gray-500">Trạng thái:</span>
                       <div className="mt-0.5">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor()}`}>
-                          {getStatusText()}
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor(
+                            item.status
+                          )}`}>
+                          {getStatusText(item.status)}
                         </span>
                       </div>
                     </div>
@@ -763,26 +813,29 @@ export default function QuanLyToTrinhPage() {
                       <Eye className="h-3.5 w-3.5" />
                       <span>Chi tiết</span>
                     </Link>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button
-                        onClick={() => handleRequestVerificationClick(item)}
-                        className="flex items-center justify-center gap-1.5 px-2 py-2 bg-yellow-600 text-white text-xs font-medium rounded-md hover:bg-yellow-700">
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Xác minh</span>
-                      </button>
-                      <button
-                        onClick={() => handleRejectClick(item)}
-                        className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700">
-                        <XCircle className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Từ chối</span>
-                      </button>
-                      <button
-                        onClick={() => handleApproveClick(item)}
-                        className="flex items-center justify-center gap-1.5 px-2 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Duyệt</span>
-                      </button>
-                    </div>
+                    {item.status ===
+                      ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH && (
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          onClick={() => handleRequestVerificationClick(item)}
+                          className="flex items-center justify-center gap-1.5 px-2 py-2 bg-yellow-600 text-white text-xs font-medium rounded-md hover:bg-yellow-700">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Xác minh</span>
+                        </button>
+                        <button
+                          onClick={() => handleRejectClick(item)}
+                          className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700">
+                          <XCircle className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Từ chối</span>
+                        </button>
+                        <button
+                          onClick={() => handleApproveClick(item)}
+                          className="flex items-center justify-center gap-1.5 px-2 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
+                          <CheckCircle className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Duyệt</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))

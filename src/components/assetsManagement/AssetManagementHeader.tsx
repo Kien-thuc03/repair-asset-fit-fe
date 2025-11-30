@@ -11,7 +11,7 @@ export default function DeviceManagementHeader({
   onQRScan,
 }: DeviceManagementHeaderProps) {
   return (
-    <div className="bg-white shadow rounded-lg p-6">
+    <div className="bg-white shadow rounded-lg p-6 mt-2 mb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">

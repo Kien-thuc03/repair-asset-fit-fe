@@ -20,9 +20,10 @@ import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
 } from "@/hooks/useReplacementProposals";
-import {ReplacementProposal} from "@/lib/api/replacement-proposals";
-import {ReplacementProposalStatus} from "@/types/repair";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types/repair";
 import { uploadFile } from "@/lib/api/upload";
+import { CheckCircle, ClipboardEdit, Monitor } from "lucide-react";
 
 // Map table field names to API field names - outside component to avoid recreation
 const mapSortFieldToAPI = (
@@ -369,9 +370,10 @@ Trân trọng kính trình.`;
               <tr>
                 <th width="5%">STT</th>
                 <th width="25%">Linh kiện cũ</th>
-                <th width="30%">Vị trí</th>
+                <th width="25%">Linh kiện mới</th>
+                <th width="15%">Vị trí</th>
                 <th width="10%">SL</th>
-                <th width="30%">Lý do</th>
+                <th width="20%">Lý do</th>
               </tr>
             </thead>
             <tbody>
@@ -386,6 +388,10 @@ Trân trọng kính trình.`;
                       item.oldComponent?.name || "Không xác định"
                     }</strong><br>
                     <small>${item.oldComponent?.componentSpecs || ""}</small>
+                  </td>
+                  <td>
+                    <strong>${item.newItemName || "Chưa xác định"}</strong><br>
+                    <small>${item.newItemSpecs || ""}</small>
                   </td>
                   <td>${item.oldComponent?.roomLocation || "Chưa xác định"}</td>
                   <td style="text-align: center;">${item.quantity}</td>
@@ -613,15 +619,21 @@ Trân trọng kính trình.`;
         </div>
 
         {/* Header*/}
-        <div className="bg-white shadow rounded-lg p-4 sm:p-6 mb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
+
+        <div className="bg-white shadow rounded-lg p-6 mt-2 mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="shrink-0">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <ClipboardEdit className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              <h1 className="text-2xl font-bold text-gray-900">
                 Duyệt đề xuất thay thế linh kiện
               </h1>
-              <p className="text-sm sm:text-base text-gray-600">
+              <p className="text-gray-600">
                 Quản lý và duyệt các đề xuất thay thế linh kiện từ kỹ thuật
-                viên. Hiển thị các đề xuất chờ duyệt, đã duyệt và đã từ chối.
+                viên.
               </p>
             </div>
           </div>

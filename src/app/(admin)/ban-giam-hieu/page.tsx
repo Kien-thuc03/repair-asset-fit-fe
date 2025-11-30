@@ -57,7 +57,7 @@ export default function BanGiamHieuDashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">

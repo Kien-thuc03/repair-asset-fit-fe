@@ -283,7 +283,7 @@ export default function ChiTietQuanLyToTrinhPage() {
       });
       setShowSuccessModal(true);
 
-      refetch();
+      // Không cần refetch vì sẽ chuyển về trang danh sách
     } catch (error) {
       console.error("Error approving proposal:", error);
       setIsProcessing(false);
@@ -350,7 +350,7 @@ export default function ChiTietQuanLyToTrinhPage() {
       });
       setShowSuccessModal(true);
 
-      refetch();
+      // Không cần refetch vì sẽ chuyển về trang danh sách
     } catch (error) {
       console.error("Error rejecting proposal:", error);
       setIsProcessing(false);
@@ -384,7 +384,7 @@ export default function ChiTietQuanLyToTrinhPage() {
       });
       setShowSuccessModal(true);
 
-      refetch();
+      // Không cần refetch vì sẽ chuyển về trang danh sách
     } catch (error) {
       console.error("Error approving proposal from B5:", error);
       setIsProcessing(false);
@@ -418,7 +418,7 @@ export default function ChiTietQuanLyToTrinhPage() {
       });
       setShowSuccessModal(true);
 
-      refetch();
+      // Không cần refetch vì sẽ chuyển về trang danh sách
     } catch (error) {
       console.error("Error rejecting proposal from B5:", error);
       setIsProcessing(false);
@@ -510,30 +510,7 @@ export default function ChiTietQuanLyToTrinhPage() {
                   </button>
                 </div>
               )}
-              {/* Action buttons - hiển thị khi status là ĐÃ_DUYỆT_TỜ_TRÌNH (B6) */}
-              {proposal.status ===
-                ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => setShowVerificationModal(true)}
-                    className="inline-flex items-center px-3 py-2 border border-yellow-300 text-sm font-medium rounded-md text-yellow-700 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-500">
-                    <AlertTriangle className="w-4 h-4 mr-1.5" />
-                    <span className="hidden sm:inline">Xác minh</span>
-                  </button>
-                  <button
-                    onClick={() => setShowRejectModal(true)}
-                    className="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500">
-                    <XCircle className="w-4 h-4 mr-1.5" />
-                    <span className="hidden sm:inline">Từ chối</span>
-                  </button>
-                  <button
-                    onClick={() => setShowSignConfirmModal(true)}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-                    <CheckCircle className="w-4 h-4 mr-1.5" />
-                    <span className="hidden sm:inline">Phê duyệt</span>
-                  </button>
-                </div>
-              )}
+              {/* Không hiển thị nút nào khi trạng thái là ĐÃ_DUYỆT_TỜ_TRÌNH */}
             </div>
           </div>
         </div>
@@ -970,8 +947,12 @@ export default function ChiTietQuanLyToTrinhPage() {
         isOpen={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false);
-          // Nếu là thao tác từ chối, chuyển về danh sách
-          if (successMessage.title.includes("Từ chối")) {
+          // Nếu là thao tác từ chối hoặc duyệt/phê duyệt, chuyển về danh sách
+          if (
+            successMessage.title.includes("Từ chối") ||
+            successMessage.title.includes("Duyệt thành công") ||
+            successMessage.title.includes("Phê duyệt thành công")
+          ) {
             router.push("/ban-giam-hieu/quan-ly-to-trinh");
           }
         }}

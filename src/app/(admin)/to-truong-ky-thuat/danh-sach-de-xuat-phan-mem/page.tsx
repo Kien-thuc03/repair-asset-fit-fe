@@ -361,7 +361,7 @@ export default function DanhSachDeXuatPhanMemPage() {
   }
 
   return (
-    <div className="space-y-6 min-h-screen">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -382,22 +382,28 @@ export default function DanhSachDeXuatPhanMemPage() {
           },
         ]}
       />
+      {/* Header*/}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Monitor className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
-            Danh sách đề xuất phần mềm
-          </h1>
-          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">
-            Duyệt các đề xuất cài đặt phần mềm từ giảng viên.
-          </p>
+      <div className="bg-white shadow rounded-lg p-6 mt-2 mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Danh sách đề xuất phần mềm
+            </h1>
+            <p className="text-gray-600">
+              Quản lý các đề xuất phần mềm đã được giảng viên gửi đến.
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-3 sm:p-4 rounded-lg shadow space-y-3 sm:space-y-4">
+      <div className="bg-white p-3 sm:p-4 rounded-lg shadow space-y-3 sm:space-y-4 mb-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <Input
             className="col-span-1 sm:col-span-2 lg:col-span-1"
@@ -513,12 +519,14 @@ export default function DanhSachDeXuatPhanMemPage() {
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-blue-600">
+                    <td className="py-4 whitespace-nowrap text-left">
+                      <div
+                        className="text-sm font-medium text-blue-600 cursor-pointer hover:text-blue-800 hover:underline"
+                        onClick={() => handleViewProposal(proposal)}>
                         {proposal.proposalCode}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-gray-400 mr-2" />
                         <div className="text-sm text-gray-900">
@@ -526,7 +534,7 @@ export default function DanhSachDeXuatPhanMemPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Building className="h-4 w-4 text-gray-400 mr-2" />
                         <div className="text-sm text-gray-900">
@@ -534,7 +542,7 @@ export default function DanhSachDeXuatPhanMemPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                           softwareProposalStatusConfig[proposal.status].color
@@ -543,7 +551,7 @@ export default function DanhSachDeXuatPhanMemPage() {
                         {softwareProposalStatusConfig[proposal.status].label}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900">
                         <Calendar className="h-4 w-4 text-gray-400 mr-2" />
                         {new Date(proposal.createdAt).toLocaleDateString(

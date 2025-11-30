@@ -1,16 +1,37 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button, Input, Modal, Form, message, Breadcrumb, Select, Card, Row, Col, Tag } from "antd";
+import {
+  Button,
+  Input,
+  Modal,
+  Form,
+  message,
+  Breadcrumb,
+  Select,
+  Card,
+  Row,
+  Col,
+  Tag,
+} from "antd";
 import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import { Pagination } from "@/components/ui";
 import { useAvailableComponents } from "@/hooks";
-import { createReplacementProposal, ComponentFromRepair } from "@/lib/api/replacement-proposals";
+import {
+  createReplacementProposal,
+  ComponentFromRepair,
+} from "@/lib/api/replacement-proposals";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
-import { ComponentType } from "@/types";
+import { ComponentStatus, ComponentType } from "@/types";
 
-type SortField = "componentName" | "assetName" | "location" | "requestCode" | "componentStatus" | "repairStatus";
+type SortField =
+  | "componentName"
+  | "assetName"
+  | "location"
+  | "requestCode"
+  | "componentStatus"
+  | "repairStatus";
 type SortDirection = "asc" | "desc" | "none";
 
 export default function CreateProposalPage() {
@@ -21,7 +42,7 @@ export default function CreateProposalPage() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState("");
   const [sortField, setSortField] = useState<SortField | "">("");
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,9 +50,9 @@ export default function CreateProposalPage() {
 
   // Filter states
   const [componentTypeFilter, setComponentTypeFilter] = useState<string[]>([]);
-  const [buildingFilter, setBuildingFilter] = useState<string>('');
-  const [floorFilter, setFloorFilter] = useState<string>('');
-  const [roomFilter, setRoomFilter] = useState<string>('');
+  const [buildingFilter, setBuildingFilter] = useState<string>("");
+  const [floorFilter, setFloorFilter] = useState<string>("");
+  const [roomFilter, setRoomFilter] = useState<string>("");
 
   // State for rooms data and cascade filtering
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
@@ -39,7 +60,8 @@ export default function CreateProposalPage() {
   const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
 
   // Sử dụng custom hook để fetch data
-  const { components, pagination, loading, error, fetchComponents } = useAvailableComponents();
+  const { components, pagination, loading, error, fetchComponents } =
+    useAvailableComponents();
 
   // Extract unique buildings from rooms
   const buildings = Array.from(
@@ -62,7 +84,9 @@ export default function CreateProposalPage() {
   // Fetch data khi component mount hoặc filters thay đổi
   useEffect(() => {
     // Map sortField to backend field names
-    const getSortByField = (field: SortField | ""): "createdAt" | "componentName" | "assetName" | "requestCode" => {
+    const getSortByField = (
+      field: SortField | ""
+    ): "createdAt" | "componentName" | "assetName" | "requestCode" => {
       switch (field) {
         case "componentName":
           return "componentName";
@@ -82,18 +106,31 @@ export default function CreateProposalPage() {
       page: currentPage,
       limit: pageSize,
       search: searchText || undefined,
-      componentType: componentTypeFilter.length > 0 ? componentTypeFilter : undefined,
+      componentType:
+        componentTypeFilter.length > 0 ? componentTypeFilter : undefined,
       building: buildingFilter || undefined,
       floor: floorFilter || undefined,
       roomName: roomFilter || undefined,
       excludeInProposal: true,
       sortBy: getSortByField(sortField),
-      sortOrder: (sortDirection === "none" ? "DESC" : sortDirection.toUpperCase()) as "ASC" | "DESC",
+      sortOrder: (sortDirection === "none"
+        ? "DESC"
+        : sortDirection.toUpperCase()) as "ASC" | "DESC",
     };
-    
+
     fetchComponents(params);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize, searchText, componentTypeFilter, buildingFilter, floorFilter, roomFilter, sortField, sortDirection]);
+  }, [
+    currentPage,
+    pageSize,
+    searchText,
+    componentTypeFilter,
+    buildingFilter,
+    floorFilter,
+    roomFilter,
+    sortField,
+    sortDirection,
+  ]);
 
   // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: SortField) => {
@@ -127,10 +164,14 @@ export default function CreateProposalPage() {
     return (
       <div className="flex flex-col">
         <ChevronUp
-          className={`h-3 w-3 ${sortDirection === "asc" ? "text-blue-600" : "text-gray-300"}`}
+          className={`h-3 w-3 ${
+            sortDirection === "asc" ? "text-blue-600" : "text-gray-300"
+          }`}
         />
         <ChevronDown
-          className={`h-3 w-3 -mt-1 ${sortDirection === "desc" ? "text-blue-600" : "text-gray-300"}`}
+          className={`h-3 w-3 -mt-1 ${
+            sortDirection === "desc" ? "text-blue-600" : "text-gray-300"
+          }`}
         />
       </div>
     );
@@ -168,7 +209,7 @@ export default function CreateProposalPage() {
       const repairRequestIds = Array.from(
         new Set(
           selectedComponents
-            .map(c => c.repairRequestId)
+            .map((c) => c.repairRequestId)
             .filter((id): id is string => !!id)
         )
       );
@@ -206,17 +247,17 @@ export default function CreateProposalPage() {
         // 🔥 MỚI: Thêm repair request IDs (nếu có)
         ...(repairRequestIds.length > 0 && { repairRequestIds }),
       };
-      
-      console.log('📤 Sending proposal data:', proposalData);
-      
+
+      console.log("📤 Sending proposal data:", proposalData);
+
       // Gọi API tạo đề xuất
       const result = await createReplacementProposal(proposalData);
-      
+
       message.success({
         content: `Tạo đề xuất thay thế thành công! Mã: ${result.proposalCode}`,
         duration: 5,
       });
-      
+
       // Reset và đóng modal
       setIsModalVisible(false);
       form.resetFields();
@@ -232,7 +273,9 @@ export default function CreateProposalPage() {
         excludeInProposal: true,
       });
     } catch (err) {
-      message.error(err instanceof Error ? err.message : "Tạo đề xuất thất bại");
+      message.error(
+        err instanceof Error ? err.message : "Tạo đề xuất thất bại"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -267,10 +310,10 @@ export default function CreateProposalPage() {
   // Clear all filters
   const clearAllFilters = () => {
     setComponentTypeFilter([]);
-    setBuildingFilter('');
-    setFloorFilter('');
-    setRoomFilter('');
-    setSearchText('');
+    setBuildingFilter("");
+    setFloorFilter("");
+    setRoomFilter("");
+    setSearchText("");
     setFilteredFloors([]);
     setFilteredRooms([]);
     setCurrentPage(1);
@@ -279,10 +322,10 @@ export default function CreateProposalPage() {
   // Handle building change - cascade filter
   const handleBuildingChange = (building: string) => {
     setBuildingFilter(building);
-    setFloorFilter('');
-    setRoomFilter('');
+    setFloorFilter("");
+    setRoomFilter("");
     setCurrentPage(1);
-    
+
     if (building) {
       // Filter floors by building
       const floorsInBuilding = Array.from(
@@ -303,9 +346,9 @@ export default function CreateProposalPage() {
   // Handle floor change - cascade filter
   const handleFloorChange = (floor: string) => {
     setFloorFilter(floor);
-    setRoomFilter('');
+    setRoomFilter("");
     setCurrentPage(1);
-    
+
     if (floor && buildingFilter) {
       // Filter rooms by building and floor
       const roomsInFloor = rooms.filter(
@@ -335,23 +378,26 @@ export default function CreateProposalPage() {
   const handleRowSelect = (id: string, selected: boolean) => {
     if (selected) {
       // Chỉ thêm nếu chưa tồn tại
-      setSelectedRowKeys(prev => {
+      setSelectedRowKeys((prev) => {
         if (prev.includes(id)) return prev;
         return [...prev, id];
       });
-      
+
       // Lưu trữ thông tin đầy đủ của component được chọn
-      const component = components.find(c => c.componentId === id);
+      const component = components.find((c) => c.componentId === id);
       if (component) {
-        setSelectedComponentsData(prev => {
+        setSelectedComponentsData((prev) => {
           // Kiểm tra xem đã tồn tại chưa
-          if (prev.find(c => c.componentId === id)) return prev;
+          if (prev.find((c) => c.componentId === id)) return prev;
           // Thêm quantity và reason mặc định
-          return [...prev, {
-            ...component,
-            quantity: 1, // Mặc định 1
-            reason: component.repairDescription || '', // Dùng description từ repair request
-          }];
+          return [
+            ...prev,
+            {
+              ...component,
+              quantity: 1, // Mặc định 1
+              reason: component.repairDescription || "", // Dùng description từ repair request
+            },
+          ];
         });
         // Khởi tạo thông tin linh kiện mới
         setNewItemInfo((prev) => ({
@@ -377,10 +423,10 @@ export default function CreateProposalPage() {
   const handleSelectAll = (selected: boolean) => {
     if (selected) {
       // Merge với các items đã chọn từ trang trước, không thay thế
-      const currentPageKeys = components.map(row => row.componentId);
-      setSelectedRowKeys(prev => {
+      const currentPageKeys = components.map((row) => row.componentId);
+      setSelectedRowKeys((prev) => {
         const newKeys = [...prev];
-        currentPageKeys.forEach(key => {
+        currentPageKeys.forEach((key) => {
           if (!newKeys.includes(key)) {
             newKeys.push(key);
           }
@@ -437,7 +483,7 @@ export default function CreateProposalPage() {
       <Breadcrumb
         items={[
           {
-            href: '/ky-thuat-vien',
+            href: "/ky-thuat-vien",
             title: (
               <div className="flex items-center">
                 <span>Trang chủ</span>
@@ -452,7 +498,7 @@ export default function CreateProposalPage() {
             ),
           },
           {
-            href: '/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat',
+            href: "/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat",
             title: (
               <div className="flex items-center">
                 <span>Lập phiếu đề xuất</span>
@@ -465,7 +511,9 @@ export default function CreateProposalPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lập phiếu đề xuất thay thế</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Lập phiếu đề xuất thay thế
+          </h1>
           <p className="text-gray-600 mt-1">
             Chọn các linh kiện từ báo cáo lỗi để tạo đề xuất thay thế
           </p>
@@ -475,8 +523,7 @@ export default function CreateProposalPage() {
           icon={<PlusOutlined />}
           onClick={handleCreateProposal}
           size="large"
-          disabled={selectedRowKeys.length === 0}
-        >
+          disabled={selectedRowKeys.length === 0}>
           Tạo đề xuất ({selectedRowKeys.length})
         </Button>
       </div>
@@ -507,9 +554,8 @@ export default function CreateProposalPage() {
                 setComponentTypeFilter(value);
                 setCurrentPage(1);
               }}
-              style={{ width: '100%' }}
-              maxTagCount="responsive"
-            >
+              style={{ width: "100%" }}
+              maxTagCount="responsive">
               {Object.entries(ComponentType).map(([key, value]) => (
                 <Select.Option key={value} value={value}>
                   {key}
@@ -524,8 +570,7 @@ export default function CreateProposalPage() {
               value={buildingFilter || undefined}
               onChange={handleBuildingChange}
               allowClear
-              style={{ width: '100%' }}
-            >
+              style={{ width: "100%" }}>
               {buildings.map((building) => (
                 <Select.Option key={building} value={building}>
                   Tòa {building}
@@ -541,13 +586,12 @@ export default function CreateProposalPage() {
               onChange={handleFloorChange}
               allowClear
               disabled={!buildingFilter}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               notFoundContent={
                 !buildingFilter
                   ? "Vui lòng chọn tòa nhà trước"
                   : "Không có dữ liệu"
-              }
-            >
+              }>
               {filteredFloors.map((floor) => (
                 <Select.Option key={floor} value={floor}>
                   Tầng {floor}
@@ -563,13 +607,10 @@ export default function CreateProposalPage() {
               onChange={handleRoomChange}
               allowClear
               disabled={!floorFilter}
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               notFoundContent={
-                !floorFilter
-                  ? "Vui lòng chọn tầng trước"
-                  : "Không có dữ liệu"
-              }
-            >
+                !floorFilter ? "Vui lòng chọn tầng trước" : "Không có dữ liệu"
+              }>
               {filteredRooms.map((room) => (
                 <Select.Option key={room.id} value={room.name || room.roomCode}>
                   {room.name || room.roomCode || `Phòng ${room.roomNumber}`}
@@ -584,9 +625,7 @@ export default function CreateProposalPage() {
               onClick={clearAllFilters}
               disabled={activeFiltersCount === 0}
               icon={<SyncOutlined />}
-              block
-            >
-            </Button>
+              block></Button>
           </Col>
         </Row>
       </Card>
@@ -602,7 +641,8 @@ export default function CreateProposalPage() {
           <div className="flex justify-center items-center py-12">
             <div className="text-center">
               <p className="text-red-600 mb-2">❌ {error}</p>
-              <Button onClick={() => fetchComponents({ page: 1, limit: pageSize })}>
+              <Button
+                onClick={() => fetchComponents({ page: 1, limit: pageSize })}>
                 Thử lại
               </Button>
             </div>
@@ -621,62 +661,61 @@ export default function CreateProposalPage() {
                       <input
                         type="checkbox"
                         className="rounded border-gray-300"
-                        checked={components.length > 0 && components.every(row => selectedRowKeys.includes(row.componentId))}
+                        checked={
+                          components.length > 0 &&
+                          components.every((row) =>
+                            selectedRowKeys.includes(row.componentId)
+                          )
+                        }
                         onChange={(e) => handleSelectAll(e.target.checked)}
                         aria-label="Chọn tất cả linh kiện"
                       />
                       <span>STT</span>
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("requestCode")}
-                  >
+                    onClick={() => handleSort("requestCode")}>
                     <div className="flex items-center uppercase space-x-1">
                       <span>Mã YCSC</span>
                       {getSortIcon("requestCode")}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("componentName")}
-                  >
+                    onClick={() => handleSort("componentName")}>
                     <div className="flex items-center uppercase space-x-1">
                       <span>Tên linh kiện</span>
                       {getSortIcon("componentName")}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("assetName")}
-                  >
+                    onClick={() => handleSort("assetName")}>
                     <div className="flex items-center uppercase space-x-1">
                       <span>Tài sản</span>
                       {getSortIcon("assetName")}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("location")}
-                  >
+                    onClick={() => handleSort("location")}>
                     <div className="flex items-center uppercase space-x-1">
                       <span>Vị trí</span>
                       {getSortIcon("location")}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("componentStatus")}
-                  >
+                    onClick={() => handleSort("componentStatus")}>
                     <div className="flex items-center uppercase space-x-1">
                       <span>Trạng thái LK</span>
                       {getSortIcon("componentStatus")}
                     </div>
                   </th>
-                  <th 
+                  <th
                     className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("repairStatus")}
-                  >
+                    onClick={() => handleSort("repairStatus")}>
                     <div className="flex items-center uppercase space-x-1">
                       <span>Trạng thái YCSC</span>
                       {getSortIcon("repairStatus")}
@@ -696,7 +735,12 @@ export default function CreateProposalPage() {
                           type="checkbox"
                           className="rounded border-gray-300"
                           checked={selectedRowKeys.includes(record.componentId)}
-                          onChange={(e) => handleRowSelect(record.componentId, e.target.checked)}
+                          onChange={(e) =>
+                            handleRowSelect(
+                              record.componentId,
+                              e.target.checked
+                            )
+                          }
                           aria-label={`Chọn linh kiện ${record.componentName}`}
                         />
                         <span>{(currentPage - 1) * pageSize + index + 1}</span>
@@ -709,75 +753,93 @@ export default function CreateProposalPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <div>
-                        <div className="font-medium">{record.componentName}</div>
+                        <div className="font-medium">
+                          {record.componentName}
+                        </div>
                         {record.componentType && (
                           <Tag color="cyan" className="text-xs mt-1">
                             {record.componentType}
                           </Tag>
                         )}
                         {record.componentSpecs && (
-                          <div className="text-sm text-gray-500 mt-1">{record.componentSpecs}</div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            {record.componentSpecs}
+                          </div>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <div>
                         <div className="font-medium">{record.assetName}</div>
-                        <div className="text-sm text-gray-500">Mã: {record.ktCode}</div>
+                        <div className="text-sm text-gray-500">
+                          Mã: {record.ktCode}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <div>
-                        <div className="font-medium">{record.buildingName || 'N/A'}</div>
+                        <div className="font-medium">
+                          {record.buildingName || "N/A"}
+                        </div>
                         {record.roomName && (
                           <div className="text-xs text-gray-500">
                             {record.roomName}
-                            {record.machineLabel && ` - Máy ${record.machineLabel}`}
+                            {record.machineLabel &&
+                              ` - Máy ${record.machineLabel}`}
                           </div>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
                       {record.componentStatus && (
-                        <Tag 
+                        <Tag
                           color={
-                            record.componentStatus === 'FAULTY' ? 'red' : 
-                            record.componentStatus === 'PENDING_REPLACEMENT' ? 'orange' : 
-                            'green'
+                            record.componentStatus === ComponentStatus.FAULTY
+                              ? "red"
+                              : record.componentStatus ===
+                                ComponentStatus.PENDING_REPLACEMENT
+                              ? "orange"
+                              : "green"
                           }
-                          className="text-xs"
-                        >
-                          {record.componentStatus === 'FAULTY' ? 'Hỏng' : 
-                           record.componentStatus === 'PENDING_REPLACEMENT' ? 'Chờ thay' : 
-                           record.componentStatus}
+                          className="text-xs">
+                          {record.componentStatus === ComponentStatus.FAULTY
+                            ? "Hỏng"
+                            : record.componentStatus ===
+                              ComponentStatus.PENDING_REPLACEMENT
+                            ? "Chờ thay"
+                            : record.componentStatus}
                         </Tag>
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
                       {record.repairStatus && (
-                        <Tag 
+                        <Tag
                           color={
-                            record.repairStatus === 'ĐANG_XỬ_LÝ' ? 'processing' :
-                            record.repairStatus === 'CHỜ_THAY_THẾ' ? 'warning' :
-                            record.repairStatus === 'ĐÃ_TIẾP_NHẬN' ? 'blue' :
-                            'default'
+                            record.repairStatus === "ĐANG_XỬ_LÝ"
+                              ? "processing"
+                              : record.repairStatus === "CHỜ_THAY_THẾ"
+                              ? "warning"
+                              : record.repairStatus === "ĐÃ_TIẾP_NHẬN"
+                              ? "blue"
+                              : "default"
                           }
-                          className="text-xs"
-                        >
+                          className="text-xs">
                           {record.repairStatus}
                         </Tag>
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      <div className="text-sm text-gray-700 line-clamp-2" title={record.repairDescription}>
-                        {record.repairDescription || 'N/A'}
+                      <div
+                        className="text-sm text-gray-700 line-clamp-2"
+                        title={record.repairDescription}>
+                        {record.repairDescription || "N/A"}
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            
+
             <Pagination
               currentPage={currentPage}
               pageSize={pageSize}
@@ -808,16 +870,14 @@ export default function CreateProposalPage() {
         okText={isSubmitting ? "Đang tạo..." : "Tạo đề xuất"}
         cancelText="Hủy"
         confirmLoading={isSubmitting}
-        maskClosable={false}
-      >
+        maskClosable={false}>
         <Form
           form={form}
           layout="vertical"
           initialValues={{
             title: `Đề xuất thay thế ${selectedRowKeys.length} linh kiện`,
             description: "",
-          }}
-        >
+          }}>
           <Form.Item
             label={<span className="font-medium">Tiêu đề đề xuất</span>}
             name="title"
@@ -825,9 +885,8 @@ export default function CreateProposalPage() {
               { required: true, message: "Vui lòng nhập tiêu đề!" },
               { min: 10, message: "Tiêu đề phải có ít nhất 10 ký tự" },
               { max: 200, message: "Tiêu đề không quá 200 ký tự" },
-            ]}
-          >
-            <Input 
+            ]}>
+            <Input
               placeholder="Ví dụ: Đề xuất thay thế RAM và SSD cho phòng H.03"
               showCount
               maxLength={200}
@@ -840,8 +899,7 @@ export default function CreateProposalPage() {
             rules={[
               { required: true, message: "Vui lòng nhập mô tả!" },
               { min: 20, message: "Mô tả phải có ít nhất 20 ký tự" },
-            ]}
-          >
+            ]}>
             <Input.TextArea
               rows={4}
               placeholder="Mô tả lý do cần thay thế, tình trạng hiện tại, yêu cầu cụ thể..."
@@ -855,18 +913,18 @@ export default function CreateProposalPage() {
             const repairRequestIds = Array.from(
               new Set(
                 selectedComponentsData
-                  .map(c => c.repairRequestId)
+                  .map((c) => c.repairRequestId)
                   .filter((id): id is string => !!id)
               )
             );
             const requestCodes = Array.from(
               new Set(
                 selectedComponentsData
-                  .map(c => c.requestCode)
-                  .filter(code => !!code)
+                  .map((c) => c.requestCode)
+                  .filter((code) => !!code)
               )
             );
-            
+
             if (repairRequestIds.length > 0) {
               return (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -884,7 +942,8 @@ export default function CreateProposalPage() {
                         ))}
                       </div>
                       <div className="text-xs text-blue-600 mt-1">
-                        Đề xuất này sẽ được liên kết tự động với các yêu cầu sửa chữa trên
+                        Đề xuất này sẽ được liên kết tự động với các yêu cầu sửa
+                        chữa trên
                       </div>
                     </div>
                   </div>
@@ -922,26 +981,28 @@ export default function CreateProposalPage() {
                             {component.componentType}
                           </Tag>
                         )}
-                      </div>
-                      
-                      {component.componentSpecs && (
+
+                        <div className="text-xs text-gray-700 mt-1">
+                          💻 {component.assetName}
+                          <span className="text-gray-500 ml-1">
+                            ({component.ktCode})
+                          </span>
+                        </div>
+
                         <div className="text-xs text-gray-600 mt-1">
                           📋 Thông số hiện tại: {component.componentSpecs}
                         </div>
-                      )}
-                      
-                      <div className="text-xs text-gray-700 mt-1">
-                        💻 {component.assetName} 
-                        <span className="text-gray-500 ml-1">({component.ktCode})</span>
-                      </div>
-                      
-                      <div className="text-xs text-gray-600 mt-1">
-                        📍 {component.buildingName} - {component.roomName}
-                        {component.machineLabel && ` - Máy ${component.machineLabel}`}
-                      </div>
 
-                      <div className="text-xs text-blue-600 mt-1 font-mono">
-                        🔖 {component.requestCode}
+                        <div className="text-xs text-blue-600 mt-1 font-mono">
+                          🔖 {component.requestCode}
+                        </div>
+
+                        {component.reason && (
+                          <div className="text-xs text-gray-700 mt-2 bg-yellow-50 p-2 rounded">
+                            <span className="font-medium">Lý do:</span>{" "}
+                            {component.reason}
+                          </div>
+                        )}
                       </div>
                       
                       {component.reason && (
@@ -1008,7 +1069,10 @@ export default function CreateProposalPage() {
               <div>
                 <span className="text-gray-600">Tổng số lượng:</span>
                 <span className="ml-2 font-semibold text-gray-900">
-                  {selectedComponentsData.reduce((sum, c) => sum + (c.quantity || 1), 0)}
+                  {selectedComponentsData.reduce(
+                    (sum, c) => sum + (c.quantity || 1),
+                    0
+                  )}
                 </span>
               </div>
             </div>
