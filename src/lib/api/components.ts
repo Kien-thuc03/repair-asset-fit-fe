@@ -306,6 +306,7 @@ export interface ReplaceComponentRequest {
   newItemSpecs: string;
   serialNumber?: string;
   notes?: string;
+  newlyPurchasedComponentId?: string;
 }
 
 /**

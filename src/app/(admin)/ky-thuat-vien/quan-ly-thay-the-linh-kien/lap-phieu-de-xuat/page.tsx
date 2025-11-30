@@ -36,9 +36,9 @@ type SortDirection = "asc" | "desc" | "none";
 
 export default function CreateProposalPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-  const [selectedComponentsData, setSelectedComponentsData] = useState<
-    ComponentFromRepair[]
-  >([]);
+  const [selectedComponentsData, setSelectedComponentsData] = useState<ComponentFromRepair[]>([]);
+  // State để lưu thông tin linh kiện mới cho từng item
+  const [newItemInfo, setNewItemInfo] = useState<Record<string, { newItemName: string; newItemSpecs: string }>>({});
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -183,6 +183,15 @@ export default function CreateProposalPage() {
       message.warning("Vui lòng chọn ít nhất một linh kiện để tạo đề xuất");
       return;
     }
+    // Khởi tạo thông tin linh kiện mới cho các item đã chọn
+    const initialNewItemInfo: Record<string, { newItemName: string; newItemSpecs: string }> = {};
+    selectedComponentsData.forEach((component) => {
+      initialNewItemInfo[component.componentId] = {
+        newItemName: component.componentName || "", // Gợi ý tên từ linh kiện cũ
+        newItemSpecs: component.componentSpecs || "", // Gợi ý thông số từ linh kiện cũ
+      };
+    });
+    setNewItemInfo(initialNewItemInfo);
     setIsModalVisible(true);
   };
 
@@ -205,19 +214,36 @@ export default function CreateProposalPage() {
         )
       );
 
+      // Validate: Kiểm tra tất cả linh kiện mới đã được nhập đầy đủ
+      const missingItems: string[] = [];
+      selectedComponents.forEach((component) => {
+        const itemInfo = newItemInfo[component.componentId];
+        if (!itemInfo || !itemInfo.newItemName || itemInfo.newItemName.trim() === "") {
+          missingItems.push(component.componentName || component.componentId);
+        }
+      });
+
+      if (missingItems.length > 0) {
+        message.error(
+          `Vui lòng nhập tên linh kiện mới cho: ${missingItems.slice(0, 3).join(", ")}${missingItems.length > 3 ? "..." : ""}`
+        );
+        return;
+      }
+
       // Tạo payload theo format API
-      // Lưu ý: newItemName và newItemSpecs để trống ở phía kỹ thuật viên
-      // Phòng quản trị sẽ cập nhật thông tin này sau
       const proposalData = {
         title: values.title,
         description: values.description,
-        items: selectedComponents.map((component) => ({
-          oldComponentId: component.componentId,
-          newItemName: "",
-          newItemSpecs: "", // Để trống, phòng quản trị sẽ cập nhật sau
-          quantity: component.quantity || 1, // Đảm bảo có quantity
-          reason: component.reason || component.repairDescription || "", // Dùng reason hoặc repairDescription
-        })),
+        items: selectedComponents.map((component) => {
+          const itemInfo = newItemInfo[component.componentId] || { newItemName: "", newItemSpecs: "" };
+          return {
+            oldComponentId: component.componentId,
+            newItemName: itemInfo.newItemName.trim(),
+            newItemSpecs: itemInfo.newItemSpecs?.trim() || undefined,
+            quantity: component.quantity || 1,
+            reason: component.reason || component.repairDescription || "",
+          };
+        }),
         // 🔥 MỚI: Thêm repair request IDs (nếu có)
         ...(repairRequestIds.length > 0 && { repairRequestIds }),
       };
@@ -237,7 +263,8 @@ export default function CreateProposalPage() {
       form.resetFields();
       setSelectedRowKeys([]);
       setSelectedComponentsData([]);
-
+      setNewItemInfo({});
+      
       // Refresh danh sách
       fetchComponents({
         page: currentPage,
@@ -257,6 +284,18 @@ export default function CreateProposalPage() {
   const handleModalCancel = () => {
     setIsModalVisible(false);
     form.resetFields();
+    setNewItemInfo({});
+  };
+
+  // Hàm cập nhật thông tin linh kiện mới
+  const handleNewItemInfoChange = (componentId: string, field: "newItemName" | "newItemSpecs", value: string) => {
+    setNewItemInfo((prev) => ({
+      ...prev,
+      [componentId]: {
+        ...prev[componentId],
+        [field]: value,
+      },
+    }));
   };
 
   // Đếm số lượng filters đang active
@@ -360,12 +399,24 @@ export default function CreateProposalPage() {
             },
           ];
         });
+        // Khởi tạo thông tin linh kiện mới
+        setNewItemInfo((prev) => ({
+          ...prev,
+          [id]: {
+            newItemName: component.componentName || "",
+            newItemSpecs: component.componentSpecs || "",
+          },
+        }));
       }
     } else {
-      setSelectedRowKeys((prev) => prev.filter((key) => key !== id));
-      setSelectedComponentsData((prev) =>
-        prev.filter((c) => c.componentId !== id)
-      );
+      setSelectedRowKeys(prev => prev.filter(key => key !== id));
+      setSelectedComponentsData(prev => prev.filter(c => c.componentId !== id));
+      // Xóa thông tin linh kiện mới của item bị bỏ chọn
+      setNewItemInfo((prev) => {
+        const newInfo = { ...prev };
+        delete newInfo[id];
+        return newInfo;
+      });
     }
   };
 
@@ -382,30 +433,47 @@ export default function CreateProposalPage() {
         });
         return newKeys;
       });
-
-      // Lưu trữ thông tin đầy đủ của các components được chọn
-      setSelectedComponentsData((prev) => {
-        const newData = [...prev];
-        components.forEach((component) => {
-          if (!newData.find((c) => c.componentId === component.componentId)) {
-            newData.push({
-              ...component,
-              quantity: 1, // Mặc định 1
-              reason: component.repairDescription || "", // Dùng description từ repair request
-            });
-          }
+      
+        // Lưu trữ thông tin đầy đủ của các components được chọn
+        setSelectedComponentsData(prev => {
+          const newData = [...prev];
+          components.forEach(component => {
+            if (!newData.find(c => c.componentId === component.componentId)) {
+              newData.push({
+                ...component,
+                quantity: 1, // Mặc định 1
+                reason: component.repairDescription || '', // Dùng description từ repair request
+              });
+            }
+          });
+          return newData;
         });
-        return newData;
-      });
+        // Khởi tạo thông tin linh kiện mới cho các components mới được chọn
+        setNewItemInfo((prev) => {
+          const newInfo = { ...prev };
+          components.forEach((component) => {
+            if (!newInfo[component.componentId]) {
+              newInfo[component.componentId] = {
+                newItemName: component.componentName || "",
+                newItemSpecs: component.componentSpecs || "",
+              };
+            }
+          });
+          return newInfo;
+        });
     } else {
       // Chỉ bỏ chọn các items của trang hiện tại, giữ lại items từ trang khác
-      const currentPageKeys = components.map((row) => row.componentId);
-      setSelectedRowKeys((prev) =>
-        prev.filter((key) => !currentPageKeys.includes(key))
-      );
-      setSelectedComponentsData((prev) =>
-        prev.filter((c) => !currentPageKeys.includes(c.componentId))
-      );
+      const currentPageKeys = components.map(row => row.componentId);
+      setSelectedRowKeys(prev => prev.filter(key => !currentPageKeys.includes(key)));
+      setSelectedComponentsData(prev => prev.filter(c => !currentPageKeys.includes(c.componentId)));
+      // Xóa thông tin linh kiện mới của các items bị bỏ chọn
+      setNewItemInfo((prev) => {
+        const newInfo = { ...prev };
+        currentPageKeys.forEach((key) => {
+          delete newInfo[key];
+        });
+        return newInfo;
+      });
     }
   };
 
@@ -798,7 +866,7 @@ export default function CreateProposalPage() {
         open={isModalVisible}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        width={720}
+        width={900}
         okText={isSubmitting ? "Đang tạo..." : "Tạo đề xuất"}
         cancelText="Hủy"
         confirmLoading={isSubmitting}
@@ -893,32 +961,25 @@ export default function CreateProposalPage() {
                 <Tag color="green">{selectedRowKeys.length} linh kiện</Tag>
               </h4>
             </div>
-            <div className="p-4 space-y-3 max-h-80 overflow-y-auto bg-white">
-              {selectedComponentsData.map(
-                (component: ComponentFromRepair, index) => (
-                  <div
-                    key={component.componentId}
-                    className="border-l-4 border-blue-400 bg-gray-50 p-3 rounded-r-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-medium text-gray-500">
-                            #{index + 1}
-                          </span>
-                          <span className="font-semibold text-gray-900 text-sm">
-                            {component.componentName}
-                          </span>
-                          {component.componentType && (
-                            <Tag color="cyan" className="text-xs m-0">
-                              {component.componentType}
-                            </Tag>
-                          )}
-                        </div>
-
-                        {component.componentSpecs && (
-                          <div className="text-xs text-gray-600 mt-1">
-                            📋 {component.componentSpecs}
-                          </div>
+            <div className="p-4 space-y-4 max-h-96 overflow-y-auto bg-white">
+              {selectedComponentsData.map((component: ComponentFromRepair, index) => {
+                const itemInfo = newItemInfo[component.componentId] || { newItemName: "", newItemSpecs: "" };
+                return (
+                  <div 
+                    key={component.componentId} 
+                    className="border-l-4 border-blue-400 bg-gray-50 p-4 rounded-r-lg hover:bg-gray-100 transition-colors"
+                  >
+                    {/* Thông tin linh kiện cũ */}
+                    <div className="mb-3 pb-3 border-b border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-medium text-gray-500">#{index + 1}</span>
+                        <span className="font-semibold text-gray-900 text-sm">
+                          Linh kiện cũ: {component.componentName}
+                        </span>
+                        {component.componentType && (
+                          <Tag color="red" className="text-xs m-0">
+                            {component.componentType}
+                          </Tag>
                         )}
 
                         <div className="text-xs text-gray-700 mt-1">
@@ -929,9 +990,7 @@ export default function CreateProposalPage() {
                         </div>
 
                         <div className="text-xs text-gray-600 mt-1">
-                          📍 {component.buildingName} - {component.roomName}
-                          {component.machineLabel &&
-                            ` - Máy ${component.machineLabel}`}
+                          📋 Thông số hiện tại: {component.componentSpecs}
                         </div>
 
                         <div className="text-xs text-blue-600 mt-1 font-mono">
@@ -945,16 +1004,56 @@ export default function CreateProposalPage() {
                           </div>
                         )}
                       </div>
+                      
+                      {component.reason && (
+                        <div className="text-xs text-gray-700 mt-2 bg-yellow-50 p-2 rounded">
+                          <span className="font-medium">Lý do thay thế:</span> {component.reason}
+                        </div>
+                      )}
+                    </div>
 
-                      <div className="shrink-0">
-                        <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold text-sm">
+                    {/* Form nhập thông tin linh kiện mới */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-semibold text-green-700">Linh kiện mới cần mua:</span>
+                        <div className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold text-xs">
                           x{component.quantity || 1}
                         </div>
                       </div>
+                      
+                      <Form.Item
+                        label={<span className="text-xs font-medium text-gray-700">Tên linh kiện mới <span className="text-red-500">*</span></span>}
+                        required
+                        validateStatus={!itemInfo.newItemName || itemInfo.newItemName.trim() === "" ? "error" : ""}
+                        help={!itemInfo.newItemName || itemInfo.newItemName.trim() === "" ? "Vui lòng nhập tên linh kiện mới" : ""}
+                        className="mb-2"
+                      >
+                        <Input
+                          placeholder="Ví dụ: Kingston Fury Beast DDR4 16GB (2x8GB) 3200MHz"
+                          value={itemInfo.newItemName}
+                          onChange={(e) => handleNewItemInfoChange(component.componentId, "newItemName", e.target.value)}
+                          className="text-sm"
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        label={<span className="text-xs font-medium text-gray-700">Thông số kỹ thuật (tùy chọn)</span>}
+                        className="mb-0"
+                      >
+                        <Input.TextArea
+                          rows={2}
+                          placeholder="Ví dụ: DDR4, 16GB (2x8GB), 3200MHz, CL18, Non-ECC, DIMM"
+                          value={itemInfo.newItemSpecs}
+                          onChange={(e) => handleNewItemInfoChange(component.componentId, "newItemSpecs", e.target.value)}
+                          className="text-sm"
+                          showCount
+                          maxLength={500}
+                        />
+                      </Form.Item>
                     </div>
                   </div>
-                )
-              )}
+                );
+              })}
             </div>
           </div>
 
