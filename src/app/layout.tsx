@@ -15,9 +15,9 @@ export const metadata: Metadata = {
   description:
     "Hệ thống quản lý sửa chữa tài sản - Khoa CNTT Đại học Công nghiệp TP.HCM",
   icons: {
-    icon: "/images/Logo_IUH.webp",
-    shortcut: "/images/Logo_IUH.webp",
-    apple: "/images/Logo_IUH.webp",
+    icon: "/images/Logo-rut-gon.png",
+    shortcut: "/images/Logo-rut-gon.png",
+    apple: "/images/Logo-rut-gon.png",
   },
 };
 

@@ -279,23 +279,23 @@ export interface AddStockComponentResponse {
  * @param data Dữ liệu thêm linh kiện
  * @returns Promise với thông tin linh kiện mới và cũ
  */
-export const addStockComponent = async (
-  data: AddStockComponentRequest
-): Promise<AddStockComponentResponse> => {
-  try {
-    const response = await api.patch<ApiResponse<AddStockComponentResponse>>(
-      `/computer/add-stock-component-legacy`,
-      data
-    );
+// export const addStockComponent = async (
+//   data: AddStockComponentRequest
+// ): Promise<AddStockComponentResponse> => {
+//   try {
+//     const response = await api.patch<ApiResponse<AddStockComponentResponse>>(
+//       `/computer/add-stock-component-legacy`,
+//       data
+//     );
 
-    return response.data.data;
-  } catch (error: unknown) {
-    const err = error as { response?: { data?: { message?: string } } };
-    throw new Error(
-      err.response?.data?.message || "Thêm linh kiện vào kho thất bại."
-    );
-  }
-};
+//     return response.data.data;
+//   } catch (error: unknown) {
+//     const err = error as { response?: { data?: { message?: string } } };
+//     throw new Error(
+//       err.response?.data?.message || "Thêm linh kiện vào kho thất bại."
+//     );
+//   }
+// };
 
 /**
  * Interface cho request thay thế linh kiện
