@@ -52,7 +52,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: LayoutDashboard,
       },
       {
-        name: "Quản lý báo hỏng thiết bị",
+        name: "Báo hỏng thiết bị",
         href: "/giang-vien/bao-cao-loi",
         icon: TriangleAlert,
       },
