@@ -780,11 +780,11 @@ Trân trọng kính trình.`;
         </div>
       </div>
 
-      {/* Basic Info and Status Progress - 2 columns */}
+      {/* Detailed Info and Status Progress - 2 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Basic Info */}
+        {/* Detailed Info */}
         <div>
-          <Card title="Thông tin cơ bản" className="shadow">
+          <Card title="Thông tin chi tiết" className="shadow">
             <Table
               dataSource={[
                 {
@@ -798,6 +798,15 @@ Trân trọng kính trình.`;
                 },
                 {
                   key: "2",
+                  field: "Tiêu đề",
+                  value: (
+                    <div className="font-medium text-xs sm:text-sm text-gray-900">
+                      {proposal.title || "Không có tiêu đề"}
+                    </div>
+                  ),
+                },
+                {
+                  key: "3",
                   field: "Trạng thái",
                   value: (
                     <Tag
@@ -809,7 +818,7 @@ Trân trọng kính trình.`;
                   ),
                 },
                 {
-                  key: "3",
+                  key: "4",
                   field: "Người đề xuất",
                   value: (
                     <div className="font-medium text-xs sm:text-sm">
@@ -818,7 +827,7 @@ Trân trọng kính trình.`;
                   ),
                 },
                 {
-                  key: "4",
+                  key: "5",
                   field: "Ngày tạo",
                   value: (
                     <div className="text-xs sm:text-sm">
@@ -836,7 +845,25 @@ Trân trọng kính trình.`;
                   ),
                 },
                 {
-                  key: "5",
+                  key: "6",
+                  field: "Ngày cập nhật",
+                  value: (
+                    <div className="text-xs sm:text-sm">
+                      {new Date(proposal.updatedAt).toLocaleDateString(
+                        "vi-VN",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  key: "7",
                   field: "Số lượng linh kiện",
                   value: (
                     <span className="font-medium text-blue-600 text-xs sm:text-sm">
@@ -844,10 +871,90 @@ Trân trọng kính trình.`;
                     </span>
                   ),
                 },
+                {
+                  key: "8",
+                  field: "Tổng số lượng",
+                  value: (
+                    <span className="font-medium text-green-600 text-xs sm:text-sm">
+                      {replacementItems.reduce(
+                        (sum, item) => sum + (item.quantity || 0),
+                        0
+                      )}{" "}
+                      sản phẩm
+                    </span>
+                  ),
+                },
+                ...(proposal.description
+                  ? [
+                      {
+                        key: "9",
+                        field: "Mô tả",
+                        value: (
+                          <div className="text-xs sm:text-sm text-gray-700 whitespace-pre-wrap max-w-md">
+                            {proposal.description}
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(teamLeadApproverName &&
+                (displayStatus === "ĐÃ_DUYỆT" ||
+                  displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH" ||
+                  displayStatus === "ĐÃ_TỪ_CHỐI")
+                  ? [
+                      {
+                        key: "10",
+                        field: "Người duyệt",
+                        value: (
+                          <div className="font-medium text-xs sm:text-sm text-green-700">
+                            {teamLeadApproverName}
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(proposal.repairRequests && proposal.repairRequests.length > 0
+                  ? [
+                      {
+                        key: "11",
+                        field: "YCSC liên quan",
+                        value: (
+                          <div className="flex flex-wrap gap-1">
+                            {proposal.repairRequests.map((rr) => (
+                              <Tag
+                                key={rr.id}
+                                color="blue"
+                                className="text-xs font-mono">
+                                {rr.requestCode}
+                              </Tag>
+                            ))}
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(proposal.submissionFormUrl
+                  ? [
+                      {
+                        key: "12",
+                        field: "Tờ trình",
+                        value: (
+                          <a
+                            href={proposal.submissionFormUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm underline flex items-center gap-1">
+                            <FileText className="w-3 h-3" />
+                            Xem tờ trình
+                          </a>
+                        ),
+                      },
+                    ]
+                  : []),
                 ...(canApproveOrReject
                   ? [
                       {
-                        key: "6",
+                        key: "13",
                         field: "Hành động",
                         value: (
                           <div className="flex flex-col sm:flex-row gap-2">
@@ -875,7 +982,7 @@ Trân trọng kính trình.`;
                 ...(canCreateSubmission
                   ? [
                       {
-                        key: "7",
+                        key: "14",
                         field: "Hành động",
                         value: (
                           <div className="flex flex-col sm:flex-row gap-2">
