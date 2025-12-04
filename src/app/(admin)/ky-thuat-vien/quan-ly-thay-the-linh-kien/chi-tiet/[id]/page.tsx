@@ -1,11 +1,12 @@
 "use client"
 
 import { useParams, useRouter } from 'next/navigation'
-import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table } from 'antd'
-import { Clock, CheckCircle, XCircle, AlertTriangle, Loader2, Package, ExternalLink } from 'lucide-react'
+import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table, Button } from 'antd'
+import { Loader2, Package, ExternalLink } from 'lucide-react'
 import { useReplacementProposal } from '@/hooks/useReplacementProposals'
 import { ReplacementItem } from '@/lib/api/replacement-proposals'
 import { ReplacementProposalStatus } from '@/types'
+import { getReplacementProposalStatusConfig } from '@/lib/constants/replacement-proposal-status'
 
 export default function ChiTietThayThePage() {
 	const params = useParams()
@@ -71,75 +72,8 @@ export default function ChiTietThayThePage() {
 		)
 	}
 
-	// Cấu hình trạng thái
-	const statusConfig: Record<ReplacementProposalStatus, { color: string; text: string; icon: React.ElementType }> = {
-		[ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
-			color: 'orange', 
-			text: 'Chờ Tổ trưởng duyệt',
-			icon: Clock
-		},
-		[ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
-			color: 'lime', 
-			text: 'Khoa đã duyệt tờ trình',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.CHỜ_XÁC_MINH]: { 
-			color: 'blue', 
-			text: 'Chờ xác minh',
-			icon: AlertTriangle
-		},
-		[ReplacementProposalStatus.ĐÃ_DUYỆT]: { 
-			color: 'green', 
-			text: 'Đã duyệt',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: { 
-			color: 'red', 
-			text: 'Đã từ chối',
-			icon: XCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_XÁC_MINH]: { 
-			color: 'purple', 
-			text: 'Đã xác minh',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
-			color: 'geekblue', 
-			text: 'Đã lập tờ trình',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
-			color: 'lime', 
-			text: 'Đã duyệt tờ trình',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
-			color: 'volcano', 
-			text: 'Đã từ chối tờ trình',
-			icon: XCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: { 
-			color: 'purple', 
-			text: 'Đã gửi biên bản',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: { 
-			color: 'geekblue', 
-			text: 'Đã ký biên bản',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
-			color: 'cyan', 
-			text: 'Đã hoàn tất mua sắm',
-			icon: CheckCircle
-		},
-	}
-
-	const currentStatus = statusConfig[request.status] || { 
-		color: 'default', 
-		text: request.status,
-		icon: Clock
-	}
+	// Lấy cấu hình trạng thái từ constant
+	const currentStatus = getReplacementProposalStatusConfig(request.status)
 
 	// Cấu hình cột cho bảng linh kiện
 	const componentColumns = [
@@ -373,14 +307,11 @@ export default function ChiTietThayThePage() {
 									{request.proposalCode}
 								</span>
 							</Descriptions.Item>
-							<Descriptions.Item label="Trạng thái">
-								<Tag color={currentStatus.color}>
-									<div className="flex items-center gap-1">
-										<currentStatus.icon className="w-3 h-3" />
-										<span>{currentStatus.text}</span>
-									</div>
-								</Tag>
-							</Descriptions.Item>
+						<Descriptions.Item label="Trạng thái">
+							<Tag color={currentStatus.color} className="inline-flex items-center gap-1">
+								<span>{currentStatus.text}</span>
+							</Tag>
+						</Descriptions.Item>
 							<Descriptions.Item label="Tiêu đề đề xuất" span={2}>
 								<div className="font-medium">{request.title || 'N/A'}</div>
 							</Descriptions.Item>

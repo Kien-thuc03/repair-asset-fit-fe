@@ -11,15 +11,16 @@ import {
   Table,
   Modal,
   Spin,
-  Steps,
+  Timeline,
 } from "antd";
 import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertTriangle,
   FileText,
+  Package,
 } from "lucide-react";
+import { getReplacementProposalStatusConfig } from "@/lib/constants/replacement-proposal-status";
 import { SubmissionFormData } from "@/types/repair";
 import {
   useReplacementProposal,
@@ -161,91 +162,11 @@ export default function ChiTietDuyetDeXuatPage() {
     );
   }
 
-  // Define the possible statuses as a union type
-  type ReplacementStatusType =
-    | "CHỜ_TỔ_TRƯỞNG_DUYỆT"
-    | "CHỜ_XÁC_MINH"
-    | "ĐÃ_DUYỆT"
-    | "ĐÃ_TỪ_CHỐI"
-    | "ĐÃ_XÁC_MINH"
-    | "ĐÃ_LẬP_TỜ_TRÌNH"
-    | "ĐÃ_DUYỆT_TỜ_TRÌNH"
-    | "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH"
-    | "ĐÃ_GỬI_BIÊN_BẢN"
-    | "ĐÃ_KÝ_BIÊN_BẢN"
-    | "ĐÃ_HOÀN_TẤT_MUA_SẮM";
-
-  // Status configuration
-  const statusConfig: Record<
-    ReplacementStatusType,
-    {
-      color: string;
-      text: string;
-      icon: React.ElementType;
-    }
-  > = {
-    CHỜ_TỔ_TRƯỞNG_DUYỆT: {
-      color: "orange",
-      text: "Chờ tổ trưởng duyệt",
-      icon: Clock,
-    },
-    CHỜ_XÁC_MINH: {
-      color: "blue",
-      text: "Chờ xác minh",
-      icon: AlertTriangle,
-    },
-    ĐÃ_DUYỆT: {
-      color: "green",
-      text: "Đã duyệt",
-      icon: CheckCircle,
-    },
-    ĐÃ_TỪ_CHỐI: {
-      color: "red",
-      text: "Đã từ chối",
-      icon: XCircle,
-    },
-    ĐÃ_XÁC_MINH: {
-      color: "purple",
-      text: "Đã xác minh",
-      icon: CheckCircle,
-    },
-    ĐÃ_LẬP_TỜ_TRÌNH: {
-      color: "geekblue",
-      text: "Đã lập tờ trình",
-      icon: CheckCircle,
-    },
-    ĐÃ_DUYỆT_TỜ_TRÌNH: {
-      color: "lime",
-      text: "Đã duyệt tờ trình",
-      icon: CheckCircle,
-    },
-    ĐÃ_TỪ_CHỐI_TỜ_TRÌNH: {
-      color: "volcano",
-      text: "Đã từ chối tờ trình",
-      icon: XCircle,
-    },
-    ĐÃ_GỬI_BIÊN_BẢN: {
-      color: "cyan",
-      text: "Đã gửi biên bản",
-      icon: CheckCircle,
-    },
-    ĐÃ_KÝ_BIÊN_BẢN: {
-      color: "geekblue",
-      text: "Đã ký biên bản",
-      icon: CheckCircle,
-    },
-    ĐÃ_HOÀN_TẤT_MUA_SẮM: {
-      color: "green",
-      text: "Đã hoàn tất mua sắm",
-      icon: CheckCircle,
-    },
-  };
-
   // Get current status - use updated status if available, otherwise use original proposal status
   const displayStatus = currentRequestStatus || proposal.status;
-  const currentStatus = statusConfig[
-    displayStatus as ReplacementStatusType
-  ] || {
+  const currentStatus = getReplacementProposalStatusConfig(
+    displayStatus as ReplacementProposalStatus
+  ) || {
     color: "default",
     text: displayStatus,
     icon: Clock,
@@ -733,18 +654,6 @@ Trân trọng kính trình.`;
   // Show "Lập tờ trình" button for ĐÃ_DUYỆT status
   const canCreateSubmission = displayStatus === "ĐÃ_DUYỆT";
 
-  // Helper function to get status step
-  const getStatusStep = (status: string) => {
-    // Xử lý trường hợp từ chối - hiển thị ở bước 1 (Đã duyệt) với status error
-    if (status === "ĐÃ_TỪ_CHỐI") {
-      return 1; // Bước "Đã duyệt" nhưng với status error
-    }
-
-    const steps = ["CHỜ_TỔ_TRƯỞNG_DUYỆT", "ĐÃ_DUYỆT", "ĐÃ_LẬP_TỜ_TRÌNH"];
-    const currentIndex = steps.indexOf(status);
-    return currentIndex >= 0 ? currentIndex : 0;
-  };
-
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
@@ -780,11 +689,12 @@ Trân trọng kính trình.`;
         </div>
       </div>
 
-      {/* Basic Info and Status Progress - 2 columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Basic Info */}
-        <div>
-          <Card title="Thông tin cơ bản" className="shadow">
+      {/* Main layout - 3 columns (2 for info, 1 for timeline) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Main Info Section */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Detailed Info */}
+          <Card title="Thông tin chi tiết" className="shadow">
             <Table
               dataSource={[
                 {
@@ -798,18 +708,26 @@ Trân trọng kính trình.`;
                 },
                 {
                   key: "2",
+                  field: "Tiêu đề",
+                  value: (
+                    <div className="font-medium text-xs sm:text-sm text-gray-900">
+                      {proposal.title || "Không có tiêu đề"}
+                    </div>
+                  ),
+                },
+                {
+                  key: "3",
                   field: "Trạng thái",
                   value: (
                     <Tag
                       color={currentStatus.color}
-                      icon={<currentStatus.icon className="w-3 h-3" />}
-                      className="text-xs">
+                      className="text-xs inline-flex items-center gap-1">
                       {currentStatus.text}
                     </Tag>
                   ),
                 },
                 {
-                  key: "3",
+                  key: "4",
                   field: "Người đề xuất",
                   value: (
                     <div className="font-medium text-xs sm:text-sm">
@@ -818,7 +736,7 @@ Trân trọng kính trình.`;
                   ),
                 },
                 {
-                  key: "4",
+                  key: "5",
                   field: "Ngày tạo",
                   value: (
                     <div className="text-xs sm:text-sm">
@@ -836,7 +754,25 @@ Trân trọng kính trình.`;
                   ),
                 },
                 {
-                  key: "5",
+                  key: "6",
+                  field: "Ngày cập nhật",
+                  value: (
+                    <div className="text-xs sm:text-sm">
+                      {new Date(proposal.updatedAt).toLocaleDateString(
+                        "vi-VN",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  key: "7",
                   field: "Số lượng linh kiện",
                   value: (
                     <span className="font-medium text-blue-600 text-xs sm:text-sm">
@@ -844,10 +780,90 @@ Trân trọng kính trình.`;
                     </span>
                   ),
                 },
+                {
+                  key: "8",
+                  field: "Tổng số lượng",
+                  value: (
+                    <span className="font-medium text-green-600 text-xs sm:text-sm">
+                      {replacementItems.reduce(
+                        (sum, item) => sum + (item.quantity || 0),
+                        0
+                      )}{" "}
+                      sản phẩm
+                    </span>
+                  ),
+                },
+                ...(proposal.description
+                  ? [
+                      {
+                        key: "9",
+                        field: "Mô tả",
+                        value: (
+                          <div className="text-xs sm:text-sm text-gray-700 whitespace-pre-wrap max-w-md">
+                            {proposal.description}
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(teamLeadApproverName &&
+                (displayStatus === "ĐÃ_DUYỆT" ||
+                  displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH" ||
+                  displayStatus === "ĐÃ_TỪ_CHỐI")
+                  ? [
+                      {
+                        key: "10",
+                        field: "Người duyệt",
+                        value: (
+                          <div className="font-medium text-xs sm:text-sm text-green-700">
+                            {teamLeadApproverName}
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(proposal.repairRequests && proposal.repairRequests.length > 0
+                  ? [
+                      {
+                        key: "11",
+                        field: "YCSC liên quan",
+                        value: (
+                          <div className="flex flex-wrap gap-1">
+                            {proposal.repairRequests.map((rr) => (
+                              <Tag
+                                key={rr.id}
+                                color="blue"
+                                className="text-xs font-mono">
+                                {rr.requestCode}
+                              </Tag>
+                            ))}
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(proposal.submissionFormUrl
+                  ? [
+                      {
+                        key: "12",
+                        field: "Tờ trình",
+                        value: (
+                          <a
+                            href={proposal.submissionFormUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm underline flex items-center gap-1">
+                            <FileText className="w-3 h-3" />
+                            Xem tờ trình
+                          </a>
+                        ),
+                      },
+                    ]
+                  : []),
                 ...(canApproveOrReject
                   ? [
                       {
-                        key: "6",
+                        key: "13",
                         field: "Hành động",
                         value: (
                           <div className="flex flex-col sm:flex-row gap-2">
@@ -875,7 +891,7 @@ Trân trọng kính trình.`;
                 ...(canCreateSubmission
                   ? [
                       {
-                        key: "7",
+                        key: "14",
                         field: "Hành động",
                         value: (
                           <div className="flex flex-col sm:flex-row gap-2">
@@ -913,108 +929,159 @@ Trân trọng kính trình.`;
               showHeader={true}
             />
           </Card>
+
+          {/* Components List */}
+          <Card
+            title={
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-gray-600" />
+                <span className="text-sm sm:text-base">
+                  Danh sách linh kiện cần thay thế
+                </span>
+                <Tag color="blue" className="ml-auto text-xs sm:text-sm">
+                  {replacementItems.length} linh kiện
+                </Tag>
+              </div>
+            }
+            className="shadow">
+            <Table
+              dataSource={tableData}
+              columns={componentColumns}
+              rowKey="id"
+              pagination={false}
+              size="small"
+              className="responsive-table"
+            />
+          </Card>
+
+          {/* Files - Tài liệu đính kèm */}
+          {proposal.submissionFormUrl && (
+            <Card title="Tài liệu đính kèm" className="shadow">
+              <div className="space-y-2">
+                <div>
+                  <a
+                    href={proposal.submissionFormUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm underline flex items-center gap-1">
+                    <FileText className="w-4 h-4" />
+                    📄 Tờ trình đề xuất
+                  </a>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
 
-        {/* Status Progress */}
-        <div>
+        {/* Timeline - Right column */}
+        <div className="lg:col-span-1">
           <Card
             title={
               <span className="text-sm sm:text-base">Tiến trình xử lý</span>
             }
             className="shadow">
-            <div className="mt-4">
-              <Steps
-                current={getStatusStep(displayStatus)}
-                status={displayStatus === "ĐÃ_TỪ_CHỐI" ? "error" : "process"}
-                size="small"
-                items={[
-                  {
-                    title: "Tạo đề xuất",
-                    icon: <Clock className="w-4 h-4" />,
-                    description:
-                      displayStatus === "CHỜ_TỔ_TRƯỞNG_DUYỆT"
-                        ? "Hiện tại"
-                        : new Date(proposal.createdAt).toLocaleDateString(
-                            "vi-VN"
-                          ),
-                  },
-                  {
-                    title: "Đã duyệt",
-                    icon: <CheckCircle className="w-4 h-4" />,
-                    description:
-                      displayStatus === "ĐÃ_DUYỆT" ||
-                      displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
-                        ? teamLeadApproverName
-                          ? `Bởi: ${teamLeadApproverName}`
-                          : new Date(proposal.updatedAt).toLocaleDateString(
-                              "vi-VN"
-                            )
-                        : "",
-                  },
-                  {
-                    title: "Đã lập tờ trình",
-                    icon: <FileText className="w-4 h-4" />,
-                    description:
-                      displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
-                        ? "Đã tạo và gửi tờ trình"
-                        : "",
-                  },
-                ]}
-              />
-              {/* Status-specific alerts */}
-              {displayStatus === "ĐÃ_TỪ_CHỐI" && (
-                <Alert
-                  className="mt-4"
-                  message="Đề xuất đã bị từ chối"
-                  description={
-                    teamLeadApproverName
-                      ? `Đề xuất đã bị từ chối bởi ${teamLeadApproverName} lúc ${new Date(
-                          proposal.updatedAt
-                        ).toLocaleString("vi-VN")}.`
-                      : `Đề xuất đã bị từ chối lúc ${new Date(
-                          proposal.updatedAt
-                        ).toLocaleString("vi-VN")}.`
-                  }
-                  type="error"
-                  icon={<XCircle />}
-                  showIcon
-                />
-              )}
-              {displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH" && (
-                <Alert
-                  className="mt-4"
-                  message="Đã lập tờ trình thành công"
-                  description={`Tờ trình đã được tạo và gửi tới Phòng Quản trị lúc ${new Date(
-                    proposal.updatedAt
-                  ).toLocaleString("vi-VN")}.`}
-                  type="success"
-                  icon={<CheckCircle />}
-                  showIcon
-                />
-              )}
-            </div>
+            <Timeline
+              items={[
+                {
+                  color: "blue",
+                  children: (
+                    <div>
+                      <p className="font-medium">Tạo đề xuất thay thế</p>
+                      <p className="text-sm text-gray-500">
+                        Người tạo: {proposerName}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(proposal.createdAt).toLocaleString("vi-VN")}
+                      </p>
+                    </div>
+                  ),
+                },
+                ...(displayStatus !== "CHỜ_TỔ_TRƯỞNG_DUYỆT"
+                  ? [
+                      {
+                        color:
+                          displayStatus === "ĐÃ_TỪ_CHỐI" ? "red" : "green",
+                        children: (
+                          <div>
+                            <p className="font-medium">
+                              {displayStatus === "ĐÃ_TỪ_CHỐI"
+                                ? "Từ chối đề xuất"
+                                : "Chấp thuận đề xuất"}
+                            </p>
+                            {teamLeadApproverName && (
+                              <p className="text-sm text-gray-500">
+                                Người duyệt: {teamLeadApproverName}
+                              </p>
+                            )}
+                            <p className="text-sm text-gray-500">
+                              {new Date(proposal.updatedAt).toLocaleString(
+                                "vi-VN"
+                              )}
+                            </p>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
+                  ? [
+                      {
+                        color: "purple",
+                        children: (
+                          <div>
+                            <p className="font-medium">Đã lập tờ trình</p>
+                            <p className="text-sm text-gray-500">
+                              {teamLeadApproverName &&
+                                `Người lập: ${teamLeadApproverName}`}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Tờ trình đã được tạo và gửi tới Phòng Quản trị
+                            </p>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(proposal.adminVerifier &&
+                displayStatus === "ĐÃ_XÁC_MINH"
+                  ? [
+                      {
+                        color: "cyan",
+                        children: (
+                          <div>
+                            <p className="font-medium">Đã xác minh</p>
+                            <p className="text-sm text-gray-500">
+                              Người xác minh: {proposal.adminVerifier.fullName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(proposal.updatedAt).toLocaleString(
+                                "vi-VN"
+                              )}
+                            </p>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(displayStatus === "ĐÃ_HOÀN_TẤT_MUA_SẮM"
+                  ? [
+                      {
+                        color: "green",
+                        children: (
+                          <div>
+                            <p className="font-medium">Hoàn tất mua sắm</p>
+                            <p className="text-sm text-gray-500">
+                              Linh kiện đã sẵn sàng để thay thế
+                            </p>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           </Card>
         </div>
-      </div>
-
-      <div>
-        {/* Components List */}
-        <Card
-          title={
-            <span className="text-sm sm:text-base">
-              Danh sách linh kiện cần thay thế ({replacementItems.length})
-            </span>
-          }
-          className="shadow">
-          <Table
-            dataSource={tableData}
-            columns={componentColumns}
-            rowKey="id"
-            pagination={false}
-            size="small"
-            className="responsive-table"
-          />
-        </Card>
       </div>
 
       {/* Approve Modal */}
