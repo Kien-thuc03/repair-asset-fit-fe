@@ -2,7 +2,7 @@
 
 import {  Edit3, Trash2 } from "lucide-react";
 import { RepairRequest } from "@/types";
-import { repairRequestStatusConfig } from "@/lib/mockData";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 
 interface DetailHeaderProps {
   request: RepairRequest;

@@ -52,7 +52,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         icon: LayoutDashboard,
       },
       {
-        name: "Quản lý báo hỏng thiết bị",
+        name: "Báo hỏng thiết bị",
         href: "/giang-vien/bao-cao-loi",
         icon: TriangleAlert,
       },
@@ -540,11 +540,11 @@ function Topbar({
           {/* Logo và tên trường */}
           <div className="flex items-center space-x-1 sm:space-x-3">
             <Image
-              src="/images/Logo_IUH.webp"
+              src="/images/Logo-rut-gon.png"
               alt="Logo"
-              width={60}
+              width={36}
               height={24}
-              className="rounded-lg sm:w-[80px] sm:h-[32px] lg:w-[100px] lg:h-[40px]"
+              className="rounded-lg sm:h-[32px] lg:h-[40px]"
             />
             {/* Ẩn text trên mobile nhỏ, hiện trên sm và lớn hơn */}
             <div className="hidden sm:block">
@@ -769,7 +769,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex items-center justify-between h-16 px-6 bg-blue-900">
           <div className="flex items-center space-x-3">
             <Image
-              src="/images/logo-IUH-ngang-trang-300x131-1.png"
+              src="/images/Logo-new-light.png"
               alt="Logo"
               width={40}
               height={40}
@@ -814,11 +814,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               {!isDesktopSidebarCollapsed && (
                 <>
                   <Image
-                    src="/images/logo-IUH-ngang-trang-300x131-1.png"
+                    src="/images/Logo-new-light.png"
                     alt="Logo"
-                    width={100}
+                    width={150}
                     height={45}
-                    className="rounded-lg mb-4"
+                    className="rounded-lg mb-2"
                   />
                   <div>
                     <div className="text-[#8cb9de] font-medium text-[16px] text-center">

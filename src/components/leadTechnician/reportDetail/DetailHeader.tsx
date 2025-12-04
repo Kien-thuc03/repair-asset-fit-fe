@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { RepairRequest, RepairStatus } from "@/types";
-import { repairRequestStatusConfig } from "@/lib/mockData";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 
 interface DetailHeaderProps {
   request: RepairRequest;

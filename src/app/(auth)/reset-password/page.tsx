@@ -154,7 +154,7 @@ export default function ResetPasswordPage() {
         {/* Logo */}
         <div className="text-center mb-6">
           <Image
-            src={"/images/logo-light.webp"}
+            src={"/images/Logo_new.png"}
             alt="Logo IUH"
             width={250}
             height={109}

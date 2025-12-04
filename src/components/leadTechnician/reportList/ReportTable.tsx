@@ -10,7 +10,7 @@ import {
   Search,
 } from "lucide-react";
 import { RepairRequest, RepairStatus } from "@/types";
-import { repairRequestStatusConfig } from "@/lib/mockData";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 
 interface ReportTableProps {
   requests: RepairRequest[];

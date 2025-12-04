@@ -11,12 +11,13 @@ import {
   ComponentStatus,
   ComponentType,
 } from "@/types";
+import { AssetStatus } from "@/types/computer";
 import { AlertCircle } from "lucide-react";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
 import { getComponentsByComputerId } from "@/lib/api/components";
 import { getSoftwareByAssetId } from "@/lib/api/asset-software";
-import { createAndProcessRepair, CreateAndProcessRepairRequest, getAssignedFloors, AssignedFloor, getRepairs } from "@/lib/api/repairs";
+import { createAndProcessRepair, CreateAndProcessRepairRequest, getAssignedFloors, AssignedFloor } from "@/lib/api/repairs";
 import { useProfile } from "@/hooks";
 import {
   getHardwareErrorTypes,
@@ -84,76 +85,82 @@ export default function GhiNhanXuLyLoiPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
   const [assignedFloors, setAssignedFloors] = useState<AssignedFloor[]>([]);
-  const [computersWithActiveRepairs, setComputersWithActiveRepairs] = useState<Set<string>>(new Set());
+  const [loadingBuildings, setLoadingBuildings] = useState(true);
+  const [loadingComputers, setLoadingComputers] = useState(false);
+  const [assignedFloorsLoaded, setAssignedFloorsLoaded] = useState(false);
 
-  // Extract unique buildings from rooms - chỉ lấy buildings được phân công
-  const buildings = assignedFloors.length > 0
+  // Extract unique buildings - CHỈ lấy từ assignedFloors sau khi đã load xong
+  // Không sử dụng fallback từ rooms để tránh hiển thị tầng không được phân công
+  const buildings = assignedFloorsLoaded
     ? Array.from(
         new Set(assignedFloors.map((floor) => floor.building).filter(Boolean))
       )
-    : Array.from(
-        new Set(rooms.map((room) => room.building).filter(Boolean))
-      );
+    : [];
 
   // Computed: Lấy floors được phân công cho building hiện tại
+  // CHỈ lấy từ assignedFloors, không fallback về rooms
   const getAvailableFloorsForBuilding = (building: string): string[] => {
-    if (!building) return [];
+    if (!building || !assignedFloorsLoaded) return [];
     
-    if (assignedFloors.length > 0) {
-      // Chỉ lấy floors được phân công cho building này
-      return Array.from(
-        new Set(
-          assignedFloors
-            .filter((floor) => floor.building === building)
-            .map((floor) => floor.floor)
-            .filter(Boolean)
-        )
-      );
-    } else {
-      // Fallback: lấy tất cả floors nếu chưa có assigned floors
-      return Array.from(
-        new Set(
-          rooms
-            .filter((room) => room.building === building)
-            .map((room) => room.floor)
-            .filter(Boolean)
-        )
-      );
-    }
+    // Chỉ lấy floors được phân công cho building này
+    return Array.from(
+      new Set(
+        assignedFloors
+          .filter((floor) => floor.building === building)
+          .map((floor) => floor.floor)
+          .filter(Boolean)
+      )
+    );
   };
 
   // Computed: Floors có sẵn cho building hiện tại
   const availableFloors = getAvailableFloorsForBuilding(formData.building);
 
-  // Fetch assigned floors for technician
+  // Fetch assigned floors and rooms for technician
   useEffect(() => {
-    const fetchAssignedFloors = async () => {
-      if (!userDetails?.id) return;
-      
-      try {
-        const response = await getAssignedFloors();
-        setAssignedFloors(response.assignedFloors || []);
-      } catch (error) {
-        console.error("Error fetching assigned floors:", error);
-        // Nếu không lấy được, vẫn cho phép hiển thị tất cả (fallback)
-        setAssignedFloors([]);
-      }
-    };
-    fetchAssignedFloors();
-  }, [userDetails?.id]);
+    const fetchInitialData = async () => {
+      setLoadingBuildings(true);
+      setAssignedFloorsLoaded(false);
+      const promises: Promise<void>[] = [];
 
-  // Fetch rooms from API
-  useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const roomsData = await getRoomsApi();
-        setRooms(roomsData);
-      } catch {
-        message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
+      // Fetch assigned floors if user is logged in - BẮT BUỘC phải load trước
+      if (userDetails?.id) {
+        promises.push(
+          getAssignedFloors()
+            .then((response) => {
+              setAssignedFloors(response.assignedFloors || []);
+              setAssignedFloorsLoaded(true); // Đánh dấu đã load xong
+            })
+            .catch((error) => {
+              console.error("Error fetching assigned floors:", error);
+              setAssignedFloors([]);
+              setAssignedFloorsLoaded(true); // Vẫn đánh dấu đã load (dù có lỗi)
+              message.error("Không thể tải danh sách tầng được phân công. Vui lòng thử lại.");
+            })
+        );
+      } else {
+        // Nếu không có user, vẫn đánh dấu đã load để không hiển thị fallback
+        setAssignedFloorsLoaded(true);
       }
+
+      // Fetch rooms (chỉ dùng để filter rooms sau khi chọn floor)
+      promises.push(
+        getRoomsApi()
+          .then((roomsData) => {
+            setRooms(roomsData);
+          })
+          .catch(() => {
+            message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
+          })
+      );
+
+      // Wait for all promises to complete
+      await Promise.all(promises);
+      setLoadingBuildings(false);
     };
-    fetchRooms();
-  }, []);
+
+    fetchInitialData();
+  }, [userDetails?.id]);
 
   // Detect mobile device
   useEffect(() => {
@@ -206,10 +213,14 @@ export default function GhiNhanXuLyLoiPage() {
     setSelectedSoftwareIds([]);
     setSelectedComputerId("");
     
-    // Filter rooms by building and floor - chỉ lấy rooms ở tầng được phân công
+    // Filter rooms by building and floor - CHỈ lấy rooms ở tầng được phân công
+    // Không sử dụng fallback để tránh hiển thị rooms không được phân công
     let roomsOnFloor: RoomResponseDto[] = [];
     
-    if (assignedFloors.length > 0) {
+    if (!assignedFloorsLoaded) {
+      // Chưa load xong, không hiển thị rooms
+      roomsOnFloor = [];
+    } else if (assignedFloors.length > 0) {
       // Kiểm tra floor có được phân công không
       const isFloorAssigned = assignedFloors.some(
         (assigned) => assigned.building === formData.building && assigned.floor === floor
@@ -225,10 +236,10 @@ export default function GhiNhanXuLyLoiPage() {
         message.warning("Tầng này không thuộc phạm vi được phân công của bạn");
       }
     } else {
-      // Fallback: lấy tất cả rooms nếu chưa có assigned floors
-      roomsOnFloor = rooms.filter(
-        (room) => room.building === formData.building && room.floor === floor
-      );
+      // assignedFloorsLoaded = true nhưng assignedFloors.length = 0
+      // Nghĩa là người dùng không được phân công tầng nào
+      roomsOnFloor = [];
+      message.warning("Bạn chưa được phân công tầng nào");
     }
     
     setFilteredRooms(roomsOnFloor);
@@ -237,40 +248,6 @@ export default function GhiNhanXuLyLoiPage() {
     setFilteredSoftware([]);
   };
 
-  // Fetch active repair requests để kiểm tra máy đang bị lỗi
-  const fetchActiveRepairs = async () => {
-    try {
-      // Lấy tất cả repair requests đang xử lý (không phải ĐÃ_HOÀN_THÀNH hoặc ĐÃ_HỦY)
-      const response = await getRepairs({
-        status: undefined, // Không filter theo status, sẽ lấy tất cả
-        limit: 1000, // Lấy nhiều để đảm bảo không bỏ sót
-      });
-
-      // Tạo Set các computerAssetId đang có repair request đang xử lý
-      const activeRepairAssetIds = new Set<string>();
-      
-      response.data.forEach((repair) => {
-        // Chỉ lấy các repair request đang xử lý (không phải ĐÃ_HOÀN_THÀNH hoặc ĐÃ_HỦY)
-        if (
-          repair.status !== RepairStatus.ĐÃ_HOÀN_THÀNH &&
-          repair.status !== RepairStatus.ĐÃ_HỦY &&
-          repair.computerAssetId
-        ) {
-          activeRepairAssetIds.add(repair.computerAssetId);
-        }
-      });
-
-      setComputersWithActiveRepairs(activeRepairAssetIds);
-    } catch (error) {
-      console.error("Error fetching active repairs:", error);
-      // Không hiển thị lỗi cho user vì đây là tính năng phụ
-    }
-  };
-
-  // Fetch active repairs khi component mount và khi room thay đổi
-  useEffect(() => {
-    fetchActiveRepairs();
-  }, []);
 
   // Handle room change
   const handleRoomChange = async (roomId: string) => {
@@ -294,11 +271,10 @@ export default function GhiNhanXuLyLoiPage() {
 
     // Fetch computers for the selected room
     try {
+      setLoadingComputers(true);
       const computers = await getComputersByRoomId(roomId);
       if (Array.isArray(computers)) {
         setFilteredComputers(computers);
-        // Refresh active repairs để cập nhật danh sách máy đang bị lỗi
-        await fetchActiveRepairs();
       } else {
         setFilteredComputers([]);
         message.error("Dữ liệu máy tính không đúng định dạng");
@@ -306,6 +282,8 @@ export default function GhiNhanXuLyLoiPage() {
     } catch {
       message.error("Không thể tải danh sách máy tính");
       setFilteredComputers([]);
+    } finally {
+      setLoadingComputers(false);
     }
   };
 
@@ -474,9 +452,6 @@ export default function GhiNhanXuLyLoiPage() {
       setIsSubmitting(false);
       setShowSuccessModal(true);
 
-      // Refresh active repairs để cập nhật danh sách máy đang bị lỗi
-      await fetchActiveRepairs();
-
       // Reset form
       setFormData({
         building: "",
@@ -594,9 +569,26 @@ export default function GhiNhanXuLyLoiPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Form.Item label="Chọn tòa nhà" required>
                 <Select
-                  placeholder="Chọn tòa nhà"
+                  placeholder={
+                    loadingBuildings 
+                      ? "Đang tải danh sách tòa nhà..." 
+                      : !assignedFloorsLoaded
+                        ? "Đang tải..."
+                        : buildings.length === 0
+                          ? "Không có tòa nhà được phân công"
+                          : "Chọn tòa nhà"
+                  }
                   value={formData.building}
                   onChange={handleBuildingChange}
+                  loading={loadingBuildings || !assignedFloorsLoaded}
+                  disabled={loadingBuildings || !assignedFloorsLoaded}
+                  notFoundContent={
+                    loadingBuildings || !assignedFloorsLoaded
+                      ? "Đang tải..." 
+                      : buildings.length === 0
+                        ? "Bạn chưa được phân công tòa nhà nào"
+                        : "Không có dữ liệu"
+                  }
                 >
                   {buildings.map(building => (
                     <Option key={building} value={building}>
@@ -609,19 +601,24 @@ export default function GhiNhanXuLyLoiPage() {
               <Form.Item label="Chọn tầng" required>
                 <Select
                   placeholder={
-                    !formData.building 
-                      ? "Vui lòng chọn tòa nhà trước" 
-                      : availableFloors.length === 0 
-                        ? "Không có tầng được phân công" 
-                        : "Chọn tầng"
+                    !assignedFloorsLoaded
+                      ? "Đang tải..."
+                      : !formData.building 
+                        ? "Vui lòng chọn tòa nhà trước" 
+                        : availableFloors.length === 0 
+                          ? "Không có tầng được phân công" 
+                          : "Chọn tầng"
                   }
                   value={formData.floor}
                   onChange={handleFloorChange}
-                  disabled={!formData.building || availableFloors.length === 0}
+                  disabled={!assignedFloorsLoaded || !formData.building || availableFloors.length === 0}
+                  loading={!assignedFloorsLoaded}
                   notFoundContent={
-                    availableFloors.length === 0 && formData.building
-                      ? "Không có tầng được phân công cho tòa nhà này"
-                      : "Không có dữ liệu"
+                    !assignedFloorsLoaded
+                      ? "Đang tải..."
+                      : availableFloors.length === 0 && formData.building
+                        ? "Không có tầng được phân công cho tòa nhà này"
+                        : "Không có dữ liệu"
                   }
                 >
                   {availableFloors.map(floor => (
@@ -630,9 +627,9 @@ export default function GhiNhanXuLyLoiPage() {
                     </Option>
                   ))}
                 </Select>
-                {formData.building && availableFloors.length === 0 && (
+                {assignedFloorsLoaded && formData.building && availableFloors.length === 0 && (
                   <div className="text-sm text-orange-600 mt-1">
-                    ⚠️ Bạn không được phân công cho tòa nhà này
+                    ⚠️ Bạn không được phân công tầng nào cho tòa nhà này
                   </div>
                 )}
               </Form.Item>
@@ -661,26 +658,39 @@ export default function GhiNhanXuLyLoiPage() {
             </h3>
             <Form.Item label="Chọn thiết bị" required>
               <Select
-                placeholder={!formData.roomId ? "Vui lòng chọn phòng trước" : "Chọn thiết bị"}
+                placeholder={
+                  !formData.roomId 
+                    ? "Vui lòng chọn phòng trước" 
+                    : loadingComputers
+                      ? "Đang tải danh sách thiết bị..."
+                      : "Chọn thiết bị"
+                }
                 value={selectedComputerId}
                 onChange={handleAssetChange}
-                disabled={!formData.roomId}
-                notFoundContent="Không có máy tính nào trong phòng này"
+                disabled={!formData.roomId || loadingComputers}
+                loading={loadingComputers}
+                notFoundContent={
+                  loadingComputers 
+                    ? "Đang tải..." 
+                    : "Không có máy tính nào trong phòng này"
+                }
               >
                 {Array.isArray(filteredComputers) &&
                   filteredComputers.map((computer) => {
-                    const isActiveRepair = computer.asset?.id && computersWithActiveRepairs.has(computer.asset.id);
+                    // Kiểm tra theo trạng thái tài sản: Asset status = DAMAGED (hư hỏng)
+                    const isAssetDamaged = computer.asset?.status === AssetStatus.DAMAGED;
+                    
                     return (
                       <Option 
                         key={computer.id} 
                         value={computer.id}
-                        disabled={isActiveRepair}
+                        disabled={isAssetDamaged}
                       >
                         <div className="flex items-center justify-between">
                           <span>
                             Máy {computer.machineLabel} - {computer.asset?.name || "N/A"}
                           </span>
-                          {isActiveRepair && (
+                          {isAssetDamaged && (
                             <span className="ml-2 text-red-600 text-xs flex items-center gap-1">
                               <AlertCircle className="w-3 h-3" />
                               Đang bị lỗi
@@ -691,17 +701,6 @@ export default function GhiNhanXuLyLoiPage() {
                     );
                   })}
               </Select>
-              {/* {filteredComputers.some(
-                (computer) => computer.asset?.id && computersWithActiveRepairs.has(computer.asset.id)
-              ) && (
-                <Alert
-                  message="Lưu ý"
-                  description="Các máy đang có lỗi đang được xử lý không thể báo lỗi mới. Vui lòng hoàn thành xử lý lỗi hiện tại trước."
-                  type="warning"
-                  showIcon
-                  className="mt-2"
-                />
-              )} */}
             </Form.Item>
           </div>
 
@@ -739,16 +738,6 @@ export default function GhiNhanXuLyLoiPage() {
                 </Select>
               </Form.Item>
             )}
-
-            {formData.errorCategory === "software" && (
-              <Alert
-                message="Lỗi phần mềm"
-                description="Đã tự động chọn loại lỗi 'Máy hư phần mềm'. Bạn có thể tiếp tục chọn phần mềm cụ thể ở bước tiếp theo."
-                type="info"
-                showIcon
-                className="mt-2"
-              />
-            )}
           </div>
 
           {/* Bước 4: Chọn linh kiện/phần mềm cụ thể */}
@@ -781,11 +770,13 @@ export default function GhiNhanXuLyLoiPage() {
                       : "Không có dữ liệu"
                   }
                 >
-                  {filteredComponents.map(component => (
-                    <Option key={component.id} value={component.id}>
-                      {component.name} ({component.componentType})
-                    </Option>
-                  ))}
+                  {filteredComponents
+                    .filter(component => component.status == ComponentStatus.INSTALLED)
+                    .map(component => (
+                      <Option key={component.id} value={component.id}>
+                        {component.name} ({component.componentType})
+                      </Option>
+                    ))}
                 </Select>
               </Form.Item>
             )}

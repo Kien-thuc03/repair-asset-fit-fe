@@ -17,7 +17,7 @@ import {
   Monitor,
   Info,
 } from "lucide-react";
-import { repairRequestStatusConfig } from "@/lib/mockData/repairRequests";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 import { RepairStatus, RepairRequestWithDetails } from "@/types";
 import { HistoryCard } from "@/components/technician/requestDetailKTV";
 import ImageViewer from "@/components/ui/ImageViewer";

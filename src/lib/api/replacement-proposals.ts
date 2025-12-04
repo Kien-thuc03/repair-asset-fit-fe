@@ -334,6 +334,45 @@ export interface UpdateReplacementItemRequest {
  * @param data Dữ liệu cập nhật
  * @returns Promise với replacement proposal đã cập nhật
  */
+/**
+ * Lấy tất cả replacement items liên quan đến một repair request
+ * @param repairRequestId ID của repair request
+ * @returns Promise với danh sách replacement items
+ */
+export const getReplacementItemsByRepairRequest = async (
+  repairRequestId: string
+): Promise<ReplacementItem[]> => {
+  try {
+    console.log(`🌐 API Call: GET /api/v1/replacement-proposals/by-repair-request/${repairRequestId}`);
+    // Lấy tất cả proposals có liên quan đến repair request này
+    const proposals = await getReplacementProposals();
+    const allItems: ReplacementItem[] = [];
+    
+    // Lọc các proposals có repair request này
+    for (const proposal of proposals.data) {
+      if (proposal.repairRequests?.some(rr => rr.id === repairRequestId)) {
+        // Lấy chi tiết proposal để có đầy đủ thông tin items
+        const proposalDetail = await getReplacementProposalById(proposal.id);
+        if (proposalDetail.items) {
+          // Chỉ lấy items có repairRequestId trùng với repair request hiện tại
+          const relevantItems = proposalDetail.items.filter(
+            item => item.repairRequestId === repairRequestId
+          );
+          allItems.push(...relevantItems);
+        }
+      }
+    }
+    
+    return allItems;
+  } catch (error: unknown) {
+    console.error("❌ Get replacement items by repair request error:", error);
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy danh sách linh kiện thay thế thất bại."
+    );
+  }
+};
+
 export const updateReplacementItem = async (
   proposalId: string,
   itemId: string,

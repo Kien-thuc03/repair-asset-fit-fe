@@ -1,6 +1,7 @@
 'use client'
 
-import { getRecentRepairRequests, repairRequestStatusConfig } from '@/lib/mockData/repairRequests'
+import { getRecentRepairRequests } from '@/lib/mockData/repairRequests'
+import { repairRequestStatusConfig } from '@/lib/constants/repairStatus'
 import { RepairRequest } from '@/types'
 import Link from 'next/link'
 

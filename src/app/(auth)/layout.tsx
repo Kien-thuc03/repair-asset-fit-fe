@@ -2,19 +2,6 @@
 
 import { ReactNode } from 'react'
 
-// Demo accounts component
-function DemoAccountsInfo() {
-
-  return (
-    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-      <h4 className="text-xs font-medium text-blue-800 mb-2">Tài khoản demo:</h4>
-      <div className="space-y-1 text-xs text-blue-700">
-        <strong>user admin :</strong> 21012345 / admin123
-      </div>
-    </div>
-  )
-}
-
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen relative">
@@ -37,9 +24,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 Trường Đại học Công nghiệp TP. Hồ Chí Minh
                 </p>
             </div>
-
-            {/* Demo accounts info */}
-            <DemoAccountsInfo />
         </div>
       </div>
     </div>
