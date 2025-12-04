@@ -18,8 +18,10 @@ import {
   Eye,
   Loader2
 } from "lucide-react";
-import { Breadcrumb, Modal } from "antd";
+import { Breadcrumb } from "antd";
 import SignConfirmModal from "@/components/modal/SignConfirmModal";
+import SuccessModal from "@/components/modal/SuccessModal";
+import ErrorModal from "@/components/modal/ErrorModal";
 import {
   useReplacementProposal,
   useUpdateReplacementProposalStatus,
@@ -37,6 +39,16 @@ export default function ChiTietDuyetToTrinhPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({
+    title: "",
+    message: "",
+  });
+  const [errorMessage, setErrorMessage] = useState({
+    title: "",
+    message: "",
+  });
 
   // Fetch proposal data từ API
   const { data: proposal, loading, error } = useReplacementProposal(id);
@@ -159,29 +171,27 @@ export default function ChiTietDuyetToTrinhPage() {
 
       // Hiển thị thông báo thành công
       if (actionType === "reject") {
-        Modal.success({
+        setSuccessMessage({
           title: "Từ chối tờ trình thành công",
-          content: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công. Tổ trưởng kỹ thuật cần lập lại tờ trình.`,
-          okText: "Đóng",
-          onOk: () => {
-            router.push("/qtv-khoa/duyet-to-trinh?success=rejected");
-          },
+          message: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công. Tổ trưởng kỹ thuật cần lập lại tờ trình.`,
         });
+        setShowSuccessModal(true);
       } else {
-        router.push(
-          "/qtv-khoa/duyet-to-trinh?success=" +
-            (actionType === "approve" ? "approved" : "rejected")
-        );
+        setSuccessMessage({
+          title: "Duyệt tờ trình thành công!",
+          message: `Tờ trình ${proposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
+        });
+        setShowSuccessModal(true);
       }
     } catch (error) {
       console.error("Error processing proposal:", error);
       setIsProcessing(false);
 
-      Modal.error({
+      setErrorMessage({
         title: "Lỗi",
-        content: "Có lỗi xảy ra khi xử lý tờ trình. Vui lòng thử lại.",
-        okText: "Đóng",
+        message: "Có lỗi xảy ra khi xử lý tờ trình. Vui lòng thử lại.",
       });
+      setShowErrorModal(true);
     }
   };
 
@@ -198,25 +208,22 @@ export default function ChiTietDuyetToTrinhPage() {
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      // Hiển thị thông báo thành công và chuyển hướng
-      Modal.success({
+      // Hiển thị thông báo thành công
+      setSuccessMessage({
         title: "Duyệt tờ trình thành công!",
-        content: `Tờ trình ${proposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
-        okText: "Đóng",
-        onOk: () => {
-          router.push("/qtv-khoa/duyet-to-trinh?success=approved");
-        },
+        message: `Tờ trình ${proposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
       });
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Error approving proposal:", error);
       setIsProcessing(false);
       setShowSignConfirmModal(false);
 
-      Modal.error({
+      setErrorMessage({
         title: "Lỗi",
-        content: "Có lỗi xảy ra khi duyệt tờ trình. Vui lòng thử lại.",
-        okText: "Đóng",
+        message: "Có lỗi xảy ra khi duyệt tờ trình. Vui lòng thử lại.",
       });
+      setShowErrorModal(true);
     }
   };
 
@@ -570,6 +577,27 @@ export default function ChiTietDuyetToTrinhPage() {
         isLoading={isProcessing}
         actionType="approve"
         customWarning="Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành 'Khoa đã duyệt tờ trình' và chuyển tới Ban giám hiệu để phê duyệt cuối cùng. Không thể hoàn tác."
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          // Luôn chuyển về danh sách sau khi đóng modal thành công
+          router.push("/qtv-khoa/duyet-to-trinh");
+        }}
+        title={successMessage.title}
+        message={successMessage.message}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title={errorMessage.title}
+        message={errorMessage.message}
+        showRetry={false}
       />
     </div>
   );

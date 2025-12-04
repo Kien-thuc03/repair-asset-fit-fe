@@ -16,6 +16,8 @@ import Link from "next/link";
 import { Breadcrumb, Button, Modal, Card, Row, Col, Input, Select, DatePicker } from "antd";
 import { SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import Pagination from "@/components/common/Pagination";
+import SuccessModal from "@/components/modal/SuccessModal";
+import ErrorModal from "@/components/modal/ErrorModal";
 import { useRouter } from "next/navigation";
 import {
   useReplacementProposals,
@@ -45,12 +47,20 @@ export default function DuyetToTrinhPage() {
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showApprovalSuccessModal, setShowApprovalSuccessModal] = useState(false);
   const [showApprovalErrorModal, setShowApprovalErrorModal] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
   const [selectedProposal, setSelectedProposal] =
     useState<ReplacementProposal | null>(null);
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
+  const [approvalSuccessMessage, setApprovalSuccessMessage] = useState({
+    title: "",
+    message: "",
+  });
+  const [approvalErrorMessage, setApprovalErrorMessage] = useState({
+    title: "",
+    message: "",
+  });
 
   // Tính toán fromDate và toDate từ dateRange
   const fromDate = dateRange?.[0]?.toISOString();
@@ -164,7 +174,6 @@ export default function DuyetToTrinhPage() {
   const handleApproveConfirm = async () => {
     if (!selectedProposal) return;
 
-    setIsApproving(true);
     try {
       await updateStatus(selectedProposal.id, {
         status: ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH,
@@ -174,26 +183,23 @@ export default function DuyetToTrinhPage() {
       setShowApprovalModal(false);
       setSelectedProposal(null);
 
-      // Refetch data để cập nhật danh sách
-      await refetch();
+      // Refetch data
+      refetch();
 
       // Hiển thị thông báo thành công
-      Modal.success({
+      setApprovalSuccessMessage({
         title: "Duyệt tờ trình thành công!",
-        content: `Tờ trình ${selectedProposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
-        okText: "Đóng",
-        onOk: () => {
-          // Không cần navigate vì đã ở trang này rồi
-        },
+        message: `Tờ trình ${selectedProposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
       });
+      setShowApprovalSuccessModal(true);
     } catch (error) {
       console.error("Error approving proposal:", error);
-      // Đóng modal xác nhận
       setShowApprovalModal(false);
-      // Hiển thị modal lỗi
+      setApprovalErrorMessage({
+        title: "Không thể duyệt tờ trình",
+        message: "Đã xảy ra lỗi khi duyệt tờ trình. Vui lòng thử lại sau.",
+      });
       setShowApprovalErrorModal(true);
-    } finally {
-      setIsApproving(false);
     }
   };
 
@@ -872,6 +878,26 @@ export default function DuyetToTrinhPage() {
           )}
         </div>
       </Modal>
+
+      {/* Approval Success Modal */}
+      <SuccessModal
+        isOpen={showApprovalSuccessModal}
+        onClose={() => {
+          setShowApprovalSuccessModal(false);
+          router.push("/qtv-khoa/duyet-to-trinh");
+        }}
+        title={approvalSuccessMessage.title}
+        message={approvalSuccessMessage.message}
+      />
+
+      {/* Approval Error Modal */}
+      <ErrorModal
+        isOpen={showApprovalErrorModal}
+        onClose={() => setShowApprovalErrorModal(false)}
+        title={approvalErrorMessage.title}
+        message={approvalErrorMessage.message}
+        showRetry={false}
+      />
     </div>
   );
 }
