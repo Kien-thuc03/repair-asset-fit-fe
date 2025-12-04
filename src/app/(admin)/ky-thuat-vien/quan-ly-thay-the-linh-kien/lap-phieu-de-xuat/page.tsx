@@ -23,7 +23,8 @@ import {
   ComponentFromRepair,
 } from "@/lib/api/replacement-proposals";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
-import { ComponentStatus, ComponentType } from "@/types";
+import { ComponentStatus, ComponentType, RepairStatus } from "@/types";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 
 type SortField =
   | "componentName"
@@ -812,21 +813,25 @@ export default function CreateProposalPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      {record.repairStatus && (
-                        <Tag
-                          color={
-                            record.repairStatus === "ĐANG_XỬ_LÝ"
-                              ? "processing"
-                              : record.repairStatus === "CHỜ_THAY_THẾ"
-                              ? "warning"
-                              : record.repairStatus === "ĐÃ_TIẾP_NHẬN"
-                              ? "blue"
-                              : "default"
-                          }
-                          className="text-xs">
-                          {record.repairStatus}
-                        </Tag>
-                      )}
+                      {record.repairStatus && (() => {
+                        const statusKey = record.repairStatus as RepairStatus;
+                        const config = repairRequestStatusConfig[statusKey];
+                        
+                        if (!config) {
+                          return (
+                            <Tag color="default" className="text-xs">
+                              {record.repairStatus}
+                            </Tag>
+                          );
+                        }
+
+                        return (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.color}`}>
+                            {config.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       <div

@@ -2,7 +2,7 @@
 
 import { CheckCircle, XCircle, Pause } from "lucide-react";
 import { RepairRequest } from "@/types";
-import { repairRequestStatusConfig } from "@/lib/mockData";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 
 interface ProgressTimelineProps {
   request: RepairRequest;

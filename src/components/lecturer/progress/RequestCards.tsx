@@ -2,7 +2,7 @@
 
 import { Eye } from "lucide-react";
 import { RepairRequest } from "@/types";
-import { repairRequestStatusConfig } from "@/lib/mockData";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 
 interface RequestCardsProps {
   requests: RepairRequest[];

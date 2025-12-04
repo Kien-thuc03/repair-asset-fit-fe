@@ -2,7 +2,7 @@
 
 import { Eye } from "lucide-react";
 import { RepairRequest } from "@/types";
-import { repairRequestStatusConfig } from "@/lib/mockData";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 import SortableHeader from "@/components/common/SortableHeader";
 
 interface RequestTableProps {

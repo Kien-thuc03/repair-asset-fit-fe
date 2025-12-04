@@ -22,7 +22,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
-import { repairRequestStatusConfig } from "@/lib/mockData/repairRequests";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 import { RepairStatus, RepairRequest } from "@/types";
 import { Pagination } from "@/components/ui";
 import { useRepairs } from "@/hooks/useRepairs";

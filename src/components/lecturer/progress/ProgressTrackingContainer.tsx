@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "antd";
 import { CheckCircle, XCircle } from "lucide-react";
 import { RepairRequest } from "@/types";
-import { repairRequestStatusConfig } from "@/lib/mockData";
+import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 import { useRepairsByReporter } from "@/hooks";
 import { useAuth } from "@/contexts/AuthContext";
 import Pagination from "@/components/common/Pagination";
