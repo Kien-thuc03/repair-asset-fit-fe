@@ -3,9 +3,9 @@
 import { useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { Breadcrumb, Card, Tag, Descriptions, Timeline, Alert, Table } from 'antd'
-import { Clock, CheckCircle, XCircle, AlertTriangle, FileText } from 'lucide-react'
 import { mockReplacementRequestItem } from '@/lib/mockData'
 import { ReplacementProposalStatus, ComponentFromRequest } from '@/types'
+import { getReplacementProposalStatusConfig } from '@/lib/constants/replacement-proposal-status'
 
 export default function QtvKhoaChiTietThayThePage() {
 	const params = useParams()
@@ -31,75 +31,10 @@ export default function QtvKhoaChiTietThayThePage() {
 		)
 	}
 
-	// Cấu hình trạng thái
-	const statusConfig: Record<ReplacementProposalStatus, { color: string; text: string; icon: React.ElementType }> = {
-		[ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
-			color: 'orange', 
-			text: 'Chờ Tổ trưởng duyệt',
-			icon: Clock
-		},
-		[ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
-			color: 'lime', 
-			text: 'Khoa đã duyệt tờ trình',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.CHỜ_XÁC_MINH]: { 
-			color: 'blue', 
-			text: 'Chờ xác minh',
-			icon: AlertTriangle
-		},
-		[ReplacementProposalStatus.ĐÃ_DUYỆT]: { 
-			color: 'green', 
-			text: 'Đã duyệt',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: { 
-			color: 'red', 
-			text: 'Đã từ chối',
-			icon: XCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_XÁC_MINH]: { 
-			color: 'purple', 
-			text: 'Đã xác minh',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
-			color: 'geekblue', 
-			text: 'Đã lập tờ trình',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
-			color: 'lime', 
-			text: 'Đã duyệt tờ trình',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
-			color: 'volcano', 
-			text: 'Đã từ chối tờ trình',
-			icon: XCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: { 
-			color: 'cyan', 
-			text: 'Đã gửi biên bản',
-			icon: FileText
-		},
-		[ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: { 
-			color: 'geekblue', 
-			text: 'Đã ký biên bản',
-			icon: CheckCircle
-		},
-		[ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
-			color: 'purple', 
-			text: 'Đã hoàn tất mua sắm',
-			icon: CheckCircle
-		},
-	}
-
-	const currentStatus = statusConfig[request.status as ReplacementProposalStatus] || { 
-		color: 'default', 
-		text: request.status,
-		icon: Clock
-	}
+	// Lấy cấu hình trạng thái
+	const currentStatus = getReplacementProposalStatusConfig(
+		request.status as ReplacementProposalStatus
+	)
 
 	// Cấu hình cột cho bảng linh kiện
 	const componentColumns = [
@@ -275,9 +210,10 @@ export default function QtvKhoaChiTietThayThePage() {
 							</Descriptions.Item>
 							<Descriptions.Item label="Trạng thái">
 								<Tag 
-									color={currentStatus.color} 
-									icon={<currentStatus.icon className="w-3 h-3" />}
+									color={currentStatus.color}
+									className="inline-flex items-center gap-1"
 								>
+									<currentStatus.icon className="w-3 h-3" />
 									{currentStatus.text}
 								</Tag>
 							</Descriptions.Item>

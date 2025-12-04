@@ -9,6 +9,7 @@ import { useProfile } from '@/hooks/useProfile'
 import { useReplacementProposalsByProposer } from '@/hooks/useReplacementProposals'
 import { ReplacementProposal } from '@/lib/api/replacement-proposals'
 import { ReplacementProposalStatus } from '@/types'
+import { getReplacementProposalStatusConfig } from '@/lib/constants/replacement-proposal-status'
 import type { Dayjs } from 'dayjs'
 
 const { RangePicker } = DatePicker
@@ -466,10 +467,7 @@ export default function QuanLyThayTheLinhKienPage() {
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
 						{paginatedData.map((record: ReplacementProposal, index: number) => {
-							const config = statusConfig[record.status] || { 
-								color: 'default', 
-								text: record.status 
-							}
+							const config = getReplacementProposalStatusConfig(record.status)
 							return (
 								<tr key={record.id} className="hover:bg-gray-50">
 									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">

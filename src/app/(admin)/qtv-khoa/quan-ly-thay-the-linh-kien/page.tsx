@@ -6,6 +6,7 @@ import { Search, Eye, ChevronUp, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { mockReplacementRequestItem } from '@/lib/mockData'
 import { ReplacementProposalStatus, ReplacementRequestItem, ComponentFromRequest } from '@/types'
+import { getReplacementProposalStatusConfig } from '@/lib/constants/replacement-proposal-status'
 import { Pagination } from '@/components/ui'
 import type { Dayjs } from 'dayjs'
 
@@ -136,45 +137,8 @@ export default function QtvKhoaQuanLyThayTheLinhKienPage() {
 		return filteredAndSortedData.slice(startIndex, endIndex)
 	}, [filteredAndSortedData, currentPage, pageSize])
 
-	// Cấu hình trạng thái
-	const statusConfig = {
-		[ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT]: { 
-			color: 'orange', 
-			text: 'Chờ Tổ trưởng duyệt' 
-		},
-		[ReplacementProposalStatus.CHỜ_XÁC_MINH]: { 
-			color: 'blue', 
-			text: 'Chờ xác minh' 
-		},
-		[ReplacementProposalStatus.ĐÃ_DUYỆT]: { 
-			color: 'green', 
-			text: 'Đã duyệt' 
-		},
-		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: { 
-			color: 'red', 
-			text: 'Đã từ chối' 
-		},
-		[ReplacementProposalStatus.ĐÃ_XÁC_MINH]: { 
-			color: 'purple', 
-			text: 'Đã xác minh' 
-		},
-		[ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: { 
-			color: 'geekblue', 
-			text: 'Đã lập tờ trình' 
-		},
-		[ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
-			color: 'lime', 
-			text: 'Đã duyệt tờ trình' 
-		},
-		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
-			color: 'volcano', 
-			text: 'Đã từ chối tờ trình' 
-		},
-		[ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM]: { 
-			color: 'cyan', 
-			text: 'Đã hoàn tất mua sắm' 
-		},
-	}
+	// Import cấu hình trạng thái từ constant
+	// (đã import ở đầu file)
 
 	return (
 		<div className="space-y-6">
@@ -321,10 +285,7 @@ export default function QtvKhoaQuanLyThayTheLinhKienPage() {
 					</thead>
 					<tbody className="bg-white divide-y divide-gray-200">
 						{paginatedData.map((record: ReplacementRequestItem, index: number) => {
-							const config = statusConfig[record.status as ReplacementProposalStatus] || { 
-								color: 'default', 
-								text: record.status 
-							}
+							const config = getReplacementProposalStatusConfig(record.status as ReplacementProposalStatus)
 							return (
 								<tr key={record.id} className="hover:bg-gray-50">
 									<td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">

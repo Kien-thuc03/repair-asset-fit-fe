@@ -17,9 +17,9 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertTriangle,
   FileText,
 } from "lucide-react";
+import { getReplacementProposalStatusConfig } from "@/lib/constants/replacement-proposal-status";
 import { SubmissionFormData } from "@/types/repair";
 import {
   useReplacementProposal,
@@ -161,91 +161,11 @@ export default function ChiTietDuyetDeXuatPage() {
     );
   }
 
-  // Define the possible statuses as a union type
-  type ReplacementStatusType =
-    | "CHỜ_TỔ_TRƯỞNG_DUYỆT"
-    | "CHỜ_XÁC_MINH"
-    | "ĐÃ_DUYỆT"
-    | "ĐÃ_TỪ_CHỐI"
-    | "ĐÃ_XÁC_MINH"
-    | "ĐÃ_LẬP_TỜ_TRÌNH"
-    | "ĐÃ_DUYỆT_TỜ_TRÌNH"
-    | "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH"
-    | "ĐÃ_GỬI_BIÊN_BẢN"
-    | "ĐÃ_KÝ_BIÊN_BẢN"
-    | "ĐÃ_HOÀN_TẤT_MUA_SẮM";
-
-  // Status configuration
-  const statusConfig: Record<
-    ReplacementStatusType,
-    {
-      color: string;
-      text: string;
-      icon: React.ElementType;
-    }
-  > = {
-    CHỜ_TỔ_TRƯỞNG_DUYỆT: {
-      color: "orange",
-      text: "Chờ tổ trưởng duyệt",
-      icon: Clock,
-    },
-    CHỜ_XÁC_MINH: {
-      color: "blue",
-      text: "Chờ xác minh",
-      icon: AlertTriangle,
-    },
-    ĐÃ_DUYỆT: {
-      color: "green",
-      text: "Đã duyệt",
-      icon: CheckCircle,
-    },
-    ĐÃ_TỪ_CHỐI: {
-      color: "red",
-      text: "Đã từ chối",
-      icon: XCircle,
-    },
-    ĐÃ_XÁC_MINH: {
-      color: "purple",
-      text: "Đã xác minh",
-      icon: CheckCircle,
-    },
-    ĐÃ_LẬP_TỜ_TRÌNH: {
-      color: "geekblue",
-      text: "Đã lập tờ trình",
-      icon: CheckCircle,
-    },
-    ĐÃ_DUYỆT_TỜ_TRÌNH: {
-      color: "lime",
-      text: "Đã duyệt tờ trình",
-      icon: CheckCircle,
-    },
-    ĐÃ_TỪ_CHỐI_TỜ_TRÌNH: {
-      color: "volcano",
-      text: "Đã từ chối tờ trình",
-      icon: XCircle,
-    },
-    ĐÃ_GỬI_BIÊN_BẢN: {
-      color: "cyan",
-      text: "Đã gửi biên bản",
-      icon: CheckCircle,
-    },
-    ĐÃ_KÝ_BIÊN_BẢN: {
-      color: "geekblue",
-      text: "Đã ký biên bản",
-      icon: CheckCircle,
-    },
-    ĐÃ_HOÀN_TẤT_MUA_SẮM: {
-      color: "green",
-      text: "Đã hoàn tất mua sắm",
-      icon: CheckCircle,
-    },
-  };
-
   // Get current status - use updated status if available, otherwise use original proposal status
   const displayStatus = currentRequestStatus || proposal.status;
-  const currentStatus = statusConfig[
-    displayStatus as ReplacementStatusType
-  ] || {
+  const currentStatus = getReplacementProposalStatusConfig(
+    displayStatus as ReplacementProposalStatus
+  ) || {
     color: "default",
     text: displayStatus,
     icon: Clock,
@@ -811,8 +731,8 @@ Trân trọng kính trình.`;
                   value: (
                     <Tag
                       color={currentStatus.color}
-                      icon={<currentStatus.icon className="w-3 h-3" />}
-                      className="text-xs">
+                      className="text-xs inline-flex items-center gap-1">
+                      <currentStatus.icon className="w-3 h-3" />
                       {currentStatus.text}
                     </Tag>
                   ),
