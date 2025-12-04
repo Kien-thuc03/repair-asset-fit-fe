@@ -11,13 +11,14 @@ import {
   Table,
   Modal,
   Spin,
-  Steps,
+  Timeline,
 } from "antd";
 import {
   Clock,
   CheckCircle,
   XCircle,
   FileText,
+  Package,
 } from "lucide-react";
 import { getReplacementProposalStatusConfig } from "@/lib/constants/replacement-proposal-status";
 import { SubmissionFormData } from "@/types/repair";
@@ -653,18 +654,6 @@ Trân trọng kính trình.`;
   // Show "Lập tờ trình" button for ĐÃ_DUYỆT status
   const canCreateSubmission = displayStatus === "ĐÃ_DUYỆT";
 
-  // Helper function to get status step
-  const getStatusStep = (status: string) => {
-    // Xử lý trường hợp từ chối - hiển thị ở bước 1 (Đã duyệt) với status error
-    if (status === "ĐÃ_TỪ_CHỐI") {
-      return 1; // Bước "Đã duyệt" nhưng với status error
-    }
-
-    const steps = ["CHỜ_TỔ_TRƯỞNG_DUYỆT", "ĐÃ_DUYỆT", "ĐÃ_LẬP_TỜ_TRÌNH"];
-    const currentIndex = steps.indexOf(status);
-    return currentIndex >= 0 ? currentIndex : 0;
-  };
-
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
@@ -700,10 +689,11 @@ Trân trọng kính trình.`;
         </div>
       </div>
 
-      {/* Detailed Info and Status Progress - 2 columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Detailed Info */}
-        <div>
+      {/* Main layout - 3 columns (2 for info, 1 for timeline) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* Main Info Section */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Detailed Info */}
           <Card title="Thông tin chi tiết" className="shadow">
             <Table
               dataSource={[
@@ -732,7 +722,6 @@ Trân trọng kính trình.`;
                     <Tag
                       color={currentStatus.color}
                       className="text-xs inline-flex items-center gap-1">
-                      <currentStatus.icon className="w-3 h-3" />
                       {currentStatus.text}
                     </Tag>
                   ),
@@ -940,108 +929,159 @@ Trân trọng kính trình.`;
               showHeader={true}
             />
           </Card>
+
+          {/* Components List */}
+          <Card
+            title={
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-gray-600" />
+                <span className="text-sm sm:text-base">
+                  Danh sách linh kiện cần thay thế
+                </span>
+                <Tag color="blue" className="ml-auto text-xs sm:text-sm">
+                  {replacementItems.length} linh kiện
+                </Tag>
+              </div>
+            }
+            className="shadow">
+            <Table
+              dataSource={tableData}
+              columns={componentColumns}
+              rowKey="id"
+              pagination={false}
+              size="small"
+              className="responsive-table"
+            />
+          </Card>
+
+          {/* Files - Tài liệu đính kèm */}
+          {proposal.submissionFormUrl && (
+            <Card title="Tài liệu đính kèm" className="shadow">
+              <div className="space-y-2">
+                <div>
+                  <a
+                    href={proposal.submissionFormUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm underline flex items-center gap-1">
+                    <FileText className="w-4 h-4" />
+                    📄 Tờ trình đề xuất
+                  </a>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
 
-        {/* Status Progress */}
-        <div>
+        {/* Timeline - Right column */}
+        <div className="lg:col-span-1">
           <Card
             title={
               <span className="text-sm sm:text-base">Tiến trình xử lý</span>
             }
             className="shadow">
-            <div className="mt-4">
-              <Steps
-                current={getStatusStep(displayStatus)}
-                status={displayStatus === "ĐÃ_TỪ_CHỐI" ? "error" : "process"}
-                size="small"
-                items={[
-                  {
-                    title: "Tạo đề xuất",
-                    icon: <Clock className="w-4 h-4" />,
-                    description:
-                      displayStatus === "CHỜ_TỔ_TRƯỞNG_DUYỆT"
-                        ? "Hiện tại"
-                        : new Date(proposal.createdAt).toLocaleDateString(
-                            "vi-VN"
-                          ),
-                  },
-                  {
-                    title: "Đã duyệt",
-                    icon: <CheckCircle className="w-4 h-4" />,
-                    description:
-                      displayStatus === "ĐÃ_DUYỆT" ||
-                      displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
-                        ? teamLeadApproverName
-                          ? `Bởi: ${teamLeadApproverName}`
-                          : new Date(proposal.updatedAt).toLocaleDateString(
-                              "vi-VN"
-                            )
-                        : "",
-                  },
-                  {
-                    title: "Đã lập tờ trình",
-                    icon: <FileText className="w-4 h-4" />,
-                    description:
-                      displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
-                        ? "Đã tạo và gửi tờ trình"
-                        : "",
-                  },
-                ]}
-              />
-              {/* Status-specific alerts */}
-              {displayStatus === "ĐÃ_TỪ_CHỐI" && (
-                <Alert
-                  className="mt-4"
-                  message="Đề xuất đã bị từ chối"
-                  description={
-                    teamLeadApproverName
-                      ? `Đề xuất đã bị từ chối bởi ${teamLeadApproverName} lúc ${new Date(
-                          proposal.updatedAt
-                        ).toLocaleString("vi-VN")}.`
-                      : `Đề xuất đã bị từ chối lúc ${new Date(
-                          proposal.updatedAt
-                        ).toLocaleString("vi-VN")}.`
-                  }
-                  type="error"
-                  icon={<XCircle />}
-                  showIcon
-                />
-              )}
-              {displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH" && (
-                <Alert
-                  className="mt-4"
-                  message="Đã lập tờ trình thành công"
-                  description={`Tờ trình đã được tạo và gửi tới Phòng Quản trị lúc ${new Date(
-                    proposal.updatedAt
-                  ).toLocaleString("vi-VN")}.`}
-                  type="success"
-                  icon={<CheckCircle />}
-                  showIcon
-                />
-              )}
-            </div>
+            <Timeline
+              items={[
+                {
+                  color: "blue",
+                  children: (
+                    <div>
+                      <p className="font-medium">Tạo đề xuất thay thế</p>
+                      <p className="text-sm text-gray-500">
+                        Người tạo: {proposerName}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(proposal.createdAt).toLocaleString("vi-VN")}
+                      </p>
+                    </div>
+                  ),
+                },
+                ...(displayStatus !== "CHỜ_TỔ_TRƯỞNG_DUYỆT"
+                  ? [
+                      {
+                        color:
+                          displayStatus === "ĐÃ_TỪ_CHỐI" ? "red" : "green",
+                        children: (
+                          <div>
+                            <p className="font-medium">
+                              {displayStatus === "ĐÃ_TỪ_CHỐI"
+                                ? "Từ chối đề xuất"
+                                : "Chấp thuận đề xuất"}
+                            </p>
+                            {teamLeadApproverName && (
+                              <p className="text-sm text-gray-500">
+                                Người duyệt: {teamLeadApproverName}
+                              </p>
+                            )}
+                            <p className="text-sm text-gray-500">
+                              {new Date(proposal.updatedAt).toLocaleString(
+                                "vi-VN"
+                              )}
+                            </p>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(displayStatus === "ĐÃ_LẬP_TỜ_TRÌNH"
+                  ? [
+                      {
+                        color: "purple",
+                        children: (
+                          <div>
+                            <p className="font-medium">Đã lập tờ trình</p>
+                            <p className="text-sm text-gray-500">
+                              {teamLeadApproverName &&
+                                `Người lập: ${teamLeadApproverName}`}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Tờ trình đã được tạo và gửi tới Phòng Quản trị
+                            </p>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(proposal.adminVerifier &&
+                displayStatus === "ĐÃ_XÁC_MINH"
+                  ? [
+                      {
+                        color: "cyan",
+                        children: (
+                          <div>
+                            <p className="font-medium">Đã xác minh</p>
+                            <p className="text-sm text-gray-500">
+                              Người xác minh: {proposal.adminVerifier.fullName}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(proposal.updatedAt).toLocaleString(
+                                "vi-VN"
+                              )}
+                            </p>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(displayStatus === "ĐÃ_HOÀN_TẤT_MUA_SẮM"
+                  ? [
+                      {
+                        color: "green",
+                        children: (
+                          <div>
+                            <p className="font-medium">Hoàn tất mua sắm</p>
+                            <p className="text-sm text-gray-500">
+                              Linh kiện đã sẵn sàng để thay thế
+                            </p>
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
           </Card>
         </div>
-      </div>
-
-      <div>
-        {/* Components List */}
-        <Card
-          title={
-            <span className="text-sm sm:text-base">
-              Danh sách linh kiện cần thay thế ({replacementItems.length})
-            </span>
-          }
-          className="shadow">
-          <Table
-            dataSource={tableData}
-            columns={componentColumns}
-            rowKey="id"
-            pagination={false}
-            size="small"
-            className="responsive-table"
-          />
-        </Card>
       </div>
 
       {/* Approve Modal */}

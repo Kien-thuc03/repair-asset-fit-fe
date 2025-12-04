@@ -309,7 +309,6 @@ export default function ChiTietThayThePage() {
 							</Descriptions.Item>
 						<Descriptions.Item label="Trạng thái">
 							<Tag color={currentStatus.color} className="inline-flex items-center gap-1">
-								<currentStatus.icon className="w-3 h-3" />
 								<span>{currentStatus.text}</span>
 							</Tag>
 						</Descriptions.Item>

@@ -225,7 +225,7 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         children: [
           {
             name: "Danh sách đề xuất linh kiện",
-            href: "/qtv-khoa/quan-ly-thay-the-linh-kien",
+            href: "/qtv-khoa/duyet-to-trinh",
             icon: ClipboardList,
           },
           {
