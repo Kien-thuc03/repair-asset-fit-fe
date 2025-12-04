@@ -1,20 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FileText,
-  Calendar,
   Eye,
   Download,
   CheckCircle,
   XCircle,
   Loader2,
   AlertCircle,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb, Button, Modal, Card, Row, Col, Input, Select, DatePicker } from "antd";
 import { SearchOutlined, SyncOutlined } from "@ant-design/icons";
-import { Pagination, SortableHeader } from "@/components/common";
+import Pagination from "@/components/common/Pagination";
 import { useRouter } from "next/navigation";
 import {
   useReplacementProposals,
@@ -39,15 +40,17 @@ export default function DuyetToTrinhPage() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showApprovalErrorModal, setShowApprovalErrorModal] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
   const [selectedProposal, setSelectedProposal] =
     useState<ReplacementProposal | null>(null);
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
-  const itemsPerPage = 10;
 
   // Tính toán fromDate và toDate từ dateRange
   const fromDate = dateRange?.[0]?.toISOString();
@@ -76,7 +79,7 @@ export default function DuyetToTrinhPage() {
     fromDate: fromDate,
     toDate: toDate,
     page: currentPage,
-    limit: itemsPerPage,
+    limit: pageSize,
     sortBy: mapSortFieldToAPI(sortField),
     sortOrder: sortDirection ? (sortDirection === "asc" ? "ASC" : "DESC") : undefined,
   });
@@ -102,7 +105,7 @@ export default function DuyetToTrinhPage() {
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
-      // Cycle through: asc -> desc -> null (default)
+      // Toggle between asc and desc
       if (sortDirection === "asc") {
         setSortDirection("desc");
       } else if (sortDirection === "desc") {
@@ -116,6 +119,29 @@ export default function DuyetToTrinhPage() {
       setSortField(field);
       setSortDirection("asc");
     }
+  };
+
+  // Hàm hiển thị icon sắp xếp
+  const getSortIcon = (field: SortField | null) => {
+    if (!field || sortField !== field) return null;
+    return (
+      <div className="flex flex-col ml-1">
+        <ChevronUp
+          className={`h-3 w-3 ${
+            sortDirection === "asc"
+              ? "text-blue-600"
+              : "text-gray-300"
+          }`}
+        />
+        <ChevronDown
+          className={`h-3 w-3 -mt-1 ${
+            sortDirection === "desc"
+              ? "text-blue-600"
+              : "text-gray-300"
+          }`}
+        />
+      </div>
+    );
   };
 
   const getStatusColor = () => {
@@ -138,16 +164,18 @@ export default function DuyetToTrinhPage() {
   const handleApproveConfirm = async () => {
     if (!selectedProposal) return;
 
+    setIsApproving(true);
     try {
       await updateStatus(selectedProposal.id, {
         status: ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH,
       });
 
-      // Đóng modal
+      // Đóng modal xác nhận
       setShowApprovalModal(false);
+      setSelectedProposal(null);
 
-      // Refetch data
-      refetch();
+      // Refetch data để cập nhật danh sách
+      await refetch();
 
       // Hiển thị thông báo thành công
       Modal.success({
@@ -155,12 +183,17 @@ export default function DuyetToTrinhPage() {
         content: `Tờ trình ${selectedProposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
         okText: "Đóng",
         onOk: () => {
-          router.push("/qtv-khoa/duyet-to-trinh");
+          // Không cần navigate vì đã ở trang này rồi
         },
       });
     } catch (error) {
       console.error("Error approving proposal:", error);
-      setShowExportErrorModal(true);
+      // Đóng modal xác nhận
+      setShowApprovalModal(false);
+      // Hiển thị modal lỗi
+      setShowApprovalErrorModal(true);
+    } finally {
+      setIsApproving(false);
     }
   };
 
@@ -252,6 +285,12 @@ export default function DuyetToTrinhPage() {
       );
     }
   };
+
+  // Reset pagination when changing search
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedRowKeys([]);
+  }, [searchTerm, statusFilter, dateRange]);
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
@@ -388,36 +427,44 @@ export default function DuyetToTrinhPage() {
       </Card>
 
       {/* Table - Desktop */}
-      <div className="bg-white rounded-lg shadow overflow-hidden hidden lg:block">
+      <div className="bg-white rounded-lg shadow hidden lg:block">
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
           <h2 className="text-base sm:text-lg font-medium text-gray-900">
             Danh sách tờ trình ({totalItems})
           </h2>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
-          </div>
-        )}
+        <div className="flex flex-col min-h-[500px]">
+          <div className="flex-1 overflow-auto">
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-500">Đang tải dữ liệu...</p>
+                </div>
+              </div>
+            )}
 
-        {/* Error State */}
-        {error && (
-          <div className="flex items-center justify-center py-12">
-            <AlertCircle className="h-8 w-8 text-red-600" />
-            <span className="ml-2 text-red-600">Lỗi: {error}</span>
-          </div>
-        )}
+            {/* Error State */}
+            {error && !loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                  <p className="text-gray-900 font-medium mb-2">
+                    Lỗi tải dữ liệu
+                  </p>
+                  <p className="text-gray-500 text-sm">{error}</p>
+                </div>
+              </div>
+            )}
 
-        {/* Table Content */}
-        {!loading && !error && (
-          <div className="overflow-x-auto min-h-[500px]">
-            <table className="w-full table-fixed divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            {/* Table Content */}
+            {!loading && !error && (
+              <table className="w-full divide-y divide-gray-200 table-fixed">
+              <thead className="bg-gray-50 sticky top-0 z-0">
                 <tr>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
+                  <th className="w-[5%] px-3 py-3 text-left">
                     <div className="flex items-center space-x-2">
                       <input
                         type="checkbox"
@@ -431,57 +478,53 @@ export default function DuyetToTrinhPage() {
                         onChange={(e) => handleSelectAll(e.target.checked)}
                         aria-label="Chọn tất cả tờ trình"
                       />
-                      <span>STT</span>
                     </div>
                   </th>
-                  <SortableHeader<ReplacementProposal>
-                    field="proposalCode"
-                    sortField={sortField}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                    className="w-[12%]">
-                    Mã ĐX
-                  </SortableHeader>
-                  <SortableHeader<ReplacementProposal>
-                    field="title"
-                    sortField={sortField}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                    className="w-[22%]">
-                    Tiêu đề
-                  </SortableHeader>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[17%]">
+                  <th className="w-[13%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <button
+                      className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
+                      onClick={() => handleSort("proposalCode")}>
+                      <span>Mã đề xuất</span>
+                      {getSortIcon("proposalCode")}
+                    </button>
+                  </th>
+                  <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <button
+                      className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
+                      onClick={() => handleSort("title")}>
+                      <span>Tiêu đề đề xuất</span>
+                      {getSortIcon("title")}
+                    </button>
+                  </th>
+                  <th className="w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Người tạo
                   </th>
-                  <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[8%]">
-                    Số lượng
+                  <th className="w-[15%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <button
+                      className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
+                      onClick={() => handleSort("status")}>
+                      <span>Trạng thái</span>
+                      {getSortIcon("status")}
+                    </button>
                   </th>
-                  <SortableHeader<ReplacementProposal>
-                    field="status"
-                    sortField={sortField}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                    className="w-[12%]">
-                    Trạng thái
-                  </SortableHeader>
-                  <SortableHeader<ReplacementProposal>
-                    field="createdAt"
-                    sortField={sortField}
-                    sortDirection={sortDirection}
-                    onSort={handleSort}
-                    className="w-[11%]">
-                    Ngày
-                  </SortableHeader>
-                  <th className="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">
+                  <th className="w-[10%] hidden lg:table-cell px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <button
+                      className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
+                      onClick={() => handleSort("createdAt")}>
+                      <span>Ngày tạo</span>
+                      {getSortIcon("createdAt")}
+                    </button>
+                  </th>
+                  <th className="w-[18%] lg:w-[18%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                     Thao tác
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedData.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-2 py-3 text-sm text-gray-700">
-                      <div className="flex items-center space-x-2">
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="w-[5%] px-3 py-4">
                         <input
                           type="checkbox"
                           className="rounded border-gray-300"
@@ -491,100 +534,99 @@ export default function DuyetToTrinhPage() {
                           }
                           aria-label={`Chọn tờ trình ${item.proposalCode}`}
                         />
-                        <span>
-                          {(currentPage - 1) * itemsPerPage + index + 1}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-2 py-3">
-                      <div className="text-xs font-medium text-gray-900 truncate">
-                        {item.proposalCode}
-                      </div>
-                    </td>
-                    <td className="px-2 py-3">
-                      <div
-                        className="text-xs text-gray-900 font-medium truncate"
-                        title={item.title || ""}>
-                        {item.title || "Không có tiêu đề"}
-                      </div>
-                      <div
-                        className="text-xs text-gray-500 truncate"
-                        title={item.description || ""}>
-                        {item.description || "Không có mô tả"}
-                      </div>
-                    </td>
-                    <td className="px-2 py-3">
-                      <div className="text-xs text-gray-900">
-                        <div className="flex items-center space-x-1">
-                          <span className="truncate text-xs font-medium">
-                            {item.proposer?.fullName || "Chưa xác định"}
-                          </span>
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap w-[13%]">
+                        <div
+                          className="text-sm text-blue-600 truncate font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                          title={item.proposalCode}
+                          onClick={() => {
+                            router.push(
+                              `/qtv-khoa/duyet-to-trinh/chi-tiet/${item.id}`
+                            );
+                          }}>
+                          {item.proposalCode}
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-2 py-3 text-center">
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {item.itemsCount || 0}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3">
-                      <span
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor()}`}>
-                        <span className="hidden lg:inline text-xs">
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap w-[25%]">
+                        <div className="flex items-center min-w-0">
+                          <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <div
+                              className="text-sm font-medium text-gray-900 truncate"
+                              title={item.title || ""}>
+                              {item.title || "Không có tiêu đề"}
+                            </div>
+                            <div
+                              className="text-xs text-gray-500 truncate"
+                              title={item.description || ""}>
+                              {item.description || "Không có mô tả"}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-center w-[8%]">
+                        <div
+                          className="text-sm text-gray-900"
+                          title={item.proposer?.fullName || "Chưa xác định"}>
+                          {item.proposer?.fullName || "N/A"}
+                        </div>
+                      </td>
+                      <td className="px-2 py-4 whitespace-nowrap text-center w-[15%]">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusColor()}`}
+                          title={getStatusText()}>
                           {getStatusText()}
                         </span>
-                      </span>
-                    </td>
-                    <td className="px-2 py-3">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3 shrink-0 text-gray-400" />
-                        <span className="text-xs text-gray-500">
-                          {new Date(item.createdAt).toLocaleDateString(
-                            "vi-VN",
-                            {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            }
-                          )}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-2 py-3 text-center">
-                      <div className="flex items-center justify-center space-x-1">
-                        <Link
-                          href={`/qtv-khoa/duyet-to-trinh/chi-tiet/${item.id}`}
-                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          title="Xem chi tiết">
-                          <Eye className="w-3 h-3" />
-                        </Link>
-                        <button
-                          onClick={() => handleApproveClick(item)}
-                          className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                          title="Duyệt tờ trình">
-                          <CheckCircle className="w-3 h-3" />
-                        </button>
-                      </div>
+                      </td>
+                      <td className="hidden lg:table-cell px-2 py-4 whitespace-nowrap text-center w-[10%]">
+                        <div className="text-sm text-gray-900">
+                          {new Date(item.createdAt).toLocaleDateString("vi-VN", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap w-[18%]">
+                        <div className="flex items-center justify-center space-x-2">
+                          <button
+                            onClick={() => {
+                              router.push(
+                                `/qtv-khoa/duyet-to-trinh/chi-tiet/${item.id}`
+                              );
+                            }}
+                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            title="Xem chi tiết">
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleApproveClick(item)}
+                            className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            title="Duyệt tờ trình">
+                            <CheckCircle className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center">
+                      <FileText className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                      <h3 className="text-sm font-medium text-gray-900 mb-1">
+                        Không tìm thấy kết quả
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                      </p>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
-
-            {/* Empty State */}
-            {paginatedData.length === 0 && !loading && !error && (
-              <div className="text-center py-12">
-                <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  Không có tờ trình nào
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Không tìm thấy tờ trình nào phù hợp với tiêu chí tìm kiếm.
-                </p>
-              </div>
             )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Mobile View */}
@@ -707,14 +749,13 @@ export default function DuyetToTrinhPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="mt-4 sm:mt-6">
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 rounded-lg shadow-sm">
+          <div className="bg-white rounded-lg shadow-sm">
             <Pagination
               currentPage={currentPage}
-              pageSize={itemsPerPage}
+              pageSize={pageSize}
               total={totalItems}
               onPageChange={setCurrentPage}
-              onPageSizeChange={() => {}}
-              showSizeChanger={false}
+              onPageSizeChange={setPageSize}
             />
           </div>
         </div>
