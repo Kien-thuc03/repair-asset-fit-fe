@@ -98,6 +98,8 @@ export default function BaoCaoLoiPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showDamagedModal, setShowDamagedModal] = useState(false);
+  const [damagedMessage, setDamagedMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorCategory, setErrorCategory] = useState<
     "hardware" | "software" | ""
@@ -537,6 +539,16 @@ export default function BaoCaoLoiPage() {
         message.warning(
           `Máy này đang có yêu cầu sửa chữa chưa hoàn thành (${data.activeRepairInfo?.requestCode}). Vui lòng chọn máy khác.`
         );
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Nếu tài sản đang ở trạng thái hư hỏng, thông báo và dừng
+      if (data.asset.status === AssetStatus.DAMAGED) {
+        setDamagedMessage(
+          `Thiết bị ${data.asset.name} (${data.asset.ktCode}) đang được đánh dấu hư hỏng. Vui lòng chọn máy khác hoặc kiểm tra yêu cầu sửa chữa hiện có.`
+        );
+        setShowDamagedModal(true);
         setIsLoadingQRData(false);
         return;
       }
@@ -1210,6 +1222,39 @@ export default function BaoCaoLoiPage() {
               này.
             </p>
           </div>
+        </div>
+      </Modal>
+
+      {/* Damaged asset modal */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2">
+            <WarningOutlined className="text-red-500 text-xl" />
+            <span>Thiết bị đang hư hỏng</span>
+          </div>
+        }
+        open={showDamagedModal}
+        onOk={() => setShowDamagedModal(false)}
+        onCancel={() => setShowDamagedModal(false)}
+        okText="Đã hiểu"
+        cancelText="Đóng"
+        centered
+        footer={[
+          <Button
+            key="ok"
+            type="primary"
+            onClick={() => setShowDamagedModal(false)}>
+            Đã hiểu
+          </Button>,
+        ]}>
+        <div className="py-4">
+          <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">{damagedMessage}</p>
+          </div>
+          <p className="text-xs text-gray-600">
+            Vui lòng chọn máy khác hoặc kiểm tra các yêu cầu sửa chữa hiện tại
+            cho thiết bị này.
+          </p>
         </div>
       </Modal>
 
