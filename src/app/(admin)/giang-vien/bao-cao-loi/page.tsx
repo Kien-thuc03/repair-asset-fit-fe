@@ -10,10 +10,7 @@ import {
   ComponentStatus,
   ComponentType,
 } from "@/types";
-import {
-  AssetStatus,
-  getAssetStatusLabel,
-} from "@/types/computer";
+import { AssetStatus, getAssetStatusLabel } from "@/types/computer";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
 import { getComponentsByComputerId } from "@/lib/api/components";
@@ -24,6 +21,7 @@ import {
   ComputerRepairInfoResponse,
 } from "@/lib/api/computers";
 import { useProfile } from "@/hooks";
+import { RoomStatus } from "@/lib/api/rooms";
 import {
   getHardwareErrorTypes,
   getErrorTypeByKey,
@@ -107,6 +105,15 @@ export default function BaoCaoLoiPage() {
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [isLoadingQRData, setIsLoadingQRData] = useState(false);
+
+  // Helper: get readable room label by id
+  const getRoomLabel = (roomId?: string) => {
+    if (!roomId) return "N/A";
+    const room =
+      filteredRooms.find((r) => r.id === roomId) ||
+      rooms.find((r) => r.id === roomId);
+    return room?.roomCode || room?.roomNumber || room?.name || roomId;
+  };
 
   // Kiểm tra xem loại lỗi hiện tại có cho phép chọn linh kiện không
   const canSelectComponents =
@@ -560,7 +567,27 @@ export default function BaoCaoLoiPage() {
         (room) =>
           room.building === data.room.building && room.floor === data.room.floor
       );
-      setFilteredRooms(roomsOnFloor);
+      if (roomsOnFloor.length > 0) {
+        setFilteredRooms(roomsOnFloor);
+      } else {
+        // Fallback: ensure the scanned room is available for display
+        const mappedRoom: RoomResponseDto = {
+          id: data.room.id,
+          building: data.room.building,
+          roomCode:
+            data.room.roomCode || data.room.roomNumber || data.room.name || "",
+          floor: data.room.floor,
+          roomNumber: data.room.roomNumber || "",
+          status: RoomStatus.ACTIVE,
+          name:
+            data.room.name ||
+            data.room.roomCode ||
+            data.room.roomNumber ||
+            "Phòng",
+          createdAt: new Date().toISOString(),
+        };
+        setFilteredRooms([mappedRoom]);
+      }
 
       // 3. Set computers for the room
       try {
@@ -716,14 +743,7 @@ export default function BaoCaoLoiPage() {
                 <div className="text-sm text-gray-500">Vị trí</div>
                 <div className="font-medium">
                   {formData.building} - {formData.floor} -{" "}
-                  {(() => {
-                    const room = filteredRooms.find(
-                      (r) => r.id === formData.roomId
-                    );
-                    return room
-                      ? room.roomCode || room.roomNumber || room.name
-                      : "N/A";
-                  })()}
+                  {getRoomLabel(formData.roomId)}
                 </div>
               </div>
             )}
