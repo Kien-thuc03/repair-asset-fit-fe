@@ -61,19 +61,19 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
   const id = Array.isArray(params?.id) ? params?.id[0] : (params?.id as string);
 
   // Use API hook để lấy chi tiết
-  const { data: currentRequest, loading, error } = useRepairDetail(id);
+  const {
+    data: currentRequest,
+    loading,
+    error,
+    refetch,
+    setData: setCurrentRequest,
+  } = useRepairDetail(id);
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
-  // Debug logging
-  console.log("🔍 Detail Page - ID:", id);
-  console.log("📦 Current Request Data:", currentRequest);
-  console.log("⏳ Loading:", loading);
-  console.log("❌ Error:", error);
 
   // Show loading state
   if (loading) {
@@ -123,15 +123,20 @@ export default function ChiTietDanhSachYeuCauSuaChuaPage() {
       setIsDeleting(true);
 
       // Call API to cancel repair request
-      await cancelRepair(id, "Hủy bởi người dùng");
+      const updated = await cancelRepair(id, "Hủy bởi người dùng");
+
+      // Cập nhật local state để ẩn nút ngay, phòng trường hợp người dùng ở lại trang
+      setCurrentRequest(updated);
 
       setShowCancelModal(false);
       setShowSuccessModal(true);
-    } catch (error) {
+
+      // Đảm bảo dữ liệu đồng bộ nếu ở lại trang một lúc
+      refetch();
+    } catch {
       setShowCancelModal(false);
       setErrorMessage("Có lỗi xảy ra khi hủy yêu cầu. Vui lòng thử lại.");
       setShowErrorModal(true);
-      console.error(error);
     } finally {
       setIsDeleting(false);
     }
