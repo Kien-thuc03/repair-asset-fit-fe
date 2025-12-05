@@ -10,6 +10,10 @@ import {
   ComponentStatus,
   ComponentType,
 } from "@/types";
+import {
+  AssetStatus,
+  getAssetStatusLabel,
+} from "@/types/computer";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
 import { getComponentsByComputerId } from "@/lib/api/components";
@@ -835,8 +839,23 @@ export default function BaoCaoLoiPage() {
                 disabled={!formData.roomId}>
                 {Array.isArray(filteredComputers) &&
                   filteredComputers.map((computer) => (
-                    <Option key={computer.id} value={computer.id}>
-                      Máy {computer.machineLabel}
+                    <Option
+                      key={computer.id}
+                      value={computer.id}
+                      disabled={computer.asset?.status === AssetStatus.DAMAGED}
+                      style={
+                        computer.asset?.status === AssetStatus.DAMAGED
+                          ? { color: "#dc2626" }
+                          : undefined
+                      }>
+                      {computer.asset?.status === AssetStatus.DAMAGED ? (
+                        <>
+                          Máy {computer.machineLabel} -{" "}
+                          {getAssetStatusLabel(computer.asset.status)}
+                        </>
+                      ) : (
+                        <>Máy {computer.machineLabel}</>
+                      )}
                     </Option>
                   ))}
               </Select>
