@@ -443,7 +443,7 @@ export default function GhiNhanXuLyLoiPage() {
           ? selectedSoftwareIds 
           : undefined,
         resolutionNotes: formData.repairNotes || undefined,
-        finalStatus: finalStatus, // undefined nếu need_replacement
+        finalStatus: finalStatus, // ĐÃ_HOÀN_THÀNH nếu đã sửa được, CHỜ_THAY_THẾ nếu cần thay thế
       };
 
       // Call API to create and process repair request
