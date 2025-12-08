@@ -14,6 +14,7 @@ import { useRepairDetailPage } from '@/hooks/useRepairs'
 import { getReplacementItemsByRepairRequest } from '@/lib/api/replacement-proposals'
 import { ReplacementItem } from '@/lib/api/replacement-proposals'
 import { completeRepair } from '@/lib/api/repairs'
+import { SuccessModal } from '@/components/modal'
 
 
 export default function RepairDetailPage() {
@@ -33,6 +34,23 @@ export default function RepairDetailPage() {
 	// State cho replacement items
 	const [replacementItems, setReplacementItems] = useState<ReplacementItem[]>([])
 	const [loadingReplacementItems, setLoadingReplacementItems] = useState(false)
+	const [successModal, setSuccessModal] = useState<{
+		open: boolean
+		title: string
+		message: string
+	}>({
+		open: false,
+		title: '',
+		message: ''
+	})
+
+	const openSuccessModal = (title: string, message: string) => {
+		setSuccessModal({ open: true, title, message })
+	}
+
+	const closeSuccessModal = () => {
+		setSuccessModal(prev => ({ ...prev, open: false }))
+	}
 
 	// Lấy replacement items khi repair request có status CHỜ_THAY_THẾ
 	useEffect(() => {
@@ -74,7 +92,10 @@ export default function RepairDetailPage() {
 			if (replaceableItems.length === 0 && currentRequest?.status === RepairStatus.CHỜ_THAY_THẾ) {
 				// Tự động cập nhật trạng thái thành ĐÃ_HOÀN_THÀNH
 				await completeRepair(id, 'Đã hoàn thành thay thế tất cả linh kiện')
-				message.success('Đã hoàn thành thay thế tất cả linh kiện. YCSC đã được cập nhật thành ĐÃ_HOÀN_THÀNH.')
+				openSuccessModal(
+					'Đã hoàn thành thay thế',
+					'Tất cả linh kiện đã được thay thế và yêu cầu đã cập nhật sang ĐÃ_HOÀN_THÀNH.'
+				)
 				
 				// Refetch repair request để cập nhật UI
 				if (refetch) {
@@ -459,8 +480,11 @@ export default function RepairDetailPage() {
 								// Sử dụng hook để cập nhật trạng thái (kèm componentIds nếu có)
 								await updateStatus(newStatus, notes, componentIds)
 								
-								// Hiển thị thông báo thành công
-								message.success('Cập nhật trạng thái thành công!')
+								// Hiển thị modal thành công (thân thiện và dễ thấy hơn toast)
+								openSuccessModal(
+									'Cập nhật thành công',
+									'Trạng thái yêu cầu đã được lưu lại. Tiếp tục theo dõi tiến độ hoặc chuyển sang bước tiếp theo nếu cần.'
+								)
 							} catch (err) {
 								console.error('Update status error:', err)
 								message.error(err instanceof Error ? err.message : 'Cập nhật trạng thái thất bại')
@@ -472,6 +496,13 @@ export default function RepairDetailPage() {
 					<RepairRequestHistoryCard repairRequestId={currentRequest.id} />
 				</div>
 			</div>
+
+			<SuccessModal
+				isOpen={successModal.open}
+				onClose={closeSuccessModal}
+				title={successModal.title}
+				message={successModal.message}
+			/>
 		</div>
 	)
 }
