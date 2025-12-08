@@ -224,13 +224,6 @@ export default function DanhSachBaoLoiPage() {
 
 	return (
 		<div className="space-y-6">
-			{/* Loading State */}
-			{isLoading && (
-				<div className="flex justify-center items-center py-12">
-					<Spin size="large" tip="Đang tải dữ liệu..." />
-				</div>
-			)}
-
 			{/* Error State */}
 			{repairsError && !isLoading && (
 				<Alert
@@ -243,7 +236,7 @@ export default function DanhSachBaoLoiPage() {
 			)}
 
 			{/* Main Content - Only show when not loading and no error */}
-			{!isLoading && !repairsError && (
+			{!repairsError && (
 				<>
 					{/* Breadcrumb */}
 					<Breadcrumb
@@ -333,169 +326,175 @@ export default function DanhSachBaoLoiPage() {
 			</div>
 
 			{/* Table */}
-			<div className="overflow-x-auto bg-white shadow rounded-lg">
-				<table className="min-w-full divide-y divide-gray-200">
-					<thead className="bg-gray-50">
-						<tr>
-							<th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-								<div className="flex items-center space-x-1">
-									<input
-										type="checkbox"
-										className="rounded border-gray-300"
-										checked={paginatedData.length > 0 && paginatedData.every(row => selectedRowKeys.includes(row.id))}
-										onChange={(e) => handleSelectAll(e.target.checked)}
-										aria-label="Chọn tất cả báo lỗi"
-									/>
-									<span className="hidden sm:inline">STT</span>
-								</div>
-							</th>
-							<th 
-								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-								onClick={() => handleSort("requestCode")}
-							>
-								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
-									<span>Mã YC</span>
-									{getSortIcon("requestCode")}
-								</div>
-							</th>
-							<th 
-								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-								onClick={() => handleSort("assetName")}
-							>
-								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
-									<span>Tài sản & Linh kiện</span>
-									{getSortIcon("assetName")}
-								</div>
-							</th>
-							<th 
-								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-								onClick={() => handleSort("location")}
-							>
-								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
-									<span>Vị trí</span>
-									{getSortIcon("location")}
-								</div>
-							</th>
-							<th 
-								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group hidden xl:table-cell"
-								onClick={() => handleSort("errorTypeName")}
-							>
-								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
-									<span>Loại lỗi</span>
-									{getSortIcon("errorTypeName")}
-								</div>
-							</th>
-							<th 
-								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-								onClick={() => handleSort("status")}
-							>
-								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
-									<span>Trạng thái</span>
-									{getSortIcon("status")}
-								</div>
-							</th>
-							<th 
-								className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group hidden lg:table-cell"
-								onClick={() => handleSort("createdAt")}
-							>
-								<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
-									<span>Ngày báo</span>
-									{getSortIcon("createdAt")}
-								</div>
-							</th>
-							<th className="px-1 py-2 text-center text-xs uppercase font-medium text-gray-500 tracking-wider w-10">
-								
-							</th>
-						</tr>
-					</thead>
-					<tbody className="bg-white divide-y divide-gray-200">
-						{paginatedData.map((record, index) => {
-							const config = repairRequestStatusConfig[record.status]
-							return (
-								<tr key={record.id} className="hover:bg-gray-50">
-									<td className="px-2 py-2 text-sm text-gray-700">
-										<div className="flex items-center space-x-1">
-											<input
-												type="checkbox"
-												className="rounded border-gray-300"
-												checked={selectedRowKeys.includes(record.id)}
-												onChange={(e) => handleRowSelect(record.id, e.target.checked)}
-												aria-label={`Chọn báo lỗi ${record.requestCode}`}
-											/>
-											<span className="hidden sm:inline whitespace-nowrap">{(currentPage - 1) * pageSize + index + 1}</span>
-										</div>
-									</td>
-									<td className="px-2 py-2 text-sm font-medium text-blue-600">
-										<div className="whitespace-nowrap" title={record.requestCode}>
-											{record.requestCode}
-										</div>
-									</td>
-									<td className="px-2 py-2 text-sm text-gray-700">
-										<div className="min-w-[180px] max-w-[250px]">
-											<div className="font-medium truncate" title={record.assetName || 'Chưa xác định'}>
-												{record.assetName || 'Chưa xác định'}
+			{isLoading ? (
+				<div className="bg-white shadow rounded-lg flex justify-center items-center py-12">
+					<Spin size="large" tip="Đang tải danh sách..." />
+				</div>
+			) : (
+				<div className="overflow-x-auto bg-white shadow rounded-lg">
+					<table className="min-w-full divide-y divide-gray-200">
+						<thead className="bg-gray-50">
+							<tr>
+								<th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+									<div className="flex items-center space-x-1">
+										<input
+											type="checkbox"
+											className="rounded border-gray-300"
+											checked={paginatedData.length > 0 && paginatedData.every(row => selectedRowKeys.includes(row.id))}
+											onChange={(e) => handleSelectAll(e.target.checked)}
+											aria-label="Chọn tất cả báo lỗi"
+										/>
+										<span className="hidden sm:inline">STT</span>
+									</div>
+								</th>
+								<th 
+									className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+									onClick={() => handleSort("requestCode")}
+								>
+									<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
+										<span>Mã YC</span>
+										{getSortIcon("requestCode")}
+									</div>
+								</th>
+								<th 
+									className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+									onClick={() => handleSort("assetName")}
+								>
+									<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
+										<span>Tài sản & Linh kiện</span>
+										{getSortIcon("assetName")}
+									</div>
+								</th>
+								<th 
+									className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+									onClick={() => handleSort("location")}
+								>
+									<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
+										<span>Vị trí</span>
+										{getSortIcon("location")}
+									</div>
+								</th>
+								<th 
+									className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group hidden xl:table-cell"
+									onClick={() => handleSort("errorTypeName")}
+								>
+									<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
+										<span>Loại lỗi</span>
+										{getSortIcon("errorTypeName")}
+									</div>
+								</th>
+								<th 
+									className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+									onClick={() => handleSort("status")}
+								>
+									<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
+										<span>Trạng thái</span>
+										{getSortIcon("status")}
+									</div>
+								</th>
+								<th 
+									className="px-2 py-2 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group hidden lg:table-cell"
+									onClick={() => handleSort("createdAt")}
+								>
+									<div className="flex items-center uppercase space-x-1 whitespace-nowrap">
+										<span>Ngày báo</span>
+										{getSortIcon("createdAt")}
+									</div>
+								</th>
+								<th className="px-1 py-2 text-center text-xs uppercase font-medium text-gray-500 tracking-wider w-10">
+									
+								</th>
+							</tr>
+						</thead>
+						<tbody className="bg-white divide-y divide-gray-200">
+							{paginatedData.map((record, index) => {
+								const config = repairRequestStatusConfig[record.status]
+								return (
+									<tr key={record.id} className="hover:bg-gray-50">
+										<td className="px-2 py-2 text-sm text-gray-700">
+											<div className="flex items-center space-x-1">
+												<input
+													type="checkbox"
+													className="rounded border-gray-300"
+													checked={selectedRowKeys.includes(record.id)}
+													onChange={(e) => handleRowSelect(record.id, e.target.checked)}
+													aria-label={`Chọn báo lỗi ${record.requestCode}`}
+												/>
+												<span className="hidden sm:inline whitespace-nowrap">{(currentPage - 1) * pageSize + index + 1}</span>
 											</div>
-											<div className="text-xs text-gray-500 truncate" title={record.componentName || 'Chưa xác định'}>
-												{record.componentName || 'Chưa xác định'}
+										</td>
+										<td className="px-2 py-2 text-sm font-medium text-blue-600">
+											<div className="whitespace-nowrap" title={record.requestCode}>
+												{record.requestCode}
 											</div>
-										</div>
-									</td>
-									<td className="px-2 py-2 text-sm text-gray-700">
-										<div className="min-w-[100px] max-w-[140px]">
-											<div className="font-medium truncate" title={`${record.buildingName || 'N/A'} - ${record.roomName || 'N/A'}`}>
-												{record.buildingName || 'N/A'} - {record.roomName || 'N/A'}
+										</td>
+										<td className="px-2 py-2 text-sm text-gray-700">
+											<div className="min-w-[180px] max-w-[250px]">
+												<div className="font-medium truncate" title={record.assetName || 'Chưa xác định'}>
+													{record.assetName || 'Chưa xác định'}
+												</div>
+												<div className="text-xs text-gray-500 truncate" title={record.componentName || 'Chưa xác định'}>
+													{record.componentName || 'Chưa xác định'}
+												</div>
 											</div>
-											<div className="text-xs text-gray-500 truncate" title={`Máy ${record.machineLabel || 'N/A'}`}>
-												Máy {record.machineLabel || 'N/A'}
+										</td>
+										<td className="px-2 py-2 text-sm text-gray-700">
+											<div className="min-w-[100px] max-w-[140px]">
+												<div className="font-medium truncate" title={`${record.buildingName || 'N/A'} - ${record.roomName || 'N/A'}`}>
+													{record.buildingName || 'N/A'} - {record.roomName || 'N/A'}
+												</div>
+												<div className="text-xs text-gray-500 truncate" title={`Máy ${record.machineLabel || 'N/A'}`}>
+													Máy {record.machineLabel || 'N/A'}
+												</div>
 											</div>
-										</div>
-									</td>
-									<td className="px-2 py-2 text-sm text-gray-700 hidden xl:table-cell">
-										<div className="max-w-[130px] truncate" title={record.errorTypeName || "Chưa xác định"}>
-											{record.errorTypeName || "Chưa xác định"}
-										</div>
-									</td>
-									<td className="px-2 py-2">
-										<span 
-											className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${config.color} whitespace-nowrap`} 
-											title={config.label}
-										>
-											<span className="truncate">{config.label}</span>
-										</span>
-									</td>
-									<td className="px-2 py-2 text-sm text-gray-700 hidden lg:table-cell">
-										<div className="whitespace-nowrap" title={new Date(record.createdAt).toLocaleDateString('vi-VN')}>
-											{new Date(record.createdAt).toLocaleDateString('vi-VN')}
-										</div>
-									</td>
-									<td className="px-1 py-2 text-center w-10">
-										<Link href={`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${record.id}`}>
-											<button 
-												title='Xem chi tiết' 
-												className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 hover:bg-blue-50 rounded"
+										</td>
+										<td className="px-2 py-2 text-sm text-gray-700 hidden xl:table-cell">
+											<div className="max-w-[130px] truncate" title={record.errorTypeName || "Chưa xác định"}>
+												{record.errorTypeName || "Chưa xác định"}
+											</div>
+										</td>
+										<td className="px-2 py-2">
+											<span 
+												className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium border ${config.color} whitespace-nowrap`} 
+												title={config.label}
 											>
-												<Eye className="w-4 h-4" />
-											</button>
-										</Link>
-									</td>
-								</tr>
-							)
-						})}
-					</tbody>
-				</table>
-				
-				<Pagination
-					currentPage={currentPage}
-					pageSize={pageSize}
-					total={filteredAndSortedData.length}
-					onPageChange={setCurrentPage}
-					onPageSizeChange={setPageSize}
-					showSizeChanger={true}
-					pageSizeOptions={[10, 20, 50, 100]}
-					showQuickJumper={true}
-					showTotal={true}
-				/>
-			</div>
+												<span className="truncate">{config.label}</span>
+											</span>
+										</td>
+										<td className="px-2 py-2 text-sm text-gray-700 hidden lg:table-cell">
+											<div className="whitespace-nowrap" title={new Date(record.createdAt).toLocaleDateString('vi-VN')}>
+												{new Date(record.createdAt).toLocaleDateString('vi-VN')}
+											</div>
+										</td>
+										<td className="px-1 py-2 text-center w-10">
+											<Link href={`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${record.id}`}>
+												<button 
+													title='Xem chi tiết' 
+													className="text-blue-600 hover:text-blue-900 inline-flex items-center p-1 hover:bg-blue-50 rounded"
+												>
+													<Eye className="w-4 h-4" />
+												</button>
+											</Link>
+										</td>
+									</tr>
+								)
+							})}
+						</tbody>
+					</table>
+					
+					<Pagination
+						currentPage={currentPage}
+						pageSize={pageSize}
+						total={filteredAndSortedData.length}
+						onPageChange={setCurrentPage}
+						onPageSizeChange={setPageSize}
+						showSizeChanger={true}
+						pageSizeOptions={[10, 20, 50, 100]}
+						showQuickJumper={true}
+						showTotal={true}
+					/>
+				</div>
+			)}
 				</>
 			)}
 		</div>
