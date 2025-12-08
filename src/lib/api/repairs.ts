@@ -601,7 +601,39 @@ export const cancelRepair = async (
   id: string,
   resolutionNotes: string
 ): Promise<GetRepairDetailResponse> => {
-  return updateRepairStatus(id, RepairStatus.ĐÃ_HỦY, resolutionNotes);
+  /**
+   * Prefer dedicated cancel endpoint (if available) so backend can revert
+   * related asset/components to normal state. Fallback to legacy status
+   * update when the endpoint is missing (older backend versions).
+   */
+  try {
+    const response = await api.patch<ApiRepairResponse>(
+      `/api/v1/repairs/${id}/cancel-request`,
+      {
+        cancelReason: resolutionNotes,
+      }
+    );
+
+    return transformApiResponse(response.data) as RepairRequestWithDetails;
+  } catch (error: unknown) {
+    const err = error as {
+      response?: { status?: number; data?: { message?: string } };
+    };
+
+    // If the cancel endpoint exists but returns an error other than 404/405, bubble it up
+    if (
+      err.response?.status &&
+      ![404, 405].includes(err.response.status)
+    ) {
+      throw new Error(
+        err.response.data?.message ||
+          "Hủy yêu cầu sửa chữa thất bại."
+      );
+    }
+
+    // Fallback to legacy status update flow
+    return updateRepairStatus(id, RepairStatus.ĐÃ_HỦY, resolutionNotes);
+  }
 };
 
 /**

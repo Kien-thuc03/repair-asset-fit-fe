@@ -10,6 +10,7 @@ import {
   ComponentStatus,
   ComponentType,
 } from "@/types";
+import { AssetStatus, getAssetStatusLabel } from "@/types/computer";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
 import { getComponentsByComputerId } from "@/lib/api/components";
@@ -20,6 +21,7 @@ import {
   ComputerRepairInfoResponse,
 } from "@/lib/api/computers";
 import { useProfile } from "@/hooks";
+import { RoomStatus } from "@/lib/api/rooms";
 import {
   getHardwareErrorTypes,
   getErrorTypeByKey,
@@ -96,6 +98,8 @@ export default function BaoCaoLoiPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showDamagedModal, setShowDamagedModal] = useState(false);
+  const [damagedMessage, setDamagedMessage] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorCategory, setErrorCategory] = useState<
     "hardware" | "software" | ""
@@ -103,6 +107,15 @@ export default function BaoCaoLoiPage() {
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [isLoadingQRData, setIsLoadingQRData] = useState(false);
+
+  // Helper: get readable room label by id
+  const getRoomLabel = (roomId?: string) => {
+    if (!roomId) return "N/A";
+    const room =
+      filteredRooms.find((r) => r.id === roomId) ||
+      rooms.find((r) => r.id === roomId);
+    return room?.roomCode || room?.roomNumber || room?.name || roomId;
+  };
 
   // Kiểm tra xem loại lỗi hiện tại có cho phép chọn linh kiện không
   const canSelectComponents =
@@ -530,6 +543,16 @@ export default function BaoCaoLoiPage() {
         return;
       }
 
+      // Nếu tài sản đang ở trạng thái hư hỏng, thông báo và dừng
+      if (data.asset.status === AssetStatus.DAMAGED) {
+        setDamagedMessage(
+          `Thiết bị ${data.asset.name} (${data.asset.ktCode}) đang được đánh dấu hư hỏng. Vui lòng chọn máy khác hoặc kiểm tra yêu cầu sửa chữa hiện có.`
+        );
+        setShowDamagedModal(true);
+        setIsLoadingQRData(false);
+        return;
+      }
+
       // Auto-fill form with QR data
       setFormData((prev) => ({
         ...prev,
@@ -556,7 +579,27 @@ export default function BaoCaoLoiPage() {
         (room) =>
           room.building === data.room.building && room.floor === data.room.floor
       );
-      setFilteredRooms(roomsOnFloor);
+      if (roomsOnFloor.length > 0) {
+        setFilteredRooms(roomsOnFloor);
+      } else {
+        // Fallback: ensure the scanned room is available for display
+        const mappedRoom: RoomResponseDto = {
+          id: data.room.id,
+          building: data.room.building,
+          roomCode:
+            data.room.roomCode || data.room.roomNumber || data.room.name || "",
+          floor: data.room.floor,
+          roomNumber: data.room.roomNumber || "",
+          status: RoomStatus.ACTIVE,
+          name:
+            data.room.name ||
+            data.room.roomCode ||
+            data.room.roomNumber ||
+            "Phòng",
+          createdAt: new Date().toISOString(),
+        };
+        setFilteredRooms([mappedRoom]);
+      }
 
       // 3. Set computers for the room
       try {
@@ -712,14 +755,7 @@ export default function BaoCaoLoiPage() {
                 <div className="text-sm text-gray-500">Vị trí</div>
                 <div className="font-medium">
                   {formData.building} - {formData.floor} -{" "}
-                  {(() => {
-                    const room = filteredRooms.find(
-                      (r) => r.id === formData.roomId
-                    );
-                    return room
-                      ? room.roomCode || room.roomNumber || room.name
-                      : "N/A";
-                  })()}
+                  {getRoomLabel(formData.roomId)}
                 </div>
               </div>
             )}
@@ -835,8 +871,23 @@ export default function BaoCaoLoiPage() {
                 disabled={!formData.roomId}>
                 {Array.isArray(filteredComputers) &&
                   filteredComputers.map((computer) => (
-                    <Option key={computer.id} value={computer.id}>
-                      Máy {computer.machineLabel}
+                    <Option
+                      key={computer.id}
+                      value={computer.id}
+                      disabled={computer.asset?.status === AssetStatus.DAMAGED}
+                      style={
+                        computer.asset?.status === AssetStatus.DAMAGED
+                          ? { color: "#dc2626" }
+                          : undefined
+                      }>
+                      {computer.asset?.status === AssetStatus.DAMAGED ? (
+                        <>
+                          Máy {computer.machineLabel} -{" "}
+                          {getAssetStatusLabel(computer.asset.status)}
+                        </>
+                      ) : (
+                        <>Máy {computer.machineLabel}</>
+                      )}
                     </Option>
                   ))}
               </Select>
@@ -1171,6 +1222,39 @@ export default function BaoCaoLoiPage() {
               này.
             </p>
           </div>
+        </div>
+      </Modal>
+
+      {/* Damaged asset modal */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2">
+            <WarningOutlined className="text-red-500 text-xl" />
+            <span>Thiết bị đang hư hỏng</span>
+          </div>
+        }
+        open={showDamagedModal}
+        onOk={() => setShowDamagedModal(false)}
+        onCancel={() => setShowDamagedModal(false)}
+        okText="Đã hiểu"
+        cancelText="Đóng"
+        centered
+        footer={[
+          <Button
+            key="ok"
+            type="primary"
+            onClick={() => setShowDamagedModal(false)}>
+            Đã hiểu
+          </Button>,
+        ]}>
+        <div className="py-4">
+          <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">{damagedMessage}</p>
+          </div>
+          <p className="text-xs text-gray-600">
+            Vui lòng chọn máy khác hoặc kiểm tra các yêu cầu sửa chữa hiện tại
+            cho thiết bị này.
+          </p>
         </div>
       </Modal>
 
