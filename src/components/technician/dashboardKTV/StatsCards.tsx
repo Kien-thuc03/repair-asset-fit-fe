@@ -1,14 +1,22 @@
 'use client'
 
-import { getRepairRequestsByStatus } from '@/lib/mockData'
-import { RepairStatus } from '@/types'
 import { FileCheck, AlertTriangle, Clock } from 'lucide-react'
 
-export default function StatsCards() {
-	const waitingCount = getRepairRequestsByStatus(RepairStatus.CHỜ_TIẾP_NHẬN).length
-	const inProgressCount = getRepairRequestsByStatus(RepairStatus.ĐANG_XỬ_LÝ).length
-	const waitingReplacementCount = getRepairRequestsByStatus(RepairStatus.CHỜ_THAY_THẾ).length
+type Props = {
+	waitingCount: number
+	inProgressCount: number
+	waitingReplacementCount: number
+	loading?: boolean
+	error?: string | null
+}
 
+export default function StatsCards({
+	waitingCount,
+	inProgressCount,
+	waitingReplacementCount,
+	loading,
+	error,
+}: Props) {
 	const items = [
 		{
 			label: 'Chờ tiếp nhận',
@@ -42,10 +50,17 @@ export default function StatsCards() {
 					</div>
 					<p className="ml-16 truncate text-sm font-medium text-gray-500">{item.label}</p>
 					<div className="ml-16 flex items-baseline">
-						<p className="text-2xl font-semibold text-gray-900">{item.value}</p>
+						<p className="text-2xl font-semibold text-gray-900">
+							{loading ? '...' : item.value}
+						</p>
 					</div>
 				</div>
 			))}
+			{error && (
+				<div className="sm:col-span-2 lg:col-span-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+					{error}
+				</div>
+			)}
 		</div>
 	)
 }

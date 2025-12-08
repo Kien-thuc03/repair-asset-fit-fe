@@ -1,33 +1,22 @@
 import { useState, useMemo } from "react";
-import {
-  statsData,
-  monthlyData,
-  errorTypeStatsData,
-  weeklyTrendData,
-  detailedTableData,
-  activityTimelineData,
-  detailedErrorStats,
-  technicianPerformanceData,
-  equipmentStatsData,
-} from "@/lib/mockData/statisticsData";
-import { mockRepairRequests } from "@/lib/mockData/repairRequests";
 import { RepairStatus } from "@/types";
+import { useRepairDashboardData } from "./useRepairDashboardData";
 
 /**
  * Hook để quản lý và tính toán các thống kê cho trang báo cáo
- * Kết hợp dữ liệu từ mockData với tính toán thực tế
  */
 export const useStatistics = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("month");
   const [dateRange, setDateRange] = useState<[string, string] | null>(null);
+  const { allRepairs, loading, error } = useRepairDashboardData();
 
-  // Tính toán thống kê thực tế từ mockRepairRequests
+  // Tính toán thống kê thực tế từ dữ liệu API
   const realTimeStats = useMemo(() => {
-    const totalReports = mockRepairRequests.length;
-    const completedReports = mockRepairRequests.filter(
+    const totalReports = allRepairs.length;
+    const completedReports = allRepairs.filter(
       (req) => req.status === RepairStatus.ĐÃ_HOÀN_THÀNH
     ).length;
-    const pendingReports = mockRepairRequests.filter(
+    const pendingReports = allRepairs.filter(
       (req) =>
         req.status === RepairStatus.ĐANG_XỬ_LÝ ||
         req.status === RepairStatus.CHỜ_TIẾP_NHẬN ||
@@ -48,20 +37,24 @@ export const useStatistics = () => {
   const updatedStatsData = useMemo(() => {
     return [
       {
-        ...statsData[0],
+        label: "Tổng yêu cầu",
         value: realTimeStats.totalReports,
+        trend: "",
       },
       {
-        ...statsData[1],
+        label: "Đang xử lý",
         value: realTimeStats.pendingReports,
+        trend: "",
       },
       {
-        ...statsData[2],
+        label: "Đã hoàn thành",
         value: realTimeStats.completedReports,
+        trend: "",
       },
       {
-        ...statsData[3],
+        label: "Tỷ lệ hoàn thành",
         value: realTimeStats.completionRate,
+        trend: "",
       },
     ];
   }, [realTimeStats]);
@@ -70,29 +63,22 @@ export const useStatistics = () => {
   const errorTypeStatsFromReal = useMemo(() => {
     const errorCounts: Record<string, number> = {};
 
-    mockRepairRequests.forEach((request) => {
-      if (request.errorTypeId && request.errorTypeName) {
-        errorCounts[request.errorTypeId] =
-          (errorCounts[request.errorTypeId] || 0) + 1;
+    allRepairs.forEach((request) => {
+      if (request.errorType && request.errorTypeName) {
+        errorCounts[request.errorType] =
+          (errorCounts[request.errorType] || 0) + 1;
       }
     });
 
     return Object.entries(errorCounts).map(([errorTypeId, count]) => {
-      const request = mockRepairRequests.find(
-        (req) => req.errorTypeId === errorTypeId
-      );
-      const existingData = errorTypeStatsData.find(
-        (data) => data.errorTypeId === errorTypeId
-      );
-
+      const request = allRepairs.find((req) => req.errorType === errorTypeId);
       return {
         name: request?.errorTypeName || "Lỗi không xác định",
         value: count,
-        color: existingData?.color || "#8c8c8c",
         errorTypeId,
       };
     });
-  }, []);
+  }, [allRepairs]);
 
   // Thống kê theo kỹ thuật viên từ dữ liệu thực
   const technicianStatsFromReal = useMemo(() => {
@@ -101,7 +87,7 @@ export const useStatistics = () => {
       { completed: number; pending: number; name: string }
     > = {};
 
-    mockRepairRequests.forEach((request) => {
+    allRepairs.forEach((request) => {
       if (request.assignedTechnicianId && request.assignedTechnicianName) {
         const techId = request.assignedTechnicianId;
         if (!technicianWork[techId]) {
@@ -133,10 +119,10 @@ export const useStatistics = () => {
         completed: stats.completed,
         pending: stats.pending,
         efficiency: Number(efficiency.toFixed(1)),
-        avgTime: 1.5 + Math.random() * 2, // Giả lập thời gian trung bình
+        avgTime: 0,
       };
     });
-  }, []);
+  }, [allRepairs]);
 
   // Lọc dữ liệu theo khoảng thời gian
   const filterDataByPeriod = (
@@ -177,5 +163,7 @@ export const useStatistics = () => {
 
     // Utility functions
     filterDataByPeriod,
+    loading,
+    error,
   };
 };

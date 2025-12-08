@@ -1,22 +1,34 @@
 'use client'
 
-import { getRecentRepairRequests } from '@/lib/mockData/repairRequests'
 import { repairRequestStatusConfig } from '@/lib/constants/repairStatus'
 import { RepairRequest } from '@/types'
 import Link from 'next/link'
+import { Card, Empty, Spin } from 'antd'
 
-export default function RecentRequests() {
-	const items = getRecentRepairRequests(4)
+type Props = {
+	items: RepairRequest[]
+	loading?: boolean
+	error?: string | null
+}
 
+export default function RecentRequests({ items, loading, error }: Props) {
 	return (
-		<div className="bg-white shadow rounded-lg">
-			<div className="px-4 py-5 sm:p-6">
-				<div className="flex items-center justify-between mb-4">
-					<h3 className="text-lg font-medium leading-6 text-gray-900">Yêu cầu gần đây</h3>
-					<Link href="/ky-thuat-vien/quan-ly-bao-loi" className="text-sm text-blue-600 hover:underline">
-						Xem tất cả
-					</Link>
+		<Card>
+			<div className="flex items-center justify-between mb-4">
+				<h3 className="text-lg font-medium leading-6 text-gray-900">Yêu cầu gần đây</h3>
+				<Link href="/ky-thuat-vien/quan-ly-bao-loi" className="text-sm text-blue-600 hover:underline">
+					Xem tất cả
+				</Link>
+			</div>
+			{loading ? (
+				<div className="flex items-center justify-center py-6">
+					<Spin />
 				</div>
+			) : error ? (
+				<Empty description={error} />
+			) : items.length === 0 ? (
+				<Empty description="Chưa có yêu cầu nào" />
+			) : (
 				<div className="divide-y divide-gray-300">
 					{items.map((req: RepairRequest) => {
 						const cfg = repairRequestStatusConfig[req.status]
@@ -33,7 +45,7 @@ export default function RecentRequests() {
 						)
 					})}
 				</div>
-			</div>
-		</div>
+			)}
+		</Card>
 	)
 }

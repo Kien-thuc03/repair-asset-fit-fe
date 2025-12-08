@@ -1,9 +1,9 @@
-import React from "react";
-import { Card, Row, Col, Statistic, Progress, Tag, Typography } from "antd";
+import React, { useMemo } from "react";
+import { Card, Row, Col, Statistic, Progress, Tag, Typography, Spin, Empty } from "antd";
 import { FileText, Users, CheckCircle, AlertCircle } from "lucide-react";
-import { units } from "@/lib/mockData/units";
-import { mockRepairRequests } from "@/lib/mockData/repairRequests";
 import { RepairStatus } from "@/types";
+import { useUnits } from "@/hooks/useUnits";
+import { useRepairDashboardData } from "@/hooks/useRepairDashboardData";
 
 const { Text, Title } = Typography;
 
@@ -12,45 +12,50 @@ const { Text, Title } = Typography;
  * Dựa trên database schema: units table và RepairRequests table
  */
 export const UnitStatistics = () => {
-  // Tính toán thống kê cho từng đơn vị
-  const unitStats = units
-    .filter((unit) => unit.status === "ACTIVE")
-    .map((unit) => {
-      // Lọc các yêu cầu sửa chữa theo đơn vị
-      const unitRequests = mockRepairRequests.filter(
-        (request) => request.unit === unit.name
-      );
+  const { units, loading: unitsLoading, error: unitsError } = useUnits();
+  const { allRepairs, loading: repairsLoading, error: repairsError } = useRepairDashboardData();
 
-      const totalRequests = unitRequests.length;
-      const completedRequests = unitRequests.filter(
-        (req) => req.status === RepairStatus.ĐÃ_HOÀN_THÀNH
-      ).length;
-      const pendingRequests = unitRequests.filter(
-        (req) =>
-          req.status === RepairStatus.ĐANG_XỬ_LÝ ||
-          req.status === RepairStatus.CHỜ_TIẾP_NHẬN ||
-          req.status === RepairStatus.ĐÃ_TIẾP_NHẬN
-      ).length;
-      const cancelledRequests = unitRequests.filter(
-        (req) => req.status === RepairStatus.ĐÃ_HỦY
-      ).length;
+  const unitStats = useMemo(() => {
+    return units
+      .filter((unit) => !unit.status || unit.status === "ACTIVE")
+      .map((unit) => {
+        const unitRequests = allRepairs.filter(
+          (request) =>
+            request.unit === unit.name ||
+            request.room?.unit?.name === unit.name
+        );
 
-      const completionRate =
-        totalRequests > 0 ? (completedRequests / totalRequests) * 100 : 0;
+        const totalRequests = unitRequests.length;
+        const completedRequests = unitRequests.filter(
+          (req) => req.status === RepairStatus.ĐÃ_HOÀN_THÀNH
+        ).length;
+        const pendingRequests = unitRequests.filter(
+          (req) =>
+            req.status === RepairStatus.ĐANG_XỬ_LÝ ||
+            req.status === RepairStatus.CHỜ_TIẾP_NHẬN ||
+            req.status === RepairStatus.ĐÃ_TIẾP_NHẬN
+        ).length;
+        const cancelledRequests = unitRequests.filter(
+          (req) => req.status === RepairStatus.ĐÃ_HỦY
+        ).length;
 
-      return {
-        id: unit.id,
-        name: unit.name,
-        type: unit.type,
-        totalRequests,
-        completedRequests,
-        pendingRequests,
-        cancelledRequests,
-        completionRate: Number(completionRate.toFixed(1)),
-        representative: unit.representativeId,
-      };
-    })
-    .sort((a, b) => b.totalRequests - a.totalRequests); // Sắp xếp theo số lượng yêu cầu
+        const completionRate =
+          totalRequests > 0 ? (completedRequests / totalRequests) * 100 : 0;
+
+        return {
+          id: unit.id,
+          name: unit.name,
+          type: unit.type,
+          totalRequests,
+          completedRequests,
+          pendingRequests,
+          cancelledRequests,
+          completionRate: Number(completionRate.toFixed(1)),
+          representative: unit.representativeId,
+        };
+      })
+      .sort((a, b) => b.totalRequests - a.totalRequests);
+  }, [units, allRepairs]);
 
   // Tính tổng thống kê
   const totalStats = unitStats.reduce(
@@ -72,6 +77,22 @@ export const UnitStatistics = () => {
     totalStats.totalRequests > 0
       ? (totalStats.completedRequests / totalStats.totalRequests) * 100
       : 0;
+
+  if (unitsLoading || repairsLoading) {
+    return (
+      <div className="flex items-center justify-center py-6">
+        <Spin />
+      </div>
+    );
+  }
+
+  if (unitsError || repairsError) {
+    return (
+      <Card>
+        <Empty description={unitsError || repairsError || "Không thể tải dữ liệu"} />
+      </Card>
+    );
+  }
 
   return (
     <div>
