@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { 
   Users, 
@@ -12,30 +14,26 @@ import {
   XCircle,
   Package
 } from 'lucide-react'
-import Link from 'next/link'
-import { useMemo } from 'react'
-import { users } from '@/lib/mockData/users'
-import { mockSoftwareProposals, getSoftwareProposalsByStatus } from '@/lib/mockData/softwareProposals'
-import { mockReplacementRequestItem } from '@/lib/mockData/replacementRequests'
+import { useUsersManagement } from '@/hooks/useUsersManagement'
+import { useSoftwareProposals } from '@/hooks/useSoftwareProposals'
+import { useReplacementProposals } from '@/hooks/useReplacementProposals'
 import { SoftwareProposalStatus } from '@/types/software'
 import { ReplacementProposalStatus, UserStatus } from '@/types'
+import { Card, Empty, Spin } from 'antd'
 
 export default function QTVKhoaDashboard() {
   const { user } = useAuth()
+  const { users, total: totalUsers, loading: usersLoading } = useUsersManagement({ initialLimit: 5 })
+  const { data: softwareData, loading: softwareLoading } = useSoftwareProposals({ page: 1, limit: 100 })
+  const { data: replacementData, loading: replacementLoading } = useReplacementProposals({ page: 1, limit: 100 })
 
-  // Tính toán thống kê từ dữ liệu thực
   const stats = useMemo(() => {
-    // Thống kê người dùng
     const activeUsers = users.filter(u => u.status === UserStatus.ACTIVE).length
-    const totalUsers = users.length
+    const softwareList = softwareData || []
+    const replacementList = replacementData?.data || []
 
-    // Thống kê đề xuất phần mềm
-    const totalSoftwareProposals = mockSoftwareProposals.length
-    const pendingSoftwareProposals = getSoftwareProposalsByStatus(SoftwareProposalStatus.CHỜ_DUYỆT).length
-
-    // Thống kê đề xuất linh kiện
-    const totalComponentRequests = mockReplacementRequestItem.length
-    const pendingComponentRequests = mockReplacementRequestItem.filter(
+    const pendingSoftware = softwareList.filter(p => p.status === SoftwareProposalStatus.CHỜ_DUYỆT).length
+    const pendingReplacement = replacementList.filter(
       req => req.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT || 
              req.status === ReplacementProposalStatus.CHỜ_XÁC_MINH
     ).length
@@ -50,16 +48,16 @@ export default function QTVKhoaDashboard() {
       },
       {
         name: 'Đề xuất phần mềm',
-        value: totalSoftwareProposals.toString(),
-        change: `${pendingSoftwareProposals} chờ duyệt`,
-        changeType: pendingSoftwareProposals > 0 ? 'neutral' as const : 'positive' as const,
+        value: softwareList.length.toString(),
+        change: `${pendingSoftware} chờ duyệt`,
+        changeType: pendingSoftware > 0 ? 'neutral' as const : 'positive' as const,
         icon: FolderCode,
       },
       {
         name: 'Đề xuất linh kiện',
-        value: totalComponentRequests.toString(),
-        change: `${pendingComponentRequests} chờ xử lý`,
-        changeType: pendingComponentRequests > 0 ? 'neutral' as const : 'positive' as const,
+        value: (replacementData?.total || replacementList.length).toString(),
+        change: `${pendingReplacement} chờ xử lý`,
+        changeType: pendingReplacement > 0 ? 'neutral' as const : 'positive' as const,
         icon: ClipboardList,
       },
       {
@@ -70,11 +68,14 @@ export default function QTVKhoaDashboard() {
         icon: Server,
       },
     ]
-  }, [])
+  }, [users, totalUsers, softwareData, replacementData])
+
+  const loading = usersLoading || softwareLoading || replacementLoading
+
+  const recentSoftware = (softwareData || []).slice(0, 3)
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard Quản trị viên khoa</h1>
         <p className="mt-2 text-gray-600">
@@ -82,7 +83,6 @@ export default function QTVKhoaDashboard() {
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((item) => (
           <div
@@ -115,7 +115,6 @@ export default function QTVKhoaDashboard() {
         ))}
       </div>
 
-      {/* Quick Actions */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
@@ -163,173 +162,140 @@ export default function QTVKhoaDashboard() {
                 </p>
               </div>
             </Link>
-
-            {/* <Link href="/qtv-khoa/giam-sat-he-thong" className="relative group bg-red-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-red-500 rounded-lg hover:bg-red-100 transition-colors">
-              <span className="rounded-lg inline-flex p-3 bg-red-600 text-white">
-                <Settings className="h-6 w-6" />
-              </span>
-              <div className="mt-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Giám sát hệ thống
-                </h3>
-                <p className="mt-2 text-sm text-gray-500">
-                  Theo dõi và quản lý hệ thống
-                </p>
-              </div>
-            </Link> */}
           </div>
         </div>
       </div>
 
-      {/* Dashboard Overview */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Software Proposals Status */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
               Trạng thái đề xuất phần mềm
             </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Clock className="h-5 w-5 text-yellow-500 mr-3" />
-                  <span className="text-sm font-medium">Chờ duyệt</span>
+            {softwareLoading ? (
+              <div className="flex items-center justify-center py-4"><Spin /></div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 text-yellow-500 mr-3" />
+                    <span className="text-sm font-medium">Chờ duyệt</span>
+                  </div>
+                  <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                    {softwareData?.filter(p => p.status === SoftwareProposalStatus.CHỜ_DUYỆT).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
-                  {getSoftwareProposalsByStatus(SoftwareProposalStatus.CHỜ_DUYỆT).length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                  <span className="text-sm font-medium">Đã duyệt</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
+                    <span className="text-sm font-medium">Đã duyệt</span>
+                  </div>
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                    {softwareData?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_DUYỆT).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  {getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_DUYỆT).length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Package className="h-5 w-5 text-blue-500 mr-3" />
-                  <span className="text-sm font-medium">Đã trang bị</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Package className="h-5 w-5 text-blue-500 mr-3" />
+                    <span className="text-sm font-medium">Đã trang bị</span>
+                  </div>
+                  <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                    {softwareData?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                  {getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_TRANG_BỊ).length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <XCircle className="h-5 w-5 text-red-500 mr-3" />
-                  <span className="text-sm font-medium">Đã từ chối</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <XCircle className="h-5 w-5 text-red-500 mr-3" />
+                    <span className="text-sm font-medium">Đã từ chối</span>
+                  </div>
+                  <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                    {softwareData?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_TỪ_CHỐI).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                  {getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_TỪ_CHỐI).length}
-                </span>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Component Requests Status */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
               Trạng thái đề xuất linh kiện
             </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Clock className="h-5 w-5 text-yellow-500 mr-3" />
-                  <span className="text-sm font-medium">Chờ tổ trưởng duyệt</span>
+            {replacementLoading ? (
+              <div className="flex items-center justify-center py-4"><Spin /></div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 text-yellow-500 mr-3" />
+                    <span className="text-sm font-medium">Chờ tổ trưởng duyệt</span>
+                  </div>
+                  <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                    {replacementData?.data.filter(req => req.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
-                  {mockReplacementRequestItem.filter(req => req.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT).length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
-                  <span className="text-sm font-medium">Đã duyệt</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
+                    <span className="text-sm font-medium">Đã duyệt</span>
+                  </div>
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                    {replacementData?.data.filter(req => req.status === ReplacementProposalStatus.ĐÃ_DUYỆT).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  {mockReplacementRequestItem.filter(req => req.status === ReplacementProposalStatus.ĐÃ_DUYỆT).length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Activity className="h-5 w-5 text-blue-500 mr-3" />
-                  <span className="text-sm font-medium">Đã hoàn tất mua sắm</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Activity className="h-5 w-5 text-blue-500 mr-3" />
+                    <span className="text-sm font-medium">Đã hoàn tất mua sắm</span>
+                  </div>
+                  <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                    {replacementData?.data.filter(req => req.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                  {mockReplacementRequestItem.filter(req => req.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM).length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <XCircle className="h-5 w-5 text-red-500 mr-3" />
-                  <span className="text-sm font-medium">Đã từ chối</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <XCircle className="h-5 w-5 text-red-500 mr-3" />
+                    <span className="text-sm font-medium">Đã từ chối</span>
+                  </div>
+                  <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                    {replacementData?.data.filter(req => req.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                  {mockReplacementRequestItem.filter(req => req.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI).length}
-                </span>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Recent Activities */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
             Hoạt động gần đây
           </h3>
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-gray-900">
-                  Đã duyệt đề xuất phần mềm DXPM-2025-003
-                </p>
-                <p className="text-xs text-gray-500">2 giờ trước</p>
-              </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-4"><Spin /></div>
+          ) : recentSoftware.length === 0 ? (
+            <Empty description="Chưa có đề xuất phần mềm nào" />
+          ) : (
+            <div className="space-y-3">
+              {recentSoftware.map((item) => (
+                <div className="flex items-start space-x-3" key={item.id}>
+                  <div className="flex-shrink-0">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-gray-900">
+                      Đề xuất {item.proposalCode} - {item.title || item.description || 'Không tiêu đề'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(item.createdAt).toLocaleString('vi-VN')}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-gray-900">
-                  Tạo tài khoản mới cho kỹ thuật viên
-                </p>
-                <p className="text-xs text-gray-500">4 giờ trước</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-gray-900">
-                  Có đề xuất phần mềm mới cần duyệt DXPM-2025-002
-                </p>
-                <p className="text-xs text-gray-500">1 ngày trước</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm text-gray-900">
-                  Đã từ chối đề xuất phần mềm DXPM-2025-004
-                </p>
-                <p className="text-xs text-gray-500">2 ngày trước</p>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

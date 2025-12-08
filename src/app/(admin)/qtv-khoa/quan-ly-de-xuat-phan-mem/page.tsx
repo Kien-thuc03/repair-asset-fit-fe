@@ -15,44 +15,17 @@ import {
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
-import { Breadcrumb, Select, DatePicker } from 'antd';
+import { Breadcrumb, Select, DatePicker, Empty, Spin } from 'antd';
 import type { Dayjs } from 'dayjs';
-import { SoftwareProposal, SoftwareProposalStatus } from '@/types/software';
-import { 
-  mockSoftwareProposals,
-  getSoftwareProposalsByStatus 
-} from '@/lib/mockData/softwareProposals';
+import { SoftwareProposalStatus } from '@/types/software';
 import { Pagination } from '@/components/common';
+import { useSoftwareProposals } from '@/hooks/useSoftwareProposals';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 type SortField = "proposalCode" | "proposerId" | "roomId" | "status" | "createdAt"
 type SortDirection = "asc" | "desc" | "none"
-
-// Mock users và rooms data để hiển thị tên
-const mockUsers = {
-  'user-5': 'Giảng viên',
-  'user-6': 'Giảng viên kiêm QTV',
-  'user-1': 'QTV Khoa'
-} as const;
-
-const mockRooms = {
-  'ROOM001': 'H101',
-  'ROOM002': 'H102', 
-  'ROOM003': 'H103',
-  'ROOM004': 'H201',
-  'ROOM005': 'H202'
-} as const;
-
-// Helper functions
-const getUserName = (userId: string): string => {
-  return (mockUsers as Record<string, string>)[userId] || userId;
-};
-
-const getRoomName = (roomId: string): string => {
-  return (mockRooms as Record<string, string>)[roomId] || roomId;
-};
 
 // Config cho trạng thái đề xuất
 const softwareProposalStatusConfig = {
@@ -80,6 +53,7 @@ const softwareProposalStatusConfig = {
 
 export default function QtvKhoaSoftwareProposalsPage() {
   const router = useRouter();
+  const { data: proposals, loading, error } = useSoftwareProposals({ page: 1, limit: 200 });
   
   // State
   const [searchText, setSearchText] = useState('');
@@ -132,12 +106,10 @@ export default function QtvKhoaSoftwareProposalsPage() {
 
   // Lọc và sắp xếp dữ liệu
   const filteredAndSortedData = useMemo(() => {
-    setCurrentPage(1);
-
-    // Lọc dữ liệu
-    const filtered = mockSoftwareProposals.filter((proposal: SoftwareProposal) => {
+    const source = proposals || [];
+    const filtered = source.filter((proposal) => {
       const matchesSearch = searchText ? 
-        [proposal.proposalCode, proposal.reason, getUserName(proposal.proposerId), getRoomName(proposal.roomId)]
+        [proposal.proposalCode, proposal.reason, proposal.proposer?.fullName, proposal.room?.name]
           .filter(Boolean)
           .join(' ')
           .toLowerCase()
@@ -165,12 +137,12 @@ export default function QtvKhoaSoftwareProposalsPage() {
           bValue = b.proposalCode;
           break;
         case "proposerId":
-          aValue = getUserName(a.proposerId);
-          bValue = getUserName(b.proposerId);
+          aValue = a.proposer?.fullName || a.proposerId || "";
+          bValue = b.proposer?.fullName || b.proposerId || "";
           break;
         case "roomId":
-          aValue = getRoomName(a.roomId);
-          bValue = getRoomName(b.roomId);
+          aValue = a.room?.name || a.roomId || "";
+          bValue = b.room?.name || b.roomId || "";
           break;
         case "status":
           aValue = a.status;
@@ -204,10 +176,10 @@ export default function QtvKhoaSoftwareProposalsPage() {
 
   // Stats
   const stats = {
-    total: mockSoftwareProposals.length,
-    pending: getSoftwareProposalsByStatus(SoftwareProposalStatus.CHỜ_DUYỆT).length,
-    approved: getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_DUYỆT).length,
-    equipped: getSoftwareProposalsByStatus(SoftwareProposalStatus.ĐÃ_TRANG_BỊ).length,
+    total: proposals?.length || 0,
+    pending: proposals?.filter(p => p.status === SoftwareProposalStatus.CHỜ_DUYỆT).length || 0,
+    approved: proposals?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_DUYỆT).length || 0,
+    equipped: proposals?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ).length || 0,
   };
 
   return (
@@ -376,6 +348,11 @@ export default function QtvKhoaSoftwareProposalsPage() {
 
       {/* Table */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-8"><Spin /></div>
+        ) : error ? (
+          <div className="p-6"><Empty description={error} /></div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -444,7 +421,7 @@ export default function QtvKhoaSoftwareProposalsPage() {
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-gray-400 mr-2" />
                         <div className="text-sm text-gray-900">
-                          {getUserName(proposal.proposerId)}
+                          {proposal.proposer?.fullName || proposal.proposerId || 'N/A'}
                         </div>
                       </div>
                     </td>
@@ -452,7 +429,7 @@ export default function QtvKhoaSoftwareProposalsPage() {
                       <div className="flex items-center">
                         <Building className="h-4 w-4 text-gray-400 mr-2" />
                         <div className="text-sm text-gray-900">
-                          {getRoomName(proposal.roomId)}
+                          {proposal.room?.name || proposal.roomId || 'N/A'}
                         </div>
                       </div>
                     </td>
@@ -483,8 +460,9 @@ export default function QtvKhoaSoftwareProposalsPage() {
             </tbody>
           </table>
         </div>
+        )}
 
-        {paginatedData.length === 0 && (
+        {!loading && paginatedData.length === 0 && !error && (
           <div className="text-center py-12">
             <Monitor className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
@@ -496,17 +474,19 @@ export default function QtvKhoaSoftwareProposalsPage() {
           </div>
         )}
 
-        <Pagination
-          currentPage={currentPage}
-          pageSize={pageSize}
-          total={filteredAndSortedData.length}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          showSizeChanger={true}
-          pageSizeOptions={[10, 20, 50, 100]}
-          showQuickJumper={true}
-          showTotal={true}
-        />
+        {!loading && !error && (
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={filteredAndSortedData.length}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            showSizeChanger={true}
+            pageSizeOptions={[10, 20, 50, 100]}
+            showQuickJumper={true}
+            showTotal={true}
+          />
+        )}
       </div>
     </div>
   );
