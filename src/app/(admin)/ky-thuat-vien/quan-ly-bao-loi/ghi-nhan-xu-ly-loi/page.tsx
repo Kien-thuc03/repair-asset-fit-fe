@@ -443,7 +443,7 @@ export default function GhiNhanXuLyLoiPage() {
           ? selectedSoftwareIds 
           : undefined,
         resolutionNotes: formData.repairNotes || undefined,
-        finalStatus: finalStatus, // undefined nếu need_replacement
+        finalStatus: finalStatus, // ĐÃ_HOÀN_THÀNH nếu đã sửa được, CHỜ_THAY_THẾ nếu cần thay thế
       };
 
       // Call API to create and process repair request
@@ -952,13 +952,8 @@ export default function GhiNhanXuLyLoiPage() {
                     ) : formData.repairMethod === 'need_replacement' ? (
                       <div>
                         <span className="text-orange-600 font-medium">→ Chờ thay thế</span>
-                        <div className="text-xs text-gray-600 mt-1 space-y-1">
-                          <div>✅ Repair Request: Status = <strong>&quot;CHỜ_THAY_THẾ&quot;</strong></div>
-                          <div>✅ Linh kiện: Status vẫn giữ <strong>&quot;FAULTY&quot;</strong></div>
-                          <div className="pt-1 text-blue-600">
-                            📋 <strong>Bước tiếp theo:</strong> Vào mục &quot;Lập phiếu đề xuất&quot; để tạo đề xuất thay thế chính thức.
-                            Khi đó, linh kiện sẽ chuyển sang trạng thái <strong>&quot;PENDING_REPLACEMENT&quot;</strong>.
-                          </div>
+                        <div className="text-xs text-gray-600 mt-1">
+                          Linh kiện đã được chọn để thay thế
                         </div>
                       </div>
                     ) : null}
