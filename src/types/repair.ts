@@ -313,6 +313,9 @@ export interface Asset {
   floor?: string;
   machineLabel?: string;
   componentCount?: number;
+  roomNumber?: string;
+  roomCode?: string;
+  notes?: string;
   components?: Array<{
     id: string;
     componentType: string;

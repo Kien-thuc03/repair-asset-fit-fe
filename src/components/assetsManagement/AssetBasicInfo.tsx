@@ -1,5 +1,5 @@
 "use client";
-import { Monitor, Tag, Hash } from "lucide-react";
+import { Monitor, Building2, Layers } from "lucide-react";
 import { Asset } from "@/types";
 import { getAssetStatusDisplay } from "@/lib/constants/assetStatus";
 
@@ -7,8 +7,20 @@ interface TechnicianDeviceBasicInfoProps {
   asset: Asset;
 }
 
+const formatDate = (dateString?: string) => {
+  if (!dateString) return "Không xác định";
+  try {
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  } catch {
+    return dateString;
+  }
+};
+
 export default function TechnicianDeviceBasicInfo({ asset }: TechnicianDeviceBasicInfoProps) {
-  const statusConfig = getAssetStatusDisplay(asset.status);
 
   return (
     <div className="space-y-4">
@@ -16,64 +28,104 @@ export default function TechnicianDeviceBasicInfo({ asset }: TechnicianDeviceBas
         <Monitor className="w-5 h-5 text-blue-600" />
         <span>Thông tin cơ bản</span>
       </h4>
-      <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-        <div className="grid grid-cols-1 gap-3">
-          <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-500">Mã kế toán:</span>
+      <div className="bg-gray-50 p-4 sm:p-6 rounded-lg">
+        {/* Grid 2 cột cho các thông tin chính */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-6 lg:gap-x-8 gap-y-0">
+          {/* Cột 1 */}
+          <div className="space-y-0">
+            <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+              <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Mã kế toán:</span>
+              <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate">
+                {asset.ktCode}
+              </span>
             </div>
-            <span className="text-sm text-gray-900 font-mono bg-white px-2 py-1 rounded">
-              {asset.ktCode}
-            </span>
-          </div>
-          
-          <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-500">Tên tài sản:</span>
+            
+            <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+              <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Mã tài sản cố định:</span>
+              <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate">
+                {asset.fixedCode}
+              </span>
             </div>
-            <span className="text-sm text-gray-900 font-medium">{asset.name}</span>
-          </div>
-          
-          <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
-            <span className="text-sm font-medium text-gray-500">Danh mục:</span>
-            <span className="text-sm text-gray-900">{asset.category}</span>
-          </div>
-          
-          <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
-            <span className="text-sm font-medium text-gray-500">Thông số kĩ thuật:</span>
-            <span className="text-sm text-gray-900 max-w-48 text-right" title={asset.specs}>
-              {asset.specs}
-            </span>
+
+            {asset.machineLabel && (
+              <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+                <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Số máy:</span>
+                <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate">{asset.machineLabel}</span>
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+              <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Tên tài sản:</span>
+              <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate" title={asset.name}>
+                {asset.name}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+              <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Danh mục:</span>
+              <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate">{asset.category}</span>
+            </div>
+
+            {asset.origin && (
+              <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+                <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Xuất xứ:</span>
+                <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate" title={asset.origin}>
+                  {asset.origin}
+                </span>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
-            <span className="text-sm font-medium text-gray-500">Xuất xứ:</span>
-            <span className="text-sm text-gray-900 max-w-48 text-right" title={asset.origin}>
-              {asset.origin}
-            </span>
-          </div>
-          
-          <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
-            <span className="text-sm font-medium text-gray-500">Mã tài sản cố định:</span>
-            <span className="text-sm text-gray-900 font-mono bg-white px-2 py-1 rounded">
-              {asset.fixedCode}
-            </span>
-          </div>
-          
-          <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-500">Phòng làm việc:</span>
+          {/* Cột 2 */}
+          <div className="space-y-0">
+            <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+              <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Phòng làm việc:</span>
+              <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate">{asset.roomName}</span>
             </div>
-            <span className="text-sm text-gray-900 font-medium">{asset.roomName}</span>
-          </div>
-          
-          <div className="flex items-center justify-between py-2">
-            <span className="text-sm font-medium text-gray-500">Trạng thái hiện tại:</span>
-            <div
-              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusConfig.badgeClass}`}>
-              <span>{statusConfig.label}</span>
+
+            {asset.roomNumber && (
+              <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+                <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Số phòng:</span>
+                <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate">{asset.roomNumber}</span>
+              </div>
+            )}
+
+            {asset.building && (
+              <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+                <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Tòa nhà:</span>
+                <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate">{asset.building}</span>
+              </div>
+            )}
+
+            {asset.floor && (
+              <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+                <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Tầng:</span>
+                <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate">{asset.floor}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+              <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Ngày nhập:</span>
+              <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate">{formatDate(asset.purchaseDate)}</span>
             </div>
+
+            {asset.notes && (
+              <div className="flex items-center justify-between py-2.5 border-b border-gray-200">
+                <span className="text-sm font-medium text-gray-800 whitespace-nowrap">Ghi chú:</span>
+                <span className="text-sm text-gray-900 text-right ml-2 max-w-[140px] sm:max-w-[180px] md:max-w-[200px] truncate" title={asset.notes}>
+                  {asset.notes}
+                </span>
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* Thông số kĩ thuật - tách riêng để không bị ảnh hưởng bởi gap */}
+        <div className="flex items-start justify-between py-2.5 border-t border-gray-300 mt-4 pt-4">
+          <span className="text-sm font-medium text-gray-800 whitespace-nowrap flex-shrink-0">Thông số kĩ thuật:</span>
+          <span className="text-sm text-gray-900 text-right ml-4 flex-1" title={asset.specs}>
+            {asset.specs || "Không có"}
+          </span>
         </div>
       </div>
     </div>

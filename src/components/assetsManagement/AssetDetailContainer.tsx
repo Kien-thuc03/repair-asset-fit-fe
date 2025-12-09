@@ -39,6 +39,10 @@ const transformComputerToAsset = (computer: ComputerDetail): Asset => {
     components: computer.components,
     software: computer.software,
     repairSummary: computer.repairSummary,
+    // Bổ sung các trường từ room và computer
+    roomNumber: computer.room?.roomNumber,
+    roomCode: computer.room?.roomCode,
+    notes: computer.notes,
   };
 };
 
@@ -206,7 +210,9 @@ export default function TechnicianDeviceDetailContainer() {
           {!showRepairHistory ? (
             // Device Information Tab
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <TechnicianDeviceBasicInfo asset={asset} />
+              <div className="col-span-2">
+              <TechnicianDeviceBasicInfo asset={asset}/>
+              </div>
 
               <TechnicianDeviceSpecifications asset={asset} />
 
