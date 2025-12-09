@@ -1,7 +1,11 @@
 "use client";
 
+import { useMemo } from "react";
+import { Empty, Spin } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
-import { mockRepairRequests } from "@/lib/mockData";
+import { useRepairDashboardData } from "@/hooks/useRepairDashboardData";
+import { useUnits } from "@/hooks/useUnits";
+import { RepairStatus } from "@/types";
 import {
   BarChart3,
   FileText,
@@ -11,50 +15,57 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-const banGiamHieuStats: Array<{
-  name: string;
-  value: string;
-  change: string;
-  changeType: "positive" | "negative" | "warning" | "neutral";
-  icon: typeof FileText;
-  color: string;
-}> = [
-  {
-    name: "Tổng yêu cầu sửa chữa",
-    value: "156",
-    change: "+12% so với tháng trước",
-    changeType: "positive",
-    icon: FileText,
-    color: "bg-blue-500",
-  },
-  {
-    name: "Đã hoàn thành",
-    value: "128",
-    change: "82% tỷ lệ hoàn thành",
-    changeType: "positive",
-    icon: CheckCircle,
-    color: "bg-green-500",
-  },
-  {
-    name: "Đang xử lý",
-    value: "24",
-    change: "4 yêu cầu mới",
-    changeType: "warning",
-    icon: AlertTriangle,
-    color: "bg-yellow-500",
-  },
-  {
-    name: "Tổng đơn vị",
-    value: "12",
-    change: "Tất cả đang hoạt động",
-    changeType: "positive",
-    icon: Building2,
-    color: "bg-purple-500",
-  },
-];
-
 export default function BanGiamHieuDashboard() {
   const { user } = useAuth();
+  const { allRepairs, recentRequests, loading, error } = useRepairDashboardData();
+  const { units } = useUnits();
+
+  const stats = useMemo(() => {
+    const total = allRepairs.length;
+    const completed = allRepairs.filter((r) => r.status === RepairStatus.ĐÃ_HOÀN_THÀNH).length;
+    const inProgress = allRepairs.filter(
+      (r) =>
+        r.status === RepairStatus.ĐANG_XỬ_LÝ ||
+        r.status === RepairStatus.CHỜ_TIẾP_NHẬN ||
+        r.status === RepairStatus.ĐÃ_TIẾP_NHẬN
+    ).length;
+    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    return [
+      {
+        name: "Tổng yêu cầu sửa chữa",
+        value: total.toString(),
+        change: `${completionRate}% hoàn thành`,
+        changeType: completionRate >= 80 ? "positive" : "warning",
+        icon: FileText,
+        color: "bg-blue-500",
+      },
+      {
+        name: "Đã hoàn thành",
+        value: completed.toString(),
+        change: `${completionRate}%`,
+        changeType: "positive",
+        icon: CheckCircle,
+        color: "bg-green-500",
+      },
+      {
+        name: "Đang xử lý",
+        value: inProgress.toString(),
+        change: `${inProgress} đang mở`,
+        changeType: inProgress > 0 ? "warning" : "positive",
+        icon: AlertTriangle,
+        color: "bg-yellow-500",
+      },
+      {
+        name: "Tổng đơn vị",
+        value: units.length.toString(),
+        change: "Đơn vị đang hoạt động",
+        changeType: "positive",
+        icon: Building2,
+        color: "bg-purple-500",
+      },
+    ];
+  }, [allRepairs, units]);
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
@@ -71,7 +82,7 @@ export default function BanGiamHieuDashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {banGiamHieuStats.map((item) => (
+        {stats.map((item) => (
           <div
             key={item.name}
             className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6">
@@ -163,26 +174,37 @@ export default function BanGiamHieuDashboard() {
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
               Hoạt động gần đây
             </h3>
-            <div className="space-y-4">
-              {mockRepairRequests.slice(0, 5).map((request) => (
-                <div key={request.id} className="flex items-start space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
+            {loading ? (
+              <div className="flex items-center justify-center py-6">
+                <Spin />
+              </div>
+            ) : error ? (
+              <Empty description={error} />
+            ) : (
+              <div className="space-y-4">
+                {recentRequests.slice(0, 5).map((request) => (
+                  <div key={request.id} className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-gray-900">
+                        <span className="font-medium">
+                          Yêu cầu {request.requestCode}
+                        </span>{" "}
+                        - {request.assetName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {request.roomName} - {request.unit}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-900">
-                      <span className="font-medium">
-                        Yêu cầu {request.requestCode}
-                      </span>{" "}
-                      - {request.assetName}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {request.roomName} - {request.unit}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+                {recentRequests.length === 0 && (
+                  <Empty description="Chưa có hoạt động" />
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

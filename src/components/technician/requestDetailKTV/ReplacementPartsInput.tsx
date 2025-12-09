@@ -4,13 +4,22 @@ import { useState, useEffect } from 'react'
 import { Button, Form, Popconfirm, Select, InputNumber, Input, Spin, Alert } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
 import { Component, ComponentType } from '@/types'
-import { ReplacementPart } from '@/lib/mockData'
 import { getComponentsByAssetId } from '@/lib/api/components'
 
 interface Props {
 	value?: ReplacementPart[]
 	onChange?: (value: ReplacementPart[]) => void
 	assetId?: string // Thêm prop assetId để lọc components
+}
+
+export interface ReplacementPart {
+	id: string
+	componentId: string
+	componentType: ComponentType
+	componentName: string
+	componentSpecs?: string
+	quantity: number
+	note?: string
 }
 
 export default function ReplacementPartsInput({ value = [], onChange, assetId }: Props) {

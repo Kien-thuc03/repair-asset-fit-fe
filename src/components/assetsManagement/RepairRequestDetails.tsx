@@ -1,9 +1,9 @@
 import React, { useMemo } from "react";
-import { Card, Table, Tag, Space, Typography, Row, Col, Statistic } from "antd";
+import { Card, Table, Tag, Space, Typography, Row, Col, Statistic, Empty, Spin } from "antd";
 import { Clock, CheckCircle, AlertTriangle } from "lucide-react";
-import { mockRepairRequests } from "@/lib/mockData/repairRequests";
 import { RepairStatus } from "@/types";
 import type { ColumnsType } from "antd/es/table";
+import { useRepairDashboardData } from "@/hooks/useRepairDashboardData";
 
 const { Text, Title } = Typography;
 
@@ -26,9 +26,11 @@ interface RepairDetail {
  * Dựa trên database schema: RepairRequests table
  */
 export const RepairRequestDetails = () => {
+  const { allRepairs, loading, error } = useRepairDashboardData();
+
   // Chuyển đổi dữ liệu repair requests thành format hiển thị
   const repairDetails: RepairDetail[] = useMemo(() => {
-    return mockRepairRequests.map((request) => {
+    return allRepairs.map((request) => {
       let resolutionTime: number | undefined;
 
       // Tính thời gian xử lý nếu đã hoàn thành
@@ -55,6 +57,32 @@ export const RepairRequestDetails = () => {
       };
     });
   }, []);
+
+  if (loading) {
+    return (
+      <Card>
+        <div className="flex items-center justify-center py-8">
+          <Spin />
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <Empty description={error} />
+      </Card>
+    );
+  }
+
+  if (repairDetails.length === 0) {
+    return (
+      <Card>
+        <Empty description="Chưa có yêu cầu sửa chữa" />
+      </Card>
+    );
+  }
 
   // Tính thống kê
   const statistics = useMemo(() => {

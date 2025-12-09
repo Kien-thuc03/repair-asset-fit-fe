@@ -1,10 +1,11 @@
 "use client";
 
-import { Table, Card, Tag, Typography, Empty } from "antd";
+import { useEffect, useState } from "react";
+import { Table, Card, Tag, Typography, Empty, Spin } from "antd";
 import { ToolOutlined, FileTextOutlined } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import { RepairRequestComponent } from "@/types";
-import { getComponentsByRepairRequestId, mockComponents } from "@/lib/mockData";
+import { getRepairById } from "@/lib/api/repairs";
 
 const { Title, Text } = Typography;
 
@@ -22,25 +23,58 @@ interface ComponentWithDetails extends RepairRequestComponent {
 export default function FaultyComponentsList({
   repairRequestId,
 }: FaultyComponentsListProps) {
-  // Lấy danh sách linh kiện bị lỗi từ repair request
-  const repairRequestComponents =
-    getComponentsByRepairRequestId(repairRequestId);
+  const [componentsWithDetails, setComponentsWithDetails] = useState<ComponentWithDetails[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Kết hợp với thông tin chi tiết của component
-  const componentsWithDetails: ComponentWithDetails[] =
-    repairRequestComponents.map((item) => {
-      const componentDetail = mockComponents.find(
-        (comp) => comp.id === item.componentId
-      );
+  useEffect(() => {
+    if (!repairRequestId) return;
 
-      return {
-        ...item,
-        componentName: componentDetail?.name || "Không xác định",
-        componentType: componentDetail?.componentType || "Không xác định",
-        componentSpecs: componentDetail?.componentSpecs,
-        serialNumber: componentDetail?.serialNumber,
-      };
-    });
+    const fetchComponents = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const repair = await getRepairById(repairRequestId);
+        const faultyComponents = (repair as any).faultyComponents as ComponentWithDetails[] | undefined;
+        const fromComponents = repair.components?.map((comp) => ({
+          componentId: comp.id,
+          note: comp.specifications,
+          componentName: comp.name,
+          componentType: comp.type,
+          componentSpecs: comp.specifications,
+          serialNumber: (comp as any).serialNumber,
+        })) as ComponentWithDetails[] | undefined;
+
+        setComponentsWithDetails(faultyComponents || fromComponents || []);
+      } catch (err) {
+        console.error("Failed to load faulty components", err);
+        setError(err instanceof Error ? err.message : "Không thể tải linh kiện");
+        setComponentsWithDetails([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchComponents();
+  }, [repairRequestId]);
+
+  if (loading) {
+    return (
+      <Card className="mt-6">
+        <div className="flex items-center justify-center py-6">
+          <Spin />
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="mt-6">
+        <Empty description={error} />
+      </Card>
+    );
+  }
 
   // Cấu hình columns cho table
   const columns: ColumnsType<ComponentWithDetails> = [

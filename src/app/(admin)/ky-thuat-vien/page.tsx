@@ -2,9 +2,11 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { StatsCards, RecentRequests, Announcements, QuickLinks } from '@/components/technician/dashboardKTV'
+import { useRepairDashboardData } from '@/hooks/useRepairDashboardData'
 
 export default function KyThuatVienDashboard() {
 	const { user } = useAuth()
+	const { statusCounts, recentRequests, loading, error } = useRepairDashboardData()
 
 	return (
 		<div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
@@ -13,11 +15,17 @@ export default function KyThuatVienDashboard() {
 				<p className="mt-2 text-gray-600">Chào mừng {user?.fullName}! Quản lý công việc sửa chữa của bạn.</p>
 			</div>
 
-			<StatsCards />
+			<StatsCards
+				waitingCount={statusCounts.waiting}
+				inProgressCount={statusCounts.inProgress}
+				waitingReplacementCount={statusCounts.waitingReplacement}
+				loading={loading}
+				error={error}
+			/>
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
 				<div className="lg:col-span-2">
-					<RecentRequests />
+					<RecentRequests items={recentRequests} loading={loading} error={error} />
 				</div>
 				<div className="lg:col-span-1">
 					<Announcements />

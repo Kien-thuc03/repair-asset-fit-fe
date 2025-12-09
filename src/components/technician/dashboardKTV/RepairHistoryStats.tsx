@@ -2,12 +2,12 @@
 
 import { Card, Row, Col, Statistic, Progress } from 'antd'
 import { CheckCircle, Clock, XCircle, Wrench, TrendingUp, Timer } from 'lucide-react'
-import { getRepairHistoryStats } from '@/lib/mockData'
+import { useRepairDashboardData } from '@/hooks/useRepairDashboardData'
 
 export default function RepairHistoryStats() {
-	const stats = getRepairHistoryStats()
+	const { repairHistoryStats: stats, loading, error } = useRepairDashboardData()
 
-	const completionRate = parseFloat(stats.completionRate)
+	const completionRate = stats.completionRate
 	
 	return (
 		<div className="space-y-6">
@@ -16,12 +16,18 @@ export default function RepairHistoryStats() {
 				Thống kê lịch sử sửa chữa
 			</h2>
 			
+			{error && (
+				<div className="text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+					{error}
+				</div>
+			)}
+
 			<Row gutter={[16, 16]}>
 				<Col xs={24} sm={12} lg={6}>
 					<Card className="h-full">
 						<Statistic
 							title="Tổng số yêu cầu"
-							value={stats.total}
+							value={loading ? undefined : stats.total}
 							prefix={<Wrench className="w-4 h-4" />}
 							valueStyle={{ color: '#3f6600' }}
 						/>
@@ -32,7 +38,7 @@ export default function RepairHistoryStats() {
 					<Card className="h-full">
 						<Statistic
 							title="Đã hoàn thành"
-							value={stats.completed}
+							value={loading ? undefined : stats.completed}
 							prefix={<CheckCircle className="w-4 h-4" />}
 							valueStyle={{ color: '#52c41a' }}
 						/>
@@ -43,7 +49,7 @@ export default function RepairHistoryStats() {
 					<Card className="h-full">
 						<Statistic
 							title="Đang xử lý"
-							value={stats.inProgress}
+							value={loading ? undefined : stats.inProgress}
 							prefix={<Clock className="w-4 h-4" />}
 							valueStyle={{ color: '#1890ff' }}
 						/>
@@ -54,7 +60,7 @@ export default function RepairHistoryStats() {
 					<Card className="h-full">
 						<Statistic
 							title="Đã hủy"
-							value={stats.cancelled}
+							value={loading ? undefined : stats.cancelled}
 							prefix={<XCircle className="w-4 h-4" />}
 							valueStyle={{ color: '#ff4d4f' }}
 						/>
@@ -73,7 +79,7 @@ export default function RepairHistoryStats() {
 						<div className="text-center">
 							<Progress
 								type="circle"
-								percent={completionRate}
+								percent={loading ? 0 : completionRate}
 								strokeColor={{
 									'0%': '#108ee9',
 									'100%': '#87d068',
@@ -96,7 +102,7 @@ export default function RepairHistoryStats() {
 					}>
 						<div className="text-center">
 							<div className="text-4xl font-bold text-blue-600 mb-2">
-								{stats.avgProcessingTime}
+								{loading ? '...' : stats.avgProcessingTimeHours}
 							</div>
 							<div className="text-lg text-gray-600 mb-2">giờ</div>
 							<p className="text-sm text-gray-500">

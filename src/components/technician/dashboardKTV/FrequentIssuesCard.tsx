@@ -1,13 +1,31 @@
 'use client'
 
-import { Card, List, Tag, Progress, Empty } from 'antd'
+import { Card, List, Tag, Progress, Empty, Spin } from 'antd'
 import { AlertTriangle, Computer, Calendar } from 'lucide-react'
-import { getAssetFailureStats } from '@/lib/mockData'
+import { useRepairDashboardData } from '@/hooks/useRepairDashboardData'
 
 export default function FrequentIssuesCard() {
-	const assetStats = getAssetFailureStats()
+	const { assetStats, loading, error } = useRepairDashboardData()
 	
-	if (assetStats.length === 0) {
+	if (loading) {
+		return (
+			<Card 
+				title={
+					<div className="flex items-center gap-2">
+						<AlertTriangle className="w-5 h-5 text-orange-600" />
+						<span>Tài sản hay gặp sự cố</span>
+					</div>
+				}
+				className="h-fit"
+			>
+				<div className="flex items-center justify-center py-6">
+					<Spin />
+				</div>
+			</Card>
+		)
+	}
+
+	if (error || assetStats.length === 0) {
 		return (
 			<Card 
 				title={
@@ -19,7 +37,7 @@ export default function FrequentIssuesCard() {
 				className="h-fit"
 			>
 				<Empty 
-					description="Không có dữ liệu thống kê"
+					description={error || "Không có dữ liệu thống kê"}
 					image={Empty.PRESENTED_IMAGE_SIMPLE}
 				/>
 			</Card>

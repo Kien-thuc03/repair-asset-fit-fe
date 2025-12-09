@@ -3,7 +3,7 @@ import { Monitor, Wrench } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { usePathname } from "next/navigation";
 import { Asset } from "@/types";
-import { assetStatusConfig } from "@/lib/mockData";
+import { AssetStatus, getAssetStatusLabel } from "@/types/computer";
 
 interface TechnicianDeviceDetailHeaderProps {
   asset: Asset;
@@ -28,33 +28,21 @@ export default function TechnicianDeviceDetailHeader({
   };
 
   const rolePath = getRoleFromPath();
-  const getStatusConfig = (status: string) => {
-    const config = assetStatusConfig[status as unknown as keyof typeof assetStatusConfig];
-    if (!config) {
-      return {
-        label: status,
-        color: "bg-gray-100 text-gray-800 border-gray-200",
-      };
-    }
-
-    const colorMap: { [key: string]: string } = {
-      green: "bg-green-100 text-green-800 border-green-200",
-      blue: "bg-blue-100 text-blue-800 border-blue-200",
-      orange: "bg-orange-100 text-orange-800 border-orange-200",
-      red: "bg-red-100 text-red-800 border-red-200",
-      gray: "bg-gray-100 text-gray-800 border-gray-200",
-      purple: "bg-purple-100 text-purple-800 border-purple-200",
-      black: "bg-gray-100 text-gray-800 border-gray-200",
-    };
-
-    return {
-      label: config.label,
-      color:
-        colorMap[config.color] || "bg-gray-100 text-gray-800 border-gray-200",
-    };
+  const statusColorMap: Record<string, string> = {
+    [AssetStatus.IN_USE]: "bg-green-100 text-green-800 border-green-200",
+    [AssetStatus.WAITING_HANDOVER]: "bg-blue-100 text-blue-800 border-blue-200",
+    [AssetStatus.WAITING_RECEIVE]: "bg-blue-100 text-blue-800 border-blue-200",
+    [AssetStatus.DAMAGED]: "bg-orange-100 text-orange-800 border-orange-200",
+    [AssetStatus.LOST]: "bg-red-100 text-red-800 border-red-200",
+    [AssetStatus.PROPOSED_LIQUIDATION]: "bg-purple-100 text-purple-800 border-purple-200",
+    [AssetStatus.LIQUIDATED]: "bg-gray-100 text-gray-800 border-gray-200",
+    [AssetStatus.WAITING_ALLOCATION]: "bg-blue-100 text-blue-800 border-blue-200",
   };
 
-  const statusConfig = getStatusConfig(asset.status);
+  const statusConfig = {
+    label: getAssetStatusLabel(asset.status as AssetStatus),
+    color: statusColorMap[asset.status] || "bg-gray-100 text-gray-800 border-gray-200",
+  };
 
   return (
     <>
