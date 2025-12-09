@@ -13,7 +13,7 @@ import {
   Tag,
 } from "antd";
 import { SearchOutlined, SyncOutlined, DownloadOutlined, PlusOutlined } from "@ant-design/icons";
-import { ChevronUp, ChevronDown, Loader2, Package } from "lucide-react";
+import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { 
   getStockComponents, 
@@ -36,6 +36,7 @@ export default function ComponentStockPage() {
   const [searchText, setSearchText] = useState("");
   const [sortField, setSortField] = useState<SortField | "">("");
   const [sortDirection, setSortDirection] = useState<SortDirection>("none");
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
   // Filter states
   const [componentTypeFilter, setComponentTypeFilter] = useState<string[]>([]);
@@ -254,6 +255,7 @@ export default function ComponentStockPage() {
     setFilteredFloors([]);
     setFilteredRooms([]);
     setCurrentPage(1);
+    setSelectedRowKeys([]);
   };
 
   // Handle building change - cascade filter
@@ -310,6 +312,28 @@ export default function ComponentStockPage() {
     setCurrentPage(1);
   };
 
+  // Row selection helpers
+  const handleRowSelect = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedRowKeys((prev) => [...prev, id]);
+    } else {
+      setSelectedRowKeys((prev) => prev.filter((key) => key !== id));
+    }
+  };
+
+  const handleSelectAllCurrentPage = (checked: boolean) => {
+    const currentPageIds = paginatedComponents.map((item) => item.id);
+    if (checked) {
+      setSelectedRowKeys((prev) => Array.from(new Set([...prev, ...currentPageIds])));
+    } else {
+      setSelectedRowKeys((prev) => prev.filter((key) => !currentPageIds.includes(key)));
+    }
+  };
+
+  const isAllCurrentPageSelected =
+    paginatedComponents.length > 0 &&
+    paginatedComponents.every((item) => selectedRowKeys.includes(item.id));
+
   // Format date
   const formatDate = (dateString: string) => {
     try {
@@ -327,10 +351,22 @@ export default function ComponentStockPage() {
 
   // Export Excel
   const handleExportExcel = async () => {
+    const exportData =
+      selectedRowKeys.length > 0
+        ? filteredAndSortedComponents.filter((item) =>
+            selectedRowKeys.includes(item.id)
+          )
+        : filteredAndSortedComponents;
+
+    if (exportData.length === 0) {
+      message.warning("Vui lòng chọn ít nhất một linh kiện để xuất Excel");
+      return;
+    }
+
     try {
       const XLSX = await import("xlsx");
 
-      const excelData = filteredAndSortedComponents.map((comp, index) => ({
+      const excelData = exportData.map((comp, index) => ({
         STT: index + 1,
         "Loại linh kiện": getComponentTypeLabel(comp.componentType as ComponentType),
         "Tên linh kiện": comp.name,
@@ -415,8 +451,14 @@ export default function ComponentStockPage() {
             icon={<DownloadOutlined />}
             onClick={handleExportExcel}
             size="large"
-            disabled={filteredAndSortedComponents.length === 0}>
-            Xuất Excel ({filteredAndSortedComponents.length})
+            disabled={
+              selectedRowKeys.length === 0 &&
+              filteredAndSortedComponents.length === 0
+            }>
+            Xuất Excel{" "}
+            {selectedRowKeys.length > 0
+              ? `(${selectedRowKeys.length} đã chọn)`
+              : `(${filteredAndSortedComponents.length})`}
           </Button>
         </div>
       </div>
@@ -449,7 +491,7 @@ export default function ComponentStockPage() {
               }}
               style={{ width: "100%" }}
               maxTagCount="responsive">
-              {Object.entries(ComponentType).map(([key, value]) => (
+              {Object.entries(ComponentType).map(([, value]) => (
                 <Select.Option key={value} value={value}>
                   {getComponentTypeLabel(value)}
                 </Select.Option>
@@ -524,171 +566,191 @@ export default function ComponentStockPage() {
       </Card>
 
       {/* Table */}
-      <div className="overflow-x-auto bg-white shadow rounded-lg">
-        {loading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
-          </div>
-        ) : error ? (
-          <div className="flex justify-center items-center py-12">
-            <div className="text-center">
-              <p className="text-red-600 mb-2">❌ {error}</p>
-              <Button onClick={() => window.location.reload()}>Thử lại</Button>
+      <Card title="Danh sách linh kiện" className="shadow rounded-lg">
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
             </div>
-          </div>
-        ) : filteredAndSortedComponents.length === 0 ? (
-          <div className="flex justify-center items-center py-12">
-            <p className="text-gray-500">
-              {allComponents.length === 0
-                ? "Không có linh kiện nào trong kho"
-                : "Không tìm thấy linh kiện nào phù hợp với bộ lọc"}
-            </p>
-          </div>
-        ) : (
-          <>
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    STT
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("componentType")}>
-                    <div className="flex items-center uppercase space-x-1">
-                      <span>Loại linh kiện</span>
-                      {getSortIcon("componentType")}
-                    </div>
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("name")}>
-                    <div className="flex items-center uppercase space-x-1">
-                      <span>Tên linh kiện</span>
-                      {getSortIcon("name")}
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Thông số kỹ thuật
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("serialNumber")}>
-                    <div className="flex items-center uppercase space-x-1">
-                      <span>Số serial</span>
-                      {getSortIcon("serialNumber")}
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trạng thái
-                  </th>
-                  <th
-                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                    onClick={() => handleSort("installedAt")}>
-                    <div className="flex items-center uppercase space-x-1">
-                      <span>Ngày nhập kho</span>
-                      {getSortIcon("installedAt")}
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ghi chú
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Vị trí
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedComponents.map((comp, index) => (
-                  <tr key={comp.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                      {(currentPage - 1) * pageSize + index + 1}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <Tag color="blue">
-                        {getComponentTypeLabel(comp.componentType as ComponentType)}
-                      </Tag>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      <div className="font-medium">{comp.name}</div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {comp.componentSpecs || "-"}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <span className="font-mono text-xs">
-                        {comp.serialNumber || "-"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm">
-                      <Tag color="green">Trong kho</Tag>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                      {formatDate(comp.installedAt)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {comp.notes || "-"}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {comp.computer?.room ? (
-                        <div>
-                          <div className="font-medium">
-                            {comp.computer.room.name}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {comp.computer.room.building} - Tầng {comp.computer.room.floor}
-                          </div>
-                        </div>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-sm text-gray-700">
-                  Hiển thị {(currentPage - 1) * pageSize + 1} -{" "}
-                  {Math.min(currentPage * pageSize, filteredAndSortedComponents.length)} trong tổng số{" "}
-                  {filteredAndSortedComponents.length} linh kiện
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    size="small">
-                    Trước
-                  </Button>
-                  <span className="text-sm">
-                    Trang {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    size="small">
-                    Sau
-                  </Button>
-                  <Select
-                    value={pageSize}
-                    onChange={handlePageSizeChange}
-                    size="small"
-                    style={{ width: 80 }}>
-                    <Select.Option value={10}>10</Select.Option>
-                    <Select.Option value={20}>20</Select.Option>
-                    <Select.Option value={50}>50</Select.Option>
-                    <Select.Option value={100}>100</Select.Option>
-                  </Select>
-                </div>
+          ) : error ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="text-center">
+                <p className="text-red-600 mb-2">❌ {error}</p>
+                <Button onClick={() => window.location.reload()}>Thử lại</Button>
               </div>
-            )}
-          </>
-        )}
-      </div>
+            </div>
+          ) : filteredAndSortedComponents.length === 0 ? (
+            <div className="flex justify-center items-center py-12">
+              <p className="text-gray-500">
+                {allComponents.length === 0
+                  ? "Không có linh kiện nào trong kho"
+                  : "Không tìm thấy linh kiện nào phù hợp với bộ lọc"}
+              </p>
+            </div>
+          ) : (
+            <>
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          checked={isAllCurrentPageSelected}
+                          onChange={(e) => handleSelectAllCurrentPage(e.target.checked)}
+                          aria-label="Chọn tất cả"
+                        />
+                        <span>STT</span>
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                      onClick={() => handleSort("componentType")}>
+                      <div className="flex items-center uppercase space-x-1">
+                        <span>Loại linh kiện</span>
+                        {getSortIcon("componentType")}
+                      </div>
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                      onClick={() => handleSort("name")}>
+                      <div className="flex items-center uppercase space-x-1">
+                        <span>Tên linh kiện</span>
+                        {getSortIcon("name")}
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Thông số kỹ thuật
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                      onClick={() => handleSort("serialNumber")}>
+                      <div className="flex items-center uppercase space-x-1">
+                        <span>Số serial</span>
+                        {getSortIcon("serialNumber")}
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Trạng thái
+                    </th>
+                    <th
+                      className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
+                      onClick={() => handleSort("installedAt")}>
+                      <div className="flex items-center uppercase space-x-1">
+                        <span>Ngày nhập kho</span>
+                        {getSortIcon("installedAt")}
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ghi chú
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Vị trí
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedComponents.map((comp, index) => (
+                    <tr key={comp.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            checked={selectedRowKeys.includes(comp.id)}
+                            onChange={(e) => handleRowSelect(comp.id, e.target.checked)}
+                            aria-label={`Chọn linh kiện ${comp.name}`}
+                          />
+                          <span>{(currentPage - 1) * pageSize + index + 1}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        <Tag color="blue">
+                          {getComponentTypeLabel(comp.componentType as ComponentType)}
+                        </Tag>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        <div className="font-medium">{comp.name}</div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {comp.componentSpecs || "-"}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        <span className="font-mono text-xs">
+                          {comp.serialNumber || "-"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        <Tag color="green">Trong kho</Tag>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                        {formatDate(comp.installedAt)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {comp.notes || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {comp.computer?.room ? (
+                          <div>
+                            <div className="font-medium">
+                              {comp.computer.room.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {comp.computer.room.building} - Tầng {comp.computer.room.floor}
+                            </div>
+                          </div>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    Hiển thị {(currentPage - 1) * pageSize + 1} -{" "}
+                    {Math.min(currentPage * pageSize, filteredAndSortedComponents.length)} trong tổng số{" "}
+                    {filteredAndSortedComponents.length} linh kiện
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      size="small">
+                      Trước
+                    </Button>
+                    <span className="text-sm">
+                      Trang {currentPage} / {totalPages}
+                    </span>
+                    <Button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      size="small">
+                      Sau
+                    </Button>
+                    <Select
+                      value={pageSize}
+                      onChange={handlePageSizeChange}
+                      size="small"
+                      style={{ width: 80 }}>
+                      <Select.Option value={10}>10</Select.Option>
+                      <Select.Option value={20}>20</Select.Option>
+                      <Select.Option value={50}>50</Select.Option>
+                      <Select.Option value={100}>100</Select.Option>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }
