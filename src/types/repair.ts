@@ -303,7 +303,6 @@ export interface Asset {
   roomName: string;
   status: AssetStatus | string; // Accept both enum and string from API
   purchaseDate: string;
-  warrantyExpiry?: string;
   lastMaintenanceDate?: string;
   assignedTo?: string;
   specifications?: Record<string, string>;

@@ -7,16 +7,11 @@ import { getAssetStatusDisplay } from "@/lib/constants/assetStatus";
 
 interface TechnicianDeviceDetailHeaderProps {
   asset: Asset;
-  warrantyStatus: {
-    label: string;
-    color: string;
-  };
   onGoBack?: () => void; // Make optional since we're not using it in this version
 }
 
 export default function TechnicianDeviceDetailHeader({
   asset,
-  warrantyStatus,
 }: TechnicianDeviceDetailHeaderProps) {
   const pathname = usePathname();
 
@@ -87,11 +82,6 @@ export default function TechnicianDeviceDetailHeader({
             <div
               className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium border ${statusConfig.badgeClass}`}>
               {statusConfig.label}
-            </div>
-            {/* Warranty status */}
-            <div
-              className={`text-sm font-medium ${warrantyStatus.color} flex items-center`}>
-              Bảo hành: {warrantyStatus.label}
             </div>
           </div>
         </div>

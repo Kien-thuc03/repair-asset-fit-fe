@@ -324,7 +324,6 @@ export interface DeviceAsset {
   roomName: string;
   status: string;
   purchaseDate: string;
-  warrantyExpiry?: string;
   qrCode?: string;
   building?: string;
   floor?: string;

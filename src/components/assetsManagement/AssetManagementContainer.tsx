@@ -30,7 +30,6 @@ const convertComputerToDeviceAsset = (computer: Computer): DeviceAsset => {
     roomName: computer.room?.name || "Không xác định",
     status: computer.asset.status,
     purchaseDate: computer.asset.entrydate,
-    warrantyExpiry: "2025-12-31", // Default warranty - có thể tính từ entrydate
     qrCode: `QR_${computer.asset.ktCode}`,
     building: computer.room?.building,
     floor: computer.room?.floor,

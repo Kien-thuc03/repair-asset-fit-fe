@@ -9,7 +9,6 @@ import TechnicianDeviceDetailHeader from "./AssetDetailHeader";
 import DeviceNotFound from "./AssetNotFound";
 import TechnicianDeviceTabNavigation from "./AssetTabNavigation";
 import TechnicianDeviceBasicInfo from "./AssetBasicInfo";
-import TechnicianDeviceWarrantyInfo from "./AssetWarrantyInfo";
 import TechnicianDeviceSpecifications from "./AssetSpecifications";
 import AssetSoftwareInfo from "./AssetSoftwareInfo";
 import TechnicianRepairHistoryTab from "./RepairHistoryTab";
@@ -19,11 +18,6 @@ import TechnicianRepairHistoryTab from "./RepairHistoryTab";
  * để tương thích với các sub-components hiện có
  */
 const transformComputerToAsset = (computer: ComputerDetail): Asset => {
-  // Calculate warranty expiry (2 years from purchase date)
-  const warrantyExpiry = computer.asset.entrydate 
-    ? new Date(new Date(computer.asset.entrydate).setFullYear(new Date(computer.asset.entrydate).getFullYear() + 2)).toISOString().split('T')[0]
-    : undefined;
-
   return {
     id: computer.asset.id,
     ktCode: computer.asset.ktCode,
@@ -35,7 +29,6 @@ const transformComputerToAsset = (computer: ComputerDetail): Asset => {
     roomName: computer.room?.name || "Không xác định",
     status: computer.asset.status, // API trả về string từ database enum
     purchaseDate: computer.asset.entrydate,
-    warrantyExpiry,
     qrCode: `QR_${computer.asset.ktCode}`,
     building: computer.room?.building,
     floor: computer.room?.floor,
@@ -174,21 +167,6 @@ export default function TechnicianDeviceDetailContainer() {
     return new Date(dateString).toLocaleDateString("vi-VN");
   };
 
-  const getWarrantyStatus = (warrantyExpiry: string) => {
-    const today = new Date();
-    const expiry = new Date(warrantyExpiry);
-    const diffTime = expiry.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      return { label: "Hết hạn", color: "text-red-600" };
-    } else if (diffDays <= 30) {
-      return { label: "Sắp hết hạn", color: "text-yellow-600" };
-    } else {
-      return { label: "Còn hiệu lực", color: "text-green-600" };
-    }
-  };
-
   const handleGoBack = () => {
     router.back();
   };
@@ -214,15 +192,10 @@ export default function TechnicianDeviceDetailContainer() {
     return <DeviceNotFound onGoBack={handleGoBack} message={error} />;
   }
 
-  const warrantyStatus = asset.warrantyExpiry 
-    ? getWarrantyStatus(asset.warrantyExpiry) 
-    : { label: "Không xác định", color: "text-gray-600" };
-
   return (
     <div className="space-y-6">
       <TechnicianDeviceDetailHeader
         asset={asset}
-        warrantyStatus={warrantyStatus}
         onGoBack={handleGoBack}
       />
 
@@ -239,12 +212,6 @@ export default function TechnicianDeviceDetailContainer() {
             // Device Information Tab
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TechnicianDeviceBasicInfo asset={asset} />
-
-              <TechnicianDeviceWarrantyInfo
-                asset={asset}
-                warrantyStatus={warrantyStatus}
-                formatDate={formatDate}
-              />
 
               <TechnicianDeviceSpecifications asset={asset} />
 
