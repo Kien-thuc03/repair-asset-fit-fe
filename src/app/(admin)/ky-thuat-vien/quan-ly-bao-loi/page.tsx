@@ -423,10 +423,12 @@ export default function DanhSachBaoLoiPage() {
 												<span className="hidden sm:inline whitespace-nowrap">{(currentPage - 1) * pageSize + index + 1}</span>
 											</div>
 										</td>
-										<td className="px-2 py-2 text-sm font-medium text-blue-600">
-											<div className="whitespace-nowrap" title={record.requestCode}>
-												{record.requestCode}
-											</div>
+										<td className="px-2 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">
+											<Link href={`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${record.id}`}>
+												<div className="whitespace-nowrap" title={record.requestCode}>
+													{record.requestCode}
+												</div>
+											</Link>
 										</td>
 										<td className="px-2 py-2 text-sm text-gray-700">
 											<div className="min-w-[180px] max-w-[250px]">

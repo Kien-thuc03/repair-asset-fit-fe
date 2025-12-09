@@ -50,6 +50,8 @@ export default function RepairDetailPage() {
 
 	const closeSuccessModal = () => {
 		setSuccessModal(prev => ({ ...prev, open: false }))
+		// Sau khi đóng modal thành công, quay lại danh sách báo lỗi
+		router.push('/ky-thuat-vien/quan-ly-bao-loi')
 	}
 
 	// Lấy replacement items khi repair request có status CHỜ_THAY_THẾ
@@ -472,19 +474,23 @@ export default function RepairDetailPage() {
 						assetId={currentRequest.computerAssetId} // Truyền computerAssetId (assetId)
 						errorTypeName={currentRequest.errorTypeName} // Truyền errorTypeName để xác định loại lỗi
 						onCreateReplacement={() => {
-							// Chuyển đến trang tạo đề xuất thay thế
-							router.push('/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat')
+							// Chuyển đến trang quản lý báo lỗi
+							router.push('/ky-thuat-vien/quan-ly-bao-loi')
 						}}
-						onStatusUpdate={async (newStatus: RepairStatus, notes: string, componentIds?: string[]) => {
+						onStatusUpdate={async (
+							newStatus: RepairStatus,
+							notes: string,
+							componentIds?: string[],
+							options?: { showSuccessModal?: boolean }
+						) => {
 							try {
-								// Sử dụng hook để cập nhật trạng thái (kèm componentIds nếu có)
 								await updateStatus(newStatus, notes, componentIds)
-								
-								// Hiển thị modal thành công (thân thiện và dễ thấy hơn toast)
-								openSuccessModal(
-									'Cập nhật thành công',
-									'Trạng thái yêu cầu đã được lưu lại. Tiếp tục theo dõi tiến độ hoặc chuyển sang bước tiếp theo nếu cần.'
-								)
+								if (options?.showSuccessModal !== false) {
+									openSuccessModal(
+										'Cập nhật thành công',
+										'Trạng thái yêu cầu đã được lưu lại. Tiếp tục theo dõi tiến độ hoặc chuyển sang bước tiếp theo nếu cần.'
+									)
+								}
 							} catch (err) {
 								console.error('Update status error:', err)
 								message.error(err instanceof Error ? err.message : 'Cập nhật trạng thái thất bại')

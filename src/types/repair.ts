@@ -1,13 +1,6 @@
 import { ErrorType } from "@/lib/constants/errorTypes";
-import { ComponentStatus, ComponentType } from "./computer";
+import { AssetStatus, ComponentStatus, ComponentType } from "./computer";
 
-// Interface cho ErrorTypes - DEPRECATED - Sử dụng ErrorType enum thay thế
-export interface ErrorTypeOld {
-  id: string; // UUID primary key
-  name: string; // Tên loại lỗi (required)
-  description?: string; // Mô tả chi tiết (optional)
-  createdAt?: string; // Timestamp (ISO string)
-}
 
 // Định nghĩa các vai trò trong hệ thống sửa chữa tài sản
 export enum UserRole {
@@ -519,18 +512,6 @@ export enum AssetType {
 export enum AssetShape {
   GENERIC = "GENERIC", // Tài sản thông thường
   COMPUTER = "COMPUTER", // Máy tính
-}
-
-// Asset Status enum - Synchronized with database-sync.json
-export enum AssetStatus {
-  IN_USE = "IN_USE", // đang sử dụng
-  WAITING_HANDOVER = "WAITING_HANDOVER", // chờ bàn giao
-  WAITING_RECEIVE = "WAITING_RECEIVE", // chờ tiếp nhận
-  DAMAGED = "DAMAGED", // hư hỏng
-  LOST = "LOST", // đã mất
-  PROPOSED_LIQUIDATION = "PROPOSED_LIQUIDATION", // đề xuất thanh lý
-  LIQUIDATED = "LIQUIDATED", // đã thanh lý
-  WAITING_ALLOCATION = "WAITING_ALLOCATION", // chờ phân bổ
 }
 
 // Comprehensive Asset interface based on database schema
