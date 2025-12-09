@@ -14,3 +14,4 @@ export { default as AssetSoftwareInfo } from "./AssetSoftwareInfo";
 export { default as TechnicianRepairHistoryTab } from "./RepairHistoryTab";
 export { UnitStatistics } from "./UnitStatistics";
 export { RepairRequestDetails } from "./RepairRequestDetails";
+export { default as ComponentExcelImportModal } from "./ComponentExcelImportModal";

@@ -32,6 +32,7 @@ import {
   TimerReset,
   ClipboardEdit,
   CheckCircle,
+  Package,
 } from "lucide-react";
 
 // Navigation items
@@ -104,6 +105,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         name: "Quản lý thay thế linh kiện",
         icon: FileText,
         children: [
+          {
+            name: "Kho linh kiện",
+            href: "/ky-thuat-vien/quan-ly-thay-the-linh-kien/kho-linh-kien",
+            icon: Package,
+          },
           {
             name: "Lập phiếu đề xuất linh kiện",
             href: "/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat",
