@@ -37,41 +37,6 @@ export default function AddComponentToStockPage() {
   const [importResult, setImportResult] = useState<{ success: number; failed: number } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    const formValues = form.getFieldsValue();
-
-    // Component type validation
-    if (!formValues.componentType) {
-      newErrors.componentType = "Vui lòng chọn loại linh kiện";
-    }
-
-    // Name validation
-    if (!formValues.name || !formValues.name.trim()) {
-      newErrors.name = "Tên linh kiện là bắt buộc";
-    } else if (formValues.name.trim().length > 255) {
-      newErrors.name = "Tên linh kiện không được vượt quá 255 ký tự";
-    }
-
-    // Component specs validation
-    if (formValues.componentSpecs && formValues.componentSpecs.length > 500) {
-      newErrors.componentSpecs = "Thông số kỹ thuật không được vượt quá 500 ký tự";
-    }
-
-    // Serial number validation
-    if (formValues.serialNumber && formValues.serialNumber.length > 100) {
-      newErrors.serialNumber = "Số serial không được vượt quá 100 ký tự";
-    }
-
-    // Notes validation
-    if (formValues.notes && formValues.notes.length > 500) {
-      newErrors.notes = "Ghi chú không được vượt quá 500 ký tự";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (values: {
     componentType: ComponentType;
     name: string;
@@ -79,8 +44,6 @@ export default function AddComponentToStockPage() {
     serialNumber?: string;
     notes?: string;
   }) => {
-    if (!validateForm()) return;
-
     setSubmitting(true);
     setErrors({});
 
@@ -272,15 +235,19 @@ export default function AddComponentToStockPage() {
           autoComplete="off">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
             {/* Loại linh kiện */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Loại linh kiện <span className="text-red-500">*</span>
-              </label>
+            <Form.Item
+              name="componentType"
+              label="Loại linh kiện"
+              required
+              validateStatus={errors.componentType ? "error" : ""}
+              help={errors.componentType || "Chỉ chấp nhận: Bàn phím, Chuột, hoặc Khác"}
+              rules={[
+                { required: true, message: "Vui lòng chọn loại linh kiện" }
+              ]}
+            >
               <Select
                 placeholder="Chọn loại linh kiện"
-                className={`w-full ${errors.componentType ? "border-red-500" : ""}`}
-                onChange={(value) => {
-                  form.setFieldsValue({ componentType: value });
+                onChange={() => {
                   if (errors.componentType) {
                     setErrors(prev => {
                       const newErrors = { ...prev };
@@ -296,23 +263,24 @@ export default function AddComponentToStockPage() {
                   </Select.Option>
                 ))}
               </Select>
-              <p className="mt-1 text-xs text-gray-500">
-                Chỉ chấp nhận: Bàn phím, Chuột, hoặc Khác
-              </p>
-              {errors.componentType && (
-                <p className="mt-1 text-sm text-red-600">{errors.componentType}</p>
-              )}
-            </div>
+            </Form.Item>
 
             {/* Tên linh kiện */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tên linh kiện <span className="text-red-500">*</span>
-              </label>
+            <Form.Item
+              name="name"
+              label="Tên linh kiện"
+              required
+              validateStatus={errors.name ? "error" : ""}
+              help={errors.name || "Tối đa 255 ký tự"}
+              rules={[
+                { required: true, message: "Tên linh kiện là bắt buộc" },
+                { max: 255, message: "Tên linh kiện không được vượt quá 255 ký tự" }
+              ]}
+            >
               <Input
-                value={form.getFieldValue('name')}
-                onChange={(e) => {
-                  form.setFieldsValue({ name: e.target.value });
+                placeholder="Ví dụ: Logitech MX Master 3"
+                maxLength={255}
+                onChange={() => {
                   if (errors.name) {
                     setErrors(prev => {
                       const newErrors = { ...prev };
@@ -321,27 +289,25 @@ export default function AddComponentToStockPage() {
                     });
                   }
                 }}
-                className={`w-full ${errors.name ? "border-red-500" : ""}`}
-                placeholder="Ví dụ: Logitech MX Master 3"
-                maxLength={255}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Tối đa 255 ký tự
-              </p>
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-              )}
-            </div>
+            </Form.Item>
 
             {/* Thông số kỹ thuật */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Thông số kỹ thuật
-              </label>
+            <Form.Item
+              name="componentSpecs"
+              label="Thông số kỹ thuật"
+              validateStatus={errors.componentSpecs ? "error" : ""}
+              help={errors.componentSpecs || "Tối đa 500 ký tự"}
+              rules={[
+                { max: 500, message: "Thông số kỹ thuật không được vượt quá 500 ký tự" }
+              ]}
+            >
               <Input.TextArea
-                value={form.getFieldValue('componentSpecs')}
-                onChange={(e) => {
-                  form.setFieldsValue({ componentSpecs: e.target.value });
+                rows={3}
+                placeholder="Ví dụ: Wireless, 4000 DPI, Bluetooth"
+                maxLength={500}
+                showCount
+                onChange={() => {
                   if (errors.componentSpecs) {
                     setErrors(prev => {
                       const newErrors = { ...prev };
@@ -350,29 +316,23 @@ export default function AddComponentToStockPage() {
                     });
                   }
                 }}
-                rows={3}
-                placeholder="Ví dụ: Wireless, 4000 DPI, Bluetooth"
-                maxLength={500}
-                showCount
-                className={errors.componentSpecs ? "border-red-500" : ""}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Tối đa 500 ký tự
-              </p>
-              {errors.componentSpecs && (
-                <p className="mt-1 text-sm text-red-600">{errors.componentSpecs}</p>
-              )}
-            </div>
+            </Form.Item>
 
             {/* Số serial */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Số serial
-              </label>
+            <Form.Item
+              name="serialNumber"
+              label="Số serial"
+              validateStatus={errors.serialNumber ? "error" : ""}
+              help={errors.serialNumber || "Tối đa 100 ký tự, phải duy nhất"}
+              rules={[
+                { max: 100, message: "Số serial không được vượt quá 100 ký tự" }
+              ]}
+            >
               <Input
-                value={form.getFieldValue('serialNumber')}
-                onChange={(e) => {
-                  form.setFieldsValue({ serialNumber: e.target.value });
+                placeholder="Nhập số serial nếu có"
+                maxLength={100}
+                onChange={() => {
                   if (errors.serialNumber) {
                     setErrors(prev => {
                       const newErrors = { ...prev };
@@ -381,27 +341,26 @@ export default function AddComponentToStockPage() {
                     });
                   }
                 }}
-                className={`w-full ${errors.serialNumber ? "border-red-500" : ""}`}
-                placeholder="Nhập số serial nếu có"
-                maxLength={100}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Tối đa 100 ký tự, phải duy nhất
-              </p>
-              {errors.serialNumber && (
-                <p className="mt-1 text-sm text-red-600">{errors.serialNumber}</p>
-              )}
-            </div>
+            </Form.Item>
 
             {/* Ghi chú */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ghi chú
-              </label>
+            <Form.Item
+              name="notes"
+              label="Ghi chú"
+              className="md:col-span-2"
+              validateStatus={errors.notes ? "error" : ""}
+              help={errors.notes || "Tối đa 500 ký tự"}
+              rules={[
+                { max: 500, message: "Ghi chú không được vượt quá 500 ký tự" }
+              ]}
+            >
               <Input.TextArea
-                value={form.getFieldValue('notes')}
-                onChange={(e) => {
-                  form.setFieldsValue({ notes: e.target.value });
+                rows={2}
+                placeholder="Ghi chú bổ sung (tùy chọn)"
+                maxLength={500}
+                showCount
+                onChange={() => {
                   if (errors.notes) {
                     setErrors(prev => {
                       const newErrors = { ...prev };
@@ -410,19 +369,8 @@ export default function AddComponentToStockPage() {
                     });
                   }
                 }}
-                rows={2}
-                placeholder="Ghi chú bổ sung (tùy chọn)"
-                maxLength={500}
-                showCount
-                className={errors.notes ? "border-red-500" : ""}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Tối đa 500 ký tự
-              </p>
-              {errors.notes && (
-                <p className="mt-1 text-sm text-red-600">{errors.notes}</p>
-              )}
-            </div>
+            </Form.Item>
           </div>
 
           {/* Buttons */}
