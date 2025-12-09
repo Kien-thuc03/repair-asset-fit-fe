@@ -3,13 +3,11 @@ import { Monitor, Wrench } from "lucide-react";
 
 interface TechnicianDeviceTabNavigationProps {
   showRepairHistory: boolean;
-  repairHistoryCount: number;
   onTabChange: (showRepairHistory: boolean) => void;
 }
 
 export default function TechnicianDeviceTabNavigation({
   showRepairHistory,
-  repairHistoryCount,
   onTabChange,
 }: TechnicianDeviceTabNavigationProps) {
   return (
@@ -37,9 +35,6 @@ export default function TechnicianDeviceTabNavigation({
           <div className="flex items-center space-x-2">
             <Wrench className="w-4 h-4" />
             <span>Lịch sử bảo trì</span>
-            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 text-xs rounded-full">
-              {repairHistoryCount}
-            </span>
           </div>
         </button>
       </nav>

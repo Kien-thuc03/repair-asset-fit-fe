@@ -203,7 +203,6 @@ export default function TechnicianDeviceDetailContainer() {
       <div className="bg-white shadow rounded-lg">
         <TechnicianDeviceTabNavigation
           showRepairHistory={showRepairHistory}
-          repairHistoryCount={repairHistory.length}
           onTabChange={handleTabChange}
         />
 
