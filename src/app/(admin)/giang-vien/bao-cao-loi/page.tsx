@@ -51,7 +51,7 @@ import {
   WarningOutlined,
   EditOutlined,
 } from "@ant-design/icons";
-import { FileText } from "lucide-react";
+import { FileText, AlertCircle } from "lucide-react";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -107,6 +107,8 @@ export default function BaoCaoLoiPage() {
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [isLoadingQRData, setIsLoadingQRData] = useState(false);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(true);
+  const [isLoadingComputers, setIsLoadingComputers] = useState(false);
 
   // Helper: get readable room label by id
   const getRoomLabel = (roomId?: string) => {
@@ -131,11 +133,14 @@ export default function BaoCaoLoiPage() {
   // Fetch rooms from API
   useEffect(() => {
     const fetchRooms = async () => {
+      setIsLoadingRooms(true);
       try {
         const roomsData = await getRoomsApi();
         setRooms(roomsData);
       } catch {
         message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
+      } finally {
+        setIsLoadingRooms(false);
       }
     };
     fetchRooms();
@@ -246,6 +251,7 @@ export default function BaoCaoLoiPage() {
 
     // Fetch computers for the selected room
     try {
+      setIsLoadingComputers(true);
       const computers = await getComputersByRoomId(roomId);
       // Ensure it's an array
       if (Array.isArray(computers)) {
@@ -257,6 +263,8 @@ export default function BaoCaoLoiPage() {
     } catch {
       message.error("Không thể tải danh sách máy tính");
       setFilteredComputers([]);
+    } finally {
+      setIsLoadingComputers(false);
     }
   };
 
@@ -813,9 +821,20 @@ export default function BaoCaoLoiPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Form.Item label="Chọn tòa nhà" required>
                 <Select
-                  placeholder="Chọn tòa nhà"
+                  placeholder={
+                    isLoadingRooms
+                      ? "Đang tải danh sách tòa nhà..."
+                      : buildings.length === 0
+                      ? "Không có dữ liệu tòa nhà"
+                      : "Chọn tòa nhà"
+                  }
                   value={formData.building}
-                  onChange={handleBuildingChange}>
+                  onChange={handleBuildingChange}
+                  loading={isLoadingRooms}
+                  disabled={isLoadingRooms}
+                  notFoundContent={
+                    isLoadingRooms ? "Đang tải..." : "Không có dữ liệu"
+                  }>
                   {buildings.map((building) => (
                     <Option key={building} value={building}>
                       {building}
@@ -826,10 +845,22 @@ export default function BaoCaoLoiPage() {
 
               <Form.Item label="Chọn tầng" required>
                 <Select
-                  placeholder="Chọn tầng"
+                  placeholder={
+                    isLoadingRooms
+                      ? "Đang tải..."
+                      : !formData.building
+                      ? "Vui lòng chọn tòa nhà trước"
+                      : filteredFloors.length === 0
+                      ? "Không có dữ liệu tầng"
+                      : "Chọn tầng"
+                  }
                   value={formData.floor}
                   onChange={handleFloorChange}
-                  disabled={!formData.building}>
+                  disabled={isLoadingRooms || !formData.building}
+                  loading={isLoadingRooms}
+                  notFoundContent={
+                    isLoadingRooms ? "Đang tải..." : "Không có dữ liệu"
+                  }>
                   {filteredFloors.map((floor) => (
                     <Option key={floor} value={floor}>
                       {floor}
@@ -840,10 +871,22 @@ export default function BaoCaoLoiPage() {
 
               <Form.Item label="Chọn phòng" required>
                 <Select
-                  placeholder="Chọn phòng"
+                  placeholder={
+                    isLoadingRooms
+                      ? "Đang tải..."
+                      : !formData.floor
+                      ? "Vui lòng chọn tầng trước"
+                      : filteredRooms.length === 0
+                      ? "Không có phòng nào"
+                      : "Chọn phòng"
+                  }
                   value={formData.roomId}
                   onChange={handleRoomChange}
-                  disabled={!formData.floor}>
+                  disabled={isLoadingRooms || !formData.floor}
+                  loading={isLoadingRooms}
+                  notFoundContent={
+                    isLoadingRooms ? "Đang tải..." : "Không có dữ liệu"
+                  }>
                   {filteredRooms.map((room) => (
                     <Option key={room.id} value={room.id}>
                       {room.roomCode || room.roomNumber || room.name}
@@ -864,30 +907,37 @@ export default function BaoCaoLoiPage() {
                 placeholder={
                   !formData.roomId
                     ? "Vui lòng chọn phòng trước"
-                    : "Chọn thiết bị"
+                      : isLoadingComputers
+                      ? "Đang tải danh sách thiết bị..."
+                      : "Chọn thiết bị"
                 }
                 value={selectedComputerId}
                 onChange={handleAssetChange}
-                disabled={!formData.roomId}>
+                  disabled={!formData.roomId || isLoadingComputers}
+                  loading={isLoadingComputers}
+                  notFoundContent={
+                    isLoadingComputers
+                      ? "Đang tải..."
+                      : "Không có máy tính nào trong phòng này"
+                  }>
                 {Array.isArray(filteredComputers) &&
                   filteredComputers.map((computer) => (
                     <Option
                       key={computer.id}
                       value={computer.id}
-                      disabled={computer.asset?.status === AssetStatus.DAMAGED}
-                      style={
-                        computer.asset?.status === AssetStatus.DAMAGED
-                          ? { color: "#dc2626" }
-                          : undefined
-                      }>
-                      {computer.asset?.status === AssetStatus.DAMAGED ? (
-                        <>
+                      disabled={computer.asset?.status === AssetStatus.DAMAGED}>
+                      <div className="flex items-center justify-between">
+                        <span>
                           Máy {computer.machineLabel} -{" "}
-                          {getAssetStatusLabel(computer.asset.status)}
-                        </>
-                      ) : (
-                        <>Máy {computer.machineLabel}</>
-                      )}
+                          {computer.asset?.name || "N/A"}
+                        </span>
+                        {computer.asset?.status === AssetStatus.DAMAGED && (
+                          <span className="ml-2 text-red-600 text-xs flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            Đang bị lỗi
+                          </span>
+                        )}
+                      </div>
                     </Option>
                   ))}
               </Select>
