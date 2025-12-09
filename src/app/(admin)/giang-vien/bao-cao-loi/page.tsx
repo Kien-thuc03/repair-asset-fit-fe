@@ -109,6 +109,7 @@ export default function BaoCaoLoiPage() {
   const [isLoadingQRData, setIsLoadingQRData] = useState(false);
   const [isLoadingRooms, setIsLoadingRooms] = useState(true);
   const [isLoadingComputers, setIsLoadingComputers] = useState(false);
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
 
   // Helper: get readable room label by id
   const getRoomLabel = (roomId?: string) => {
@@ -145,6 +146,14 @@ export default function BaoCaoLoiPage() {
     };
     fetchRooms();
   }, []);
+
+  useEffect(() => {
+    const urls = formData.mediaFiles.map((file) => URL.createObjectURL(file));
+    setMediaPreviews(urls);
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [formData.mediaFiles]);
 
   // Tính toán bước hiện tại dựa trên dữ liệu đã điền
   const getCurrentStep = (): number => {
@@ -1149,12 +1158,12 @@ export default function BaoCaoLoiPage() {
               </div>
 
               {/* Display selected images */}
-              {formData.mediaFiles.length > 0 && (
+              {formData.mediaFiles.length > 0 && mediaPreviews.length > 0 && (
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
                   {formData.mediaFiles.map((file, index) => (
                     <div key={index} className="relative">
                       <Image
-                        src={URL.createObjectURL(file)}
+                        src={mediaPreviews[index]}
                         alt={`Preview ${index + 1}`}
                         width={150}
                         height={96}
