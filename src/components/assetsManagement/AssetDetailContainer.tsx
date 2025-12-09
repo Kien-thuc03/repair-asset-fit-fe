@@ -29,6 +29,7 @@ const transformComputerToAsset = (computer: ComputerDetail): Asset => {
     roomName: computer.room?.name || "Không xác định",
     status: computer.asset.status, // API trả về string từ database enum
     purchaseDate: computer.asset.entrydate,
+    origin: computer.asset.origin,
     qrCode: `QR_${computer.asset.ktCode}`,
     building: computer.room?.building,
     floor: computer.room?.floor,
@@ -87,7 +88,6 @@ export default function TechnicianDeviceDetailContainer() {
     const fetchRepairHistory = async () => {
       try {
         setLoadingRepairHistory(true);
-        console.log("🔍 Fetching repair history for asset:", asset.id);
 
         // Lấy tất cả repair requests cho asset này
         const repairsResponse = await getRepairs({
@@ -95,8 +95,6 @@ export default function TechnicianDeviceDetailContainer() {
           sortBy: "createdAt",
           sortOrder: "DESC",
         });
-
-        console.log(`✅ Found ${repairsResponse.data.length} repair requests`);
 
         // Với mỗi repair request, fetch logs
         const historyWithLogs = await Promise.all(
@@ -150,10 +148,8 @@ export default function TechnicianDeviceDetailContainer() {
         );
 
         setRepairHistory(historyWithLogs);
-        console.log(`✅ Loaded ${historyWithLogs.length} repair history items with logs`);
       } catch (err) {
-        console.error("❌ Error fetching repair history:", err);
-        // Don't set error state, just show empty history
+        console.error("Error fetching repair history:", err);
         setRepairHistory([]);
       } finally {
         setLoadingRepairHistory(false);

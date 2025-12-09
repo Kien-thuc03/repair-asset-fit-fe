@@ -45,6 +45,13 @@ export default function TechnicianDeviceBasicInfo({ asset }: TechnicianDeviceBas
               {asset.specs}
             </span>
           </div>
+
+          <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
+            <span className="text-sm font-medium text-gray-500">Xuất xứ:</span>
+            <span className="text-sm text-gray-900 max-w-48 text-right" title={asset.origin}>
+              {asset.origin}
+            </span>
+          </div>
           
           <div className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
             <span className="text-sm font-medium text-gray-500">Mã tài sản cố định:</span>

@@ -182,10 +182,10 @@ export interface ComputerAsset {
   ktCode: string;
   fixedCode: string;
   name: string;
-  specs?: string;
+  specs: string;
   status: string;
   entrydate: string;
-  origin?: string;
+  origin: string;
   categoryId: string;
   categoryName?: string;
 }
