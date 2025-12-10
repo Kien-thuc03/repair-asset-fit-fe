@@ -18,7 +18,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
-import { SubmissionPreviewModal, SuccessModal } from "@/components/modal";
+import {
+  SubmissionPreviewModal,
+  SuccessModal,
+  RejectConfirmModal,
+} from "@/components/modal";
 import { exportSubmissionDocx } from "@/components/common";
 import {
   useReplacementProposal,
@@ -26,6 +30,7 @@ import {
 } from "@/hooks";
 import { ReplacementProposalStatus, SubmissionFormData } from "@/types";
 import { getFileNameFromUrl } from "@/lib/utils";
+import { rejectReplacementProposal } from "@/lib/api/replacement-proposals";
 
 export default function XuLyToTrinhDetailPage() {
   const params = useParams();
@@ -35,6 +40,7 @@ export default function XuLyToTrinhDetailPage() {
   // note: no loading spinner needed; modal handles confirmation flow
   const [showSubmissionPreview, setShowSubmissionPreview] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState({
     title: "",
@@ -187,15 +193,13 @@ export default function XuLyToTrinhDetailPage() {
   };
 
   // Hàm xử lý từ chối tờ trình
-  const handleReject = async () => {
+  const handleReject = async (reason?: string) => {
     if (!proposal) return;
 
-    setShowConfirmModal(false);
+    setShowRejectModal(false);
 
     try {
-      await updateStatus(proposal.id, {
-        status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
-      });
+      await rejectReplacementProposal(proposal.id, reason);
 
       setActionType(null);
 
@@ -315,8 +319,7 @@ export default function XuLyToTrinhDetailPage() {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
-                      setActionType("reject");
-                      setShowConfirmModal(true);
+                      setShowRejectModal(true);
                     }}
                     className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500">
                     Từ chối
@@ -548,7 +551,9 @@ export default function XuLyToTrinhDetailPage() {
             </button>,
             <button
               key="confirm"
-              onClick={actionType === "approve" ? handleApprove : handleReject}
+              onClick={() =>
+                actionType === "approve" ? handleApprove() : handleReject()
+              }
               className={`px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                 actionType === "approve"
                   ? "bg-green-600 hover:bg-green-700 focus:ring-green-500"
@@ -602,6 +607,16 @@ export default function XuLyToTrinhDetailPage() {
           </div>
         </Modal>
       )}
+
+      {/* Reject Confirmation Modal */}
+      <RejectConfirmModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onConfirm={(reason) => handleReject(reason)}
+        title="Xác nhận từ chối tờ trình"
+        description="Sau khi từ chối, trạng thái tờ trình sẽ được chuyển thành 'Đã từ chối' và không thể hoàn tác."
+        okText="Xác nhận từ chối"
+      />
 
       {/* Submission Preview Modal */}
       {proposal && (
