@@ -15,7 +15,7 @@ import { AssetStatus } from "@/types/computer";
 import { AlertCircle } from "lucide-react";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
-import { getComponentsByComputerId } from "@/lib/api/components";
+import { getComponentsByComputerId, getStockComponents, StockComponentDto, replaceComponent } from "@/lib/api/components";
 import { getSoftwareByAssetId } from "@/lib/api/asset-software";
 import { createAndProcessRepair, CreateAndProcessRepairRequest, getAssignedFloors, AssignedFloor } from "@/lib/api/repairs";
 import { useProfile } from "@/hooks";
@@ -83,6 +83,10 @@ export default function GhiNhanXuLyLoiPage() {
   const [selectedSoftwareIds, setSelectedSoftwareIds] = useState<string[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  // State cho linh kiện trong kho và mapping thay thế
+  const [stockComponents, setStockComponents] = useState<StockComponentDto[]>([]);
+  const [replacementMapping, setReplacementMapping] = useState<Record<string, string>>({}); // oldComponentId -> newComponentId
+  const [availableReplacements, setAvailableReplacements] = useState<Record<string, StockComponentDto[]>>({}); // componentType -> StockComponentDto[]
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
   const [assignedFloors, setAssignedFloors] = useState<AssignedFloor[]>([]);
   const [loadingBuildings, setLoadingBuildings] = useState(true);
@@ -170,6 +174,32 @@ export default function GhiNhanXuLyLoiPage() {
       urls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [formData.mediaFiles]);
+
+  // Load stock components on mount
+  useEffect(() => {
+    const fetchStockComponents = async () => {
+      try {
+        const stock = await getStockComponents();
+        setStockComponents(stock);
+        
+        // Group by componentType
+        const grouped: Record<string, StockComponentDto[]> = {};
+        stock.forEach(comp => {
+          const type = comp.componentType;
+          if (!grouped[type]) {
+            grouped[type] = [];
+          }
+          grouped[type].push(comp);
+        });
+        setAvailableReplacements(grouped);
+      } catch (error) {
+        console.error("Error fetching stock components:", error);
+        // Không hiển thị lỗi vì đây là tính năng bổ sung
+      }
+    };
+    
+    fetchStockComponents();
+  }, []);
 
   // Detect mobile device
   useEffect(() => {
@@ -422,19 +452,62 @@ export default function GhiNhanXuLyLoiPage() {
       return;
     }
 
+    // Validate computerId is available for replacement
+    if (!selectedComputerId && formData.repairMethod === 'need_replacement' && Object.keys(replacementMapping).length > 0) {
+      message.error("Không thể xác định máy tính để thay thế linh kiện. Vui lòng thử lại.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
+      // Xử lý thay thế linh kiện nếu có chọn linh kiện thay thế từ kho
+      let allReplacementsSuccessful = true;
+      if (formData.repairMethod === 'need_replacement' && Object.keys(replacementMapping).length > 0 && selectedComputerId) {
+        const replacementPromises = Object.entries(replacementMapping).map(async ([oldComponentId, newComponentId]) => {
+          const oldComponent = filteredComponents.find(c => c.id === oldComponentId);
+          const newComponent = stockComponents.find(c => c.id === newComponentId);
+          
+          if (!oldComponent || !newComponent) {
+            throw new Error(`Không tìm thấy thông tin linh kiện để thay thế`);
+          }
+
+          try {
+            await replaceComponent(selectedComputerId, {
+              oldComponentId: oldComponentId,
+              newItemName: newComponent.name,
+              newItemSpecs: newComponent.componentSpecs || "",
+              serialNumber: newComponent.serialNumber,
+              notes: `Thay thế từ kho - ${formData.repairNotes || "Thay thế linh kiện bị lỗi"}`,
+              newlyPurchasedComponentId: newComponentId,
+            });
+            return true;
+          } catch (error) {
+            console.error(`Lỗi thay thế linh kiện ${oldComponent.name}:`, error);
+            message.error(`Không thể thay thế linh kiện ${oldComponent.name}. ${error instanceof Error ? error.message : "Vui lòng thử lại."}`);
+            return false;
+          }
+        });
+
+        const results = await Promise.all(replacementPromises);
+        allReplacementsSuccessful = results.every(r => r === true);
+      }
+
       // ⚠️ LOGIC: Determine finalStatus based on repairMethod
-      // - ĐÃ_HOÀN_THÀNH: khi sửa xong (software_fixed hoặc hardware_fixed)
-      // - CHỜ_THAY_THẾ: khi cần thay thế linh kiện (need_replacement)
+      // - ĐÃ_HOÀN_THÀNH: khi sửa xong (software_fixed hoặc hardware_fixed) HOẶC đã thay thế thành công
+      // - CHỜ_THAY_THẾ: khi cần thay thế linh kiện (need_replacement) nhưng chưa thay thế hoặc thay thế thất bại
       let finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ | undefined;
       
       if (formData.repairMethod === 'software_fixed' || formData.repairMethod === 'hardware_fixed') {
         finalStatus = RepairStatus.ĐÃ_HOÀN_THÀNH;
       } else if (formData.repairMethod === 'need_replacement') {
-        // 🔥 Chuyển sang CHỜ_THAY_THẾ ngay khi ghi nhận cần thay thế
-        finalStatus = RepairStatus.CHỜ_THAY_THẾ;
+        // Nếu đã thay thế thành công tất cả linh kiện, chuyển sang ĐÃ_HOÀN_THÀNH
+        // Nếu không có chọn linh kiện thay thế hoặc thay thế thất bại, giữ CHỜ_THAY_THẾ
+        if (Object.keys(replacementMapping).length > 0 && allReplacementsSuccessful) {
+          finalStatus = RepairStatus.ĐÃ_HOÀN_THÀNH;
+        } else {
+          finalStatus = RepairStatus.CHỜ_THAY_THẾ;
+        }
       }
 
       // Prepare request data
@@ -452,7 +525,7 @@ export default function GhiNhanXuLyLoiPage() {
           ? selectedSoftwareIds 
           : undefined,
         resolutionNotes: formData.repairNotes || undefined,
-        finalStatus: finalStatus, // ĐÃ_HOÀN_THÀNH nếu đã sửa được, CHỜ_THAY_THẾ nếu cần thay thế
+        finalStatus: finalStatus, // ĐÃ_HOÀN_THÀNH nếu đã sửa được hoặc đã thay thế thành công, CHỜ_THAY_THẾ nếu cần thay thế
       };
 
       // Call API to create and process repair request
@@ -909,24 +982,81 @@ export default function GhiNhanXuLyLoiPage() {
                     showIcon
                   />
                 ) : (
-                  <Alert
-                    message={`Đã chọn ${selectedComponentIds.length} linh kiện để thay thế`}
-                    description={
-                      <div className="mt-2">
-                        <div className="text-sm">Linh kiện được chọn:</div>
-                        <ul className="mt-1 list-disc list-inside text-sm">
-                          {selectedComponentIds.map(id => {
-                            const component = filteredComponents.find(c => c.id === id);
-                            return component ? (
-                              <li key={id}>{component.name} ({component.componentType})</li>
-                            ) : null;
-                          })}
-                        </ul>
-                      </div>
-                    }
-                    type="info"
-                    showIcon
-                  />
+                  <div className="space-y-4">
+                    <Alert
+                      message={`Đã chọn ${selectedComponentIds.length} linh kiện để thay thế`}
+                      description="Bạn có thể chọn linh kiện thay thế từ kho ngay bây giờ (nếu có sẵn)"
+                      type="info"
+                      showIcon
+                      className="mb-4"
+                    />
+                    
+                    {/* Danh sách linh kiện cần thay thế và chọn linh kiện thay thế */}
+                    {selectedComponentIds.map(oldComponentId => {
+                      const oldComponent = filteredComponents.find(c => c.id === oldComponentId);
+                      if (!oldComponent) return null;
+                      
+                      const availableStock = availableReplacements[oldComponent.componentType] || [];
+                      const hasStock = availableStock.length > 0;
+                      const selectedReplacementId = replacementMapping[oldComponentId];
+                      
+                      return (
+                        <div key={oldComponentId} className="p-3 bg-white rounded border border-orange-300">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <span className="font-medium text-gray-900">{oldComponent.name}</span>
+                              <span className="text-sm text-gray-500 ml-2">({oldComponent.componentType})</span>
+                            </div>
+                            {hasStock && (
+                              <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                                Có {availableStock.length} linh kiện trong kho
+                              </span>
+                            )}
+                          </div>
+                          
+                          {hasStock ? (
+                            <Form.Item
+                              label="Chọn linh kiện thay thế từ kho"
+                              className="mb-0"
+                            >
+                              <Select
+                                placeholder="Chọn linh kiện thay thế (tùy chọn)"
+                                value={selectedReplacementId}
+                                onChange={(value) => {
+                                  setReplacementMapping(prev => ({
+                                    ...prev,
+                                    [oldComponentId]: value
+                                  }));
+                                }}
+                                allowClear
+                                showSearch
+                                filterOption={(input, option) => {
+                                  const label = typeof option?.label === 'string' 
+                                    ? option.label 
+                                    : String(option?.children || '');
+                                  return label.toLowerCase().includes(input.toLowerCase());
+                                }}
+                              >
+                                {availableStock.map(stockComp => (
+                                  <Option key={stockComp.id} value={stockComp.id}>
+                                    {stockComp.name} {stockComp.componentSpecs && `- ${stockComp.componentSpecs}`}
+                                    {stockComp.serialNumber && ` (SN: ${stockComp.serialNumber})`}
+                                  </Option>
+                                ))}
+                              </Select>
+                              <div className="text-xs text-gray-500 mt-1">
+                                Nếu không chọn, linh kiện sẽ được đánh dấu cần thay thế và xử lý sau
+                              </div>
+                            </Form.Item>
+                          ) : (
+                            <div className="text-sm text-gray-600">
+                              ⚠️ Không có linh kiện cùng loại trong kho. Linh kiện sẽ được đánh dấu cần thay thế.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             )}

@@ -417,6 +417,19 @@ export interface RepairHistoryItem {
     actorName: string;
     actorEmail?: string;
   }>;
+  // Các linh kiện liên quan đến đề xuất thay thế (nếu có)
+  replacementItems?: ReplacementHistoryItem[];
+}
+
+// Thông tin tối giản của linh kiện trong đề xuất thay thế cho UI lịch sử
+export interface ReplacementHistoryItem {
+  id: string;
+  oldComponentName?: string;
+  oldComponentSpecs?: string;
+  newItemName: string;
+  newItemSpecs?: string;
+  quantity?: number;
+  proposalStatus?: string;
 }
 
 // Interface for replacement requests displayed in technician pages - Khớp với database ReplacementProposals

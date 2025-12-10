@@ -20,8 +20,8 @@ import {
   StockComponentDto, 
   ComponentType,
 } from "@/lib/api/components";
-import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getComponentTypeLabel } from "@/types/computer";
+import Pagination from "@/components/common/Pagination";
 
 type SortField = "componentType" | "name" | "installedAt" | "serialNumber";
 type SortDirection = "asc" | "desc" | "none";
@@ -40,32 +40,6 @@ export default function ComponentStockPage() {
 
   // Filter states
   const [componentTypeFilter, setComponentTypeFilter] = useState<string[]>([]);
-  const [buildingFilter, setBuildingFilter] = useState<string>("");
-  const [floorFilter, setFloorFilter] = useState<string>("");
-  const [roomFilter, setRoomFilter] = useState<string>("");
-
-  // State for rooms data and cascade filtering
-  const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
-  const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
-  const [filteredRooms, setFilteredRooms] = useState<RoomResponseDto[]>([]);
-
-  // Extract unique buildings from rooms
-  const buildings = Array.from(
-    new Set(rooms.map((room) => room.building).filter(Boolean))
-  );
-
-  // Fetch rooms from API
-  useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const roomsData = await getRoomsApi();
-        setRooms(roomsData);
-      } catch {
-        message.error("Không thể tải danh sách phòng. Vui lòng thử lại.");
-      }
-    };
-    fetchRooms();
-  }, []);
 
   // Fetch stock components
   const fetchStockComponents = async () => {
@@ -114,29 +88,6 @@ export default function ComponentStockPage() {
       );
     }
 
-    // Building filter
-    if (buildingFilter) {
-      filtered = filtered.filter(
-        (comp) => comp.computer?.room?.building === buildingFilter
-      );
-    }
-
-    // Floor filter
-    if (floorFilter) {
-      filtered = filtered.filter(
-        (comp) => comp.computer?.room?.floor === floorFilter
-      );
-    }
-
-    // Room filter
-    if (roomFilter) {
-      filtered = filtered.filter(
-        (comp) =>
-          comp.computer?.room?.name === roomFilter ||
-          comp.computer?.room?.roomCode === roomFilter
-      );
-    }
-
     // Sort
     if (sortField && sortDirection !== "none") {
       filtered.sort((a, b) => {
@@ -175,9 +126,6 @@ export default function ComponentStockPage() {
     allComponents,
     searchText,
     componentTypeFilter,
-    buildingFilter,
-    floorFilter,
-    roomFilter,
     sortField,
     sortDirection,
   ]);
@@ -188,8 +136,6 @@ export default function ComponentStockPage() {
     const end = start + pageSize;
     return filteredAndSortedComponents.slice(start, end);
   }, [filteredAndSortedComponents, currentPage, pageSize]);
-
-  const totalPages = Math.ceil(filteredAndSortedComponents.length / pageSize);
 
   // Hàm xử lý sắp xếp 3 trạng thái
   const handleSort = (field: SortField) => {
@@ -239,68 +185,15 @@ export default function ComponentStockPage() {
   // Đếm số lượng filters đang active
   const activeFiltersCount = [
     componentTypeFilter.length > 0,
-    buildingFilter,
-    floorFilter,
-    roomFilter,
     searchText,
   ].filter(Boolean).length;
 
   // Clear all filters
   const clearAllFilters = () => {
     setComponentTypeFilter([]);
-    setBuildingFilter("");
-    setFloorFilter("");
-    setRoomFilter("");
     setSearchText("");
-    setFilteredFloors([]);
-    setFilteredRooms([]);
     setCurrentPage(1);
     setSelectedRowKeys([]);
-  };
-
-  // Handle building change - cascade filter
-  const handleBuildingChange = (building: string) => {
-    setBuildingFilter(building);
-    setFloorFilter("");
-    setRoomFilter("");
-    setCurrentPage(1);
-
-    if (building) {
-      const floorsInBuilding = Array.from(
-        new Set(
-          rooms
-            .filter((room) => room.building === building)
-            .map((room) => room.floor)
-            .filter(Boolean)
-        )
-      );
-      setFilteredFloors(floorsInBuilding);
-    } else {
-      setFilteredFloors([]);
-    }
-    setFilteredRooms([]);
-  };
-
-  // Handle floor change - cascade filter
-  const handleFloorChange = (floor: string) => {
-    setFloorFilter(floor);
-    setRoomFilter("");
-    setCurrentPage(1);
-
-    if (floor && buildingFilter) {
-      const roomsInFloor = rooms.filter(
-        (room) => room.building === buildingFilter && room.floor === floor
-      );
-      setFilteredRooms(roomsInFloor);
-    } else {
-      setFilteredRooms([]);
-    }
-  };
-
-  // Handle room change
-  const handleRoomChange = (roomName: string) => {
-    setRoomFilter(roomName);
-    setCurrentPage(1);
   };
 
   const handlePageChange = (page: number) => {
@@ -321,18 +214,18 @@ export default function ComponentStockPage() {
     }
   };
 
-  const handleSelectAllCurrentPage = (checked: boolean) => {
-    const currentPageIds = paginatedComponents.map((item) => item.id);
+  const handleSelectAll = (checked: boolean) => {
+    const allFilteredIds = filteredAndSortedComponents.map((item) => item.id);
     if (checked) {
-      setSelectedRowKeys((prev) => Array.from(new Set([...prev, ...currentPageIds])));
+      setSelectedRowKeys(Array.from(new Set([...allFilteredIds])));
     } else {
-      setSelectedRowKeys((prev) => prev.filter((key) => !currentPageIds.includes(key)));
+      setSelectedRowKeys([]);
     }
   };
 
-  const isAllCurrentPageSelected =
-    paginatedComponents.length > 0 &&
-    paginatedComponents.every((item) => selectedRowKeys.includes(item.id));
+  const isAllSelected =
+    filteredAndSortedComponents.length > 0 &&
+    filteredAndSortedComponents.every((item) => selectedRowKeys.includes(item.id));
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -375,11 +268,6 @@ export default function ComponentStockPage() {
         "Trạng thái": comp.status,
         "Ngày nhập kho": formatDate(comp.installedAt),
         "Ghi chú": comp.notes || "",
-        "Máy tính": comp.computer?.asset?.name || "",
-        "Mã KT": comp.computer?.asset?.ktCode || "",
-        "Phòng": comp.computer?.room?.name || "",
-        "Tòa nhà": comp.computer?.room?.building || "",
-        "Tầng": comp.computer?.room?.floor || "",
       }));
 
       const wb = XLSX.utils.book_new();
@@ -464,9 +352,9 @@ export default function ComponentStockPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <div className="bg-white shadow rounded-lg p-4">
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={15}>
             <Input
               placeholder="Tìm kiếm theo tên linh kiện, thông số, serial..."
               prefix={<SearchOutlined />}
@@ -479,7 +367,7 @@ export default function ComponentStockPage() {
             />
           </Col>
 
-          <Col xs={24} sm={12} md={5}>
+          <Col xs={24} sm={12} md={8}>
             <Select
               mode="multiple"
               allowClear
@@ -499,88 +387,29 @@ export default function ComponentStockPage() {
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={4}>
-            <Select
-              placeholder="Tất cả tòa nhà"
-              value={buildingFilter || undefined}
-              onChange={handleBuildingChange}
-              allowClear
-              style={{ width: "100%" }}>
-              {buildings.map((building) => (
-                <Select.Option key={building} value={building}>
-                  Tòa {building}
-                </Select.Option>
-              ))}
-            </Select>
-          </Col>
-
-          <Col xs={24} sm={12} md={4}>
-            <Select
-              placeholder={!buildingFilter ? "Chọn tòa trước" : "Tất cả tầng"}
-              value={floorFilter || undefined}
-              onChange={handleFloorChange}
-              allowClear
-              disabled={!buildingFilter}
-              style={{ width: "100%" }}
-              notFoundContent={
-                !buildingFilter
-                  ? "Vui lòng chọn tòa nhà trước"
-                  : "Không có dữ liệu"
-              }>
-              {filteredFloors.map((floor) => (
-                <Select.Option key={floor} value={floor}>
-                  Tầng {floor}
-                </Select.Option>
-              ))}
-            </Select>
-          </Col>
-
-          <Col xs={24} sm={12} md={4}>
-            <Select
-              placeholder={!floorFilter ? "Chọn tầng trước" : "Tất cả phòng"}
-              value={roomFilter || undefined}
-              onChange={handleRoomChange}
-              allowClear
-              disabled={!floorFilter}
-              style={{ width: "100%" }}
-              notFoundContent={
-                !floorFilter ? "Vui lòng chọn tầng trước" : "Không có dữ liệu"
-              }>
-              {filteredRooms.map((room) => (
-                <Select.Option key={room.id} value={room.name || room.roomCode}>
-                  {room.name || room.roomCode || `Phòng ${room.roomNumber}`}
-                </Select.Option>
-              ))}
-            </Select>
-          </Col>
-
           <Col xs={24} sm={12} md={1}>
             <Button
               type="default"
               onClick={clearAllFilters}
               disabled={activeFiltersCount === 0}
               icon={<SyncOutlined />}
-              block></Button>
-          </Col>
+              block>
+            </Button>
+            </Col>
         </Row>
-      </Card>
+      </div>
+
 
       {/* Table */}
-      <Card title="Danh sách linh kiện" className="shadow rounded-lg">
-        <div className="overflow-x-auto">
-          {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-              <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
-            </div>
-          ) : error ? (
+        <div className="overflow-x-auto bg-white shadow rounded-lg">
+          {error ? (
             <div className="flex justify-center items-center py-12">
               <div className="text-center">
                 <p className="text-red-600 mb-2">❌ {error}</p>
                 <Button onClick={() => window.location.reload()}>Thử lại</Button>
               </div>
             </div>
-          ) : filteredAndSortedComponents.length === 0 ? (
+          ) : filteredAndSortedComponents.length === 0 && !loading ? (
             <div className="flex justify-center items-center py-12">
               <p className="text-gray-500">
                 {allComponents.length === 0
@@ -598,8 +427,8 @@ export default function ComponentStockPage() {
                         <input
                           type="checkbox"
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          checked={isAllCurrentPageSelected}
-                          onChange={(e) => handleSelectAllCurrentPage(e.target.checked)}
+                          checked={isAllSelected}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
                           aria-label="Chọn tất cả"
                         />
                         <span>STT</span>
@@ -652,105 +481,90 @@ export default function ComponentStockPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {paginatedComponents.map((comp, index) => (
-                    <tr key={comp.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                            checked={selectedRowKeys.includes(comp.id)}
-                            onChange={(e) => handleRowSelect(comp.id, e.target.checked)}
-                            aria-label={`Chọn linh kiện ${comp.name}`}
-                          />
-                          <span>{(currentPage - 1) * pageSize + index + 1}</span>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={9} className="px-4 py-12 text-center">
+                        <div className="flex justify-center items-center">
+                          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                          <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <Tag color="blue">
-                          {getComponentTypeLabel(comp.componentType as ComponentType)}
-                        </Tag>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        <div className="font-medium">{comp.name}</div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {comp.componentSpecs || "-"}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <span className="font-mono text-xs">
-                          {comp.serialNumber || "-"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <Tag color="green">Trong kho</Tag>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                        {formatDate(comp.installedAt)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {comp.notes || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        {comp.computer?.room ? (
-                          <div>
-                            <div className="font-medium">
-                              {comp.computer.room.name}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {comp.computer.room.building} - Tầng {comp.computer.room.floor}
-                            </div>
-                          </div>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
                     </tr>
-                  ))}
+                  ) : (
+                    paginatedComponents.map((comp, index) => (
+                      <tr key={comp.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              checked={selectedRowKeys.includes(comp.id)}
+                              onChange={(e) => handleRowSelect(comp.id, e.target.checked)}
+                              aria-label={`Chọn linh kiện ${comp.name}`}
+                            />
+                            <span>{(currentPage - 1) * pageSize + index + 1}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <Tag color="blue">
+                            {getComponentTypeLabel(comp.componentType as ComponentType)}
+                          </Tag>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          <div className="font-medium">{comp.name}</div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {comp.componentSpecs || "-"}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <span className="font-mono text-xs">
+                            {comp.serialNumber || "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                          <Tag color="green">Trong kho</Tag>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                          {formatDate(comp.installedAt)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {comp.notes || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {comp.computer?.room ? (
+                            <div>
+                              <div className="font-medium">
+                                {comp.computer.room.name}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {comp.computer.room.building} - Tầng {comp.computer.room.floor}
+                              </div>
+                            </div>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
-                    Hiển thị {(currentPage - 1) * pageSize + 1} -{" "}
-                    {Math.min(currentPage * pageSize, filteredAndSortedComponents.length)} trong tổng số{" "}
-                    {filteredAndSortedComponents.length} linh kiện
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      size="small">
-                      Trước
-                    </Button>
-                    <span className="text-sm">
-                      Trang {currentPage} / {totalPages}
-                    </span>
-                    <Button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      size="small">
-                      Sau
-                    </Button>
-                    <Select
-                      value={pageSize}
-                      onChange={handlePageSizeChange}
-                      size="small"
-                      style={{ width: 80 }}>
-                      <Select.Option value={10}>10</Select.Option>
-                      <Select.Option value={20}>20</Select.Option>
-                      <Select.Option value={50}>50</Select.Option>
-                      <Select.Option value={100}>100</Select.Option>
-                    </Select>
-                  </div>
-                </div>
-              )}
+              <Pagination
+                currentPage={currentPage}
+                pageSize={pageSize}
+                total={filteredAndSortedComponents.length}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                showSizeChanger={true}
+                pageSizeOptions={[10, 20, 50, 100]}
+                showQuickJumper={true}
+                showTotal={true}
+              />
             </>
           )}
         </div>
-      </Card>
     </div>
   );
 }

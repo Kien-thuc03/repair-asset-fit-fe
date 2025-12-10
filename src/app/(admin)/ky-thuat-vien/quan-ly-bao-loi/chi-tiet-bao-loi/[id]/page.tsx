@@ -90,8 +90,21 @@ export default function RepairDetailPage() {
 				item => item.oldComponentId && item.oldComponent?.status !== 'REMOVED'
 			)
 
-			// Nếu tất cả linh kiện đã được thay thế và repair request đang ở trạng thái CHỜ_THAY_THẾ
-			if (replaceableItems.length === 0 && currentRequest?.status === RepairStatus.CHỜ_THAY_THẾ) {
+			// Kiểm tra thêm các linh kiện FAULTY chưa có DXTT (trong repair request)
+			let latestRequest = currentRequest
+			if (refetch) {
+				const refreshed = await refetch()
+				// refetch có thể trả về void hoặc RepairRequestWithDetails; fallback currentRequest
+				if (refreshed) {
+					latestRequest = refreshed as typeof currentRequest
+				}
+			}
+
+			const hasFaultyComponents =
+				latestRequest?.components?.some(c => c.status === 'FAULTY') ?? false
+
+			// Nếu tất cả linh kiện đã được thay thế và không còn FAULTY, và trạng thái đang CHỜ_THAY_THẾ
+			if (replaceableItems.length === 0 && !hasFaultyComponents && latestRequest?.status === RepairStatus.CHỜ_THAY_THẾ) {
 				// Tự động cập nhật trạng thái thành ĐÃ_HOÀN_THÀNH
 				await completeRepair(id, 'Đã hoàn thành thay thế tất cả linh kiện')
 				openSuccessModal(
