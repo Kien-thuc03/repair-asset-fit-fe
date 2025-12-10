@@ -83,11 +83,6 @@ const roleBasedRoutes = {
     "/qtv-khoa/giam-sat-he-thong",
   ],
 
-  // Routes dành cho Ban Giám hiệu
-  [UserRole.BAN_GIAM_HIEU]: [
-    "/ban-giam-hieu",
-    "/ban-giam-hieu/quan-ly-to-trinh",
-  ],
 };
 
 // Routes chung cho tất cả người dùng đã đăng nhập
@@ -167,9 +162,7 @@ function getDefaultRouteByRole(userRole: string): string {
   if (userRole === UserRole.QTV_KHOA || userRole === "QTV_KHOA") {
     return "/qtv-khoa";
   }
-  if (userRole === UserRole.BAN_GIAM_HIEU || userRole === "BAN_GIAM_HIEU") {
-    return "/ban-giam-hieu";
-  }
+
   return "/login"; // Mặc định redirect về login nếu không xác định được vai trò
 }
 

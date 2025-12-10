@@ -90,6 +90,7 @@ export default function ProposalTable({
   onSelectAll,
   onRowSelect,
   onSort,
+  onReject,
   onCreateSubmission,
   onDataChange,
 }: ProposalTableProps) {
@@ -136,6 +137,11 @@ export default function ProposalTable({
 
   // Handle reject action with API call
   const handleRejectClick = (proposalId: string) => {
+    if (onReject) {
+      // Nếu đã truyền callback bên ngoài (đã có modal riêng), gọi thẳng
+      onReject(proposalId);
+      return;
+    }
     setCurrentProposalId(proposalId);
     setShowConfirmReject(true);
   };
@@ -143,9 +149,14 @@ export default function ProposalTable({
   const handleConfirmReject = async () => {
     setShowConfirmReject(false);
     try {
-      await updateStatus(currentProposalId, {
-        status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI,
-      });
+      console.log("🚫 ProposalTable handleConfirmReject", currentProposalId);
+      if (onReject) {
+        await onReject(currentProposalId);
+      } else {
+        await updateStatus(currentProposalId, {
+          status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI,
+        });
+      }
 
       // Refresh data
       if (onDataChange) {

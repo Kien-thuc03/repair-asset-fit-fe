@@ -12,7 +12,6 @@ import {
   FileCheck,
   Loader2,
   AlertCircle,
-  Eye,
   Download,
 } from "lucide-react";
 import { Breadcrumb, Modal } from "antd";
@@ -252,12 +251,40 @@ export default function RequestDetailPage() {
     }
   };
 
-  // Hàm helper để generate HTML content cho biên bản kiểm tra
+  // Hàm helper để generate HTML content cho biên bản kiểm tra (layout theo mẫu)
   const generateInspectionHTML = (
     formData: InspectionFormData,
     proposalData: typeof proposal
   ): string => {
     if (!proposalData) return "";
+
+    type OldComponentWithComputer =
+      | (NonNullable<typeof proposalData.items>[number]["oldComponent"] & {
+          computer?: { name?: string; machineLabel?: string };
+        })
+      | null
+      | undefined;
+
+    const getComputerName = (oldComp: OldComponentWithComputer) => {
+      if (!oldComp) return "Máy tính";
+      return (
+        oldComp.computer?.name ||
+        oldComp.computerName ||
+        oldComp.name ||
+        oldComp.componentType ||
+        "Máy tính"
+      );
+    };
+
+    const getComputerLabel = (oldComp: OldComponentWithComputer) => {
+      if (!oldComp) return "Không rõ";
+      return (
+        oldComp.componentSpecs ||
+        oldComp.name ||
+        oldComp.computer?.machineLabel ||
+        "Không rõ"
+      );
+    };
 
     return `
         <!DOCTYPE html>
@@ -265,90 +292,86 @@ export default function RequestDetailPage() {
         <head>
           <meta charset="UTF-8">
           <style>
-            body { font-family: 'Times New Roman', Times, serif; font-size: 13pt; line-height: 1.5; margin: 40px; }
-            .header-table { width: 100%; border: none; margin-bottom: 10px; }
+            body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.4; margin: 32px 36px; }
+            .header-table { width: 100%; border: none; margin-bottom: 6px; }
             .header-table td { border: none; padding: 0; vertical-align: top; font-size: 11pt; text-align: center; }
-            .header-left { width: 50%; }
-            .header-right { width: 50%; }
-            .bold { font-weight: bold; }
-            .underline { text-decoration: underline; }
-            table.data-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            table.data-table th, table.data-table td { border: 1px solid black; padding: 8px; }
-            table.data-table th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
-            h2 { font-size: 14pt; font-weight: bold; text-align: center; margin: 20px 0 10px 0; }
-            h3 { font-size: 13pt; font-weight: bold; text-align: center; margin: 5px 0 20px 0; }
-            p { margin: 5px 0; }
-            .right-text { text-align: right; margin-bottom: 20px; }
-            .signature-section { margin-top: 40px; }
-            .signature-table { width: 100%; border: none; }
-            .signature-table td { border: none; text-align: center; padding: 10px; vertical-align: top; }
+            .title { text-align: center; font-weight: bold; font-size: 16pt; margin: 12px 0 4px 0; }
+            .subtitle { text-align: center; font-weight: bold; font-size: 13pt; color: #0056b3; margin: 4px 0 14px 0; }
+            .info { margin: 4px 0; }
+            .list { margin: 2px 0 10px 0; }
+            .data-table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+            .data-table th, .data-table td { border: 1px solid #000; padding: 6px 8px; font-size: 12pt; }
+            .data-table th { text-align: center; font-weight: bold; }
+            .signature-table { width: 100%; border: none; margin-top: 20px; }
+            .signature-table td { border: none; text-align: center; padding: 10px 4px; vertical-align: top; }
+            .small { font-size: 11pt; }
+            .center { text-align: center; }
+            .note { margin-top: 12px; }
+            .no-break { page-break-inside: avoid; break-inside: avoid; }
           </style>
         </head>
         <body>
           <table class="header-table">
             <tr>
               <td class="header-left">
-                <p>TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP</p>
-                <p>THÀNH PHỐ HỒ CHÍ MINH</p>
-                <p class="bold">PHÒNG QUẢN TRỊ</p>
+                <p><strong>TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP</strong></p>
+                <p><strong>THÀNH PHỐ HỒ CHÍ MINH</strong></p>
+                <p><strong>PHÒNG QUẢN TRỊ</strong></p>
               </td>
               <td class="header-right">
-                <p class="bold">CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-                <p class="bold underline">Độc lập - Tự do - Hạnh phúc</p>
+                <p><strong>CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</strong></p>
+                <p><u><strong>Độc lập - Tự do - Hạnh phúc</strong></u></p>
               </td>
             </tr>
           </table>
-          
-          <p class="right-text">
-            <em>Thành phố Hồ Chí Minh, ngày ${
-              formData.inspectionDay || "___"
-            } tháng ${formData.inspectionMonth || "___"} năm ${
+          <p class="center"><em>Thành phố Hồ Chí Minh, ngày ${
+            formData.inspectionDay || "__"
+          } tháng ${formData.inspectionMonth || "__"} năm ${
       formData.inspectionYear || "2025"
-    }</em>
-          </p>
-          
-          <h2>BIÊN BẢN</h2>
-          <h3>Kiểm tra tình trạng kỹ thuật cơ sở vật chất hư hỏng hoặc cần cải tạo<br>để đề xuất giải pháp khắc phục</h3>
-          
-          <p><strong>Căn cứ đề nghị của:</strong> ${
-            formData.requestedBy
-          } &nbsp;&nbsp;&nbsp;&nbsp; <strong>Năm:</strong> ${formData.year}</p>
-          <p><strong>Hôm nay, Ngày:</strong> ${
-            formData.inspectionDay || "___"
-          } <strong>Tháng:</strong> ${
-      formData.inspectionMonth || "___"
-    } <strong>Năm:</strong> ${formData.inspectionYear || "2025"}</p>
-          <p><strong>Tại vị trí:</strong> ${formData.location}</p>
-          
-          <p><strong>Chúng tôi gồm có:</strong></p>
-          <p style="margin-left: 20px;">
-            <strong>1. Ông:</strong> ${
-              formData.departmentRep
-            } &nbsp;&nbsp;&nbsp;&nbsp; <strong>đại diện:</strong> ${
-      formData.departmentName
-    }
-          </p>
-          <p style="margin-left: 20px;">
-            <strong>2. Ông:</strong> ${
+    }</em></p>
+
+          <h2 class="title">BIÊN BẢN</h2>
+          <div class="subtitle">
+            Kiểm tra tình trạng kỹ thuật cơ sở vật chất hư hỏng hoặc cần cải tạo<br/>
+            và đề nghị giải pháp khác phục
+          </div>
+
+          <p class="info"><strong>Căn cứ đề nghị của:</strong> ${
+            formData.requestedBy || "Khoa CNTT"
+          } &nbsp; Năm ${formData.year || "2025"}</p>
+          <p class="info"><strong>Hôm nay, lúc</strong> ____h, <strong>ngày</strong> ${
+            formData.inspectionDay || "__"
+          } <strong>tháng</strong> ${
+      formData.inspectionMonth || "__"
+    } <strong>năm</strong> ${formData.inspectionYear || "2025"}.</p>
+          <p class="info"><strong>Tại vị trí:</strong> ${
+            formData.location || "H8.01"
+          }</p>
+
+          <p class="info"><strong>Chúng tôi gồm:</strong></p>
+          <div class="list">
+            1. Ông: ${formData.departmentRep || "Giang Thanh Trọn"} &nbsp;&nbsp;
+            đại diện: ${formData.departmentName || "Khoa CNTT"}<br/>
+            2. Ông: ${
               proposalData?.adminVerifier?.fullName ||
               formData.adminRep ||
-              "Chưa xác định"
-            } &nbsp;&nbsp;&nbsp;&nbsp; <strong>đại diện:</strong> ${
+              "Nguyễn Ngữ"
+            } &nbsp;&nbsp; đại diện: ${
       formData.adminDepartment || "Phòng Quản trị"
     }
-          </p>
-          
-          <p><strong>Cùng lập biên bản kiểm tra tình trạng kỹ thuật của cơ sở vật chất hư hỏng cần thay thế:</strong></p>
-          
+          </div>
+
+          <p class="info"><strong>Cùng lập biên bản kiểm tra tình trạng kỹ thuật của cơ sở vật chất hư hỏng như sau:</strong></p>
+
           <table class="data-table">
             <thead>
               <tr>
                 <th width="5%">TT</th>
-                <th width="25%">Nội dung kiểm tra</th>
-                <th width="8%">SL</th>
-                <th width="20%">Vị trí</th>
+                <th width="28%">Nội dung kiểm tra</th>
+                <th width="8%">Số lượng</th>
+                <th width="15%">Vị trí</th>
                 <th width="12%">Tình trạng</th>
-                <th width="30%">Giải pháp</th>
+                <th width="32%">Giải pháp khác phục</th>
               </tr>
             </thead>
             <tbody>
@@ -357,23 +380,28 @@ export default function RequestDetailPage() {
                   ?.map(
                     (item, index) => `
                 <tr>
-                  <td style="text-align: center;">${index + 1}</td>
+                  <td class="center">${index + 1}</td>
                   <td>
-                    <strong>${
-                      item.oldComponent?.computerName || "Không xác định"
-                    }</strong><br>
-                    <small>${item.oldComponent?.name || "N/A"}</small>
+                    <div><strong>${getComputerName(
+                      item.oldComponent
+                    )}</strong></div>
+                    <div><em>${
+                      item.oldComponent?.name || "Linh kiện"
+                    }</em></div>
+                    <div class="small">(${getComputerLabel(
+                      item.oldComponent
+                    )})</div>
                   </td>
-                  <td style="text-align: center;">${item.quantity}</td>
+                  <td class="center">${item.quantity || 1}</td>
+                  <td class="center">${
+                    item.oldComponent?.roomLocation || "N/A"
+                  }</td>
+                  <td class="center">Hỏng</td>
                   <td>
-                    ${item.oldComponent?.roomLocation || "Chưa xác định"}<br>
-                    <small>${item.oldComponent?.componentSpecs || "N/A"}</small>
-                  </td>
-                  <td>Hỏng</td>
-                  <td>
-                    - Đề nghị thay thế:<br>
-                    1. ${item.newItemName || "Không xác định"}<br>
-                    2. ${item.newItemSpecs || "N/A"}
+                    - Đề nghị nâng cấp:<br/>
+                    ${item.newItemName ? `1. ${item.newItemName}` : ""}${
+                      item.newItemSpecs ? ` ${item.newItemSpecs}` : ""
+                    }${item.reason ? `<br/>Ghi chú: ${item.reason}` : ""}
                   </td>
                 </tr>
               `
@@ -382,46 +410,25 @@ export default function RequestDetailPage() {
               }
             </tbody>
           </table>
-          
-          <p><strong>Đại diện các đơn vị tham gia công tác kiểm tra tình trạng kỹ thuật của cơ sở vật chất hư hỏng cùng đồng ý với nội dung trên; Đồng ý với kỹ sư.</strong></p>
-          
-          ${
-            formData.notes
-              ? `<p><strong>Ghi chú:</strong> ${formData.notes}</p>`
-              : ""
-          }
-          
-          <div class="signature-section">
-            <table class="signature-table">
-              <tr>
-                <td width="50%">
-                  <p><strong>${formData.departmentName}</strong></p>
-                  <br><br><br>
-                  <p><strong>Tổ trưởng Kỹ thuật</strong></p>
-                  <br><br>
-                  <p>${formData.departmentRep}</p>
-                </td>
-                <td width="50%">
-                  <p><strong>${
-                    formData.adminDepartment || "Phòng Quản trị"
-                  }</strong></p>
-                  <br><br><br>
-                  <p><strong>Người thực hiện</strong></p>
-                  <br><br>
-                  <p>${
-                    proposalData?.adminVerifier?.fullName ||
-                    formData.adminRep ||
-                    "Chưa xác định"
-                  }</p>
-                </td>
-              </tr>
-            </table>
-          </div>
-          
-          <div style="text-align: center; margin-top: 40px;">
-            <p><strong>Ý kiến của Lãnh đạo Phòng Quản trị:</strong></p>
-            <br><br><br>
-            <p>_______________________________</p>
+
+          <p class="note"><strong>Đại diện các đơn vị tham gia công tác kiểm tra tình trạng kỹ thuật của cơ sở vật chất hư hỏng cùng đọc, đồng ý và ký tên.</strong></p>
+
+          <div class="no-break">
+          <table class="signature-table">
+            <tr>
+              <td><strong>Khoa CNTT</strong><br/><br/><br/>${
+                formData.departmentRep || "Giang Thanh Trọn"
+              }</td>
+              <td><strong>Nhân viên Kỹ thuật</strong><br/><br/><br/>${
+                proposalData?.adminVerifier?.fullName ||
+                formData.adminRep ||
+                "Nguyễn Ngữ"
+              }</td>
+            </tr>
+          </table>
+
+          <p class="center" style="margin-top: 12px;"><strong>Ý kiến của Lãnh đạo Phòng Quản trị:</strong></p>
+          <p class="center">_______________________________</p>
           </div>
         </body>
         </html>
@@ -838,12 +845,6 @@ export default function RequestDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setShowSubmissionPreview(true)}
-                        className="text-blue-600 hover:bg-blue-100 rounded transition-colors"
-                        title="Xem tài liệu">
-                        <Eye className="w-4 h-4 text-blue-600" />
-                      </button>
                       <button
                         onClick={handleExportSubmissionDocx}
                         className="text-gray-600 hover:bg-blue-100 rounded transition-colors"

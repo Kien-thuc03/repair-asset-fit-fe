@@ -52,7 +52,6 @@ export default function LoginPage() {
         TO_TRUONG_KY_THUAT: "/to-truong-ky-thuat",
         KY_THUAT_VIEN: "/ky-thuat-vien",
         GIANG_VIEN: "/giang-vien",
-        BAN_GIAM_HIEU: "/ban-giam-hieu",
       };
       const route =
         roleRoutes[user.activeRole?.code as keyof typeof roleRoutes] ||

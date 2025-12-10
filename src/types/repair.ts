@@ -1,7 +1,6 @@
 import { ErrorType } from "@/lib/constants/errorTypes";
 import { AssetStatus, ComponentStatus, ComponentType } from "./computer";
 
-
 // Định nghĩa các vai trò trong hệ thống sửa chữa tài sản
 export enum UserRole {
   ADMIN = "ADMIN", // Quản trị viên hệ thống
@@ -10,7 +9,6 @@ export enum UserRole {
   TO_TRUONG_KY_THUAT = "TO_TRUONG_KY_THUAT", // Tổ trưởng Kỹ thuật
   PHONG_QUAN_TRI = "PHONG_QUAN_TRI", // Nhân viên Phòng Quản trị
   QTV_KHOA = "QTV_KHOA", // Quản trị viên Khoa
-  BAN_GIAM_HIEU = "BAN_GIAM_HIEU", // Ban Giám hiệu
 }
 // Interface cho bảng trung gian RepairRequestComponents (quan hệ nhiều-nhiều)
 export interface RepairRequestComponent {
@@ -209,12 +207,6 @@ export const RoleInfo = {
       "system_oversight",
     ],
   },
-  [UserRole.BAN_GIAM_HIEU]: {
-    name: "Ban Giám hiệu",
-    description: "Quản lý hệ thống và phê duyệt cuối cùng",
-    defaultRoute: "/ban-giam-hieu",
-    permissions: ["final_approval"],
-  },
 } as const;
 
 // Định nghĩa trạng thái báo cáo lỗi
@@ -264,13 +256,11 @@ export enum ReplacementProposalStatus {
   ĐÃ_TỪ_CHỐI = "ĐÃ_TỪ_CHỐI", // B3 - Tổ trưởng kỹ thuật từ chối đề xuất, cần lập lại
   ĐÃ_LẬP_TỜ_TRÌNH = "ĐÃ_LẬP_TỜ_TRÌNH", // B4 - Tổ trưởng kỹ thuật đã lập tờ trình gửi Quản trị viên khoa
   KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH = "KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH", // B5 - Quản trị viên khoa duyệt tờ trình (set facultyAdminApproverId)
-  ĐÃ_DUYỆT_TỜ_TRÌNH = "ĐÃ_DUYỆT_TỜ_TRÌNH", // B6 - Ban giám hiệu duyệt tờ trình (set principalApproverId)
-  ĐÃ_TỪ_CHỐI_TỜ_TRÌNH = "ĐÃ_TỪ_CHỐI_TỜ_TRÌNH", // B7 - Từ chối tờ trình, cần lập lại
-  CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH", // B8 - Phòng Quản trị tiếp nhận yêu cầu xác minh (set adminVerifierId)
-  ĐÃ_XÁC_MINH = "ĐÃ_XÁC_MINH", // B9 - Phòng Quản trị đã xác nhận và xác minh thực tế xong
-  ĐÃ_GỬI_BIÊN_BẢN = "ĐÃ_GỬI_BIÊN_BẢN", // B10 - Sau khi xác minh thành công, gửi biên bản xác nhận lại cho tổ trưởng kỹ thuật ký
-  ĐÃ_KÝ_BIÊN_BẢN = "ĐÃ_KÝ_BIÊN_BẢN", // B11 - Tổ trưởng kỹ thuật đã ký biên bản xác nhận
-  ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM", // B12 - Đã có thiết bị mới, hoàn tất mua sắm
+  CHỜ_XÁC_MINH = "CHỜ_XÁC_MINH", // B6 - Phòng Quản trị tiếp nhận yêu cầu xác minh (set adminVerifierId)
+  ĐÃ_XÁC_MINH = "ĐÃ_XÁC_MINH", // B7 - Phòng Quản trị đã xác nhận và xác minh thực tế xong
+  ĐÃ_GỬI_BIÊN_BẢN = "ĐÃ_GỬI_BIÊN_BẢN", // B8 - Sau khi xác minh thành công, gửi biên bản xác nhận lại cho tổ trưởng kỹ thuật ký
+  ĐÃ_KÝ_BIÊN_BẢN = "ĐÃ_KÝ_BIÊN_BẢN", // B9 - Tổ trưởng kỹ thuật đã ký biên bản xác nhận
+  ĐÃ_HOÀN_TẤT_MUA_SẮM = "ĐÃ_HOÀN_TẤT_MUA_SẮM", // B10 - Đã có thiết bị mới, hoàn tất mua sắm
 }
 
 // Type cho đề xuất thay thế

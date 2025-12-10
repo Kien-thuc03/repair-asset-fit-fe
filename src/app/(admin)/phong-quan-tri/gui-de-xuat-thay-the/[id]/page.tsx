@@ -18,7 +18,6 @@ import {
   FileText,
   Download,
   PlaneLanding,
-  Eye,
   Loader2,
   AlertCircle,
   Clock,
@@ -39,14 +38,8 @@ import {
   SubmissionFormData,
   InspectionFormData,
 } from "@/types";
-import {
-  replaceComponent,
-  getComponentById,
-  addStockFromProposal,
-} from "@/lib/api/components";
-import { getComputerDetail } from "@/lib/api/computers";
-import { ReplacementItem } from "@/lib/api/replacement-proposals";
-import { RefreshCw, CheckCircle2 } from "lucide-react";
+import { addStockFromProposal } from "@/lib/api/components";
+import { CheckCircle2 } from "lucide-react";
 
 const { Title } = Typography;
 
@@ -304,7 +297,7 @@ export default function ChiTietDeXuatThayThePage() {
     // Xử lý trường hợp từ chối
     if (
       status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ||
-      status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
+      status === ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH
     ) {
       return 1; // Bước "Đã duyệt" nhưng với status error
     }
@@ -427,7 +420,7 @@ export default function ChiTietDeXuatThayThePage() {
               status={
                 proposal.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ||
                 proposal.status ===
-                  ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH
+                  ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH
                   ? "error"
                   : "process"
               }
@@ -459,7 +452,7 @@ export default function ChiTietDeXuatThayThePage() {
                     proposal.status ===
                       ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH ||
                     proposal.status ===
-                      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH ||
+                      ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH ||
                     proposal.status ===
                       ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
                       ? new Date(proposal.updatedAt).toLocaleDateString("vi-VN")
@@ -477,7 +470,7 @@ export default function ChiTietDeXuatThayThePage() {
                     proposal.status ===
                       ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH ||
                     proposal.status ===
-                      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH ||
+                      ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH ||
                     proposal.status ===
                       ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
                       ? proposal.adminVerifier
@@ -496,7 +489,7 @@ export default function ChiTietDeXuatThayThePage() {
                     proposal.status ===
                       ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH ||
                     proposal.status ===
-                      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH ||
+                      ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH ||
                     proposal.status ===
                       ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
                       ? new Date(proposal.updatedAt).toLocaleDateString("vi-VN")
@@ -516,7 +509,7 @@ export default function ChiTietDeXuatThayThePage() {
             {/* Status-specific alerts */}
             {(proposal.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI ||
               proposal.status ===
-                ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH) && (
+                ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH) && (
               <Alert
                 className="mt-4"
                 message="Đề xuất đã bị từ chối"
@@ -668,17 +661,9 @@ export default function ChiTietDeXuatThayThePage() {
                         ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
                         <div className="mt-2">
                           {item.newlyPurchasedComponentId ? (
-                            <Tag
-                              color="green"
-                              icon={<CheckCircle2 className="w-3 h-3" />}>
-                              Đã nhập kho
-                            </Tag>
+                            <Tag color="green">Đã nhập kho</Tag>
                           ) : (
-                            <Tag
-                              color="orange"
-                              icon={<Clock className="w-3 h-3" />}>
-                              Chưa nhập kho
-                            </Tag>
+                            <Tag color="orange">Chưa nhập kho</Tag>
                           )}
                         </div>
                       )}
@@ -716,12 +701,6 @@ export default function ChiTietDeXuatThayThePage() {
                         title="Tải xuống">
                         <Download className="h-4 w-4 text-blue-600" />
                       </button>
-                      <button
-                        onClick={() => setShowSubmissionPreview(true)}
-                        className="p-1 hover:bg-blue-100 rounded transition-colors"
-                        title="Xem trước">
-                        <Eye className="h-4 w-4 text-blue-600" />
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -750,12 +729,6 @@ export default function ChiTietDeXuatThayThePage() {
                         className="p-1 hover:bg-green-100 rounded transition-colors"
                         title="Tải xuống">
                         <Download className="h-4 w-4 text-green-600" />
-                      </button>
-                      <button
-                        onClick={() => setShowInspectionPreview(true)}
-                        className="p-1 hover:bg-green-100 rounded transition-colors"
-                        title="Xem trước">
-                        <Eye className="h-4 w-4 text-green-600" />
                       </button>
                     </div>
                   </div>

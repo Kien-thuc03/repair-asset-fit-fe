@@ -42,7 +42,7 @@ export default function XuLyToTrinhPage() {
 
   const { updateStatus } = useUpdateReplacementProposalStatus();
 
-  // Fetch data từ API - lấy tất cả rồi filter ở frontend để lấy cả B6 và B8
+  // Fetch data từ API - lấy tất cả rồi filter ở frontend để lấy cả B5/B6
   const {
     data: apiData,
     loading,
@@ -56,10 +56,10 @@ export default function XuLyToTrinhPage() {
   const filteredData = useMemo(() => {
     const proposals = apiData?.data || [];
 
-    // Filter chỉ lấy B6 (ĐÃ_DUYỆT_TỜ_TRÌNH) và B8 (CHỜ_XÁC_MINH)
+    // Filter chỉ lấy các trạng thái cần xử lý: B5/B6
     const ALLOWED_STATUSES = [
-      ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH, // B6
-      ReplacementProposalStatus.CHỜ_XÁC_MINH, // B8
+      ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH, // B5
+      ReplacementProposalStatus.CHỜ_XÁC_MINH, // B6
     ];
 
     let filtered = proposals.filter((proposal) =>
@@ -149,7 +149,7 @@ export default function XuLyToTrinhPage() {
 
   const getStatusColor = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-lime-100 text-lime-800 border-lime-200";
       case ReplacementProposalStatus.CHỜ_XÁC_MINH:
         return "bg-blue-100 text-blue-800 border-blue-200";
@@ -160,8 +160,8 @@ export default function XuLyToTrinhPage() {
 
   const getStatusText = (status: ReplacementProposalStatus) => {
     switch (status) {
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
-        return "Ban giám hiệu đã duyệt tờ trình";
+      case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
+        return "Khoa đã duyệt tờ trình";
       case ReplacementProposalStatus.CHỜ_XÁC_MINH:
         return "Chờ xác minh";
       default:
@@ -257,33 +257,35 @@ export default function XuLyToTrinhPage() {
   };
 
   // Hàm xử lý khi click xem chi tiết
+  // Nếu đang ở KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH, tự động chuyển sang CHỜ_XÁC_MINH trước khi điều hướng
   const handleViewDetail = async (
-    e: React.MouseEvent<HTMLAnchorElement>,
+    e: React.MouseEvent<HTMLElement>,
     item: ReplacementProposal
   ) => {
-    // Nếu status là ĐÃ_DUYỆT_TỜ_TRÌNH (B6), tự động chuyển sang CHỜ_XÁC_MINH (B8) trước
-    if (item.status === ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH) {
+    if (item.status === ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH) {
       e.preventDefault();
       setProcessingId(item.id);
-
       try {
         await updateStatus(item.id, {
           status: ReplacementProposalStatus.CHỜ_XÁC_MINH,
         });
-        // Chuyển hướng sau khi update thành công
-        router.push(`/phong-quan-tri/xu-ly-to-trinh/${item.id}`);
-      } catch (error) {
-        console.error("Error updating status:", error);
+      } catch (err) {
+        console.error("Error updating status:", err);
         Modal.error({
           title: "Lỗi",
-          content: "Không thể chuyển trạng thái tờ trình. Vui lòng thử lại.",
+          content:
+            err instanceof Error
+              ? err.message
+              : "Không thể chuyển trạng thái. Vui lòng thử lại.",
           okText: "Đóng",
         });
+        return;
       } finally {
         setProcessingId(null);
       }
     }
-    // Nếu status khác, cho phép navigate bình thường
+
+    router.push(`/phong-quan-tri/xu-ly-to-trinh/${item.id}`);
   };
 
   return (
@@ -506,12 +508,7 @@ export default function XuLyToTrinhPage() {
                         className="text-xs font-medium text-blue-600 truncate cursor-pointer hover:text-blue-800 hover:underline"
                         onClick={(e) => {
                           e.preventDefault();
-                          handleViewDetail(
-                            {
-                              preventDefault: () => {},
-                            } as React.MouseEvent<HTMLAnchorElement>,
-                            item
-                          );
+                          handleViewDetail(e, item);
                         }}>
                         {item.proposalCode}
                       </div>

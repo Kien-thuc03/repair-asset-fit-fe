@@ -16,10 +16,11 @@ import {
   Cpu,
   MemoryStick,
   Eye,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { Breadcrumb } from "antd";
 import SignConfirmModal from "@/components/modal/SignConfirmModal";
+import RejectConfirmModal from "@/components/modal/RejectConfirmModal";
 import SuccessModal from "@/components/modal/SuccessModal";
 import ErrorModal from "@/components/modal/ErrorModal";
 import {
@@ -27,17 +28,14 @@ import {
   useUpdateReplacementProposalStatus,
 } from "@/hooks";
 import { ReplacementProposalStatus } from "@/types/repair";
+import { rejectReplacementProposal } from "@/lib/api/replacement-proposals";
 export default function ChiTietDuyetToTrinhPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
 
-  const [actionType, setActionType] = useState<"approve" | "reject" | null>(
-    null
-  );
-  const [adminNotes, setAdminNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [showSignConfirmModal, setShowSignConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -127,9 +125,9 @@ export default function ChiTietDuyetToTrinhPage() {
         return "bg-indigo-100 text-indigo-800 border-indigo-200";
       case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "bg-lime-100 text-lime-800 border-lime-200";
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_DUYỆT:
         return "bg-green-100 text-green-800 border-green-200";
-      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI:
         return "bg-orange-100 text-orange-800 border-orange-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -142,49 +140,33 @@ export default function ChiTietDuyetToTrinhPage() {
         return "Đã lập tờ trình";
       case ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH:
         return "Khoa đã duyệt tờ trình";
-      case ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_DUYỆT:
         return "Ban giám hiệu đã duyệt tờ trình";
-      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH:
+      case ReplacementProposalStatus.ĐÃ_TỪ_CHỐI:
         return "Đã từ chối tờ trình";
       default:
         return status;
     }
   };
 
-  const handleConfirmAction = async () => {
+  const handleReject = async (reason?: string) => {
     if (!proposal) return;
 
     setIsProcessing(true);
-    setShowConfirmModal(false);
+    setShowRejectModal(false);
 
     try {
-      await updateStatus(proposal.id, {
-        status:
-          actionType === "approve"
-            ? ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH
-            : ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH,
-      });
+      await rejectReplacementProposal(proposal.id, reason);
 
       setIsProcessing(false);
-      setActionType(null);
-      setAdminNotes("");
 
-      // Hiển thị thông báo thành công
-      if (actionType === "reject") {
-        setSuccessMessage({
-          title: "Từ chối tờ trình thành công",
-          message: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công. Tổ trưởng kỹ thuật cần lập lại tờ trình.`,
-        });
-        setShowSuccessModal(true);
-      } else {
-        setSuccessMessage({
-          title: "Duyệt tờ trình thành công!",
-          message: `Tờ trình ${proposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
-        });
-        setShowSuccessModal(true);
-      }
+      setSuccessMessage({
+        title: "Từ chối tờ trình thành công",
+        message: `Tờ trình ${proposal.proposalCode} đã được từ chối thành công. Tổ trưởng kỹ thuật cần lập lại tờ trình.`,
+      });
+      setShowSuccessModal(true);
     } catch (error) {
-      console.error("Error processing proposal:", error);
+      console.error("Error rejecting proposal:", error);
       setIsProcessing(false);
 
       setErrorMessage({
@@ -301,8 +283,7 @@ export default function ChiTietDuyetToTrinhPage() {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
-                      setActionType("reject");
-                      setShowConfirmModal(true);
+                      setShowRejectModal(true);
                     }}
                     className="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-1 focus:ring-red-500">
                     Từ chối
@@ -522,50 +503,15 @@ export default function ChiTietDuyetToTrinhPage() {
         </div>
       </div>
 
-      {/* Confirmation Modal - Chỉ cho từ chối */}
-      {showConfirmModal && actionType === "reject" && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
-                <AlertTriangle className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div className="mt-2 px-4 py-3 text-center">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Xác nhận từ chối tờ trình
-                </h3>
-                <div className="mt-2 px-2 py-2">
-                  <p className="text-sm text-gray-500">
-                    Bạn có chắc chắn muốn từ chối tờ trình
-                    <strong> {proposal.proposalCode}</strong>?
-                  </p>
-                  <p className="text-xs text-red-500 mt-2">
-                    Sau khi từ chối, tổ trưởng kỹ thuật sẽ cần lập lại tờ trình.
-                  </p>
-                  {adminNotes && (
-                    <div className="mt-3 p-2 bg-gray-50 rounded text-left">
-                      <p className="text-xs text-gray-600">Ghi chú:</p>
-                      <p className="text-sm text-gray-800">{adminNotes}</p>
-                    </div>
-                  )}
-                </div>
-                <div className="items-center px-4 py-3 flex justify-center space-x-4">
-                  <button
-                    onClick={() => setShowConfirmModal(false)}
-                    className="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-gray-600">
-                    Hủy
-                  </button>
-                  <button
-                    onClick={handleConfirmAction}
-                    className="px-4 py-2 text-white text-base font-medium rounded-md shadow-sm bg-red-600 hover:bg-red-700">
-                    Từ chối
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Reject Confirmation Modal */}
+      <RejectConfirmModal
+        isOpen={showRejectModal}
+        onClose={() => setShowRejectModal(false)}
+        onConfirm={(reason) => handleReject(reason)}
+        title="Xác nhận từ chối tờ trình"
+        description="Sau khi từ chối, tổ trưởng kỹ thuật sẽ cần lập lại tờ trình. Hành động không thể hoàn tác."
+        okText="Xác nhận từ chối"
+      />
 
       {/* SignConfirmModal cho duyệt tờ trình */}
       <SignConfirmModal

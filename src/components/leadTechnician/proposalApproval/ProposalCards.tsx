@@ -32,6 +32,7 @@ export default function ProposalCards({
   statusConfig,
   onSelectAll,
   onSelectItem,
+  onReject,
   onCreateSubmission,
   onDataChange,
 }: ProposalCardsProps) {
@@ -78,6 +79,11 @@ export default function ProposalCards({
 
   // Handle reject action with API call
   const handleRejectClick = (proposalId: string) => {
+    console.log("🚫 ProposalCards handleRejectClick", proposalId);
+    if (onReject) {
+      onReject(proposalId);
+      return;
+    }
     setCurrentProposalId(proposalId);
     setShowConfirmReject(true);
   };
@@ -85,9 +91,14 @@ export default function ProposalCards({
   const handleConfirmReject = async () => {
     setShowConfirmReject(false);
     try {
-      await updateStatus(currentProposalId, {
-        status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI,
-      });
+      console.log("🚫 ProposalCards handleConfirmReject", currentProposalId);
+      if (onReject) {
+        await onReject(currentProposalId);
+      } else {
+        await updateStatus(currentProposalId, {
+          status: ReplacementProposalStatus.ĐÃ_TỪ_CHỐI,
+        });
+      }
 
       // Refresh data
       if (onDataChange) {
@@ -192,7 +203,8 @@ export default function ProposalCards({
                   </button>
                 </Link>
 
-                {proposal.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT && (
+                {proposal.status ===
+                  ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT && (
                   <>
                     <button
                       onClick={() => handleApproveClick(proposal.id)}
