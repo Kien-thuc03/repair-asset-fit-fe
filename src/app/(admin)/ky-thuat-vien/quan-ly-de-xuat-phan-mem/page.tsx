@@ -6,8 +6,6 @@ import {
   Search, 
   Eye, 
   CheckCircle, 
-  XCircle, 
-  Clock, 
   Monitor,
   Calendar,
   User,
@@ -23,6 +21,7 @@ import { SoftwareProposal, SoftwareProposalStatus } from '@/types/software';
 import { useSoftwareProposalsByTechnician } from '@/hooks/useSoftwareProposals';
 import { useAuth } from '@/contexts/AuthContext';
 import { Pagination } from '@/components/common';
+import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from '@/lib/constants';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -37,35 +36,6 @@ const getUserName = (proposal: SoftwareProposal): string => {
 
 const getRoomName = (proposal: SoftwareProposal): string => {
   return proposal.room?.name || proposal.roomId || 'N/A';
-};
-
-// Config cho trạng thái đề xuất
-const softwareProposalStatusConfig = {
-  [SoftwareProposalStatus.CHỜ_DUYỆT]: {
-    label: 'Chờ duyệt',
-    color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    icon: Clock
-  },
-  [SoftwareProposalStatus.ĐÃ_DUYỆT]: {
-    label: 'Đã duyệt',
-    color: 'text-green-600 bg-green-50 border-green-200',
-    icon: CheckCircle
-  },
-  [SoftwareProposalStatus.ĐÃ_TỪ_CHỐI]: {
-    label: 'Đã từ chối',
-    color: 'text-red-600 bg-red-50 border-red-200',
-    icon: XCircle
-  },
-  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
-    label: 'Đang trang bị',
-    color: 'text-orange-600 bg-orange-50 border-orange-200',
-    icon: Wrench
-  },
-  [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
-    label: 'Đã trang bị',
-    color: 'text-blue-600 bg-blue-50 border-blue-200',
-    icon: Monitor
-  }
 };
 
 export default function SoftwareProposalsPage() {
@@ -166,7 +136,7 @@ export default function SoftwareProposalsPage() {
         'Lý do đề xuất': item.reason,
         'Người đề xuất': getUserName(item),
         'Phòng': getRoomName(item),
-        'Trạng thái': softwareProposalStatusConfig[item.status]?.label || item.status,
+        'Trạng thái': SOFTWARE_PROPOSAL_STATUS_CONFIG[item.status]?.label || item.status,
         'Ngày tạo': new Date(item.createdAt).toLocaleDateString('vi-VN'),
       }))
 
@@ -538,7 +508,8 @@ export default function SoftwareProposalsPage() {
               </tr>
             ) : (
               paginatedData.map((proposal) => {
-                const StatusIcon = softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
+                const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+                const StatusIcon = statusConfig?.icon || Monitor;
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
                   <td className="px-4 py-4 whitespace-nowrap">
@@ -572,9 +543,9 @@ export default function SoftwareProposalsPage() {
                     </div>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${softwareProposalStatusConfig[proposal.status].color}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusConfig.color}`}>
                       <StatusIcon className="h-3 w-3 mr-1" />
-                      {softwareProposalStatusConfig[proposal.status].label}
+                      {statusConfig.label}
                     </span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">

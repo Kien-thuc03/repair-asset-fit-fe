@@ -616,6 +616,7 @@ export default function DanhSachBaoLoiPage() {
                       </p>
                     </div>
                     <input
+                      title="Chọn báo lỗi này"
                       type="checkbox"
                       className="rounded border-gray-300 flex-shrink-0 mt-1"
                       checked={selectedRowKeys.includes(record.id)}

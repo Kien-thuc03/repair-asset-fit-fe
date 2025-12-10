@@ -7,16 +7,13 @@ import {
   Building,
   Calendar,
   FileText,
-  CheckCircle,
-  XCircle,
-  Clock,
   Package,
-  AlertCircle,
-  Wrench
+  AlertCircle
 } from 'lucide-react';
 import { Breadcrumb, Button, Spin } from 'antd';
 import { SoftwareProposalStatus, SoftwareProposal, SoftwareProposalItem } from '@/types/software';
 import { useSoftwareProposalDetail } from '@/hooks/useSoftwareProposals';
+import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from '@/lib/constants';
 
 // Helper functions
 const getUserName = (proposal: SoftwareProposal | null): string => {
@@ -27,35 +24,6 @@ const getUserName = (proposal: SoftwareProposal | null): string => {
 const getRoomName = (proposal: SoftwareProposal | null): string => {
   if (!proposal) return 'N/A';
   return proposal.room?.name || proposal.roomId || 'N/A';
-};
-
-// Config cho trạng thái đề xuất
-const softwareProposalStatusConfig = {
-  [SoftwareProposalStatus.CHỜ_DUYỆT]: {
-    label: 'Chờ duyệt',
-    color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    icon: Clock
-  },
-  [SoftwareProposalStatus.ĐÃ_DUYỆT]: {
-    label: 'Đã duyệt',
-    color: 'text-green-600 bg-green-50 border-green-200',
-    icon: CheckCircle
-  },
-  [SoftwareProposalStatus.ĐÃ_TỪ_CHỐI]: {
-    label: 'Đã từ chối',
-    color: 'text-red-600 bg-red-50 border-red-200',
-    icon: XCircle
-  },
-  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
-    label: 'Đang trang bị',
-    color: 'text-orange-600 bg-orange-50 border-orange-200',
-    icon: Wrench
-  },
-  [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
-    label: 'Đã trang bị',
-    color: 'text-blue-600 bg-blue-50 border-blue-200',
-    icon: Monitor
-  }
 };
 
 export default function QtvKhoaSoftwareProposalDetailPage() {
@@ -94,7 +62,8 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
     );
   }
 
-  const StatusIcon = softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
+  const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+  const StatusIcon = statusConfig?.icon || Monitor;
   const proposalItems = proposal.items || [];
 
   return (
@@ -151,9 +120,9 @@ export default function QtvKhoaSoftwareProposalDetailPage() {
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Thông tin cơ bản</h2>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${softwareProposalStatusConfig[proposal.status].color}`}>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${statusConfig.color}`}>
                 <StatusIcon className="h-4 w-4 mr-1" />
-                {softwareProposalStatusConfig[proposal.status].label}
+                {statusConfig.label}
               </span>
             </div>
             

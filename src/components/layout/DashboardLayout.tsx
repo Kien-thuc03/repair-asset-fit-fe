@@ -244,25 +244,8 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
       {
         name: "Duyệt tờ trình",
         href: "/qtv-khoa/duyet-to-trinh",
-        icon: FileText,
-        children: [
-          {
-            name: "Danh sách tờ trình",
-            href: "/qtv-khoa/duyet-to-trinh",
-            icon: FileText,
-          },
-        ],
+        icon: ClipboardList
       }
-      // {
-      //   name: "Thống kê báo cáo",
-      //   href: "/qtv-khoa/thong-ke-bao-cao",
-      //   icon: BarChart3,
-      // },
-      // {
-      //   name: "Giám sát hệ thống",
-      //   href: "/qtv-khoa/giam-sat-he-thong",
-      //   icon: Settings,
-      // },
     ],
   };
 

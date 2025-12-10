@@ -375,12 +375,12 @@ export default function DuyetToTrinhPage() {
               <Select.Option value={ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH}>
                 Khoa đã duyệt tờ trình
               </Select.Option>
-              <Select.Option value={ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH}>
+              {/* <Select.Option value={ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH}>
                 Ban giám hiệu đã duyệt tờ trình
               </Select.Option>
               <Select.Option value={ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH}>
                 Đã từ chối tờ trình
-              </Select.Option>
+              </Select.Option> */}
             </Select>
           </Col>
 
@@ -434,11 +434,6 @@ export default function DuyetToTrinhPage() {
 
       {/* Table - Desktop */}
       <div className="bg-white rounded-lg shadow hidden lg:block">
-        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-          <h2 className="text-base sm:text-lg font-medium text-gray-900">
-            Danh sách tờ trình ({totalItems})
-          </h2>
-        </div>
 
         <div className="flex flex-col min-h-[500px]">
           <div className="flex-1 overflow-auto">
