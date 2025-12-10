@@ -8,8 +8,11 @@ import {
   AlertCircle,
   Clock,
   ArrowRight,
+  Package,
 } from "lucide-react";
-import { RepairHistoryItem } from "@/types";
+import { RepairHistoryItem, RepairStatus, ErrorType } from "@/types";
+import { getStatusConfig } from "@/lib/constants/repairStatus";
+import { getErrorTypeLabel } from "@/lib/constants/errorTypes";
 
 interface TechnicianRepairHistoryTabProps {
   repairHistory: RepairHistoryItem[];
@@ -20,6 +23,23 @@ export default function TechnicianRepairHistoryTab({
   repairHistory,
   formatDate,
 }: TechnicianRepairHistoryTabProps) {
+  // Map nhãn tiếng Việt -> enum để tương thích dữ liệu cũ
+  const statusLabelToEnum: Record<string, RepairStatus> = {
+    "Chờ tiếp nhận": RepairStatus.CHỜ_TIẾP_NHẬN,
+    "Đã tiếp nhận": RepairStatus.ĐÃ_TIẾP_NHẬN,
+    "Đang xử lý": RepairStatus.ĐANG_XỬ_LÝ,
+    "Chờ thay thế": RepairStatus.CHỜ_THAY_THẾ,
+    "Đã hoàn thành": RepairStatus.ĐÃ_HOÀN_THÀNH,
+    "Đã hủy": RepairStatus.ĐÃ_HỦY,
+  };
+
+  const normalizeStatus = (status: string): RepairStatus | undefined => {
+    if (Object.values(RepairStatus).includes(status as RepairStatus)) {
+      return status as RepairStatus;
+    }
+    return statusLabelToEnum[status];
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Chờ tiếp nhận":
@@ -119,15 +139,23 @@ export default function TechnicianRepairHistoryTab({
                       </h5>
                       <p className="text-sm text-gray-600 flex items-center">
                         <AlertCircle className="w-4 h-4 mr-1" />
-                        {repair.errorType}
+                          {getErrorTypeLabel(repair.errorType as ErrorType)}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
+                      {(() => {
+                        const normalized = normalizeStatus(repair.status);
+                        const statusCfg = normalized ? getStatusConfig(normalized) : undefined;
+                        const badgeLabel = statusCfg?.label || repair.status;
+                        const badgeColor = statusCfg?.color || getStatusColor(repair.status);
+                        return (
                     <div
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(repair.status)}`}>
-                      {repair.status}
-                    </div>
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${badgeColor}`}>
+                          {badgeLabel}
+                        </div>
+                        );
+                      })()}
                     <div className="text-xs text-gray-500 mt-1 flex items-center">
                       <Calendar className="w-3 h-3 mr-1" />
                       {formatDate(repair.reportDate)}
@@ -166,6 +194,60 @@ export default function TechnicianRepairHistoryTab({
                       </div>
                     )}
 
+                    {repair.replacementItems && repair.replacementItems.length > 0 && (
+                      <div>
+                        <h6 className="font-medium text-gray-900 mb-2 flex items-center">
+                          <Package className="w-4 h-4 mr-2 text-blue-600" />
+                          Linh kiện trong đề xuất thay thế
+                        </h6>
+                        <div className="space-y-3">
+                          {repair.replacementItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className="border border-blue-100 bg-blue-50 p-3 rounded-lg">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1 space-y-1">
+                                  <p className="text-xs uppercase text-gray-500">
+                                    Linh kiện cũ
+                                  </p>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {item.oldComponentName || "Chưa rõ"}
+                                  </p>
+                                  {item.oldComponentSpecs && (
+                                    <p className="text-xs text-gray-600">
+                                      {item.oldComponentSpecs}
+                                    </p>
+                                  )}
+                                  <div className="flex items-center text-xs text-gray-500">
+                                    <ArrowRight className="w-3 h-3 mr-1" />
+                                    <span>Thay thế bằng</span>
+                                  </div>
+                                  <p className="text-sm font-semibold text-blue-700">
+                                    {item.newItemName}
+                                  </p>
+                                  {item.newItemSpecs && (
+                                    <p className="text-xs text-gray-600">
+                                      {item.newItemSpecs}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex flex-col items-end gap-1 text-xs text-gray-600">
+                                  {item.quantity && (
+                                    <span>Số lượng: {item.quantity}</span>
+                                  )}
+                                  {item.proposalStatus && (
+                                    <span className="px-2 py-1 rounded-full bg-white border border-blue-200 text-blue-700 text-[11px] font-medium">
+                                      {item.proposalStatus.replace(/_/g, " ")}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center space-x-2 text-gray-600">
                         <User className="w-4 h-4" />
@@ -184,7 +266,7 @@ export default function TechnicianRepairHistoryTab({
                       <Settings className="w-4 h-4 mr-2 text-blue-500" />
                       Các bước xử lý:
                     </h6>
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                    <div className="space-y-3 overflow-y-auto">
                       {repair.steps.map((step, stepIndex) => (
                         <div
                           key={step.id}
@@ -195,7 +277,7 @@ export default function TechnicianRepairHistoryTab({
                           )}
                           
                           {/* Step icon */}
-                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${getStepStatusColor(step.toStatus)}`}>
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${getStepStatusColor(step.toStatus || "")}`}>
                             {getActionIcon(step.action)}
                           </div>
                           
@@ -224,8 +306,8 @@ export default function TechnicianRepairHistoryTab({
                                     {step.fromStatus.replace(/_/g, ' ')}
                                   </span>
                                   <ArrowRight className="w-3 h-3 mx-1" />
-                                  <span className={`px-2 py-0.5 rounded text-xs ${getStepStatusColor(step.toStatus)}`}>
-                                    {step.toStatus.replace(/_/g, ' ')}
+                                  <span className={`px-2 py-0.5 rounded text-xs ${getStepStatusColor(step.toStatus || "")}`}>
+                                    {(step.toStatus || "").replace(/_/g, ' ')}
                                   </span>
                                 </span>
                               </div>

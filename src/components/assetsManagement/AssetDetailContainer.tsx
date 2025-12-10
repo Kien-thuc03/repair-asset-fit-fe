@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Asset, RepairHistoryItem } from "@/types";
+import { Asset, RepairHistoryItem, ReplacementHistoryItem } from "@/types";
 import { getComputerDetail } from "@/lib/api/computers";
 import { getRepairs, getRepairLogs } from "@/lib/api/repairs";
+import { getReplacementItemsByRepairRequest } from "@/lib/api/replacement-proposals";
 import type { ComputerDetail } from "@/types/computer";
 import TechnicianDeviceDetailHeader from "./AssetDetailHeader";
 import DeviceNotFound from "./AssetNotFound";
@@ -103,6 +104,25 @@ export default function TechnicianDeviceDetailContainer() {
         // Với mỗi repair request, fetch logs
         const historyWithLogs = await Promise.all(
           repairsResponse.data.map(async (repair) => {
+            let replacementItems: ReplacementHistoryItem[] = [];
+            try {
+              const items = await getReplacementItemsByRepairRequest(repair.id);
+              replacementItems = items.map((item) => ({
+                id: item.id,
+                oldComponentName: item.oldComponent?.name || item.oldComponent?.componentType,
+                oldComponentSpecs: item.oldComponent?.componentSpecs,
+                newItemName: item.newItemName,
+                newItemSpecs: item.newItemSpecs,
+                quantity: item.quantity,
+                proposalStatus: item.proposalStatus,
+              }));
+            } catch (replacementError) {
+              console.warn(
+                `⚠️ Could not fetch replacement items for repair ${repair.id}:`,
+                replacementError
+              );
+            }
+
             try {
               const logsResponse = await getRepairLogs(repair.id);
               
@@ -129,6 +149,7 @@ export default function TechnicianDeviceDetailContainer() {
                   actorName: log.actor.fullName,
                   actorEmail: log.actor.email,
                 })),
+                replacementItems,
               } as RepairHistoryItem;
             } catch (logError) {
               console.warn(`⚠️ Could not fetch logs for repair ${repair.id}:`, logError);
@@ -146,6 +167,7 @@ export default function TechnicianDeviceDetailContainer() {
                 technicianName: repair.assignedTechnicianName || "Chưa phân công",
                 reporterName: repair.reporterName || "Không xác định",
                 steps: [],
+                replacementItems,
               } as RepairHistoryItem;
             }
           })
