@@ -1,12 +1,14 @@
 "use client"
 
-import { useState } from 'react'
-import { Card, Alert, Button, Form, Input, message, Tag } from 'antd'
+import { useState, useEffect } from 'react'
+import { Card, Alert, Button, Form, Input, message, Tag, Select } from 'antd'
 import { Package, ArrowRight, CheckCircle2, AlertCircle, Info, RefreshCw, CheckCircle } from 'lucide-react'
 import { ReplacementItem } from '@/lib/api/replacement-proposals'
-import { replaceComponent, getComponentById } from '@/lib/api/components'
+import { replaceComponent, getComponentById, getStockComponents, StockComponentDto } from '@/lib/api/components'
 import { completeRepair } from '@/lib/api/repairs'
 import { RepairStatus } from '@/types'
+
+const { Option } = Select
 
 interface ComponentReplacementSectionProps {
 	repairRequestId: string
@@ -22,6 +24,36 @@ export default function ComponentReplacementSection({
 	const [form] = Form.useForm()
 	const [replacingItemId, setReplacingItemId] = useState<string | null>(null)
 	const [replaceFormVisible, setReplaceFormVisible] = useState<Record<string, boolean>>({})
+	// State cho linh kiện trong kho và mapping thay thế
+	const [stockComponents, setStockComponents] = useState<StockComponentDto[]>([])
+	const [replacementMapping, setReplacementMapping] = useState<Record<string, string>>({}) // oldComponentId -> newComponentId
+	const [availableReplacements, setAvailableReplacements] = useState<Record<string, StockComponentDto[]>>({}) // componentType -> StockComponentDto[]
+
+	// Load stock components on mount
+	useEffect(() => {
+		const fetchStockComponents = async () => {
+			try {
+				const stock = await getStockComponents()
+				setStockComponents(stock)
+				
+				// Group by componentType
+				const grouped: Record<string, StockComponentDto[]> = {}
+				stock.forEach(comp => {
+					const type = comp.componentType
+					if (!grouped[type]) {
+						grouped[type] = []
+					}
+					grouped[type].push(comp)
+				})
+				setAvailableReplacements(grouped)
+			} catch (error) {
+				console.error('Error fetching stock components:', error)
+				// Không hiển thị lỗi vì đây là tính năng bổ sung
+			}
+		}
+		
+		fetchStockComponents()
+	}, [])
 
 	// Lọc các items có thể thay thế (có oldComponentId và chưa được thay thế)
 	const replaceableItems = items.filter(
@@ -42,12 +74,32 @@ export default function ComponentReplacementSection({
 		try {
 			setReplacingItemId(item.id)
 			
-			// Lấy giá trị từ form
+			// Lấy giá trị từ form hoặc từ replacement mapping (nếu chọn từ kho)
 			const formValues = form.getFieldsValue()
 			const itemKey = `item_${item.id}`
-			const newItemName = formValues[`${itemKey}_name`] || item.newItemName
-			const newItemSpecs = formValues[`${itemKey}_specs`] || item.newItemSpecs || ''
-			const serialNumber = formValues[`${itemKey}_serial`] || undefined
+			
+			// Kiểm tra xem có chọn linh kiện từ kho không
+			const selectedStockComponentId = replacementMapping[item.oldComponentId!]
+			let newItemName: string
+			let newItemSpecs: string
+			let serialNumber: string | undefined
+			
+			if (selectedStockComponentId) {
+				// Nếu có chọn từ kho, lấy thông tin từ stock component
+				const stockComponent = stockComponents.find(c => c.id === selectedStockComponentId)
+				if (!stockComponent) {
+					throw new Error('Không tìm thấy thông tin linh kiện đã chọn từ kho')
+				}
+				newItemName = stockComponent.name
+				newItemSpecs = stockComponent.componentSpecs || ''
+				serialNumber = stockComponent.serialNumber
+			} else {
+				// Nếu không chọn từ kho, lấy từ form (nhập thủ công)
+				newItemName = formValues[`${itemKey}_name`] || item.newItemName
+				newItemSpecs = formValues[`${itemKey}_specs`] || item.newItemSpecs || ''
+				serialNumber = formValues[`${itemKey}_serial`] || undefined
+			}
+			
 			const notes = formValues[`${itemKey}_notes`] || `Thay thế linh kiện cho YCSC ${item.requestCode || repairRequestId}`
 
 			// Lấy computerId từ oldComponent
@@ -76,8 +128,17 @@ export default function ComponentReplacementSection({
 				newItemSpecs,
 				serialNumber,
 				notes,
-				newlyPurchasedComponentId: item.newlyPurchasedComponentId,
+				newlyPurchasedComponentId: selectedStockComponentId || item.newlyPurchasedComponentId,
 			})
+			
+			// Xóa mapping sau khi thay thế thành công
+			if (selectedStockComponentId) {
+				setReplacementMapping(prev => {
+					const newMapping = { ...prev }
+					delete newMapping[item.oldComponentId!]
+					return newMapping
+				})
+			}
 
 			message.success(`Đã thay thế linh kiện "${newItemName}" thành công!`)
 			
@@ -316,6 +377,64 @@ export default function ComponentReplacementSection({
 												layout="vertical"
 												className="space-y-3"
 											>
+												{/* Chọn linh kiện từ kho */}
+												{item.oldComponent && (
+													<Form.Item
+														label={<span className="font-medium text-sm">Chọn linh kiện thay thế từ kho (tùy chọn)</span>}
+														className="mb-0"
+													>
+														<Select
+															placeholder="Chọn linh kiện từ kho hoặc để trống để nhập thủ công"
+															value={replacementMapping[item.oldComponentId!]}
+															onChange={(value) => {
+																setReplacementMapping(prev => ({
+																	...prev,
+																	[item.oldComponentId!]: value
+																}))
+																
+																// Tự động điền thông tin khi chọn từ kho
+																if (value) {
+																	const stockComp = stockComponents.find(c => c.id === value)
+																	if (stockComp) {
+																		form.setFieldsValue({
+																			[`item_${item.id}_name`]: stockComp.name,
+																			[`item_${item.id}_specs`]: stockComp.componentSpecs || '',
+																			[`item_${item.id}_serial`]: stockComp.serialNumber || '',
+																		})
+																	}
+																} else {
+																	// Xóa mapping và reset form về giá trị mặc định
+																	form.setFieldsValue({
+																		[`item_${item.id}_name`]: item.newItemName,
+																		[`item_${item.id}_specs`]: item.newItemSpecs || '',
+																		[`item_${item.id}_serial`]: '',
+																	})
+																}
+															}}
+															allowClear
+															showSearch
+															filterOption={(input, option) => {
+																const label = typeof option?.label === 'string' 
+																	? option.label 
+																	: String(option?.children || '')
+																return label.toLowerCase().includes(input.toLowerCase())
+															}}
+														>
+															{(availableReplacements[item.oldComponent.componentType] || []).map(stockComp => (
+																<Option key={stockComp.id} value={stockComp.id}>
+																	{stockComp.name} {stockComp.componentSpecs && `- ${stockComp.componentSpecs}`}
+																	{stockComp.serialNumber && ` (SN: ${stockComp.serialNumber})`}
+																</Option>
+															))}
+														</Select>
+														<div className="text-xs text-gray-500 mt-1">
+															{(availableReplacements[item.oldComponent.componentType] || []).length > 0 
+																? `Có ${(availableReplacements[item.oldComponent.componentType] || []).length} linh kiện cùng loại trong kho`
+																: 'Không có linh kiện cùng loại trong kho. Vui lòng nhập thủ công.'}
+														</div>
+													</Form.Item>
+												)}
+
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 													<Form.Item
 														label={<span className="font-medium text-sm">Tên linh kiện mới <span className="text-red-500">*</span></span>}
@@ -327,6 +446,7 @@ export default function ComponentReplacementSection({
 															placeholder="Nhập tên linh kiện mới" 
 															size="middle"
 															prefix={<Package className="w-4 h-4 text-gray-400" />}
+															disabled={!!replacementMapping[item.oldComponentId!]}
 														/>
 													</Form.Item>
 
@@ -338,6 +458,7 @@ export default function ComponentReplacementSection({
 														<Input 
 															placeholder="Nhập số serial nếu có" 
 															size="middle"
+															disabled={!!replacementMapping[item.oldComponentId!]}
 														/>
 													</Form.Item>
 												</div>
@@ -352,6 +473,7 @@ export default function ComponentReplacementSection({
 														rows={2} 
 														placeholder="Nhập thông số kỹ thuật linh kiện mới" 
 														className="resize-none"
+														disabled={!!replacementMapping[item.oldComponentId!]}
 													/>
 												</Form.Item>
 
