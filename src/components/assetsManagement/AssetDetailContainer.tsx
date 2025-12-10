@@ -9,7 +9,6 @@ import TechnicianDeviceDetailHeader from "./AssetDetailHeader";
 import DeviceNotFound from "./AssetNotFound";
 import TechnicianDeviceTabNavigation from "./AssetTabNavigation";
 import TechnicianDeviceBasicInfo from "./AssetBasicInfo";
-import TechnicianDeviceWarrantyInfo from "./AssetWarrantyInfo";
 import TechnicianDeviceSpecifications from "./AssetSpecifications";
 import AssetSoftwareInfo from "./AssetSoftwareInfo";
 import TechnicianRepairHistoryTab from "./RepairHistoryTab";
@@ -19,11 +18,6 @@ import TechnicianRepairHistoryTab from "./RepairHistoryTab";
  * để tương thích với các sub-components hiện có
  */
 const transformComputerToAsset = (computer: ComputerDetail): Asset => {
-  // Calculate warranty expiry (2 years from purchase date)
-  const warrantyExpiry = computer.asset.entrydate 
-    ? new Date(new Date(computer.asset.entrydate).setFullYear(new Date(computer.asset.entrydate).getFullYear() + 2)).toISOString().split('T')[0]
-    : undefined;
-
   return {
     id: computer.asset.id,
     ktCode: computer.asset.ktCode,
@@ -35,7 +29,7 @@ const transformComputerToAsset = (computer: ComputerDetail): Asset => {
     roomName: computer.room?.name || "Không xác định",
     status: computer.asset.status, // API trả về string từ database enum
     purchaseDate: computer.asset.entrydate,
-    warrantyExpiry,
+    origin: computer.asset.origin,
     qrCode: `QR_${computer.asset.ktCode}`,
     building: computer.room?.building,
     floor: computer.room?.floor,
@@ -45,6 +39,10 @@ const transformComputerToAsset = (computer: ComputerDetail): Asset => {
     components: computer.components,
     software: computer.software,
     repairSummary: computer.repairSummary,
+    // Bổ sung các trường từ room và computer
+    roomNumber: computer.room?.roomNumber,
+    roomCode: computer.room?.roomCode,
+    notes: computer.notes,
   };
 };
 
@@ -94,7 +92,6 @@ export default function TechnicianDeviceDetailContainer() {
     const fetchRepairHistory = async () => {
       try {
         setLoadingRepairHistory(true);
-        console.log("🔍 Fetching repair history for asset:", asset.id);
 
         // Lấy tất cả repair requests cho asset này
         const repairsResponse = await getRepairs({
@@ -102,8 +99,6 @@ export default function TechnicianDeviceDetailContainer() {
           sortBy: "createdAt",
           sortOrder: "DESC",
         });
-
-        console.log(`✅ Found ${repairsResponse.data.length} repair requests`);
 
         // Với mỗi repair request, fetch logs
         const historyWithLogs = await Promise.all(
@@ -157,10 +152,8 @@ export default function TechnicianDeviceDetailContainer() {
         );
 
         setRepairHistory(historyWithLogs);
-        console.log(`✅ Loaded ${historyWithLogs.length} repair history items with logs`);
       } catch (err) {
-        console.error("❌ Error fetching repair history:", err);
-        // Don't set error state, just show empty history
+        console.error("Error fetching repair history:", err);
         setRepairHistory([]);
       } finally {
         setLoadingRepairHistory(false);
@@ -172,21 +165,6 @@ export default function TechnicianDeviceDetailContainer() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN");
-  };
-
-  const getWarrantyStatus = (warrantyExpiry: string) => {
-    const today = new Date();
-    const expiry = new Date(warrantyExpiry);
-    const diffTime = expiry.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) {
-      return { label: "Hết hạn", color: "text-red-600" };
-    } else if (diffDays <= 30) {
-      return { label: "Sắp hết hạn", color: "text-yellow-600" };
-    } else {
-      return { label: "Còn hiệu lực", color: "text-green-600" };
-    }
   };
 
   const handleGoBack = () => {
@@ -214,15 +192,10 @@ export default function TechnicianDeviceDetailContainer() {
     return <DeviceNotFound onGoBack={handleGoBack} message={error} />;
   }
 
-  const warrantyStatus = asset.warrantyExpiry 
-    ? getWarrantyStatus(asset.warrantyExpiry) 
-    : { label: "Không xác định", color: "text-gray-600" };
-
   return (
     <div className="space-y-6">
       <TechnicianDeviceDetailHeader
         asset={asset}
-        warrantyStatus={warrantyStatus}
         onGoBack={handleGoBack}
       />
 
@@ -230,7 +203,6 @@ export default function TechnicianDeviceDetailContainer() {
       <div className="bg-white shadow rounded-lg">
         <TechnicianDeviceTabNavigation
           showRepairHistory={showRepairHistory}
-          repairHistoryCount={repairHistory.length}
           onTabChange={handleTabChange}
         />
 
@@ -238,13 +210,9 @@ export default function TechnicianDeviceDetailContainer() {
           {!showRepairHistory ? (
             // Device Information Tab
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <TechnicianDeviceBasicInfo asset={asset} />
-
-              <TechnicianDeviceWarrantyInfo
-                asset={asset}
-                warrantyStatus={warrantyStatus}
-                formatDate={formatDate}
-              />
+              <div className="col-span-2">
+              <TechnicianDeviceBasicInfo asset={asset}/>
+              </div>
 
               <TechnicianDeviceSpecifications asset={asset} />
 

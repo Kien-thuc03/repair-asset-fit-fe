@@ -29,10 +29,11 @@ export enum ComponentType {
  * Component Status enum
  */
 export enum ComponentStatus {
-  INSTALLED = "INSTALLED",
-  REMOVED = "REMOVED",
-  FAULTY = "FAULTY",
-  MAINTENANCE = "MAINTENANCE",
+  INSTALLED = 'INSTALLED', // Đã lắp đặt
+  FAULTY = 'FAULTY', // Có lỗi
+  PENDING_REPLACEMENT = 'PENDING_REPLACEMENT', // Chờ thay thế
+  REMOVED = 'REMOVED', // Đã bị xóa
+  IN_STOCK = 'IN_STOCK', // Đang trong kho
 }
 
 /**
@@ -405,6 +406,112 @@ export const getComputerIdFromComponent = async (
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
       err.response?.data?.message || "Lấy thông tin máy tính thất bại."
+    );
+  }
+};
+
+/**
+ * Interface cho request thêm linh kiện vào kho
+ */
+export interface CreateComponentRequest {
+  computerAssetId?: string | null; // Optional - null nếu chỉ nhập kho, chưa lắp đặt
+  componentType: ComponentType | string;
+  name: string;
+  componentSpecs?: string;
+  serialNumber?: string;
+  notes?: string;
+}
+
+/**
+ * Thêm linh kiện mới vào kho
+ * Linh kiện sẽ được tạo với status IN_STOCK
+ * 
+ * @param data Dữ liệu tạo linh kiện mới
+ * @returns Promise với thông tin component vừa được tạo
+ * 
+ * @example
+ * ```typescript
+ * const component = await addComponentToStock({
+ *   computerAssetId: 'uuid-computer-id',
+ *   componentType: ComponentType.RAM,
+ *   name: 'Kingston Fury Beast DDR5 16GB',
+ *   componentSpecs: '16GB 5200MHz',
+ *   serialNumber: 'SN123456789ABC',
+ *   notes: 'Linh kiện mới nhập kho'
+ * });
+ * ```
+ */
+export const addComponentToStock = async (
+  data: CreateComponentRequest
+): Promise<ComponentResponseDto> => {
+  try {
+    const response = await api.post<ApiResponse<ComponentResponseDto>>(
+      `/computer/component`,
+      data
+    );
+
+    return response.data.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Thêm linh kiện vào kho thất bại."
+    );
+  }
+};
+
+/**
+ * Interface cho stock component với thông tin đầy đủ
+ */
+export interface StockComponentDto {
+  id: string;
+  componentType: ComponentType | string;
+  name: string;
+  componentSpecs?: string;
+  serialNumber?: string;
+  status: string;
+  installedAt: string;
+  notes?: string;
+  computer?: {
+    id: string;
+    machineLabel: string;
+    asset?: {
+      id: string;
+      name: string;
+      ktCode: string;
+      fixedCode: string;
+    };
+    room?: {
+      id: string;
+      name: string;
+      roomCode: string;
+      building: string;
+      floor: string;
+    };
+  };
+}
+
+/**
+ * Lấy danh sách tất cả linh kiện có trạng thái IN_STOCK (trong kho)
+ * 
+ * @returns Promise với danh sách linh kiện trong kho
+ * 
+ * @example
+ * ```typescript
+ * const stockComponents = await getStockComponents();
+ * console.log(`Có ${stockComponents.length} linh kiện trong kho`);
+ * ```
+ */
+export const getStockComponents = async (): Promise<StockComponentDto[]> => {
+  try {
+    const response = await api.get<ApiResponse<StockComponentDto[]>>(
+      `/computer/components/stock`
+    );
+
+    return response.data.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy danh sách linh kiện trong kho thất bại."
     );
   }
 };

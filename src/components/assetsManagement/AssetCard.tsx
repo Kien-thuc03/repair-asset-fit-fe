@@ -1,98 +1,15 @@
 "use client";
-import { Monitor, Eye, Wrench, Calendar } from "lucide-react";
-import { Asset, AssetStatus, DeviceAsset } from "@/types";
+import { Monitor, Eye, Wrench } from "lucide-react";
+import { Asset, DeviceAsset } from "@/types";
+import { getAssetStatusDisplay } from "@/lib/constants/assetStatus";
+
 interface DeviceCardProps {
   asset: Asset | DeviceAsset;
   onViewDetail: (assetId: string) => void;
 }
 
-export const assetStatusConfig = {
-  [AssetStatus.WAITING_HANDOVER]: {
-    label: "Chờ bàn giao",
-    color: "blue"
-  },
-  [AssetStatus.WAITING_RECEIVE]: {
-    label: "Chờ tiếp nhận",
-    color: "orange"
-  },
-  [AssetStatus.IN_USE]: {
-    label: "Đang sử dụng",
-    color: "green"
-  },
-  [AssetStatus.LOST]: {
-    label: "Đã mất",
-    color: "gray"
-  },
-  [AssetStatus.PROPOSED_LIQUIDATION]: {
-    label: "Đề xuất thanh lý",
-    color: "purple"
-  },
-  [AssetStatus.LIQUIDATED]: {
-    label: "Đã thanh lý",
-    color: "black"
-  },
-  [AssetStatus.DAMAGED]: {
-    label: "Hư hỏng",
-    color: "red"
-  }
-};
-
 export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
-  const getStatusConfig = (status: string) => {
-    const config = assetStatusConfig[status as keyof typeof assetStatusConfig];
-    if (!config) {
-      return {
-        label: status,
-        color: "bg-gray-100 text-gray-800 border-gray-200"
-      };
-    }
-    
-    const colorMap: { [key: string]: string } = {
-      green: "bg-green-100 text-green-800 border-green-200",
-      blue: "bg-blue-100 text-blue-800 border-blue-200",
-      orange: "bg-orange-100 text-orange-800 border-orange-200",
-      red: "bg-red-100 text-red-800 border-red-200",
-      gray: "bg-gray-100 text-gray-800 border-gray-200",
-      purple: "bg-purple-100 text-purple-800 border-purple-200",
-      black: "bg-gray-100 text-gray-800 border-gray-200"
-    };
-
-    return {
-      label: config.label,
-      color: colorMap[config.color] || "bg-gray-100 text-gray-800 border-gray-200"
-    };
-  };
-
-  const getWarrantyStatus = (warrantyExpiry?: string) => {
-    if (!warrantyExpiry) {
-      return { status: "unknown", label: "Không có thông tin", color: "text-gray-600" };
-    }
-
-    const today = new Date();
-    const expiry = new Date(warrantyExpiry);
-    const daysLeft = Math.ceil(
-      (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (daysLeft < 0) {
-      return { status: "expired", label: "Hết hạn", color: "text-red-600" };
-    } else if (daysLeft < 30) {
-      return {
-        status: "expiring",
-        label: `Còn ${daysLeft} ngày`,
-        color: "text-orange-600",
-      };
-    } else {
-      return {
-        status: "valid",
-        label: `Còn ${Math.ceil(daysLeft / 30)} tháng`,
-        color: "text-green-600",
-      };
-    }
-  };
-
-  const statusConfig = getStatusConfig(asset.status);
-  const warrantyStatus = getWarrantyStatus(asset.warrantyExpiry);
+  const statusConfig = getAssetStatusDisplay(asset.status);
 
   return (
     <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow border border-gray-200">
@@ -112,7 +29,7 @@ export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
             </div>
           </div>
           <div
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${statusConfig.color}`}>
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${statusConfig.badgeClass}`}>
             <span className="truncate">
               {statusConfig.label}
             </span>
@@ -122,7 +39,6 @@ export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
         <div className="space-y-3">
           <div className="flex justify-between text-sm">
             <span className="text-gray-500 flex items-center">
-              <Wrench className="w-4 h-4 mr-1" />
               Thông số kĩ thuật:
             </span>
             <span className="text-gray-900 text-right max-w-32 truncate" title={'specs' in asset ? asset.specs : 'N/A'}>
@@ -135,11 +51,10 @@ export default function DeviceCard({ asset, onViewDetail }: DeviceCardProps) {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500 flex items-center">
-              <Calendar className="w-4 h-4 mr-1" />
-              Bảo hành:
+              Số linh kiện:
             </span>
-            <span className={`font-medium ${warrantyStatus.color}`}>
-              {warrantyStatus.label}
+            <span className="text-gray-900 font-medium">
+              {asset.componentCount}
             </span>
           </div>
         </div>

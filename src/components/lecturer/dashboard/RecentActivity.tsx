@@ -111,7 +111,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ repairRequests }) => {
 
         <div className="mt-4 pt-4 border-t border-gray-200">
           <Link
-            href="/giang-vien/theo-doi-tien-do"
+            href="/giang-vien/danh-sach-yeu-cau-sua-chua"
             className="text-sm text-blue-600 hover:text-blue-500 font-medium">
             Xem tất cả hoạt động →
           </Link>

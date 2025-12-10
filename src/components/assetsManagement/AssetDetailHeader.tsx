@@ -3,20 +3,15 @@ import { Monitor, Wrench } from "lucide-react";
 import { Breadcrumb } from "antd";
 import { usePathname } from "next/navigation";
 import { Asset } from "@/types";
-import { AssetStatus, getAssetStatusLabel } from "@/types/computer";
+import { getAssetStatusDisplay } from "@/lib/constants/assetStatus";
 
 interface TechnicianDeviceDetailHeaderProps {
   asset: Asset;
-  warrantyStatus: {
-    label: string;
-    color: string;
-  };
   onGoBack?: () => void; // Make optional since we're not using it in this version
 }
 
 export default function TechnicianDeviceDetailHeader({
   asset,
-  warrantyStatus,
 }: TechnicianDeviceDetailHeaderProps) {
   const pathname = usePathname();
 
@@ -28,21 +23,7 @@ export default function TechnicianDeviceDetailHeader({
   };
 
   const rolePath = getRoleFromPath();
-  const statusColorMap: Record<string, string> = {
-    [AssetStatus.IN_USE]: "bg-green-100 text-green-800 border-green-200",
-    [AssetStatus.WAITING_HANDOVER]: "bg-blue-100 text-blue-800 border-blue-200",
-    [AssetStatus.WAITING_RECEIVE]: "bg-blue-100 text-blue-800 border-blue-200",
-    [AssetStatus.DAMAGED]: "bg-orange-100 text-orange-800 border-orange-200",
-    [AssetStatus.LOST]: "bg-red-100 text-red-800 border-red-200",
-    [AssetStatus.PROPOSED_LIQUIDATION]: "bg-purple-100 text-purple-800 border-purple-200",
-    [AssetStatus.LIQUIDATED]: "bg-gray-100 text-gray-800 border-gray-200",
-    [AssetStatus.WAITING_ALLOCATION]: "bg-blue-100 text-blue-800 border-blue-200",
-  };
-
-  const statusConfig = {
-    label: getAssetStatusLabel(asset.status as AssetStatus),
-    color: statusColorMap[asset.status] || "bg-gray-100 text-gray-800 border-gray-200",
-  };
+  const statusConfig = getAssetStatusDisplay(asset.status);
 
   return (
     <>
@@ -99,13 +80,8 @@ export default function TechnicianDeviceDetailHeader({
           <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
             {/* Status badge */}
             <div
-              className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium border ${statusConfig.color}`}>
+              className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium border ${statusConfig.badgeClass}`}>
               {statusConfig.label}
-            </div>
-            {/* Warranty status */}
-            <div
-              className={`text-sm font-medium ${warrantyStatus.color} flex items-center`}>
-              Bảo hành: {warrantyStatus.label}
             </div>
           </div>
         </div>

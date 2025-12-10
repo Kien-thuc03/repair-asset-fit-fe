@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from '@/contexts/AuthContext'
-import { StatsCards, RecentRequests, Announcements, QuickLinks } from '@/components/technician/dashboardKTV'
+import { StatsCards, RecentRequests, QuickLinks } from '@/components/technician/dashboardKTV'
 import { useRepairDashboardData } from '@/hooks/useRepairDashboardData'
 
 export default function KyThuatVienDashboard() {
@@ -24,11 +24,8 @@ export default function KyThuatVienDashboard() {
 			/>
 
 			<div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-				<div className="lg:col-span-2">
+				<div className="lg:col-span-3">
 					<RecentRequests items={recentRequests} loading={loading} error={error} />
-				</div>
-				<div className="lg:col-span-1">
-					<Announcements />
 				</div>
 			</div>
 

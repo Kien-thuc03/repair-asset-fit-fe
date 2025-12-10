@@ -1,5 +1,4 @@
 // Dashboard components
-export * from './dashboardKTV/Announcements';
 export * from './dashboardKTV/FrequentIssuesCard';
 export * from './dashboardKTV/QuickLinks';
 export * from './dashboardKTV/RecentRequests';

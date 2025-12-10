@@ -88,6 +88,7 @@ export default function GhiNhanXuLyLoiPage() {
   const [loadingBuildings, setLoadingBuildings] = useState(true);
   const [loadingComputers, setLoadingComputers] = useState(false);
   const [assignedFloorsLoaded, setAssignedFloorsLoaded] = useState(false);
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
 
   // Extract unique buildings - CHỈ lấy từ assignedFloors sau khi đã load xong
   // Không sử dụng fallback từ rooms để tránh hiển thị tầng không được phân công
@@ -161,6 +162,14 @@ export default function GhiNhanXuLyLoiPage() {
 
     fetchInitialData();
   }, [userDetails?.id]);
+
+  useEffect(() => {
+    const urls = formData.mediaFiles.map((file) => URL.createObjectURL(file));
+    setMediaPreviews(urls);
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [formData.mediaFiles]);
 
   // Detect mobile device
   useEffect(() => {
@@ -1010,7 +1019,7 @@ export default function GhiNhanXuLyLoiPage() {
                     {formData.mediaFiles.map((file, index) => (
                       <div key={index} className="relative">
                         <Image
-                          src={URL.createObjectURL(file)}
+                          src={mediaPreviews[index]}
                           alt={`Preview ${index + 1}`}
                           width={150}
                           height={96}

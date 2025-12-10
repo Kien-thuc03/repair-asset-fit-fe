@@ -14,7 +14,12 @@ interface Props {
 	assetId?: string // Asset ID để lấy danh sách linh kiện
 	errorTypeName?: string // Tên loại lỗi để xác định category
 	onCreateReplacement: () => void // Callback khi cần tạo đề xuất thay thế (không cần parts nữa)
-	onStatusUpdate?: (newStatus: RepairStatus, notes: string, componentIds?: string[]) => void
+	onStatusUpdate?: (
+		newStatus: RepairStatus,
+		notes: string,
+		componentIds?: string[],
+		options?: { showSuccessModal?: boolean }
+	) => void
 }
 
 export default function ActionPanel({ initStatus, assetId, errorTypeName, onCreateReplacement, onStatusUpdate }: Props) {
@@ -134,7 +139,9 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 		// Gọi callback để cập nhật trạng thái với componentIds
 		if (onStatusUpdate) {
 			try {
-				await onStatusUpdate(newStatus, values.notes || '', componentIds)
+				await onStatusUpdate(newStatus, values.notes || '', componentIds, {
+					showSuccessModal: true, // Chỉ hiển thị modal khi nhấn nút cập nhật kết quả
+				})
 				// Nếu là replacement và cập nhật thành công, chuyển đến trang tạo đề xuất
 				if (values.inspectionResult === 'replacement') {
 					onCreateReplacement()
@@ -175,7 +182,9 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 							onClick={() => {
 								setStatus(RepairStatus.ĐANG_XỬ_LÝ)
 								if (onStatusUpdate) {
-									onStatusUpdate(RepairStatus.ĐANG_XỬ_LÝ, 'Bắt đầu kiểm tra và xử lý')
+									onStatusUpdate(RepairStatus.ĐANG_XỬ_LÝ, 'Bắt đầu kiểm tra và xử lý', undefined, {
+										showSuccessModal: false, // Không bật modal cho hành động bắt đầu kiểm tra
+									})
 								}
 							}}
 						>
