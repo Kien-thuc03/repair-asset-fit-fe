@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { UserRole, RoleInfo } from "@/types/repair";
 import { IRole } from "@/types/user";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,7 +35,6 @@ const RoleIcons: Record<
   [UserRole.TO_TRUONG_KY_THUAT]: ShieldCheck,
   [UserRole.PHONG_QUAN_TRI]: CheckCircle2,
   [UserRole.QTV_KHOA]: ShieldCheck,
-  [UserRole.BAN_GIAM_HIEU]: ShieldCheck,
 };
 
 export function RoleSelectionModal({
@@ -46,6 +45,12 @@ export function RoleSelectionModal({
   const [selectedRole, setSelectedRole] = useState<IRole | null>(null);
   const [isAutoSelectEnabled, setIsAutoSelectEnabled] = useState(true);
   const [countdown, setCountdown] = useState(10);
+
+  // Chỉ giữ lại các vai trò còn được cấu hình trong RoleInfo (loại bỏ vai trò Ban Giám hiệu)
+  const rolesToShow = useMemo(
+    () => user?.roles.filter((role) => Boolean(getRoleInfo(role.code))) ?? [],
+    [user?.roles]
+  );
 
   const handleContinue = () => {
     if (selectedRole) {
@@ -60,22 +65,22 @@ export function RoleSelectionModal({
 
   // Khởi tạo selectedRole với vai trò hiện tại hoặc vai trò đầu tiên trong danh sách
   useEffect(() => {
-    if (isOpen && user && user.roles && user.roles.length > 0) {
-      console.log("RoleModal - User roles:", user.roles);
-      console.log("RoleModal - Active role:", user.activeRole);
+    if (isOpen && rolesToShow.length > 0) {
+      console.log("RoleModal - User roles:", rolesToShow);
+      console.log("RoleModal - Active role:", user?.activeRole);
 
       // Đặt vai trò đang hoạt động làm mặc định nếu có
       if (
-        user.activeRole &&
-        user.roles.some((role) => role.id === user.activeRole?.id)
+        user?.activeRole &&
+        rolesToShow.some((role) => role.id === user.activeRole?.id)
       ) {
         setSelectedRole(user.activeRole);
       } else {
         // Nếu không, đặt vai trò đầu tiên làm mặc định
-        setSelectedRole(user.roles[0]);
+        setSelectedRole(rolesToShow[0]);
       }
     }
-  }, [isOpen, user]);
+  }, [isOpen, rolesToShow, user?.activeRole]);
 
   // Thêm một timeout để tự động chọn vai trò sau 10 giây nếu người dùng không chọn
   useEffect(() => {
@@ -113,7 +118,7 @@ export function RoleSelectionModal({
     }
   }, [isOpen, isAutoSelectEnabled, selectedRole, switchRole, onClose]);
 
-  if (!isOpen || !user || !user.roles || user.roles.length <= 1) return null;
+  if (!isOpen || !user || rolesToShow.length <= 1) return null;
 
   const handleRoleSelection = (role: IRole) => {
     setSelectedRole(role);
@@ -141,7 +146,7 @@ export function RoleSelectionModal({
           {/* Role List */}
           <div className="p-6">
             <div className="space-y-3">
-              {user.roles.map((role) => {
+              {rolesToShow.map((role) => {
                 const RoleIcon =
                   (role.code && RoleIcons[role.code as UserRole]) || Users;
 

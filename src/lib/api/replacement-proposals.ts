@@ -84,6 +84,33 @@ export interface ReplacementProposal {
 }
 
 /**
+ * Từ chối đề xuất thay thế (rollback linh kiện)
+ */
+export const rejectReplacementProposal = async (
+  id: string,
+  reason?: string
+): Promise<ReplacementProposal> => {
+  try {
+    console.log("🌐 API Call: PATCH /api/v1/replacement-proposals/:id/reject", {
+      id,
+      reason,
+    });
+    const response = await api.patch<ReplacementProposal>(
+      `/api/v1/replacement-proposals/${id}/reject`,
+      { reason }
+    );
+    console.log("✅ API Response (reject):", response.data);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    console.error("❌ Reject replacement proposal error:", error);
+    throw new Error(
+      err.response?.data?.message || "Từ chối đề xuất thay thế thất bại."
+    );
+  }
+};
+
+/**
  * Interface cho query parameters
  */
 export interface GetReplacementProposalsQueryParams {
@@ -344,11 +371,13 @@ export const getReplacementItemsByRepairRequest = async (
   repairRequestId: string
 ): Promise<ReplacementItem[]> => {
   try {
-    console.log(`🌐 API Call: GET /api/v1/replacement-proposals/by-repair-request/${repairRequestId}`);
+    console.log(
+      `🌐 API Call: GET /api/v1/replacement-proposals/by-repair-request/${repairRequestId}`
+    );
     // Lấy tất cả proposals có liên quan đến repair request này
     const proposals = await getReplacementProposals();
     const allItems: ReplacementItem[] = [];
-    
+
     // Lọc các proposals có repair request này
     for (const proposal of proposals.data) {
       const hasRepairRequest = proposal.repairRequests?.some(rr => rr.id === repairRequestId);
@@ -368,13 +397,14 @@ export const getReplacementItemsByRepairRequest = async (
         }
       }
     }
-    
+
     return allItems;
   } catch (error: unknown) {
     console.error("❌ Get replacement items by repair request error:", error);
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(
-      err.response?.data?.message || "Lấy danh sách linh kiện thay thế thất bại."
+      err.response?.data?.message ||
+        "Lấy danh sách linh kiện thay thế thất bại."
     );
   }
 };

@@ -24,8 +24,12 @@ export function RoleSwitcher() {
   const [isOpen, setIsOpen] = useState(false);
   const { user, switchRole } = useAuth();
 
+  // Chỉ hiển thị những vai trò còn được cấu hình trong RoleInfo (loại bỏ vai trò đã bỏ như Ban Giám hiệu)
+  const rolesToShow =
+    user?.roles.filter((role) => Boolean(getRoleInfo(role.code))) ?? [];
+
   // Return null if user has only one role
-  if (!user || user.roles.length <= 1) {
+  if (!user || rolesToShow.length <= 1) {
     return null;
   }
 
@@ -51,7 +55,7 @@ export function RoleSwitcher() {
               Chọn vai trò
             </div>
             <div className="space-y-1">
-              {user.roles.map((role) => (
+              {rolesToShow.map((role) => (
                 <button
                   key={role.id}
                   onClick={() => handleRoleSwitch(role)}

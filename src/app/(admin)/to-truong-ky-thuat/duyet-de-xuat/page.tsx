@@ -2,13 +2,14 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SubmissionFormData } from "@/types";
-import { Breadcrumb, Modal } from "antd";
+import { Breadcrumb, Modal, message } from "antd";
 import { Pagination } from "@/components/common";
 import {
   ExportExcelSuccessModal,
   ExportExcelErrorModal,
   SubmissionFormModal,
   SubmissionPreviewModal,
+  RejectConfirmModal,
 } from "@/components/modal";
 import {
   ProposalFilters,
@@ -20,10 +21,17 @@ import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
 } from "@/hooks/useReplacementProposals";
-import { ReplacementProposal } from "@/lib/api/replacement-proposals";
+import {
+  ReplacementProposal,
+  rejectReplacementProposal,
+} from "@/lib/api/replacement-proposals";
 import { ReplacementProposalStatus } from "@/types/repair";
 import { uploadFile } from "@/lib/api/upload";
-import { CheckCircle, ClipboardEdit, Monitor } from "lucide-react";
+import { ClipboardEdit } from "lucide-react";
+import {
+  exportSubmissionDocx,
+  generateSubmissionDocBlob,
+} from "@/components/common";
 
 // Map table field names to API field names - outside component to avoid recreation
 const mapSortFieldToAPI = (
@@ -82,6 +90,9 @@ export default function DuyetDeXuatPage() {
       director: "TS. Lê Nhất Duy",
       rector: "TS. Phan Hồng Hải",
     });
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   // Team Lead Approver ID - Tổ trưởng kỹ thuật
   const TEAM_LEAD_APPROVER_ID = "e30e5ae1-eed1-42f9-82ba-090a4ee27837";
@@ -113,6 +124,33 @@ export default function DuyetDeXuatPage() {
 
   // Update status hook
   const { updateStatus } = useUpdateReplacementProposalStatus();
+  // Từ chối đề xuất: dùng modal riêng và gọi API reject (rollback linh kiện)
+  const handleRejectProposal = (id: string) => {
+    console.log("🚫 handleRejectProposal", id);
+    setRejectingId(id);
+    setShowRejectModal(true);
+  };
+
+  const handleConfirmReject = async (reason: string) => {
+    if (!rejectingId) return;
+    try {
+      setIsRejecting(true);
+      await rejectReplacementProposal(rejectingId, reason);
+      message.success("Đã từ chối đề xuất và rollback linh kiện.");
+      setShowRejectModal(false);
+      setRejectingId(null);
+      refetch();
+    } catch (err) {
+      console.error("❌ rejectReplacementProposal error", err);
+      Modal.error({
+        title: "Lỗi",
+        content:
+          err instanceof Error ? err.message : "Không thể từ chối đề xuất.",
+      });
+    } finally {
+      setIsRejecting(false);
+    }
+  };
 
   // Transform API data to match component expectations
   // Filter chỉ lấy 3 trạng thái: CHỜ_TỔ_TRƯỞNG_DUYỆT, ĐÃ_DUYỆT, ĐÃ_TỪ_CHỐI
@@ -237,18 +275,13 @@ Trân trọng kính trình.`;
 
     setIsSubmitting(true);
     try {
-      // 1. Tạo file DOCX từ HTML content
-      const htmlContent = generateSubmissionHTML(
-        submissionFormData,
-        selectedRequestForSubmission
-      );
-
-      const blob = new Blob([htmlContent], { type: "application/vnd.ms-word" });
+      // 1. Tạo file DOCX từ helper common
+      const blob = await generateSubmissionDocBlob(submissionFormData);
       const fileName = `To_trinh_${selectedRequestForSubmission.proposalCode}_${
         new Date().toISOString().split("T")[0]
-      }.doc`;
+      }.docx`;
       const file = new File([blob], fileName, {
-        type: "application/vnd.ms-word",
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       });
 
       // 2. Upload file lên Cloudinary
@@ -301,159 +334,17 @@ Trân trọng kính trình.`;
     }
   };
 
-  // Hàm helper để generate HTML content cho tờ trình
-  const generateSubmissionHTML = (
-    formData: SubmissionFormData,
-    proposal: ReplacementProposal
-  ): string => {
-    return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            body { font-family: 'Times New Roman', Times, serif; font-size: 13pt; line-height: 1.5; margin: 40px; }
-            .header-table { width: 100%; border: none; margin-bottom: 10px; }
-            .header-table td { border: none; padding: 0; vertical-align: top; font-size: 11pt; }
-            .header-left { text-align: center; width: 50%; }
-            .header-right { text-align: center; width: 50%; }
-            .center { text-align: center; }
-            .right { text-align: right; }
-            .bold { font-weight: bold; }
-            .underline { text-decoration: underline; }
-            table.data-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            table.data-table th, table.data-table td { border: 1px solid black; padding: 8px; }
-            table.data-table th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
-            .signature-table { width: 100%; border: none; margin-top: 40px; }
-            .signature-table td { border: none; text-align: center; padding: 10px; vertical-align: top; }
-            h2 { font-size: 14pt; font-weight: bold; text-align: center; margin: 20px 0 10px 0; }
-            h3 { font-size: 13pt; font-weight: normal; text-align: center; margin: 5px 0 20px 0; }
-            h4 { font-size: 13pt; font-weight: bold; text-align: center; margin: 15px 0; }
-            p { margin: 5px 0; }
-          </style>
-        </head>
-        <body>
-          <table class="header-table">
-            <tr>
-              <td class="header-left">
-                <p>BỘ CÔNG THƯƠNG</p>
-                <p class="bold">TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP</p>
-                <p class="bold">THÀNH PHỐ HỒ CHÍ MINH</p>
-                <p class="bold underline">${formData.department.toUpperCase()}</p>
-              </td>
-              <td class="header-right">
-                <p class="bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-                <p class="bold underline">Độc lập – Tự do – Hạnh phúc</p>
-                <p><em>Tp. Hồ Chí Minh, ngày ___ tháng ___ năm 2025</em></p>
-              </td>
-            </tr>
-          </table>
-          
-          <h2>PHIẾU ĐỀ NGHỊ GIẢI QUYẾT CÔNG VIỆC</h2>
-          <h3>${formData.subject}</h3>
-          
-          <p><strong>Kính gửi:</strong> ${formData.recipientDepartment}</p>
-          <p><strong>Người đề nghị:</strong> ${formData.submittedBy}</p>
-          <p><strong>Chức vụ:</strong> ${formData.position}</p>
-          <p><strong>Đơn vị:</strong> ${formData.department}</p>
-          <p><strong>Đề nghị:</strong> ${formData.subject}</p>
-          <p><strong>Văn bản kèm theo:</strong> ${formData.attachments}</p>
-          
-          <h4>NỘI DUNG</h4>
-          <p style="text-align: justify; white-space: pre-wrap;">${
-            formData.content
-          }</p>
-          
-          <p><strong>Danh sách linh kiện đề xuất thay thế:</strong></p>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th width="5%">STT</th>
-                <th width="25%">Linh kiện cũ</th>
-                <th width="25%">Linh kiện mới</th>
-                <th width="15%">Vị trí</th>
-                <th width="10%">SL</th>
-                <th width="20%">Lý do</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${
-                proposal.items
-                  ?.map(
-                    (item, index) => `
-                <tr>
-                  <td style="text-align: center;">${index + 1}</td>
-                  <td>
-                    <strong>${
-                      item.oldComponent?.name || "Không xác định"
-                    }</strong><br>
-                    <small>${item.oldComponent?.componentSpecs || ""}</small>
-                  </td>
-                  <td>
-                    <strong>${item.newItemName || "Chưa xác định"}</strong><br>
-                    <small>${item.newItemSpecs || ""}</small>
-                  </td>
-                  <td>${item.oldComponent?.roomLocation || "Chưa xác định"}</td>
-                  <td style="text-align: center;">${item.quantity}</td>
-                  <td>${item.reason || "Cần thay thế"}</td>
-                </tr>
-              `
-                  )
-                  .join("") || ""
-              }
-            </tbody>
-          </table>
-          
-          <p><strong>${
-            formData.department
-          } kính trình Ban Giám hiệu xem xét và phê duyệt.</strong></p>
-          
-          <table class="signature-table">
-            <tr>
-              <td width="33%">
-                <p><strong>Trưởng phòng</strong></p>
-                <br><br><br>
-                <p>${formData.director}</p>
-              </td>
-              <td width="33%">
-                <p><strong>Hiệu trưởng</strong></p>
-                <br><br><br>
-                <p>${formData.rector}</p>
-              </td>
-              <td width="33%">
-                <p><strong>${formData.position}</strong></p>
-                <p><em>(Ký và ghi rõ họ tên)</em></p>
-                <br><br>
-                <p>${formData.submittedBy}</p>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-      `;
-  };
+  // Hàm generate DOCX được tách sang @/components/common/submissionDocx
 
-  // Hàm xuất file DOCX cho tờ trình (sử dụng HTML)
+  // Hàm xuất file DOCX cho tờ trình (sử dụng docx library)
   const handleExportSubmissionDocx = async () => {
     if (!selectedRequestForSubmission) return;
 
     try {
-      // Tạo nội dung HTML cho tờ trình
-      const htmlContent = generateSubmissionHTML(
+      await exportSubmissionDocx(
         submissionFormData,
-        selectedRequestForSubmission
+        selectedRequestForSubmission.proposalCode
       );
-
-      // Tạo Blob và download
-      const blob = new Blob([htmlContent], { type: "application/vnd.ms-word" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `To_trinh_${selectedRequestForSubmission.proposalCode}_${
-        new Date().toISOString().split("T")[0]
-      }.doc`;
-      link.click();
-      window.URL.revokeObjectURL(url);
 
       Modal.success({
         title: "Xuất file thành công!",
@@ -664,6 +555,7 @@ Trân trọng kính trình.`;
               onSelectAll={handleSelectAll}
               onRowSelect={handleRowSelect}
               onSort={handleSort}
+              onReject={handleRejectProposal}
               onCreateSubmission={handleCreateSubmission}
               onDataChange={refetch}
             />
@@ -689,6 +581,7 @@ Trân trọng kính trình.`;
                 const isSelected = selectedRowKeys.includes(id);
                 handleRowSelect(id, !isSelected);
               }}
+              onReject={handleRejectProposal}
               onCreateSubmission={handleCreateSubmission}
               onDataChange={refetch}
             />
@@ -749,6 +642,21 @@ Trân trọng kính trình.`;
         onExport={handleExportSubmissionDocx}
         onSubmit={handleSubmitSubmission}
         isSubmitting={isSubmitting}
+      />
+
+      {/* Reject Proposal Modal */}
+      <RejectConfirmModal
+        isOpen={showRejectModal}
+        onClose={() => {
+          setShowRejectModal(false);
+          setRejectingId(null);
+        }}
+        onConfirm={handleConfirmReject}
+        defaultReason="Tổ trưởng từ chối"
+        title="Từ chối đề xuất"
+        description="Bạn có chắc chắn muốn từ chối đề xuất này không?"
+        okText={isRejecting ? "Đang từ chối..." : "Từ chối"}
+        cancelText="Hủy"
       />
     </>
   );
