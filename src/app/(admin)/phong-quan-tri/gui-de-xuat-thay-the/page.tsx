@@ -580,6 +580,21 @@ export default function GuiDeXuatThayThePage() {
             )}
           </div>
         )}
+
+        {/* Pagination */}
+        {!loading && !error && (
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={totalItems}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showSizeChanger={true}
+            pageSizeOptions={[10, 20, 50, 100]}
+            showQuickJumper={true}
+            showTotal={true}
+          />
+        )}
       </div>
 
       {/* Mobile View */}
@@ -713,11 +728,9 @@ export default function GuiDeXuatThayThePage() {
             )}
           </div>
         )}
-      </div>
 
-      {/* Pagination */}
-      {!loading && !error && (
-        <div className="bg-white shadow rounded-lg overflow-hidden">
+        {/* Pagination */}
+        {!loading && !error && (
           <Pagination
             currentPage={currentPage}
             pageSize={pageSize}
@@ -729,8 +742,8 @@ export default function GuiDeXuatThayThePage() {
             showQuickJumper={true}
             showTotal={true}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Modal xác nhận hoàn tất mua sắm */}
       <SignConfirmModal
