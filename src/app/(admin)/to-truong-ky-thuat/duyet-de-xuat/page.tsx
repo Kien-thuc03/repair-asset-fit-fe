@@ -2,13 +2,14 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SubmissionFormData } from "@/types";
-import { Breadcrumb, Modal } from "antd";
+import { Breadcrumb, Modal, message } from "antd";
 import { Pagination } from "@/components/common";
 import {
   ExportExcelSuccessModal,
   ExportExcelErrorModal,
   SubmissionFormModal,
   SubmissionPreviewModal,
+  RejectConfirmModal,
 } from "@/components/modal";
 import {
   ProposalFilters,
@@ -20,7 +21,10 @@ import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
 } from "@/hooks/useReplacementProposals";
-import { ReplacementProposal } from "@/lib/api/replacement-proposals";
+import {
+  ReplacementProposal,
+  rejectReplacementProposal,
+} from "@/lib/api/replacement-proposals";
 import { ReplacementProposalStatus } from "@/types/repair";
 import { uploadFile } from "@/lib/api/upload";
 import { ClipboardEdit } from "lucide-react";
@@ -86,6 +90,9 @@ export default function DuyetDeXuatPage() {
       director: "TS. Lê Nhất Duy",
       rector: "TS. Phan Hồng Hải",
     });
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   // Team Lead Approver ID - Tổ trưởng kỹ thuật
   const TEAM_LEAD_APPROVER_ID = "e30e5ae1-eed1-42f9-82ba-090a4ee27837";
@@ -117,6 +124,33 @@ export default function DuyetDeXuatPage() {
 
   // Update status hook
   const { updateStatus } = useUpdateReplacementProposalStatus();
+  // Từ chối đề xuất: dùng modal riêng và gọi API reject (rollback linh kiện)
+  const handleRejectProposal = (id: string) => {
+    console.log("🚫 handleRejectProposal", id);
+    setRejectingId(id);
+    setShowRejectModal(true);
+  };
+
+  const handleConfirmReject = async (reason: string) => {
+    if (!rejectingId) return;
+    try {
+      setIsRejecting(true);
+      await rejectReplacementProposal(rejectingId, reason);
+      message.success("Đã từ chối đề xuất và rollback linh kiện.");
+      setShowRejectModal(false);
+      setRejectingId(null);
+      refetch();
+    } catch (err) {
+      console.error("❌ rejectReplacementProposal error", err);
+      Modal.error({
+        title: "Lỗi",
+        content:
+          err instanceof Error ? err.message : "Không thể từ chối đề xuất.",
+      });
+    } finally {
+      setIsRejecting(false);
+    }
+  };
 
   // Transform API data to match component expectations
   // Filter chỉ lấy 3 trạng thái: CHỜ_TỔ_TRƯỞNG_DUYỆT, ĐÃ_DUYỆT, ĐÃ_TỪ_CHỐI
@@ -521,6 +555,7 @@ Trân trọng kính trình.`;
               onSelectAll={handleSelectAll}
               onRowSelect={handleRowSelect}
               onSort={handleSort}
+              onReject={handleRejectProposal}
               onCreateSubmission={handleCreateSubmission}
               onDataChange={refetch}
             />
@@ -546,6 +581,7 @@ Trân trọng kính trình.`;
                 const isSelected = selectedRowKeys.includes(id);
                 handleRowSelect(id, !isSelected);
               }}
+              onReject={handleRejectProposal}
               onCreateSubmission={handleCreateSubmission}
               onDataChange={refetch}
             />
@@ -606,6 +642,21 @@ Trân trọng kính trình.`;
         onExport={handleExportSubmissionDocx}
         onSubmit={handleSubmitSubmission}
         isSubmitting={isSubmitting}
+      />
+
+      {/* Reject Proposal Modal */}
+      <RejectConfirmModal
+        isOpen={showRejectModal}
+        onClose={() => {
+          setShowRejectModal(false);
+          setRejectingId(null);
+        }}
+        onConfirm={handleConfirmReject}
+        defaultReason="Tổ trưởng từ chối"
+        title="Từ chối đề xuất"
+        description="Bạn có chắc chắn muốn từ chối đề xuất này không?"
+        okText={isRejecting ? "Đang từ chối..." : "Từ chối"}
+        cancelText="Hủy"
       />
     </>
   );
