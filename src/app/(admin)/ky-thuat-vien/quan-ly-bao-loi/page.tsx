@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Breadcrumb, Input, Select, DatePicker, Button, message, Spin, Alert } from 'antd'
 import type { Dayjs } from 'dayjs'
-import { Search, ChevronUp, ChevronDown, Eye, Download } from 'lucide-react'
+import { Search, ChevronUp, ChevronDown, Eye, Download, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import { repairRequestStatusConfig } from '@/lib/constants/repairStatus'
 import { RepairStatus, RepairRequest } from '@/types'
@@ -223,7 +223,7 @@ export default function DanhSachBaoLoiPage() {
 	}, [filteredAndSortedData, currentPage, pageSize])
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4 sm:space-y-6">
 			{/* Error State */}
 			{repairsError && !isLoading && (
 				<Alert
@@ -261,19 +261,19 @@ export default function DanhSachBaoLoiPage() {
 
 			{/* Header */}
 			<div>
-				<h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+				<h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
 					Quản lý báo lỗi
 				</h1>
-				<p className="mt-2 text-gray-600">
+				<p className="mt-2 text-sm sm:text-base text-gray-600">
 					Theo dõi và quản lý các báo cáo lỗi từ giảng viên và kỹ thuật viên.
 				</p>
 			</div>
 
 			{/* Filters & Search */}
-			<div className="bg-white p-4 rounded-lg shadow space-y-4">
-				<div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+			<div className="bg-white p-3 sm:p-4 rounded-lg shadow space-y-3 sm:space-y-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
 					<Input
-						className='col-span-1 md:col-span-2'
+						className='col-span-1 sm:col-span-2 lg:col-span-2'
 						placeholder="Tìm kiếm theo mã, tên tài sản, linh kiện, loại lỗi, vị trí..."
 						prefix={<Search className="w-4 h-4" />}
 						value={searchText}
@@ -285,6 +285,7 @@ export default function DanhSachBaoLoiPage() {
 						value={statusFilter}
 						onChange={setStatusFilter}
 						allowClear
+						className="w-full"
 					>
 						<Option value="">Tất cả trạng thái</Option>
 						<Option value={RepairStatus.CHỜ_TIẾP_NHẬN}>
@@ -312,6 +313,7 @@ export default function DanhSachBaoLoiPage() {
 						format="DD/MM/YYYY"
 						value={dateRange}
 						onChange={setDateRange}
+						className="w-full"
 					/>
 
 					<Button
@@ -319,19 +321,21 @@ export default function DanhSachBaoLoiPage() {
 						icon={<Download className="w-4 h-4" />}
 						onClick={handleExportExcel}
 						disabled={selectedRowKeys.length === 0}
+						className="w-full sm:w-auto"
 					>
-						Xuất Excel ({selectedRowKeys.length})
+						<span className="hidden sm:inline">Xuất Excel </span>
+						<span>({selectedRowKeys.length})</span>
 					</Button>
 				</div>
 			</div>
 
-			{/* Table */}
+			{/* Desktop Table View */}
 			{isLoading ? (
 				<div className="bg-white shadow rounded-lg flex justify-center items-center py-12">
 					<Spin size="large" tip="Đang tải danh sách..." />
 				</div>
 			) : (
-				<div className="overflow-x-auto bg-white shadow rounded-lg">
+				<div className="hidden lg:block overflow-x-auto bg-white shadow rounded-lg">
 					<table className="min-w-full divide-y divide-gray-200">
 						<thead className="bg-gray-50">
 							<tr>
@@ -495,6 +499,135 @@ export default function DanhSachBaoLoiPage() {
 						showQuickJumper={true}
 						showTotal={true}
 					/>
+				</div>
+			)}
+
+			{/* Mobile Card View */}
+			{!isLoading && (
+				<div className="lg:hidden bg-white shadow rounded-lg">
+					<div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+						<h2 className="text-base sm:text-lg font-medium text-gray-900">
+							Danh sách báo lỗi ({filteredAndSortedData.length})
+						</h2>
+					</div>
+					<div className="p-4 space-y-4">
+						{repairsError ? (
+							<div className="flex flex-col justify-center items-center py-12">
+								<XCircle className="h-12 w-12 text-red-300 mb-3" />
+								<h3 className="text-sm font-medium text-gray-900 mb-1">
+									Có lỗi xảy ra
+								</h3>
+								<p className="text-xs text-gray-500">{repairsError}</p>
+							</div>
+						) : paginatedData.length > 0 ? (
+							paginatedData.map((record) => {
+								const config = repairRequestStatusConfig[record.status]
+								return (
+									<div
+										key={record.id}
+										className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+										{/* Header */}
+										<div className="flex items-start gap-3 mb-3">
+											<div className="flex-1 min-w-0">
+												<h3 className="text-sm font-semibold text-blue-600 mb-1">
+													{record.requestCode}
+												</h3>
+												<p className="text-xs text-gray-500 line-clamp-2">
+													{record.assetName || 'Chưa xác định'}
+												</p>
+												{record.componentName && (
+													<p className="text-xs text-gray-400 mt-1">
+														Linh kiện: {record.componentName}
+													</p>
+												)}
+											</div>
+											<input
+												type="checkbox"
+												className="rounded border-gray-300 flex-shrink-0 mt-1"
+												checked={selectedRowKeys.includes(record.id)}
+												onChange={(e) => handleRowSelect(record.id, e.target.checked)}
+												aria-label={`Chọn báo lỗi ${record.requestCode}`}
+											/>
+										</div>
+
+										{/* Info grid */}
+										<div className="space-y-2 mb-3">
+											<div className="flex justify-between items-start text-xs">
+												<div className="flex-1">
+													<div className="text-gray-500 mb-0.5">Vị trí</div>
+													<div className="text-sm text-gray-900 font-medium">
+														{record.buildingName || 'N/A'}
+													</div>
+													<div className="text-gray-500">
+														{record.roomName || 'N/A'} - Máy {record.machineLabel || 'N/A'}
+													</div>
+												</div>
+												<div className="flex-1 text-right">
+													<div className="text-gray-500 mb-0.5">Người báo</div>
+													<div className="text-sm text-gray-900 font-medium">
+														{record.reporterName || 'N/A'}
+													</div>
+												</div>
+											</div>
+											<div className="flex justify-between items-start text-xs">
+												<div className="flex-1">
+													<div className="text-gray-500 mb-0.5">Loại lỗi</div>
+													<div className="text-sm text-gray-900">
+														{record.errorTypeName || 'N/A'}
+													</div>
+												</div>
+												<div className="flex-1 text-right">
+													<div className="text-gray-500 mb-0.5">Ngày báo</div>
+													<div className="text-sm text-gray-900">
+														{new Date(record.createdAt).toLocaleDateString('vi-VN')}
+													</div>
+												</div>
+											</div>
+										</div>
+
+										{/* Footer */}
+										<div className="flex items-center justify-between pt-3 border-t border-gray-100">
+											<span
+												className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium border ${config.color}`}>
+												{config.label}
+											</span>
+											<Link href={`/ky-thuat-vien/quan-ly-bao-loi/chi-tiet-bao-loi/${record.id}`}>
+												<button className="flex items-center gap-1 text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+													<Eye className="h-4 w-4" />
+													<span>Xem</span>
+												</button>
+											</Link>
+										</div>
+									</div>
+								)
+							})
+						) : (
+							<div className="text-center py-12">
+								<Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+								<h3 className="text-sm font-medium text-gray-900 mb-1">
+									Không tìm thấy kết quả
+								</h3>
+								<p className="text-xs text-gray-500">
+									Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+								</p>
+							</div>
+						)}
+					</div>
+
+					{/* Pagination for Mobile */}
+					<div className="px-4 pb-4">
+						<Pagination
+							currentPage={currentPage}
+							pageSize={pageSize}
+							total={filteredAndSortedData.length}
+							onPageChange={setCurrentPage}
+							onPageSizeChange={setPageSize}
+							showSizeChanger={true}
+							pageSizeOptions={[10, 20, 50, 100]}
+							showQuickJumper={true}
+							showTotal={true}
+						/>
+					</div>
 				</div>
 			)}
 				</>
