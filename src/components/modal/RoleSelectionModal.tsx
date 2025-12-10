@@ -35,7 +35,6 @@ const RoleIcons: Record<
   [UserRole.TO_TRUONG_KY_THUAT]: ShieldCheck,
   [UserRole.PHONG_QUAN_TRI]: CheckCircle2,
   [UserRole.QTV_KHOA]: ShieldCheck,
-  [UserRole.BAN_GIAM_HIEU]: ShieldCheck,
 };
 
 export function RoleSelectionModal({
