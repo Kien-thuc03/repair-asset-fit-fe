@@ -435,7 +435,6 @@ export default function BienBanPage() {
           />
 
           {/* Pagination */}
-          <div className="mt-6">
             <Pagination
               currentPage={currentPage}
               total={totalFiltered}
@@ -446,7 +445,6 @@ export default function BienBanPage() {
                 setCurrentPage(1);
               }}
             />
-          </div>
         </>
       )}
 

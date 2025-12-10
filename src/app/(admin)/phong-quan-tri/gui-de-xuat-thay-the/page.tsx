@@ -11,7 +11,6 @@ import {
   XCircle,
   Loader2,
   AlertCircle,
-  Monitor,
   FileCheck,
 } from "lucide-react";
 import Link from "next/link";
@@ -33,8 +32,8 @@ export default function GuiDeXuatThayThePage() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-  const itemsPerPage = 10;
 
   // Modal states
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -178,12 +177,23 @@ export default function GuiDeXuatThayThePage() {
 
   // Pagination
   const totalItems = filteredData.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = filteredData.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + pageSize
   );
+
+  // Page change handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedRowKeys([]);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+    setSelectedRowKeys([]);
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -386,6 +396,7 @@ export default function GuiDeXuatThayThePage() {
                 <tr>
                   <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[5%]">
                     <input
+                      title="Chọn tất cả đề xuất"
                       type="checkbox"
                       checked={
                         selectedRowKeys.length === paginatedData.length &&
@@ -451,6 +462,7 @@ export default function GuiDeXuatThayThePage() {
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-2 py-3">
                       <input
+                        title="Chọn đề xuất này"
                         type="checkbox"
                         checked={selectedRowKeys.includes(item.id)}
                         onChange={(e) => {
@@ -617,6 +629,7 @@ export default function GuiDeXuatThayThePage() {
                       </div>
                     </div>
                     <input
+                      title="Chọn đề xuất này"
                       type="checkbox"
                       checked={selectedRowKeys.includes(item.id)}
                       onChange={(e) => {
@@ -703,18 +716,19 @@ export default function GuiDeXuatThayThePage() {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-4 sm:mt-6">
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 rounded-lg shadow-sm">
-            <Pagination
-              currentPage={currentPage}
-              pageSize={itemsPerPage}
-              total={totalItems}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={() => {}}
-              showSizeChanger={false}
-            />
-          </div>
+      {!loading && !error && (
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={totalItems}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showSizeChanger={true}
+            pageSizeOptions={[10, 20, 50, 100]}
+            showQuickJumper={true}
+            showTotal={true}
+          />
         </div>
       )}
 

@@ -24,7 +24,7 @@ import {
 import Link from "next/link";
 import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 import { RepairStatus, RepairRequest } from "@/types";
-import { Pagination } from "@/components/ui";
+import { Pagination } from "@/components/common";
 import { useRepairs } from "@/hooks/useRepairs";
 import type { GetRepairsQueryParams } from "@/lib/api/repairs";
 

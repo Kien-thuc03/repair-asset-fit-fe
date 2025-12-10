@@ -7,7 +7,7 @@ import { Search, ChevronUp, ChevronDown, Eye, Download } from 'lucide-react'
 import Link from 'next/link'
 import { repairRequestStatusConfig } from '@/lib/constants/repairStatus'
 import { RepairStatus, RepairRequest } from '@/types'
-import { Pagination } from '@/components/ui'
+import { Pagination } from '@/components/common'
 import { useProfile } from '@/hooks/useProfile'
 import { useRepairsByTechnician } from '@/hooks/useRepairsByTechnician'
 
