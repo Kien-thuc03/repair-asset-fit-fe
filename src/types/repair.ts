@@ -1,7 +1,6 @@
 import { ErrorType } from "@/lib/constants/errorTypes";
 import { AssetStatus, ComponentStatus, ComponentType } from "./computer";
 
-
 // Định nghĩa các vai trò trong hệ thống sửa chữa tài sản
 export enum UserRole {
   ADMIN = "ADMIN", // Quản trị viên hệ thống
