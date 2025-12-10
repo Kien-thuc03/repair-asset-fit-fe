@@ -7,6 +7,7 @@ import { ReplacementItem } from '@/lib/api/replacement-proposals'
 import { replaceComponent, getComponentById, getStockComponents, StockComponentDto } from '@/lib/api/components'
 import { completeRepair } from '@/lib/api/repairs'
 import { RepairStatus } from '@/types'
+import { ReplacementProposalStatus } from '@/types/repair'
 
 const { Option } = Select
 
@@ -55,14 +56,21 @@ export default function ComponentReplacementSection({
 		fetchStockComponents()
 	}, [])
 
-	// Lọc các items có thể thay thế (có oldComponentId và chưa được thay thế)
-	const replaceableItems = items.filter(
+	// Chỉ hiển thị các items thuộc đề xuất đã hoàn tất mua sắm
+	const displayItems = items.filter(
+		item => item.proposalStatus === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM
+	)
+
+	// Lọc các items có thể thay thế (có oldComponentId và chưa được thay thế) trong các DXTT đã hoàn tất mua sắm
+	const replaceableItems = displayItems.filter(
 		item => item.oldComponentId && item.oldComponent?.status !== 'REMOVED'
 	)
 
-	// Kiểm tra xem tất cả linh kiện đã được thay thế chưa
-	const allReplaced = replaceableItems.length === 0 || 
-		items.every(item => !item.oldComponentId || item.oldComponent?.status === 'REMOVED')
+	// Kiểm tra xem tất cả linh kiện (mọi DXTT) đã được thay thế chưa
+	const allPendingAcrossAll = items.filter(
+		item => item.oldComponentId && item.oldComponent?.status !== 'REMOVED'
+	)
+	const allReplaced = allPendingAcrossAll.length === 0
 
 	// Hàm xử lý thay thế linh kiện
 	const handleReplaceComponent = async (item: ReplacementItem) => {
@@ -163,13 +171,13 @@ export default function ComponentReplacementSection({
 	}
 
 	// Nếu không có items hoặc không có items cần thay thế, không hiển thị
-	if (!items || items.length === 0) {
+	if (!displayItems || displayItems.length === 0) {
 		return null
 	}
 
 	// Chỉ hiển thị khi có items cần thay thế hoặc đã có items được thay thế
 	const hasReplaceableItems = replaceableItems.length > 0
-	const hasReplacedItems = items.some(item => item.oldComponent?.status === 'REMOVED')
+	const hasReplacedItems = displayItems.some(item => item.oldComponent?.status === 'REMOVED')
 
 	if (!hasReplaceableItems && !hasReplacedItems) {
 		return null
@@ -182,7 +190,7 @@ export default function ComponentReplacementSection({
 					<Package className="w-5 h-5 text-blue-600" />
 					<span>Xử lý thay thế linh kiện</span>
 					<Tag color="blue" className="ml-auto">
-						{replaceableItems.length} cần thay thế
+						{replaceableItems.length} có thể thay thế
 					</Tag>
 				</div>
 			}
@@ -216,7 +224,7 @@ export default function ComponentReplacementSection({
 						className="mb-6"
 					/>
 					<div className="space-y-4">
-						{items.map((item) => {
+						{displayItems.map((item) => {
 							const isReplacing = replacingItemId === item.id
 							const showForm = replaceFormVisible[item.id]
 							const canReplace = item.oldComponentId && item.oldComponent?.status !== 'REMOVED'

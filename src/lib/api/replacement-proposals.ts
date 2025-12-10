@@ -30,6 +30,7 @@ export interface OldComponentInfo {
 export interface ReplacementItem {
   id: string;
   proposalId: string;
+  proposalStatus?: ReplacementProposalStatus; // optional for UI filtering
   oldComponentId?: string;
   oldComponent?: OldComponentInfo;
   newItemName: string;
@@ -350,14 +351,19 @@ export const getReplacementItemsByRepairRequest = async (
     
     // Lọc các proposals có repair request này
     for (const proposal of proposals.data) {
-      if (proposal.repairRequests?.some(rr => rr.id === repairRequestId)) {
+      const hasRepairRequest = proposal.repairRequests?.some(rr => rr.id === repairRequestId);
+
+      if (hasRepairRequest) {
         // Lấy chi tiết proposal để có đầy đủ thông tin items
         const proposalDetail = await getReplacementProposalById(proposal.id);
         if (proposalDetail.items) {
           // Chỉ lấy items có repairRequestId trùng với repair request hiện tại
-          const relevantItems = proposalDetail.items.filter(
-            item => item.repairRequestId === repairRequestId
-          );
+          const relevantItems = proposalDetail.items
+            .filter(item => item.repairRequestId === repairRequestId)
+            .map(item => ({
+              ...item,
+              proposalStatus: proposalDetail.status, // gắn status để UI filter/hiển thị
+            }));
           allItems.push(...relevantItems);
         }
       }
