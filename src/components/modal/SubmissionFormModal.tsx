@@ -38,8 +38,10 @@ export default function SubmissionFormModal({
       width="100%"
       style={{ maxWidth: "900px" }}
       footer={[
-        <Button key="cancel" onClick={onClose}
-        className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
+        <Button
+          key="cancel"
+          onClick={onClose}
+          className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-md text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 whitespace-nowrap flex-shrink-0">
           Hủy
         </Button>,
         <Button
@@ -176,7 +178,7 @@ export default function SubmissionFormModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Giám đốc
+              Trưởng đơn vị
             </label>
             <Input
               value={formData.director}
