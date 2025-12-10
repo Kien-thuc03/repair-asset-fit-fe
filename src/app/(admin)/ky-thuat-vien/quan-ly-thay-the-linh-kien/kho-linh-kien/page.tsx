@@ -321,18 +321,18 @@ export default function ComponentStockPage() {
     }
   };
 
-  const handleSelectAllCurrentPage = (checked: boolean) => {
-    const currentPageIds = paginatedComponents.map((item) => item.id);
+  const handleSelectAll = (checked: boolean) => {
+    const allFilteredIds = filteredAndSortedComponents.map((item) => item.id);
     if (checked) {
-      setSelectedRowKeys((prev) => Array.from(new Set([...prev, ...currentPageIds])));
+      setSelectedRowKeys(Array.from(new Set([...allFilteredIds])));
     } else {
-      setSelectedRowKeys((prev) => prev.filter((key) => !currentPageIds.includes(key)));
+      setSelectedRowKeys([]);
     }
   };
 
-  const isAllCurrentPageSelected =
-    paginatedComponents.length > 0 &&
-    paginatedComponents.every((item) => selectedRowKeys.includes(item.id));
+  const isAllSelected =
+    filteredAndSortedComponents.length > 0 &&
+    filteredAndSortedComponents.every((item) => selectedRowKeys.includes(item.id));
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -375,11 +375,6 @@ export default function ComponentStockPage() {
         "Trạng thái": comp.status,
         "Ngày nhập kho": formatDate(comp.installedAt),
         "Ghi chú": comp.notes || "",
-        "Máy tính": comp.computer?.asset?.name || "",
-        "Mã KT": comp.computer?.asset?.ktCode || "",
-        "Phòng": comp.computer?.room?.name || "",
-        "Tòa nhà": comp.computer?.room?.building || "",
-        "Tầng": comp.computer?.room?.floor || "",
       }));
 
       const wb = XLSX.utils.book_new();
@@ -598,8 +593,8 @@ export default function ComponentStockPage() {
                         <input
                           type="checkbox"
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          checked={isAllCurrentPageSelected}
-                          onChange={(e) => handleSelectAllCurrentPage(e.target.checked)}
+                          checked={isAllSelected}
+                          onChange={(e) => handleSelectAll(e.target.checked)}
                           aria-label="Chọn tất cả"
                         />
                         <span>STT</span>
