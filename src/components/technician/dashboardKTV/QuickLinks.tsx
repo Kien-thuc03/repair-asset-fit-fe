@@ -6,9 +6,9 @@ import { FileText, Search, PlusCircle, ListChecks, Package } from 'lucide-react'
 const links = [
 	{ href: '/ky-thuat-vien/quan-ly-bao-loi', label: 'Danh sách yêu cầu sửa chữa', icon: ListChecks, color: 'bg-sky-600' },
 	{ href: '/ky-thuat-vien/quan-ly-thay-the-linh-kien', label: 'Quản lý thay thế linh kiện', icon: Package, color: 'bg-indigo-600' },
-	{ href: '/ky-thuat-vien/lap-phieu-yeu-cau-thay-the', label: 'Tạo Đề xuất Thay thế', icon: FileText, color: 'bg-purple-600' },
+	{ href: '/ky-thuat-vien/quan-ly-thay-the-linh-kien/lap-phieu-de-xuat', label: 'Tạo Đề xuất Thay thế', icon: FileText, color: 'bg-purple-600' },
 	{ href: '/ky-thuat-vien/tra-cuu-thiet-bi', label: 'Tra cứu Tài sản/Linh kiện', icon: Search, color: 'bg-emerald-600' },
-	{ href: '/ky-thuat-vien/bao-cao-loi', label: 'Tạo Yêu cầu Mới', icon: PlusCircle, color: 'bg-orange-600' },
+	{ href: '/ky-thuat-vien/quan-ly-bao-loi/ghi-nhan-xu-ly-loi', label: 'Tạo Yêu cầu Mới', icon: PlusCircle, color: 'bg-orange-600' },
 ]
 
 export default function QuickLinks() {
