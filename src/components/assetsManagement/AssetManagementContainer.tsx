@@ -11,6 +11,8 @@ import {
   DeviceGrid,
 } from "@/components/assetsManagement";
 import { useComputers } from "@/hooks";
+import QRScanner from "@/components/common/QRScanner";
+import { getComputerRepairInfo } from "@/lib/api/computers";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getAssignedFloors, AssignedFloor } from "@/lib/api/repairs";
 import { api } from "@/lib/api";
@@ -74,6 +76,7 @@ export default function TechnicianDeviceManagementContainer() {
     machineLabel?: string;
     roomName?: string;
   } | null>(null);
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   // Pagination state (managed by API)
   const [currentPage, setCurrentPage] = useState(1);
@@ -446,13 +449,40 @@ export default function TechnicianDeviceManagementContainer() {
     }
   }, [error]);
 
-  // Simulate QR scan for demo
-  const simulateQRScan = () => {
-    if (deviceAssets.length > 0) {
-      const randomAsset = deviceAssets[Math.floor(Math.random() * deviceAssets.length)];
-      router.push(`${rolePath}/quan-ly-thiet-bi/chi-tiet/${randomAsset.id}`);
-    } else {
-      message.info("Chưa có thiết bị nào");
+  // Mở trình quét QR
+  const openQRScanner = () => {
+    setShowQRScanner(true);
+  };
+
+  // Xử lý kết quả quét QR -> điều hướng chi tiết thiết bị
+  const handleQRScanSuccess = async (decodedText: string) => {
+    try {
+      let qrData;
+      try {
+        qrData = JSON.parse(decodedText);
+      } catch {
+        message.error("Mã QR không hợp lệ. Vui lòng quét lại.");
+        return;
+      }
+
+      if (qrData.type !== "REPAIR_REQUEST" || !qrData.computerId) {
+        message.error("Mã QR không phải của thiết bị. Vui lòng quét đúng mã.");
+        return;
+      }
+
+      const repairInfo = await getComputerRepairInfo(qrData.computerId);
+      if (!repairInfo.success || !repairInfo.data?.asset?.id) {
+        message.error(repairInfo.message || "Không lấy được thông tin thiết bị.");
+        return;
+      }
+
+      const assetId = repairInfo.data.asset.id;
+      router.push(`${rolePath}/quan-ly-thiet-bi/chi-tiet/${assetId}`);
+      setShowQRScanner(false);
+      message.success(`Đã mở chi tiết thiết bị: ${repairInfo.data.asset.name}`);
+    } catch (error) {
+      console.error("QR scan error:", error);
+      message.error("Không thể xử lý mã QR. Vui lòng thử lại.");
     }
   };
 
@@ -600,7 +630,7 @@ export default function TechnicianDeviceManagementContainer() {
       </div>
 
       {/* Header */}
-      <DeviceManagementHeader isMobile={isMobile} onQRScan={simulateQRScan} />
+      <DeviceManagementHeader isMobile={isMobile} onQRScan={openQRScanner} />
 
       {/* Quick Stats */}
       <DeviceStatsCards 
@@ -741,6 +771,13 @@ export default function TechnicianDeviceManagementContainer() {
           <div className="text-center py-6 text-gray-500">Đang tải mã QR...</div>
         )}
       </Modal>
+
+      {/* QR Scanner */}
+      <QRScanner
+        open={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScanSuccess={handleQRScanSuccess}
+      />
     </div>
   );
 }
