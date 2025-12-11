@@ -216,7 +216,7 @@ export default function ChiTietDeXuatThayThePage() {
       });
 
       message.success(
-        `Đã cập nhật trạng thái ${proposal.proposalCode} thành công!`
+        `Đã cập nhật trạng thái ${proposal.proposalCode} thành công! Vui lòng nhập kho để thông báo kỹ thuật viên.`
       );
 
       // Refetch để lấy dữ liệu mới
@@ -266,7 +266,7 @@ export default function ChiTietDeXuatThayThePage() {
       // Hiển thị kết quả
       if (result.successCount === result.totalItems) {
         message.success(
-          `Đã nhập kho thành công ${result.successCount}/${result.totalItems} linh kiện!`
+          `Đã nhập kho thành công ${result.successCount}/${result.totalItems} linh kiện! Thông báo đã được gửi tới kỹ thuật viên.`
         );
       } else {
         message.warning(
