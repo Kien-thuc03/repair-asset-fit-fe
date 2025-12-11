@@ -11,6 +11,10 @@ import {
   Package,
   AlertCircle,
   Trash2,
+  Clock,
+  CheckCircle,
+  Wrench,
+  XCircle,
 } from "lucide-react";
 import { Breadcrumb, Steps, Divider, Alert } from "antd";
 import { SoftwareProposalStatus, SoftwareProposal } from "@/types/software";
@@ -35,11 +39,6 @@ const getTechnicianName = (proposal: SoftwareProposal): string => {
   return (
     proposal.technician?.fullName || proposal.technicianId || "Chưa phân công"
   );
-};
-    label: "Đã trang bị",
-    color: "text-blue-600 bg-blue-50 border-blue-200",
-    icon: Monitor,
-  },
 };
 
 export default function SoftwareProposalDetailPage() {
