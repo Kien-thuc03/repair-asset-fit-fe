@@ -215,7 +215,7 @@ export default function TechnicianDeviceDetailContainer() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
       <TechnicianDeviceDetailHeader
         asset={asset}
         onGoBack={handleGoBack}
@@ -228,12 +228,12 @@ export default function TechnicianDeviceDetailContainer() {
           onTabChange={handleTabChange}
         />
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {!showRepairHistory ? (
             // Device Information Tab
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="col-span-2">
-              <TechnicianDeviceBasicInfo asset={asset}/>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="col-span-1 lg:col-span-2">
+                <TechnicianDeviceBasicInfo asset={asset}/>
               </div>
 
               <TechnicianDeviceSpecifications asset={asset} />
@@ -244,17 +244,23 @@ export default function TechnicianDeviceDetailContainer() {
             // Repair History Tab
             <>
               {loadingRepairHistory ? (
-                <div className="flex items-center justify-center py-12">
+                <div className="flex items-center justify-center py-10 sm:py-12">
                   <div className="text-center">
                     <div className="inline-block h-6 w-6 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-                    <p className="mt-4 text-gray-600">Đang tải lịch sử sửa chữa...</p>
+                    <p className="mt-4 text-gray-600 text-sm sm:text-base">
+                      Đang tải lịch sử sửa chữa...
+                    </p>
                   </div>
                 </div>
               ) : (
-                <TechnicianRepairHistoryTab
-                  repairHistory={repairHistory}
-                  formatDate={formatDate}
-                />
+                <div className="overflow-x-auto">
+                  <div className="min-w-full">
+                    <TechnicianRepairHistoryTab
+                      repairHistory={repairHistory}
+                      formatDate={formatDate}
+                    />
+                  </div>
+                </div>
               )}
             </>
           )}
