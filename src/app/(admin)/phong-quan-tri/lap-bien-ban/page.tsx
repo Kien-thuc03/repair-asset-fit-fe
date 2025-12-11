@@ -17,7 +17,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { Breadcrumb, Modal, Button } from "antd";
-import { SortableHeader } from "@/components/common";
+import { SortableHeader, Pagination } from "@/components/common";
 import { useReplacementProposals } from "@/hooks";
 import { ReplacementProposal } from "@/lib/api/replacement-proposals";
 import { ReplacementProposalStatus } from "@/types";
@@ -33,6 +33,8 @@ export default function LapBienBanPage() {
   );
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
   // Export modal states
@@ -142,6 +144,26 @@ export default function LapBienBanPage() {
 
     return filtered;
   }, [apiData?.data, searchTerm, sortField, sortDirection]);
+
+  // Pagination
+  const totalItems = filteredReports.length;
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedReports = filteredReports.slice(
+    startIndex,
+    startIndex + pageSize
+  );
+
+  // Page change handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedRowKeys([]);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+    setSelectedRowKeys([]);
+  };
 
   const handleViewReport = (proposalId: string) => {
     router.push(`/phong-quan-tri/lap-bien-ban/${proposalId}`);
@@ -258,13 +280,6 @@ export default function LapBienBanPage() {
     );
   };
 
-  const handleSelectAll = () => {
-    if (selectedRowKeys.length === filteredReports.length) {
-      setSelectedRowKeys([]);
-    } else {
-      setSelectedRowKeys(filteredReports.map((report) => report.id));
-    }
-  };
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
@@ -409,12 +424,21 @@ export default function LapBienBanPage() {
                     <tr>
                       <th className="w-[5%] px-2 py-3 text-left">
                         <input
+                          title="Chọn tất cả biên bản"
                           type="checkbox"
                           checked={
-                            selectedRowKeys.length === filteredReports.length &&
-                            filteredReports.length > 0
+                            selectedRowKeys.length === paginatedReports.length &&
+                            paginatedReports.length > 0
                           }
-                          onChange={handleSelectAll}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const currentPageKeys = paginatedReports.map((report) => report.id);
+                              setSelectedRowKeys((prev) => [...prev, ...currentPageKeys]);
+                            } else {
+                              const currentPageKeys = paginatedReports.map((report) => report.id);
+                              setSelectedRowKeys((prev) => prev.filter((key) => !currentPageKeys.includes(key)));
+                            }
+                          }}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                       </th>
@@ -464,12 +488,13 @@ export default function LapBienBanPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredReports.map((proposal) => {
+                    {paginatedReports.map((proposal) => {
                       const stats = getProposalStatistics(proposal);
                       return (
                         <tr key={proposal.id} className="hover:bg-gray-50">
                           <td className="px-2 py-4">
                             <input
+                              title="Chọn biên bản này"
                               type="checkbox"
                               checked={selectedRowKeys.includes(proposal.id)}
                               onChange={() => handleSelectItem(proposal.id)}
@@ -546,6 +571,7 @@ export default function LapBienBanPage() {
                           </td>
                           <td className="px-2 py-4">
                             <button
+                              title="Xem chi tiết biên bản"
                               onClick={() => handleViewReport(proposal.id)}
                               className="text-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                               <Eye className="w-3 h-3 mr-1" />
@@ -571,6 +597,21 @@ export default function LapBienBanPage() {
               </div>
             )}
           </>
+        )}
+
+        {/* Pagination */}
+        {!loading && !error && (
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={totalItems}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showSizeChanger={true}
+            pageSizeOptions={[10, 20, 50, 100]}
+            showQuickJumper={true}
+            showTotal={true}
+          />
         )}
       </div>
 
@@ -602,8 +643,8 @@ export default function LapBienBanPage() {
         {/* Mobile Cards */}
         {!loading && !error && (
           <div className="p-4 space-y-4">
-            {filteredReports.length > 0 ? (
-              filteredReports.map((proposal) => {
+            {paginatedReports.length > 0 ? (
+              paginatedReports.map((proposal) => {
                 const stats = getProposalStatistics(proposal);
                 return (
                   <div
@@ -623,6 +664,7 @@ export default function LapBienBanPage() {
                         </div>
                       </div>
                       <input
+                        title="Chọn biên bản này"
                         type="checkbox"
                         checked={selectedRowKeys.includes(proposal.id)}
                         onChange={() => handleSelectItem(proposal.id)}
@@ -713,6 +755,21 @@ export default function LapBienBanPage() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && !error && (
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={totalItems}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showSizeChanger={true}
+            pageSizeOptions={[10, 20, 50, 100]}
+            showQuickJumper={true}
+            showTotal={true}
+          />
         )}
       </div>
 

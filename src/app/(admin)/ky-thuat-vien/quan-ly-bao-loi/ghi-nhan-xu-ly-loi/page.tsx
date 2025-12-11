@@ -584,7 +584,7 @@ export default function GhiNhanXuLyLoiPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
       <div className="mb-2">
         <Breadcrumb
@@ -602,10 +602,10 @@ export default function GhiNhanXuLyLoiPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-blue-900 mb-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-blue-900 mb-2">
           Ghi nhận và xử lý lỗi thiết bị
         </h1>
-        <p className="text-gray-600">
+        <p className="text-sm sm:text-base text-gray-600">
           Ghi nhận lỗi thiết bị và thực hiện xử lý trực tiếp tại hiện trường
         </p>
       </div>
@@ -644,11 +644,11 @@ export default function GhiNhanXuLyLoiPage() {
       <Card>
         <Form layout="vertical" onFinish={handleSubmit}>
           {/* Bước 1: Chọn vị trí */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-900">
               Bước 1: Chọn vị trí thiết bị
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               <Form.Item label="Chọn tòa nhà" required>
                 <Select
                   placeholder={
@@ -734,8 +734,8 @@ export default function GhiNhanXuLyLoiPage() {
           </div>
 
           {/* Bước 2: Chọn thiết bị */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-900">
               Bước 2: Chọn thiết bị
             </h3>
             <Form.Item label="Chọn thiết bị" required>
@@ -787,8 +787,8 @@ export default function GhiNhanXuLyLoiPage() {
           </div>
 
           {/* Bước 3: Phân loại lỗi */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-900">
               Bước 3: Phân loại và chọn loại lỗi
             </h3>
             <Form.Item label="Phân loại lỗi" required>
@@ -823,8 +823,8 @@ export default function GhiNhanXuLyLoiPage() {
           </div>
 
           {/* Bước 4: Chọn linh kiện/phần mềm cụ thể */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-900">
               Bước 4: Chọn {formData.errorCategory === "hardware" ? "linh kiện" : "phần mềm"} bị lỗi
             </h3>
             
@@ -883,8 +883,8 @@ export default function GhiNhanXuLyLoiPage() {
           </div>
 
           {/* Bước 5: Mô tả chi tiết */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-900">
               Bước 5: Mô tả chi tiết vấn đề
             </h3>
             <Form.Item label="Mô tả chi tiết lỗi" required>
@@ -900,8 +900,8 @@ export default function GhiNhanXuLyLoiPage() {
           </div>
 
           {/* Bước 6: Xử lý và kết quả */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-900">
               Bước 6: Xử lý và kết quả kiểm tra
             </h3>
 
@@ -1103,8 +1103,8 @@ export default function GhiNhanXuLyLoiPage() {
           </div>
 
           {/* Bước 7: Đính kèm hình ảnh */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-blue-900">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-blue-900">
               Bước 7: Đính kèm hình ảnh (tùy chọn)
             </h3>
             <Form.Item label="Hình ảnh minh họa">
@@ -1212,8 +1212,8 @@ export default function GhiNhanXuLyLoiPage() {
           )}
 
           {/* Action buttons */}
-          <div className="flex justify-end space-x-4">
-            <Button onClick={handleCancel}>
+          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 sm:space-x-0">
+            <Button onClick={handleCancel} className="w-full sm:w-auto">
               Hủy bỏ
             </Button>
             <Button
@@ -1231,6 +1231,7 @@ export default function GhiNhanXuLyLoiPage() {
                 !formData.repairNotes ||
                 (formData.repairMethod === 'need_replacement' && selectedComponentIds.length === 0)
               }
+              className="w-full sm:w-auto"
             >
               {isSubmitting ? "Đang ghi nhận..." : "Ghi nhận và xử lý"}
             </Button>

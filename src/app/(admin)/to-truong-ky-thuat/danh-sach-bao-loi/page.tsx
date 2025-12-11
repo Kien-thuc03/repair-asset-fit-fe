@@ -24,7 +24,7 @@ import {
 import Link from "next/link";
 import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 import { RepairStatus, RepairRequest } from "@/types";
-import { Pagination } from "@/components/ui";
+import { Pagination } from "@/components/common";
 import { useRepairs } from "@/hooks/useRepairs";
 import type { GetRepairsQueryParams } from "@/lib/api/repairs";
 
@@ -616,6 +616,7 @@ export default function DanhSachBaoLoiPage() {
                       </p>
                     </div>
                     <input
+                      title="Chọn báo lỗi này"
                       type="checkbox"
                       className="rounded border-gray-300 flex-shrink-0 mt-1"
                       checked={selectedRowKeys.includes(record.id)}

@@ -278,15 +278,6 @@ export default function ChiTietThayThePage() {
 				/>
 			)}
 
-			{request.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH && (
-				<Alert
-					message="Tờ trình đã bị từ chối"
-					description="Tờ trình đề xuất này đã bị từ chối"
-					type="error"
-					showIcon
-				/>
-			)}
-
 			{request.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM && (
 				<Alert
 					message="Linh kiện đã sẵn sàng"

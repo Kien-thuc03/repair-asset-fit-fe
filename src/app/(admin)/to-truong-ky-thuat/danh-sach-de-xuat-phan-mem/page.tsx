@@ -8,12 +8,10 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  Clock,
   Monitor,
   Calendar,
   User,
-  Building,
-  Wrench,
+  Building
 } from "lucide-react";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import { Pagination, SortableHeader } from "@/components/common";
@@ -23,37 +21,9 @@ import {
 } from "@/hooks/useSoftwareProposals";
 import { useAuth } from "@/contexts/AuthContext";
 import { SoftwareProposalConfirmModal } from "@/components/modal";
+import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from "@/lib/constants";
 
 const { Option } = Select;
-
-// Config cho trạng thái đề xuất
-const softwareProposalStatusConfig = {
-  [SoftwareProposalStatus.CHỜ_DUYỆT]: {
-    label: "Chờ duyệt",
-    color: "text-yellow-600 bg-yellow-50 border-yellow-200",
-    icon: Clock,
-  },
-  [SoftwareProposalStatus.ĐÃ_DUYỆT]: {
-    label: "Đã duyệt",
-    color: "text-green-600 bg-green-50 border-green-200",
-    icon: CheckCircle,
-  },
-  [SoftwareProposalStatus.ĐÃ_TỪ_CHỐI]: {
-    label: "Đã từ chối",
-    color: "text-red-600 bg-red-50 border-red-200",
-    icon: XCircle,
-  },
-  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
-    label: "Đang trang bị",
-    color: "text-orange-600 bg-orange-50 border-orange-200",
-    icon: Wrench,
-  },
-  [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
-    label: "Đã trang bị",
-    color: "text-blue-600 bg-blue-50 border-blue-200",
-    icon: Monitor,
-  },
-};
 
 // Helper functions
 const getUserName = (proposal: SoftwareProposal): string => {
@@ -447,6 +417,7 @@ export default function DanhSachDeXuatPhanMemPage() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <input
+                    title="Chọn tất cả đề xuất"
                     type="checkbox"
                     checked={
                       paginatedProposals.length > 0 &&
@@ -500,8 +471,8 @@ export default function DanhSachDeXuatPhanMemPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedProposals.map((proposal) => {
-                const StatusIcon =
-                  softwareProposalStatusConfig[proposal.status].icon;
+                const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+                const StatusIcon = statusConfig.icon;
                 const canApprove =
                   proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT;
                 const canReject =
@@ -511,6 +482,7 @@ export default function DanhSachDeXuatPhanMemPage() {
                   <tr key={proposal.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
+                        title="Chọn đề xuất này"
                         type="checkbox"
                         checked={selectedRowKeys.includes(proposal.id)}
                         onChange={(e) =>
@@ -545,10 +517,10 @@ export default function DanhSachDeXuatPhanMemPage() {
                     <td className="px-2 py-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          softwareProposalStatusConfig[proposal.status].color
+                          statusConfig.color
                         }`}>
                         <StatusIcon className="w-3 h-3 mr-1" />
-                        {softwareProposalStatusConfig[proposal.status].label}
+                        {statusConfig.label}
                       </span>
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap">
@@ -605,8 +577,8 @@ export default function DanhSachDeXuatPhanMemPage() {
         {/* Mobile Card View */}
         <div className="lg:hidden space-y-4 p-4">
           {paginatedProposals.map((proposal) => {
-            const StatusIcon =
-              softwareProposalStatusConfig[proposal.status].icon;
+            const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+            const StatusIcon = statusConfig.icon;
             const canApprove =
               proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT;
             const canReject =
@@ -620,6 +592,7 @@ export default function DanhSachDeXuatPhanMemPage() {
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
                       <input
+                        title="Chọn đề xuất này"
                         type="checkbox"
                         checked={selectedRowKeys.includes(proposal.id)}
                         onChange={(e) =>
@@ -650,10 +623,10 @@ export default function DanhSachDeXuatPhanMemPage() {
                   </div>
                   <span
                     className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
-                      softwareProposalStatusConfig[proposal.status].color
+                      statusConfig.color
                     }`}>
                     <StatusIcon className="w-3 h-3 mr-1" />
-                    {softwareProposalStatusConfig[proposal.status].label}
+                    {statusConfig.label}
                   </span>
                 </div>
                 <div className="flex justify-end space-x-2 pt-2 border-t border-gray-200">

@@ -32,13 +32,13 @@ export default function XuLyToTrinhPage() {
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const itemsPerPage = 10;
 
   const { updateStatus } = useUpdateReplacementProposalStatus();
 
@@ -122,12 +122,23 @@ export default function XuLyToTrinhPage() {
 
   // Pagination
   const totalItems = filteredData.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const startIndex = (currentPage - 1) * pageSize;
   const paginatedData = filteredData.slice(
     startIndex,
-    startIndex + itemsPerPage
+    startIndex + pageSize
   );
+
+  // Page change handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedRowKeys([]);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+    setSelectedRowKeys([]);
+  };
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -490,6 +501,7 @@ export default function XuLyToTrinhPage() {
                     <td className="px-2 py-3 text-sm text-gray-700">
                       <div className="flex items-center space-x-2">
                         <input
+                          title="Chọn tờ trình này"
                           type="checkbox"
                           className="rounded border-gray-300"
                           checked={selectedRowKeys.includes(item.id)}
@@ -499,13 +511,13 @@ export default function XuLyToTrinhPage() {
                           aria-label={`Chọn tờ trình ${item.proposalCode}`}
                         />
                         <span>
-                          {(currentPage - 1) * itemsPerPage + index + 1}
+                          {(currentPage - 1) * pageSize + index + 1}
                         </span>
                       </div>
                     </td>
-                    <td className="px-2 py-3">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <div
-                        className="text-xs font-medium text-blue-600 truncate cursor-pointer hover:text-blue-800 hover:underline"
+                        className="text-sm font-medium text-blue-600 truncate cursor-pointer hover:text-blue-800 hover:underline"
                         onClick={(e) => {
                           e.preventDefault();
                           handleViewDetail(e, item);
@@ -513,35 +525,35 @@ export default function XuLyToTrinhPage() {
                         {item.proposalCode}
                       </div>
                     </td>
-                    <td className="px-2 py-3">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <div
-                        className="text-xs text-gray-900 font-medium truncate"
+                        className="text-sm text-gray-900 font-medium truncate"
                         title={item.title || ""}>
                         {item.title || "Không có tiêu đề"}
                       </div>
                       <div
-                        className="text-xs text-gray-500 truncate"
+                        className="text-sm text-gray-500 truncate"
                         title={item.description || ""}>
                         {item.description || "Không có mô tả"}
                       </div>
                     </td>
-                    <td className="px-2 py-3">
-                      <div className="text-xs text-gray-900">
+                    <td className="px-2 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
                         <div className="flex items-center space-x-1">
-                          <span className="truncate text-xs font-medium">
+                          <span className="truncate text-sm font-medium">
                             {item.proposer?.fullName || "Chưa xác định"}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-2 py-3 text-center">
-                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <td className="px-2 py-4 whitespace-nowrap text-center">
+                      <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
                         {item.itemsCount || 0}
                       </span>
                     </td>
-                    <td className="px-2 py-3">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
                           item.status
                         )}`}>
                         <span className="hidden lg:inline text-xs">
@@ -549,32 +561,30 @@ export default function XuLyToTrinhPage() {
                         </span>
                       </span>
                     </td>
-                    <td className="px-2 py-3">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3 flex-shrink-0 text-gray-400" />
-                        <span className="text-xs text-gray-500">
-                          {new Date(item.createdAt).toLocaleDateString(
-                            "vi-VN",
-                            {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            }
-                          )}
-                        </span>
+                    <td className="px-2 py-4 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                        {new Date(item.createdAt).toLocaleDateString(
+                          "vi-VN",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          }
+                        )}
                       </div>
                     </td>
-                    <td className="px-2 py-3 text-center">
+                    <td className="px-2 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center space-x-1">
                         {processingId === item.id ? (
-                          <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
+                          <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
                         ) : (
                           <Link
                             href={`/phong-quan-tri/xu-ly-to-trinh/${item.id}`}
                             onClick={(e) => handleViewDetail(e, item)}
                             className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             title="Xem chi tiết">
-                            <Eye className="w-3 h-3" />
+                            <Eye className="h-4 w-4" />
                           </Link>
                         )}
                       </div>
@@ -597,6 +607,21 @@ export default function XuLyToTrinhPage() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && !error && (
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={totalItems}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showSizeChanger={true}
+            pageSizeOptions={[10, 20, 50, 100]}
+            showQuickJumper={true}
+            showTotal={true}
+          />
         )}
       </div>
 
@@ -647,6 +672,7 @@ export default function XuLyToTrinhPage() {
                       </div>
                     </div>
                     <input
+                      title="Chọn tờ trình này"
                       type="checkbox"
                       checked={selectedRowKeys.includes(item.id)}
                       onChange={(e) =>
@@ -718,23 +744,22 @@ export default function XuLyToTrinhPage() {
             )}
           </div>
         )}
-      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-4 sm:mt-6">
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6 rounded-lg shadow-sm">
-            <Pagination
-              currentPage={currentPage}
-              pageSize={itemsPerPage}
-              total={totalItems}
-              onPageChange={setCurrentPage}
-              onPageSizeChange={() => {}}
-              showSizeChanger={false}
-            />
-          </div>
-        </div>
-      )}
+        {/* Pagination */}
+        {!loading && !error && (
+          <Pagination
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={totalItems}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            showSizeChanger={true}
+            pageSizeOptions={[10, 20, 50, 100]}
+            showQuickJumper={true}
+            showTotal={true}
+          />
+        )}
+      </div>
 
       {/* Export Success Modal */}
       <Modal

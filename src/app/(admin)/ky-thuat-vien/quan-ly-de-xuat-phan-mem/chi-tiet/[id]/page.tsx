@@ -9,12 +9,8 @@ import {
   Building,
   Calendar,
   FileText,
-  CheckCircle,
-  XCircle,
-  Clock,
   Package,
-  AlertCircle,
-  Wrench
+  AlertCircle
 } from 'lucide-react';
 import { Breadcrumb, Button, Modal, Form, Input, message, Spin } from 'antd';
 import { SoftwareProposalStatus, SoftwareProposalItem, SoftwareProposal } from '@/types/software';
@@ -23,16 +19,7 @@ import { useUpdateSoftwareProposalStatus } from '@/hooks/useSoftwareProposals';
 import { completeSoftwareProposal, CompleteSoftwareProposalRequest } from '@/lib/api/software-proposals';
 import { getComputersByRoomId } from '@/lib/api/computers';
 import { useAuth } from '@/contexts/AuthContext';
-
-
-
-// Config cho trạng thái đề xuất
-const softwareProposalStatusConfig = {
-  [SoftwareProposalStatus.CHỜ_DUYỆT]: {
-    label: 'Chờ duyệt',
-    color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    icon: Clock
-  },
+import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from '@/lib/constants';
   [SoftwareProposalStatus.ĐÃ_DUYỆT]: {
     label: 'Đã duyệt',
     color: 'text-green-600 bg-green-50 border-green-200',
@@ -139,7 +126,8 @@ export default function SoftwareProposalDetailPage() {
     );
   }
 
-  const StatusIcon = softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
+  const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+  const StatusIcon = statusConfig?.icon || Monitor;
   const proposalItems = proposal.items || [];
 
   // Lấy số lượng máy tính trong phòng khi mở modal
@@ -308,9 +296,9 @@ export default function SoftwareProposalDetailPage() {
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Thông tin cơ bản</h2>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${softwareProposalStatusConfig[proposal.status].color}`}>
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${statusConfig.color}`}>
                 <StatusIcon className="h-4 w-4 mr-1" />
-                {softwareProposalStatusConfig[proposal.status].label}
+                {statusConfig.label}
               </span>
             </div>
             

@@ -15,7 +15,7 @@ import {
 import { PlusOutlined, SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Pagination } from "@/components/ui";
+import { Pagination } from "@/components/common";
 import { useAvailableComponents } from "@/hooks";
 import { ComponentFromRepair } from "@/lib/api/replacement-proposals";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";

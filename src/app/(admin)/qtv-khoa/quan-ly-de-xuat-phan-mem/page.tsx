@@ -5,173 +5,177 @@ import { useRouter } from 'next/navigation';
 import { 
   Search, 
   Eye, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
   Monitor,
-  Calendar,
-  User,
-  Building,
-  ChevronUp,
-  ChevronDown
+  Clock,
+  CheckCircle
 } from 'lucide-react';
-import { Breadcrumb, Select, DatePicker, Empty, Spin } from 'antd';
-import type { Dayjs } from 'dayjs';
-import { SoftwareProposalStatus } from '@/types/software';
-import { Pagination } from '@/components/common';
+import { Breadcrumb, Input, Select } from 'antd';
+import { SoftwareProposal, SoftwareProposalStatus } from '@/types/software';
+import { Pagination, SortableHeader } from '@/components/common';
 import { useSoftwareProposals } from '@/hooks/useSoftwareProposals';
+import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from '@/lib/constants';
 
-const { RangePicker } = DatePicker;
 const { Option } = Select;
 
-type SortField = "proposalCode" | "proposerId" | "roomId" | "status" | "createdAt"
-type SortDirection = "asc" | "desc" | "none"
+// Helper functions
+const getUserName = (proposal: SoftwareProposal): string => {
+  return proposal.proposer?.fullName || proposal.proposerId;
+};
 
-// Config cho trạng thái đề xuất
-const softwareProposalStatusConfig = {
-  [SoftwareProposalStatus.CHỜ_DUYỆT]: {
-    label: 'Chờ duyệt',
-    color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    icon: Clock
-  },
-  [SoftwareProposalStatus.ĐÃ_DUYỆT]: {
-    label: 'Đã duyệt',
-    color: 'text-green-600 bg-green-50 border-green-200',
-    icon: CheckCircle
-  },
-  [SoftwareProposalStatus.ĐÃ_TỪ_CHỐI]: {
-    label: 'Đã từ chối',
-    color: 'text-red-600 bg-red-50 border-red-200',
-    icon: XCircle
-  },
-  [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
-    label: 'Đã trang bị',
-    color: 'text-blue-600 bg-blue-50 border-blue-200',
-    icon: Monitor
-  }
+const getRoomName = (proposal: SoftwareProposal): string => {
+  return (
+    proposal.room?.name ||
+    proposal.room?.roomNumber ||
+    `${proposal.room?.building || ""}.${proposal.room?.floor || ""}${
+      proposal.room?.roomNumber || ""
+    }` ||
+    proposal.roomId
+  );
 };
 
 export default function QtvKhoaSoftwareProposalsPage() {
   const router = useRouter();
-  const { data: proposals, loading, error } = useSoftwareProposals({ page: 1, limit: 200 });
   
   // State
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<SoftwareProposalStatus | ''>('');
-  const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
-  const [sortField, setSortField] = useState<SortField | "">("");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("none");
+  const [sortField, setSortField] = useState<keyof SoftwareProposal | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Hàm xử lý sắp xếp 3 trạng thái
-  const handleSort = (field: SortField) => {
+  // Query params
+  const queryParams = useMemo(() => {
+    const mappedSortBy: "createdAt" | "proposalCode" | "status" | undefined =
+      sortField === "proposalCode"
+        ? "proposalCode"
+        : sortField === "createdAt"
+        ? "createdAt"
+        : sortField === "status"
+        ? "status"
+        : "createdAt";
+
+    return {
+      status: statusFilter || undefined,
+      search: searchText || undefined,
+      page: 1,
+      limit: 1000, // Lấy tối đa để filter ở frontend
+      sortBy: mappedSortBy,
+      sortOrder: (sortDirection?.toUpperCase() || "DESC") as "ASC" | "DESC",
+    };
+  }, [searchText, statusFilter, sortField, sortDirection]);
+
+  // Fetch data from API
+  const { data: apiData, loading } = useSoftwareProposals(queryParams);
+
+  // Filter proposals
+  const proposals = useMemo(() => {
+    if (!apiData || apiData.length === 0) return [];
+
+    const ALLOWED_STATUSES = [
+      SoftwareProposalStatus.CHỜ_DUYỆT,
+      SoftwareProposalStatus.ĐÃ_DUYỆT,
+      SoftwareProposalStatus.ĐÃ_TỪ_CHỐI,
+      SoftwareProposalStatus.ĐANG_TRANG_BỊ,
+      SoftwareProposalStatus.ĐÃ_TRANG_BỊ,
+    ];
+
+    return apiData.filter((proposal) =>
+      ALLOWED_STATUSES.includes(proposal.status)
+    );
+  }, [apiData]);
+
+  // Handle sorting
+  const handleSort = (field: keyof SoftwareProposal) => {
     if (sortField === field) {
       if (sortDirection === "asc") {
-        setSortDirection("desc")
+        setSortDirection("desc");
       } else if (sortDirection === "desc") {
-        setSortDirection("none")
-        setSortField("")
+        setSortDirection(null);
+        setSortField(null);
       } else {
-        setSortDirection("asc")
+        setSortDirection("asc");
+        setSortField(field);
       }
     } else {
-      setSortField(field)
-      setSortDirection("asc")
+      setSortField(field);
+      setSortDirection("asc");
     }
-  }
+  };
 
-  // Hàm lấy icon sắp xếp
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field || sortDirection === "none") {
-      return (
-        <div className="flex flex-col opacity-50 group-hover:opacity-75 transition-opacity">
-          <ChevronUp className="h-3 w-3 text-gray-400" />
-          <ChevronDown className="h-3 w-3 -mt-1 text-gray-400" />
-        </div>
-      )
+  // Apply sorting to proposals
+  const sortedProposals = [...proposals].sort((a, b) => {
+    if (!sortField || !sortDirection) return 0;
+
+    let aValue: string | undefined;
+    let bValue: string | undefined;
+
+    switch (sortField) {
+      case "proposalCode":
+        aValue = a.proposalCode;
+        bValue = b.proposalCode;
+        break;
+      case "proposerId":
+        aValue = getUserName(a);
+        bValue = getUserName(b);
+        break;
+      case "roomId":
+        aValue = getRoomName(a);
+        bValue = getRoomName(b);
+        break;
+      case "status":
+        aValue = a.status;
+        bValue = b.status;
+        break;
+      case "createdAt":
+        aValue = a.createdAt;
+        bValue = b.createdAt;
+        break;
+      default:
+        return 0;
     }
 
-    return (
-      <div className="flex flex-col">
-        <ChevronUp
-          className={`h-3 w-3 ${sortDirection === "asc" ? "text-blue-600" : "text-gray-300"}`}
-        />
-        <ChevronDown
-          className={`h-3 w-3 -mt-1 ${sortDirection === "desc" ? "text-blue-600" : "text-gray-300"}`}
-        />
-      </div>
-    )
-  }
+    if (!aValue && !bValue) return 0;
+    if (!aValue) return sortDirection === "asc" ? -1 : 1;
+    if (!bValue) return sortDirection === "asc" ? 1 : -1;
 
-  // Lọc và sắp xếp dữ liệu
-  const filteredAndSortedData = useMemo(() => {
-    const source = proposals || [];
-    const filtered = source.filter((proposal) => {
-      const matchesSearch = searchText ? 
-        [proposal.proposalCode, proposal.reason, proposal.proposer?.fullName, proposal.room?.name]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase()
-          .includes(searchText.toLowerCase()) : true;
+    if (sortField === "createdAt") {
+      const aTime = new Date(aValue).getTime();
+      const bTime = new Date(bValue).getTime();
+      return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
+    }
 
-      const matchesStatus = statusFilter ? proposal.status === statusFilter : true;
+    const aLower = aValue.toLowerCase();
+    const bLower = bValue.toLowerCase();
 
-      const createdAt = new Date(proposal.createdAt);
-      const matchesDateRange = dateRange && dateRange[0] && dateRange[1] ? 
-        createdAt >= dateRange[0].toDate() && createdAt <= dateRange[1].toDate() : true;
+    if (aLower < bLower) {
+      return sortDirection === "asc" ? -1 : 1;
+    }
+    if (aLower > bLower) {
+      return sortDirection === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
 
-      return matchesSearch && matchesStatus && matchesDateRange;
-    });
-
-    // Sắp xếp dữ liệu
-    if (!sortField || sortDirection === "none") return filtered;
-
-    return [...filtered].sort((a, b) => {
-      let aValue: string | Date = "";
-      let bValue: string | Date = "";
-
-      switch (sortField) {
-        case "proposalCode":
-          aValue = a.proposalCode;
-          bValue = b.proposalCode;
-          break;
-        case "proposerId":
-          aValue = a.proposer?.fullName || a.proposerId || "";
-          bValue = b.proposer?.fullName || b.proposerId || "";
-          break;
-        case "roomId":
-          aValue = a.room?.name || a.roomId || "";
-          bValue = b.room?.name || b.roomId || "";
-          break;
-        case "status":
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        case "createdAt":
-          aValue = new Date(a.createdAt);
-          bValue = new Date(b.createdAt);
-          break;
-        default:
-          return 0;
-      }
-
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [searchText, statusFilter, dateRange, sortField, sortDirection]);
-
-  // Dữ liệu phân trang
-  const paginatedData = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return filteredAndSortedData.slice(startIndex, endIndex);
-  }, [filteredAndSortedData, currentPage, pageSize]);
+  // Pagination
+  const paginatedProposals = sortedProposals.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   // Navigation handlers
   const handleViewProposal = (proposal: SoftwareProposal) => {
     router.push(`/qtv-khoa/quan-ly-de-xuat-phan-mem/chi-tiet/${proposal.id}`);
+  };
+
+  // Page change handler
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
   };
 
   // Stats
@@ -182,8 +186,20 @@ export default function QtvKhoaSoftwareProposalsPage() {
     equipped: proposals?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ).length || 0,
   };
 
+  // Show loading state
+  if (loading && proposals.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen">
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
@@ -206,14 +222,22 @@ export default function QtvKhoaSoftwareProposalsPage() {
       />
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Monitor className="h-6 w-6 text-blue-600" />
-          Quản lý đề xuất phần mềm
-        </h1>
-        <p className="mt-2 text-gray-600">
-          Theo dõi các đề xuất cài đặt phần mềm từ giảng viên và kỹ thuật viên.
-        </p>
+      <div className="bg-white shadow rounded-lg p-6 mt-2 mb-4">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Monitor className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Quản lý đề xuất phần mềm
+            </h1>
+            <p className="text-gray-600">
+              Theo dõi các đề xuất cài đặt phần mềm từ giảng viên và kỹ thuật viên.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -300,158 +324,138 @@ export default function QtvKhoaSoftwareProposalsPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm theo mã đề xuất, lý do, người đề xuất..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-          
+      <div className="bg-white p-3 sm:p-4 rounded-lg shadow space-y-3 sm:space-y-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <Input
+            className="col-span-1 sm:col-span-2 lg:col-span-1"
+            placeholder="Nhập mã đề xuất, lý do, người đề xuất..."
+            prefix={<Search className="w-4 h-4" />}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            allowClear
+            size="middle"
+          />
+
           <Select
             placeholder="Chọn trạng thái"
-            className="!h-full"
             value={statusFilter}
             onChange={setStatusFilter}
             allowClear
-          >
+            size="middle"
+            className="w-full">
             <Option value="">Tất cả trạng thái</Option>
-            <Option value={SoftwareProposalStatus.CHỜ_DUYỆT}>
-              Chờ duyệt
-            </Option>
-            <Option value={SoftwareProposalStatus.ĐÃ_DUYỆT}>
-              Đã duyệt
-            </Option>
+            <Option value={SoftwareProposalStatus.CHỜ_DUYỆT}>Chờ duyệt</Option>
+            <Option value={SoftwareProposalStatus.ĐÃ_DUYỆT}>Đã duyệt</Option>
             <Option value={SoftwareProposalStatus.ĐÃ_TỪ_CHỐI}>
               Đã từ chối
+            </Option>
+            <Option value={SoftwareProposalStatus.ĐANG_TRANG_BỊ}>
+              Đang trang bị
             </Option>
             <Option value={SoftwareProposalStatus.ĐÃ_TRANG_BỊ}>
               Đã trang bị
             </Option>
           </Select>
-          
-          <RangePicker
-            placeholder={['Từ ngày', 'Đến ngày']}
-            format="DD/MM/YYYY"
-            value={dateRange}
-            onChange={setDateRange}
-          />
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-8"><Spin /></div>
-        ) : error ? (
-          <div className="p-6"><Empty description={error} /></div>
-        ) : (
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("proposalCode")}
-                >
-                  <div className="flex items-center uppercase space-x-1">
-                    <span>Mã đề xuất</span>
-                    {getSortIcon("proposalCode")}
-                  </div>
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("proposerId")}
-                >
-                  <div className="flex items-center uppercase space-x-1">
-                    <span>Người đề xuất</span>
-                    {getSortIcon("proposerId")}
-                  </div>
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("roomId")}
-                >
-                  <div className="flex items-center uppercase space-x-1">
-                    <span>Phòng</span>
-                    {getSortIcon("roomId")}
-                  </div>
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("status")}
-                >
-                  <div className="flex items-center uppercase space-x-1">
-                    <span>Trạng thái</span>
-                    {getSortIcon("status")}
-                  </div>
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100 group"
-                  onClick={() => handleSort("createdAt")}
-                >
-                  <div className="flex items-center uppercase space-x-1">
-                    <span>Ngày tạo</span>
-                    {getSortIcon("createdAt")}
-                  </div>
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <SortableHeader
+                  field="proposalCode"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
+                  Mã đề xuất
+                </SortableHeader>
+                <SortableHeader
+                  field="proposerId"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
+                  Người đề xuất
+                </SortableHeader>
+                <SortableHeader
+                  field="roomId"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
+                  Phòng
+                </SortableHeader>
+                <SortableHeader
+                  field="status"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
+                  Trạng thái
+                </SortableHeader>
+                <SortableHeader
+                  field="createdAt"
+                  sortField={sortField}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}>
+                  Ngày tạo
+                </SortableHeader>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thao tác
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedData.map((proposal) => {
-                const StatusIcon = softwareProposalStatusConfig[proposal.status].icon;
+              {paginatedProposals.map((proposal) => {
+                const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+                const StatusIcon = statusConfig.icon;
+
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                    <td className="py-4 whitespace-nowrap text-left">
+                      <div
+                        className="text-sm font-medium text-blue-600 cursor-pointer hover:text-blue-800 hover:underline"
+                        onClick={() => handleViewProposal(proposal)}>
                         {proposal.proposalCode}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <User className="h-4 w-4 text-gray-400 mr-2" />
                         <div className="text-sm text-gray-900">
-                          {proposal.proposer?.fullName || proposal.proposerId || 'N/A'}
+                          {getUserName(proposal)}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <Building className="h-4 w-4 text-gray-400 mr-2" />
                         <div className="text-sm text-gray-900">
-                          {proposal.room?.name || proposal.roomId || 'N/A'}
+                          {getRoomName(proposal)}
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${softwareProposalStatusConfig[proposal.status].color}`}>
-                        <StatusIcon className="h-3 w-3 mr-1" />
-                        {softwareProposalStatusConfig[proposal.status].label}
+                    <td className="px-2 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                          statusConfig.color
+                        }`}>
+                        <StatusIcon className="w-3 h-3 mr-1" />
+                        {statusConfig.label}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900">
-                        <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                        {new Date(proposal.createdAt).toLocaleDateString('vi-VN')}
+                        {new Date(proposal.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       <button
-                        title='Xem chi tiết'
+                        title="Xem chi tiết"
                         onClick={() => handleViewProposal(proposal)}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 focus:outline-none"
-                      >
-                        <Eye className="h-4 w-4 items-center" />
+                        className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <Eye className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -460,10 +464,60 @@ export default function QtvKhoaSoftwareProposalsPage() {
             </tbody>
           </table>
         </div>
-        )}
 
-        {!loading && paginatedData.length === 0 && !error && (
-          <div className="text-center py-12">
+        {/* Mobile Card View */}
+        <div className="lg:hidden space-y-4 p-4">
+          {paginatedProposals.map((proposal) => {
+            const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+            const StatusIcon = statusConfig.icon;
+
+            return (
+              <div
+                key={proposal.id}
+                className="border border-gray-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-blue-600 cursor-pointer hover:text-blue-800 hover:underline"
+                        onClick={() => handleViewProposal(proposal)}>
+                      {proposal.proposalCode}
+                    </h3>
+                    <div className="mt-2 space-y-1">
+                      <div className="flex items-center text-xs text-gray-600">
+                        {getUserName(proposal)}
+                      </div>
+                      <div className="flex items-center text-xs text-gray-600">
+                        {getRoomName(proposal)}
+                      </div>
+                      <div className="flex items-center text-xs text-gray-600">
+                        {new Date(proposal.createdAt).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
+                      statusConfig.color
+                    }`}>
+                    <StatusIcon className="w-3 h-3 mr-1" />
+                    {statusConfig.label}
+                  </span>
+                </div>
+                <div className="flex justify-end space-x-2 pt-2 border-t border-gray-200">
+                  <button
+                    onClick={() => handleViewProposal(proposal)}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <Eye className="w-3 h-3 mr-1" />
+                    Chi tiết
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {sortedProposals.length === 0 && !loading && (
+          <div className="text-center py-12 px-4">
             <Monitor className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
               Không có đề xuất nào
@@ -474,19 +528,17 @@ export default function QtvKhoaSoftwareProposalsPage() {
           </div>
         )}
 
-        {!loading && !error && (
-          <Pagination
-            currentPage={currentPage}
-            pageSize={pageSize}
-            total={filteredAndSortedData.length}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
-            showSizeChanger={true}
-            pageSizeOptions={[10, 20, 50, 100]}
-            showQuickJumper={true}
-            showTotal={true}
-          />
-        )}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={sortedProposals.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          showSizeChanger={true}
+          pageSizeOptions={[10, 20, 50, 100]}
+          showQuickJumper={true}
+          showTotal={true}
+        />
       </div>
     </div>
   );

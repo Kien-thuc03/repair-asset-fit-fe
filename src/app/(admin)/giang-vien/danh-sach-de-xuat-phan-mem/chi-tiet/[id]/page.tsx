@@ -8,13 +8,9 @@ import {
   Building,
   Calendar,
   FileText,
-  CheckCircle,
-  XCircle,
-  Clock,
   Package,
   AlertCircle,
   Trash2,
-  Wrench,
 } from "lucide-react";
 import { Breadcrumb, Steps, Divider, Alert } from "antd";
 import { SoftwareProposalStatus, SoftwareProposal } from "@/types/software";
@@ -24,6 +20,7 @@ import {
   ErrorModal,
 } from "@/components/modal";
 import { useSoftwareProposalDetail } from "@/hooks/useSoftwareProposals";
+import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from "@/lib/constants";
 
 // Helper functions to get names from nested objects
 const getUserName = (proposal: SoftwareProposal): string => {
@@ -39,30 +36,6 @@ const getTechnicianName = (proposal: SoftwareProposal): string => {
     proposal.technician?.fullName || proposal.technicianId || "Chưa phân công"
   );
 };
-
-// Config cho trạng thái đề xuất
-const softwareProposalStatusConfig = {
-  [SoftwareProposalStatus.CHỜ_DUYỆT]: {
-    label: "Chờ duyệt",
-    color: "text-yellow-600 bg-yellow-50 border-yellow-200",
-    icon: Clock,
-  },
-  [SoftwareProposalStatus.ĐÃ_DUYỆT]: {
-    label: "Đã duyệt",
-    color: "text-green-600 bg-green-50 border-green-200",
-    icon: CheckCircle,
-  },
-  [SoftwareProposalStatus.ĐÃ_TỪ_CHỐI]: {
-    label: "Đã từ chối",
-    color: "text-red-600 bg-red-50 border-red-200",
-    icon: XCircle,
-  },
-  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
-    label: "Đang trang bị",
-    color: "text-orange-600 bg-orange-50 border-orange-200",
-    icon: Wrench,
-  },
-  [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
     label: "Đã trang bị",
     color: "text-blue-600 bg-blue-50 border-blue-200",
     icon: Monitor,
@@ -148,8 +121,8 @@ export default function SoftwareProposalDetailPage() {
     );
   }
 
-  const StatusIcon =
-    softwareProposalStatusConfig[proposal.status]?.icon || Monitor;
+  const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+  const StatusIcon = statusConfig?.icon || Monitor;
 
   // Helper function to get status step
   const getStatusStep = (status: SoftwareProposalStatus) => {
@@ -215,11 +188,11 @@ export default function SoftwareProposalDetailPage() {
           <div className="flex flex-col items-start lg:items-end gap-2">
             <span
               className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${
-                softwareProposalStatusConfig[proposal.status]?.color ||
+                statusConfig?.color ||
                 "text-gray-600 bg-gray-50 border-gray-200"
               }`}>
               <StatusIcon className="h-4 w-4 mr-1" />
-              {softwareProposalStatusConfig[proposal.status]?.label ||
+              {statusConfig?.label ||
                 proposal.status}
             </span>
             <div className="text-sm text-gray-500 flex items-center gap-1">

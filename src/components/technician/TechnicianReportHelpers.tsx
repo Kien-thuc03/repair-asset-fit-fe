@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, Tag, Steps } from "antd";
-import { CheckCircleOutlined, ClockCircleOutlined, ToolOutlined } from "@ant-design/icons";
 
 const { Step } = Steps;
 
@@ -9,52 +8,62 @@ interface TechnicianReportStepsProps {
 }
 
 export const TechnicianReportSteps: React.FC<TechnicianReportStepsProps> = ({ currentStep }) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const steps = [
     {
       title: "Chọn vị trí",
-      description: "Tòa nhà - Tầng - Phòng máy",
-      icon: <ClockCircleOutlined />,
+      description: isMobile ? undefined : "Tòa nhà - Tầng - Phòng máy",
     },
     {
       title: "Chọn thiết bị",
-      description: "Thiết bị cần xử lý",
-      icon: <ClockCircleOutlined />,
+      description: isMobile ? undefined : "Thiết bị cần xử lý",
     },
     {
       title: "Phân loại lỗi",
-      description: "Phần mềm/Phần cứng & loại lỗi",
-      icon: <ClockCircleOutlined />,
+      description: isMobile ? undefined : "Phần mềm/Phần cứng & loại lỗi",
     },
     {
       title: "Chi tiết lỗi",
-      description: "Linh kiện/Phần mềm cụ thể",
-      icon: <ClockCircleOutlined />,
+      description: isMobile ? undefined : "Linh kiện/Phần mềm cụ thể",
     },
     {
       title: "Mô tả vấn đề",
-      description: "Chi tiết hiện tượng lỗi",
-      icon: <ClockCircleOutlined />,
+      description: isMobile ? undefined : "Chi tiết hiện tượng lỗi",
     },
     {
       title: "Xử lý & kết quả",
-      description: "Phương pháp & ghi chú xử lý",
-      icon: <ToolOutlined />,
+      description: isMobile ? undefined : "Phương pháp & ghi chú xử lý",
     },
     {
       title: "Hoàn tất",
-      description: "Đính kèm ảnh & xác nhận",
-      icon: <CheckCircleOutlined />,
+      description: isMobile ? undefined : "Đính kèm ảnh & xác nhận",
     },
   ];
 
   return (
-    <Card className="mb-5">
-      <Steps current={currentStep} size="small" responsive={false}>
+    <Card className="mb-4 sm:mb-5">
+      <Steps 
+        current={currentStep} 
+        size="small" 
+        direction={isMobile ? "vertical" : "horizontal"}
+        responsive={true}
+        className="w-full"
+      >
         {steps.map((step, index) => (
           <Step
             key={index}
-            title={step.title}
-            description={step.description}
+            title={<span className="text-xs sm:text-sm">{step.title}</span>}
+            description={step.description ? <span className="text-xs hidden sm:inline">{step.description}</span> : undefined}
             status={
               index < currentStep 
                 ? "finish" 

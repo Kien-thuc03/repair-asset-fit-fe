@@ -34,6 +34,7 @@ export default function RepairDetailPage() {
 	// State cho replacement items
 	const [replacementItems, setReplacementItems] = useState<ReplacementItem[]>([])
 	const [loadingReplacementItems, setLoadingReplacementItems] = useState(false)
+	const [isMobile, setIsMobile] = useState(false)
 	const [successModal, setSuccessModal] = useState<{
 		open: boolean
 		title: string
@@ -43,6 +44,16 @@ export default function RepairDetailPage() {
 		title: '',
 		message: ''
 	})
+
+	// Detect mobile device
+	useEffect(() => {
+		const checkMobile = () => {
+			setIsMobile(window.innerWidth <= 768)
+		}
+		checkMobile()
+		window.addEventListener('resize', checkMobile)
+		return () => window.removeEventListener('resize', checkMobile)
+	}, [])
 
 	const openSuccessModal = (title: string, message: string) => {
 		setSuccessModal({ open: true, title, message })
@@ -203,7 +214,7 @@ export default function RepairDetailPage() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4 sm:space-y-6">
 			{/* Breadcrumb */}
 			<Breadcrumb
 				items={[
@@ -234,16 +245,16 @@ export default function RepairDetailPage() {
 			/>
 
 			{/* Header with Status */}
-			<div className="bg-white shadow rounded-lg p-6">
+			<div className="bg-white shadow rounded-lg p-4 sm:p-6">
 				<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-					<div>
-						<h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-							<FileText className="w-8 h-8 text-blue-600" />
-							{currentRequest.requestCode}
+					<div className="flex-1 min-w-0">
+						<h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+							<FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+							<span className="truncate">{currentRequest.requestCode}</span>
 						</h1>
-						<p className="mt-2 text-gray-600 flex items-center gap-2">
-							<Monitor className="w-4 h-4" />
-							{currentRequest.assetName} • {currentRequest.buildingName} - {currentRequest.roomName}
+						<p className="mt-2 text-sm sm:text-base text-gray-600 flex items-center gap-2">
+							<Monitor className="w-4 h-4 flex-shrink-0" />
+							<span className="truncate">{currentRequest.assetName} • {currentRequest.buildingName} - {currentRequest.roomName}</span>
 						</p>
 					</div>
 					<div className="flex flex-col items-start lg:items-end gap-2">
@@ -271,47 +282,44 @@ export default function RepairDetailPage() {
 						current={getCurrentStep(currentRequest.status)}
 						status={getStepsStatus()}
 						size="small"
+						direction={isMobile ? "vertical" : "horizontal"}
+						responsive={true}
+						className="w-full"
 						items={[
 							{
-								title: 'Chờ tiếp nhận',
-								icon: <Clock className="w-4 h-4" />,
-								description: currentRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN 
-									? 'Hiện tại' 
-									: currentRequest.status === RepairStatus.ĐÃ_HỦY && !currentRequest.acceptedAt
-									? 'Đã hủy'
-									: '',
+								title: <span className="text-xs sm:text-sm">Chờ tiếp nhận</span>,
+								icon: <Clock className="w-3 h-3 sm:w-4 sm:h-4" />,
+								description: isMobile 
+									? (currentRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN ? 'Hiện tại' : 
+									   currentRequest.status === RepairStatus.ĐÃ_HỦY && !currentRequest.acceptedAt ? 'Đã hủy' : undefined)
+									: (currentRequest.status === RepairStatus.CHỜ_TIẾP_NHẬN ? 'Hiện tại' : 
+									   currentRequest.status === RepairStatus.ĐÃ_HỦY && !currentRequest.acceptedAt ? 'Đã hủy' : ''),
 								status: currentRequest.status === RepairStatus.ĐÃ_HỦY && !currentRequest.acceptedAt ? 'error' : undefined
 							},
 							{
-								title: 'Đã tiếp nhận',
-								icon: <CheckCircle className="w-4 h-4" />,
-								description: currentRequest.acceptedAt 
-									? new Date(currentRequest.acceptedAt).toLocaleDateString('vi-VN')
-									: currentRequest.status === RepairStatus.ĐÃ_HỦY && currentRequest.acceptedAt
-									? 'Đã hủy'
-									: '',
+								title: <span className="text-xs sm:text-sm">Đã tiếp nhận</span>,
+								icon: <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />,
+								description: isMobile
+									? (currentRequest.acceptedAt ? new Date(currentRequest.acceptedAt).toLocaleDateString('vi-VN') :
+									   currentRequest.status === RepairStatus.ĐÃ_HỦY && currentRequest.acceptedAt ? 'Đã hủy' : undefined)
+									: (currentRequest.acceptedAt ? new Date(currentRequest.acceptedAt).toLocaleDateString('vi-VN') :
+									   currentRequest.status === RepairStatus.ĐÃ_HỦY && currentRequest.acceptedAt ? 'Đã hủy' : ''),
 								status: currentRequest.status === RepairStatus.ĐÃ_HỦY && currentRequest.acceptedAt && !currentRequest.completedAt ? 'error' : undefined
 							},
 							{
-								title: 'Đang xử lý',
-								icon: <Settings className="w-4 h-4" />,
-								description: currentRequest.status === RepairStatus.ĐANG_XỬ_LÝ 
-									? 'Hiện tại' 
-									: ''
+								title: <span className="text-xs sm:text-sm">Đang xử lý</span>,
+								icon: <Settings className="w-3 h-3 sm:w-4 sm:h-4" />,
+								description: currentRequest.status === RepairStatus.ĐANG_XỬ_LÝ ? 'Hiện tại' : (isMobile ? undefined : '')
 							},
 							{
-								title: 'Chờ thay thế',
-								icon: <Package className="w-4 h-4" />,
-								description: currentRequest.status === RepairStatus.CHỜ_THAY_THẾ 
-									? 'Hiện tại' 
-									: ''
+								title: <span className="text-xs sm:text-sm">Chờ thay thế</span>,
+								icon: <Package className="w-3 h-3 sm:w-4 sm:h-4" />,
+								description: currentRequest.status === RepairStatus.CHỜ_THAY_THẾ ? 'Hiện tại' : (isMobile ? undefined : '')
 							},
 							{
-								title: 'Hoàn thành',
-								icon: <CheckCircle className="w-4 h-4" />,
-								description: currentRequest.completedAt 
-									? new Date(currentRequest.completedAt).toLocaleDateString('vi-VN') 
-									: ''
+								title: <span className="text-xs sm:text-sm">Hoàn thành</span>,
+								icon: <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />,
+								description: currentRequest.completedAt ? new Date(currentRequest.completedAt).toLocaleDateString('vi-VN') : (isMobile ? undefined : '')
 							}
 						]}
 					/>
@@ -350,16 +358,16 @@ export default function RepairDetailPage() {
 			</div>
 
 			{/* Main Content */}
-			<div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-				<div className="xl:col-span-2 space-y-6">
+			<div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-3">
+				<div className="xl:col-span-2 space-y-4 sm:space-y-6">
 					{/* Enhanced Info Card */}
 					<Card title={
 						<div className="flex items-center gap-2">
-							<Info className="w-5 h-5 text-blue-600" />
-							<span>Thông tin báo lỗi</span>
+							<Info className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+							<span className="text-sm sm:text-base">Thông tin báo lỗi</span>
 						</div>
 					}>
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
 							<div className="space-y-4">
 								<div>
 									<p className="text-sm font-medium text-gray-500 mb-1">Người báo lỗi</p>

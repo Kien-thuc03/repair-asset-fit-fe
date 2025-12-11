@@ -194,7 +194,7 @@ export default function ComponentReplacementSection({
 					</Tag>
 				</div>
 			}
-			className="shadow-lg border-2 border-blue-100"
+			className="border-2 border-blue-100"
 		>
 			{allReplaced ? (
 				<Alert
@@ -206,23 +206,6 @@ export default function ComponentReplacementSection({
 				/>
 			) : (
 				<>
-					<Alert
-						message="Linh kiện đã sẵn sàng để thay thế"
-						description={
-							<div className="mt-2">
-								<p className="mb-1">Vui lòng thực hiện thay thế linh kiện cho các linh kiện trong danh sách bên dưới.</p>
-								<ul className="list-disc list-inside text-sm space-y-1 text-gray-600">
-									<li>Linh kiện cũ sẽ được chuyển sang trạng thái <strong>REMOVED</strong></li>
-									<li>Linh kiện mới sẽ có trạng thái <strong>INSTALLED</strong></li>
-									<li>Hệ thống sẽ tự động cập nhật thời gian và log liên quan</li>
-									<li>Khi hoàn thành tất cả linh kiện, YCSC sẽ tự động chuyển sang trạng thái <strong>ĐÃ_HOÀN_THÀNH</strong></li>
-								</ul>
-							</div>
-						}
-						type="info"
-						icon={<Info className="w-5 h-5" />}
-						className="mb-6"
-					/>
 					<div className="space-y-4">
 						{displayItems.map((item) => {
 							const isReplacing = replacingItemId === item.id
