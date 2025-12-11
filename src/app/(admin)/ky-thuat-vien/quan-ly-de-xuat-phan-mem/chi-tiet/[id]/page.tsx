@@ -10,7 +10,10 @@ import {
   Calendar,
   FileText,
   Package,
-  AlertCircle
+  AlertCircle,
+  CheckCircle,
+  Wrench,
+  XCircle
 } from 'lucide-react';
 import { Breadcrumb, Button, Modal, Form, Input, message, Spin } from 'antd';
 import { SoftwareProposalStatus, SoftwareProposalItem, SoftwareProposal } from '@/types/software';
@@ -20,27 +23,7 @@ import { completeSoftwareProposal, CompleteSoftwareProposalRequest } from '@/lib
 import { getComputersByRoomId } from '@/lib/api/computers';
 import { useAuth } from '@/contexts/AuthContext';
 import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from '@/lib/constants';
-  [SoftwareProposalStatus.ĐÃ_DUYỆT]: {
-    label: 'Đã duyệt',
-    color: 'text-green-600 bg-green-50 border-green-200',
-    icon: CheckCircle
-  },
-  [SoftwareProposalStatus.ĐÃ_TỪ_CHỐI]: {
-    label: 'Đã từ chối',
-    color: 'text-red-600 bg-red-50 border-red-200',
-    icon: XCircle
-  },
-  [SoftwareProposalStatus.ĐANG_TRANG_BỊ]: {
-    label: 'Đang trang bị',
-    color: 'text-orange-600 bg-orange-50 border-orange-200',
-    icon: Wrench
-  },
-  [SoftwareProposalStatus.ĐÃ_TRANG_BỊ]: {
-    label: 'Đã trang bị',
-    color: 'text-blue-600 bg-blue-50 border-blue-200',
-    icon: Monitor
-  }
-};
+
 
 
 export default function SoftwareProposalDetailPage() {
