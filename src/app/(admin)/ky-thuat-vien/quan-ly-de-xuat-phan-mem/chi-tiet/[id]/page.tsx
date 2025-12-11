@@ -358,10 +358,6 @@ export default function SoftwareProposalDetailPage() {
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Số lượng</p>
-                    <p className="font-medium text-gray-900">{item.quantity}</p>
-                  </div>
                 </div>
               ))}
               {proposalItems.length === 0 && (
