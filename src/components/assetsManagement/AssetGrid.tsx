@@ -7,11 +7,13 @@ import DeviceCard from "./AssetCard";
 interface DeviceGridProps {
   assets: Asset[] | DeviceAsset[];
   onViewDetail: (assetId: string) => void;
+  onShowQR?: (asset: DeviceAsset) => void;
 }
 
 export default function DeviceGrid({
   assets,
   onViewDetail,
+  onShowQR,
 }: DeviceGridProps) {
   return (
     <>
@@ -34,6 +36,7 @@ export default function DeviceGrid({
                 key={asset.id}
                 asset={asset}
                 onViewDetail={onViewDetail}
+                onShowQR={onShowQR}
               />
             ))}
           </div>

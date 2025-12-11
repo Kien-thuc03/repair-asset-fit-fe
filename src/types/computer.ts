@@ -315,6 +315,7 @@ export interface GetComputersParams {
  */
 export interface DeviceAsset {
   id: string;
+  computerId?: string;
   ktCode: string;
   name: string;
   category: string;
