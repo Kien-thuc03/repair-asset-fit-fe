@@ -36,7 +36,8 @@ import {
   Select, 
   Radio, 
   Alert, 
-  message 
+  message, 
+  Modal 
 } from "antd";
 import { DeleteOutlined, CameraOutlined, ScanOutlined } from "@ant-design/icons";
 
@@ -83,6 +84,10 @@ export default function GhiNhanXuLyLoiPage() {
   const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>([]);
   const [selectedSoftwareIds, setSelectedSoftwareIds] = useState<string[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDamagedModal, setShowDamagedModal] = useState(false);
+  const [damagedMessage, setDamagedMessage] = useState("");
+  const [showUnassignedModal, setShowUnassignedModal] = useState(false);
+  const [unassignedMessage, setUnassignedMessage] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [isLoadingQRData, setIsLoadingQRData] = useState(false);
@@ -478,19 +483,21 @@ export default function GhiNhanXuLyLoiPage() {
 
       const { data } = repairInfo;
 
-      // Check if computer has active repair
-      if (data.hasActiveRepair) {
-        message.warning(
-          `Máy này đang có yêu cầu sửa chữa chưa hoàn thành (${data.activeRepairInfo?.requestCode}). Vui lòng chọn máy khác.`
-        );
+      // Ưu tiên cảnh báo hư hỏng trước
+      if (data.asset.status === AssetStatus.DAMAGED) {
+        const warningText = `Thiết bị ${data.asset.name} (${data.asset.ktCode}) đang được đánh dấu hư hỏng. Vui lòng chọn máy khác hoặc kiểm tra yêu cầu sửa chữa hiện có.`;
+        message.warning(warningText);
+        setDamagedMessage(warningText);
+        setShowDamagedModal(true);
         setIsLoadingQRData(false);
+        setShowQRScanner(false);
         return;
       }
 
-      // Nếu tài sản đang ở trạng thái hư hỏng, thông báo và dừng
-      if (data.asset.status === AssetStatus.DAMAGED) {
+      // Sau đó cảnh báo nếu đã có yêu cầu sửa chữa đang mở
+      if (data.hasActiveRepair) {
         message.warning(
-          `Thiết bị ${data.asset.name} (${data.asset.ktCode}) đang được đánh dấu hư hỏng. Vui lòng chọn máy khác hoặc kiểm tra yêu cầu sửa chữa hiện có.`
+          `Máy này đang có yêu cầu sửa chữa chưa hoàn thành (${data.activeRepairInfo?.requestCode}). Vui lòng chọn máy khác.`
         );
         setIsLoadingQRData(false);
         return;
@@ -503,16 +510,29 @@ export default function GhiNhanXuLyLoiPage() {
         return;
       }
 
+      // Nếu kỹ thuật viên chưa được phân công tầng này, chặn thao tác quét
+      if (assignedFloorsLoaded && assignedFloors.length === 0) {
+        const warningText = "Bạn chưa được phân công tầng này. Vui lòng liên hệ quản trị để được phân công trước khi ghi nhận.";
+        message.warning(warningText);
+        setUnassignedMessage(warningText);
+        setShowUnassignedModal(true);
+        setIsLoadingQRData(false);
+        setShowQRScanner(false);
+        return;
+      }
+
       // Bước 2: Kiểm tra xem building/floor có trong assignedFloors không
       const isFloorAssigned = assignedFloors.some(
         (assigned) => assigned.building === data.room.building && assigned.floor === data.room.floor
       );
 
-      if (!isFloorAssigned && assignedFloors.length > 0) {
-        message.warning(
-          `Tầng ${data.room.floor} của tòa nhà ${data.room.building} không thuộc phạm vi được phân công của bạn.`
-        );
+      if (!isFloorAssigned) {
+        const warningText = `Tầng ${data.room.floor} của tòa nhà ${data.room.building} không thuộc phạm vi được phân công của bạn.`;
+        message.warning(warningText);
+        setUnassignedMessage(warningText);
+        setShowUnassignedModal(true);
         setIsLoadingQRData(false);
+        setShowQRScanner(false);
         return;
       }
 
@@ -657,6 +677,28 @@ export default function GhiNhanXuLyLoiPage() {
     // Validate computerId is available for replacement
     if (!selectedComputerId && formData.repairMethod === 'need_replacement' && Object.keys(replacementMapping).length > 0) {
       message.error("Không thể xác định máy tính để thay thế linh kiện. Vui lòng thử lại.");
+      return;
+    }
+
+    // Không cho gửi khi chưa tải xong thông tin phân công
+    if (!assignedFloorsLoaded) {
+      message.warning("Đang tải thông tin phân công. Vui lòng thử lại sau khi tải xong.");
+      return;
+    }
+
+    // Chặn gửi nếu không có bất kỳ tầng/phòng nào được phân công
+    if (assignedFloors.length === 0) {
+      message.error("Bạn chưa được phân công tầng/phòng nào nên không thể ghi nhận xử lý.");
+      return;
+    }
+
+    // Đảm bảo vị trí hiện tại nằm trong phạm vi phân công
+    const isAssignedLocation = assignedFloors.some(
+      (assigned) => assigned.building === formData.building && assigned.floor === formData.floor
+    );
+
+    if (!isAssignedLocation) {
+      message.error(`Vị trí ${formData.building} - ${formData.floor} không thuộc phạm vi được phân công của bạn.`);
       return;
     }
 
@@ -1493,6 +1535,30 @@ export default function GhiNhanXuLyLoiPage() {
         title="Ghi nhận xử lý lỗi thành công!"
         message="Thông tin xử lý lỗi đã được ghi nhận vào hệ thống. Yêu cầu sẽ được cập nhật trạng thái tương ứng và thông báo đến người báo lỗi."
       />
+
+      {/* Cảnh báo thiết bị đang bị lỗi */}
+      <Modal
+        open={showDamagedModal}
+        title="Thiết bị đang bị lỗi"
+        okText="Đã hiểu"
+        cancelButtonProps={{ style: { display: "none" } }}
+        onOk={() => setShowDamagedModal(false)}
+        onCancel={() => setShowDamagedModal(false)}
+      >
+        <p>{damagedMessage}</p>
+      </Modal>
+
+      {/* Cảnh báo quét/ghi nhận ngoài phạm vi phân công */}
+      <Modal
+        open={showUnassignedModal}
+        title="Ngoài phạm vi được phân công"
+        okText="Đã hiểu"
+        cancelButtonProps={{ style: { display: "none" } }}
+        onOk={() => setShowUnassignedModal(false)}
+        onCancel={() => setShowUnassignedModal(false)}
+      >
+        <p>{unassignedMessage}</p>
+      </Modal>
 
       {/* QR Scanner Modal */}
       <QRScanner
