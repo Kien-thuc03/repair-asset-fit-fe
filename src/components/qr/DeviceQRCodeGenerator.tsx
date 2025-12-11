@@ -23,7 +23,21 @@ interface QRCodeData {
   qrCodeImage: string;
 }
 
-export default function MaQRThietBiPage() {
+interface DeviceQRCodeGeneratorProps {
+  homeHref?: string;
+  homeLabel?: string;
+  pageTitle?: string;
+  pageSubtitle?: string;
+  breadcrumbLabel?: string;
+}
+
+export default function DeviceQRCodeGenerator({
+  homeHref = "/giang-vien",
+  homeLabel = "Trang chủ",
+  pageTitle = "Tạo mã QR cho thiết bị",
+  pageSubtitle = "Tạo mã QR để quét và báo lỗi nhanh chóng trên thiết bị di động",
+  breadcrumbLabel = "Mã QR thiết bị",
+}: DeviceQRCodeGeneratorProps) {
   const [rooms, setRooms] = useState<RoomResponseDto[]>([]);
   const [buildings, setBuildings] = useState<string[]>([]);
   const [filteredFloors, setFilteredFloors] = useState<string[]>([]);
@@ -280,11 +294,11 @@ export default function MaQRThietBiPage() {
         <Breadcrumb
           items={[
             {
-              href: "/giang-vien",
-              title: <span>Trang chủ</span>,
+              href: homeHref,
+              title: <span>{homeLabel}</span>,
             },
             {
-              title: <span>Mã QR thiết bị</span>,
+              title: <span>{breadcrumbLabel}</span>,
             },
           ]}
         />
@@ -293,11 +307,9 @@ export default function MaQRThietBiPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold text-blue-900 mb-2">
-          Tạo mã QR cho thiết bị
+          {pageTitle}
         </h1>
-        <p className="text-sm sm:text-base text-gray-600">
-          Tạo mã QR để quét và báo lỗi nhanh chóng trên thiết bị di động
-        </p>
+        <p className="text-sm sm:text-base text-gray-600">{pageSubtitle}</p>
       </div>
 
       {/* Instructions Card */}
@@ -516,3 +528,4 @@ export default function MaQRThietBiPage() {
     </div>
   );
 }
+
