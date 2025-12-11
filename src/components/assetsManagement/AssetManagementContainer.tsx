@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Breadcrumb, message } from "antd";
+import { Breadcrumb, message, Modal, Button } from "antd";
+import { DownloadOutlined, PrinterOutlined, QrcodeOutlined } from "@ant-design/icons";
 import Pagination from "@/components/common/Pagination";
 import {
   DeviceManagementHeader,
@@ -12,6 +13,7 @@ import {
 import { useComputers } from "@/hooks";
 import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
 import { getAssignedFloors, AssignedFloor } from "@/lib/api/repairs";
+import { api } from "@/lib/api";
 import type { Computer, DeviceAsset } from "@/types/computer";
 
 /**
@@ -21,6 +23,7 @@ import type { Computer, DeviceAsset } from "@/types/computer";
 const convertComputerToDeviceAsset = (computer: Computer): DeviceAsset => {
   return {
     id: computer.asset.id,
+    computerId: computer.id,
     ktCode: computer.asset.ktCode,
     name: computer.asset.name,
     category: computer.asset.categoryName || "Máy tính",
@@ -62,6 +65,15 @@ export default function TechnicianDeviceManagementContainer() {
   const [floorFilter, setFloorFilter] = useState<string>("");
   const [roomFilter, setRoomFilter] = useState<string>("");
   const [isMobile, setIsMobile] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrData, setQrData] = useState<{
+    qrCodeImage: string;
+    ktCode: string;
+    assetName: string;
+    machineLabel?: string;
+    roomName?: string;
+  } | null>(null);
 
   // Pagination state (managed by API)
   const [currentPage, setCurrentPage] = useState(1);
@@ -78,7 +90,6 @@ export default function TechnicianDeviceManagementContainer() {
 
   // Check if current user is a technician (not team lead)
   const isTechnician = pathname.includes("/ky-thuat-vien/") && !pathname.includes("/to-truong-ky-thuat/");
-  const isTeamLead = pathname.includes("/to-truong-ky-thuat/");
   const hasAssignments = isTechnician && assignedFloors.length > 0;
 
   const technicianRooms = useMemo(() => {
@@ -143,6 +154,125 @@ export default function TechnicianDeviceManagementContainer() {
 
   const statsAssets = hasAssignments ? filteredDeviceAssets : deviceAssets;
   const statsSummary = !hasAssignments && !hasActiveFilters ? summary : null;
+
+  // QR helpers
+  const handleShowQR = async (asset: DeviceAsset) => {
+    if (!asset.computerId) {
+      message.warning("Không xác định được máy để tạo QR");
+      return;
+    }
+    setQrLoading(true);
+    try {
+      const response = await api.get<string>(
+        `/computer/${asset.computerId}/qr-code`
+      );
+      setQrData({
+        qrCodeImage: response.data,
+        ktCode: asset.ktCode,
+        assetName: asset.name,
+        machineLabel: asset.machineLabel,
+        roomName: asset.roomName,
+      });
+      setQrModalOpen(true);
+    } catch (error) {
+      message.error("Không thể tạo/hiển thị mã QR");
+      console.error("QR error:", error);
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const handleDownloadQR = () => {
+    if (!qrData) return;
+    const link = document.createElement("a");
+    link.href = qrData.qrCodeImage;
+    link.download = `QR_May${qrData.machineLabel || qrData.ktCode}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrintQR = () => {
+    if (!qrData) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      message.error("Không thể mở cửa sổ in");
+      return;
+    }
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>In mã QR - ${qrData.machineLabel || qrData.ktCode}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              margin: 0;
+              padding: 20px;
+            }
+            .qr-container {
+              text-align: center;
+              border: 2px solid #333;
+              padding: 30px;
+              border-radius: 8px;
+              max-width: 400px;
+            }
+            .qr-title {
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 10px;
+              color: #1890ff;
+            }
+            .qr-info {
+              font-size: 14px;
+              margin-bottom: 20px;
+              color: #666;
+            }
+            .qr-image {
+              margin: 20px 0;
+            }
+            .qr-footer {
+              font-size: 12px;
+              color: #999;
+              margin-top: 20px;
+            }
+            @media print {
+              body {
+                background: white;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="qr-container">
+            <div class="qr-title">MÃ QR THIẾT BỊ</div>
+            <div class="qr-info">
+              <p><strong>Máy số:</strong> ${qrData.machineLabel || "N/A"}</p>
+              <p><strong>Thiết bị:</strong> ${qrData.assetName}</p>
+              <p><strong>Mã KT:</strong> ${qrData.ktCode}</p>
+              <p><strong>Phòng:</strong> ${qrData.roomName || "N/A"}</p>
+            </div>
+            <div class="qr-image">
+              <img src="${qrData.qrCodeImage}" alt="QR Code" style="width: 250px; height: 250px;" />
+            </div>
+            <div class="qr-footer">
+              Quét mã QR để báo cáo lỗi thiết bị
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 400);
+  };
 
   // Inject CSS vào head để xử lý scrollbar cho toàn trang
   useEffect(() => {
@@ -528,7 +658,11 @@ export default function TechnicianDeviceManagementContainer() {
 
       {/* Device Grid */}
       {!loading && !loadingAssignments && !error && (
-        <DeviceGrid assets={deviceAssets} onViewDetail={handleViewDetail} />
+        <DeviceGrid
+          assets={deviceAssets}
+          onViewDetail={handleViewDetail}
+          onShowQR={handleShowQR}
+        />
       )}
 
       {/* Pagination */}
@@ -547,6 +681,66 @@ export default function TechnicianDeviceManagementContainer() {
           />
         </div>
       )}
+
+      {/* QR Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <QrcodeOutlined />
+            <span>Mã QR thiết bị</span>
+          </div>
+        }
+        open={qrModalOpen}
+        onCancel={() => setQrModalOpen(false)}
+        footer={[
+          <Button key="download" icon={<DownloadOutlined />} onClick={handleDownloadQR} disabled={!qrData}>
+            Tải xuống
+          </Button>,
+          <Button
+            key="print"
+            type="primary"
+            icon={<PrinterOutlined />}
+            onClick={handlePrintQR}
+            disabled={!qrData}
+          >
+            In mã QR
+          </Button>,
+        ]}
+        centered
+        width={500}
+        confirmLoading={qrLoading}
+      >
+        {qrData ? (
+          <div className="text-center py-3">
+            <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-600 mb-1">
+                <strong>Máy số:</strong> {qrData.machineLabel || "N/A"}
+              </p>
+              <p className="text-sm text-gray-600 mb-1">
+                <strong>Thiết bị:</strong> {qrData.assetName}
+              </p>
+              <p className="text-sm text-gray-600 mb-1">
+                <strong>Mã KT:</strong> {qrData.ktCode}
+              </p>
+              <p className="text-sm text-gray-600">
+                <strong>Phòng:</strong> {qrData.roomName || "N/A"}
+              </p>
+            </div>
+            <div className="flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrData.qrCodeImage}
+                alt="QR Code"
+                className="border-2 border-gray-300 rounded-lg p-2"
+                width={280}
+                height={280}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-6 text-gray-500">Đang tải mã QR...</div>
+        )}
+      </Modal>
     </div>
   );
 }
