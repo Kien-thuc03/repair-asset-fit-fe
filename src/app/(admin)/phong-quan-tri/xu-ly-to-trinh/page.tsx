@@ -463,7 +463,7 @@ export default function XuLyToTrinhPage() {
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}
-                    className="w-[17%]">
+                    className="w-[15%]">
                     Người tạo
                   </SortableHeader>
                   <SortableHeader<ReplacementProposal>
@@ -471,7 +471,7 @@ export default function XuLyToTrinhPage() {
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}
-                    className="w-[8%]">
+                    className="w-[10%]">
                     Số lượng
                   </SortableHeader>
                   <SortableHeader<ReplacementProposal>
@@ -479,7 +479,7 @@ export default function XuLyToTrinhPage() {
                     sortField={sortField}
                     sortDirection={sortDirection}
                     onSort={handleSort}
-                    className="w-[12%]">
+                    className="w-[15%]">
                     Trạng thái
                   </SortableHeader>
                   <SortableHeader<ReplacementProposal>

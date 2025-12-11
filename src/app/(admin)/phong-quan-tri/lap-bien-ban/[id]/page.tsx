@@ -67,7 +67,7 @@ export default function RequestDetailPage() {
   // Update status hook
   const { updateStatus } = useUpdateReplacementProposalStatus();
 
-  // Tự động điền thông tin người quản trị từ proposal hoặc user hiện tại
+  // Tự động điền thông tin người quản trị và vị trí từ proposal hoặc user hiện tại
   useEffect(() => {
     if (proposal) {
       setInspectionFormData((prev) => ({
@@ -76,6 +76,10 @@ export default function RequestDetailPage() {
           proposal.adminVerifier?.fullName ||
           user?.fullName ||
           prev.adminRep ||
+          "",
+        location:
+          proposal.items?.[0]?.oldComponent?.roomLocation ||
+          prev.location ||
           "",
       }));
     }
@@ -297,16 +301,16 @@ export default function RequestDetailPage() {
             .header-table td { border: none; padding: 0; vertical-align: top; font-size: 11pt; text-align: center; }
             .title { text-align: center; font-weight: bold; font-size: 16pt; margin: 12px 0 4px 0; }
             .subtitle { text-align: center; font-weight: bold; font-size: 13pt; color: #0056b3; margin: 4px 0 14px 0; }
-            .info { margin: 4px 0; }
-            .list { margin: 2px 0 10px 0; }
+            .info { margin: 4px 0; font-size: 13pt; }
+            .list { margin: 2px 0 10px 0; font-size: 13pt; }
             .data-table { width: 100%; border-collapse: collapse; margin: 14px 0; }
-            .data-table th, .data-table td { border: 1px solid #000; padding: 6px 8px; font-size: 12pt; }
+            .data-table th, .data-table td { border: 1px solid #000; padding: 6px 8px; font-size: 13pt; }
             .data-table th { text-align: center; font-weight: bold; }
             .signature-table { width: 100%; border: none; margin-top: 20px; }
-            .signature-table td { border: none; text-align: center; padding: 10px 4px; vertical-align: top; }
+            .signature-table td { border: none; text-align: center; padding: 10px 4px; vertical-align: top; font-size: 13pt; }
             .small { font-size: 11pt; }
-            .center { text-align: center; }
-            .note { margin-top: 12px; }
+            .center { text-align: center; font-size: 13pt; }
+            .note { margin-top: 12px; font-size: 13pt; }
             .no-break { page-break-inside: avoid; break-inside: avoid; }
           </style>
         </head>
@@ -339,13 +343,17 @@ export default function RequestDetailPage() {
           <p class="info"><strong>Căn cứ đề nghị của:</strong> ${
             formData.requestedBy || "Khoa CNTT"
           } &nbsp; Năm ${formData.year || "2025"}</p>
-          <p class="info"><strong>Hôm nay, lúc</strong> ____h, <strong>ngày</strong> ${
+          <p class="info"><strong>Hôm nay, lúc ____giờ</strong>, <strong>ngày</strong> ${
             formData.inspectionDay || "__"
           } <strong>tháng</strong> ${
       formData.inspectionMonth || "__"
-    } <strong>năm</strong> ${formData.inspectionYear || "2025"}.</p>
+    } <strong>năm</strong> <strong>${
+      formData.inspectionYear || "2025"
+    }.</strong></p>
           <p class="info"><strong>Tại vị trí:</strong> ${
-            formData.location || "H8.01"
+            proposalData.items?.[0]?.oldComponent?.roomLocation ||
+            formData.location ||
+            "H8.01"
           }</p>
 
           <p class="info"><strong>Chúng tôi gồm:</strong></p>

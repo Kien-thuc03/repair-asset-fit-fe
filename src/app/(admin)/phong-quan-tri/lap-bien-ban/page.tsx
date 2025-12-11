@@ -573,7 +573,7 @@ export default function LapBienBanPage() {
                             <button
                               title="Xem chi tiết biên bản"
                               onClick={() => handleViewReport(proposal.id)}
-                              className="text-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                              className="ml-4 text-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                               <Eye className="w-3 h-3 mr-1" />
                             </button>
                           </td>
