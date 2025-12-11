@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -13,12 +13,13 @@ import {
 } from "@/types";
 import { AssetStatus } from "@/types/computer";
 import { AlertCircle } from "lucide-react";
-import { getRoomsApi, RoomResponseDto } from "@/lib/api/rooms";
-import { getComputersByRoomId, ComputerResponseDto } from "@/lib/api/computers";
+import { getRoomsApi, RoomResponseDto, RoomStatus } from "@/lib/api/rooms";
+import { getComputersByRoomId, ComputerResponseDto, getComputerRepairInfo, ComputerRepairInfoResponse } from "@/lib/api/computers";
 import { getComponentsByComputerId, getStockComponents, StockComponentDto, replaceComponent } from "@/lib/api/components";
 import { getSoftwareByAssetId } from "@/lib/api/asset-software";
 import { createAndProcessRepair, CreateAndProcessRepairRequest, getAssignedFloors, AssignedFloor } from "@/lib/api/repairs";
 import { useProfile } from "@/hooks";
+import QRScanner from "@/components/common/QRScanner";
 import {
   getHardwareErrorTypes,
   getErrorTypeByKey,
@@ -83,6 +84,8 @@ export default function GhiNhanXuLyLoiPage() {
   const [selectedSoftwareIds, setSelectedSoftwareIds] = useState<string[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [isLoadingQRData, setIsLoadingQRData] = useState(false);
   // State cho linh kiện trong kho và mapping thay thế
   const [stockComponents, setStockComponents] = useState<StockComponentDto[]>([]);
   const [replacementMapping, setReplacementMapping] = useState<Record<string, string>>({}); // oldComponentId -> newComponentId
@@ -96,30 +99,40 @@ export default function GhiNhanXuLyLoiPage() {
 
   // Extract unique buildings - CHỈ lấy từ assignedFloors sau khi đã load xong
   // Không sử dụng fallback từ rooms để tránh hiển thị tầng không được phân công
-  const buildings = assignedFloorsLoaded
-    ? Array.from(
-        new Set(assignedFloors.map((floor) => floor.building).filter(Boolean))
-      )
-    : [];
+  // Sử dụng useMemo để đảm bảo tính toán lại khi assignedFloors hoặc formData.building thay đổi
+  const buildings = useMemo(() => {
+    if (!assignedFloorsLoaded) return [];
+    const buildingsList = Array.from(
+      new Set(assignedFloors.map((floor) => floor.building).filter(Boolean))
+    );
+    // Nếu formData.building đã được set nhưng không có trong danh sách, thêm vào
+    if (formData.building && !buildingsList.includes(formData.building)) {
+      return [formData.building, ...buildingsList];
+    }
+    return buildingsList;
+  }, [assignedFloorsLoaded, assignedFloors, formData.building]);
 
   // Computed: Lấy floors được phân công cho building hiện tại
   // CHỈ lấy từ assignedFloors, không fallback về rooms
-  const getAvailableFloorsForBuilding = (building: string): string[] => {
-    if (!building || !assignedFloorsLoaded) return [];
+  // Sử dụng useMemo để đảm bảo tính toán lại khi formData.building thay đổi
+  const availableFloors = useMemo(() => {
+    if (!formData.building || !assignedFloorsLoaded) return [];
     
     // Chỉ lấy floors được phân công cho building này
-    return Array.from(
+    const floorsList = Array.from(
       new Set(
         assignedFloors
-          .filter((floor) => floor.building === building)
+          .filter((floor) => floor.building === formData.building)
           .map((floor) => floor.floor)
           .filter(Boolean)
       )
     );
-  };
-
-  // Computed: Floors có sẵn cho building hiện tại
-  const availableFloors = getAvailableFloorsForBuilding(formData.building);
+    // Nếu formData.floor đã được set nhưng không có trong danh sách, thêm vào
+    if (formData.floor && !floorsList.includes(formData.floor)) {
+      return [formData.floor, ...floorsList];
+    }
+    return floorsList;
+  }, [assignedFloorsLoaded, assignedFloors, formData.building, formData.floor]);
 
   // Fetch assigned floors and rooms for technician
   useEffect(() => {
@@ -326,39 +339,11 @@ export default function GhiNhanXuLyLoiPage() {
     }
   };
 
-  // Handle asset change
-  const handleAssetChange = async (computerId: string) => {
-    setSelectedComponentIds([]);
-    setSelectedSoftwareIds([]);
-
+  // Helper function to load components and software for a computer
+  const loadComputerData = async (computerId: string, selectedComputer: ComputerResponseDto) => {
     // Reset components and software first
     setFilteredComponents([]);
     setFilteredSoftware([]);
-
-    // Find the selected computer to get its details
-    const selectedComputer = filteredComputers.find(
-      (comp) => comp.id === computerId
-    );
-
-    if (!selectedComputer) {
-      message.error("Không tìm thấy máy tính được chọn");
-      return;
-    }
-
-    // Check if computer has asset
-    if (!selectedComputer.asset?.id) {
-      message.error("Máy tính này chưa được gán tài sản");
-      return;
-    }
-
-    // Store asset.id instead of computer.id
-    setFormData((prev) => ({
-      ...prev,
-      assetId: selectedComputer.asset!.id, // Use asset.id for backend
-    }));
-
-    // Store computer.id for loading components
-    setSelectedComputerId(computerId);
 
     // Fetch components for the selected computer using computer ID
     try {
@@ -388,24 +373,60 @@ export default function GhiNhanXuLyLoiPage() {
     }
 
     // Fetch software using asset ID
-    try {
-      const softwareList = await getSoftwareByAssetId(
-        selectedComputer.asset.id
-      );
+    if (selectedComputer.asset?.id) {
+      try {
+        const softwareList = await getSoftwareByAssetId(
+          selectedComputer.asset.id
+        );
 
-      // Map SoftwareDto to Software interface
-      const mappedSoftware: Software[] = softwareList.map((sw) => ({
-        id: sw.softwareId,
-        name: sw.name,
-        version: sw.version,
-        publisher: sw.publisher,
-        createdAt: sw.installationDate,
-      }));
-      setFilteredSoftware(mappedSoftware);
-    } catch {
-      message.error("Không thể tải danh sách phần mềm");
-      setFilteredSoftware([]);
+        // Map SoftwareDto to Software interface
+        const mappedSoftware: Software[] = softwareList.map((sw) => ({
+          id: sw.softwareId,
+          name: sw.name,
+          version: sw.version,
+          publisher: sw.publisher,
+          createdAt: sw.installationDate,
+        }));
+        setFilteredSoftware(mappedSoftware);
+      } catch {
+        message.error("Không thể tải danh sách phần mềm");
+        setFilteredSoftware([]);
+      }
     }
+  };
+
+  // Handle asset change
+  const handleAssetChange = async (computerId: string) => {
+    setSelectedComponentIds([]);
+    setSelectedSoftwareIds([]);
+
+    // Find the selected computer to get its details
+    const selectedComputer = filteredComputers.find(
+      (comp) => comp.id === computerId
+    );
+
+    if (!selectedComputer) {
+      message.error("Không tìm thấy máy tính được chọn");
+      return;
+    }
+
+    // Check if computer has asset
+    if (!selectedComputer.asset?.id) {
+      message.error("Máy tính này chưa được gán tài sản");
+      return;
+    }
+
+    // Store asset.id instead of computer.id
+    setFormData((prev) => ({
+      ...prev,
+      assetId: selectedComputer.asset!.id, // Use asset.id for backend
+    }));
+
+    // Store computer.id for loading components
+    setSelectedComputerId(computerId);
+
+    // Load components and software
+    await loadComputerData(computerId, selectedComputer);
   };
 
   // Handle error category change
@@ -421,10 +442,191 @@ export default function GhiNhanXuLyLoiPage() {
     setSelectedSoftwareIds([]);
   };
 
-  // Handle QR scan (simulation)
-  const simulateQRScan = async () => {
-    // This would open camera in real app
-    message.info("Chức năng quét QR đang được phát triển");
+  // Handle QR scan success
+  const handleQRScanSuccess = async (decodedText: string) => {
+    try {
+      setIsLoadingQRData(true);
+
+      // Parse QR code data
+      let qrData: { type: string; computerId: string; timestamp?: string };
+      try {
+        qrData = JSON.parse(decodedText);
+      } catch {
+        message.error("Mã QR không hợp lệ. Vui lòng quét lại.");
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Validate QR data
+      if (qrData.type !== "REPAIR_REQUEST" || !qrData.computerId) {
+        message.error(
+          "Mã QR không phải là mã QR của thiết bị. Vui lòng quét đúng mã QR."
+        );
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Fetch computer repair info from API
+      const repairInfo: ComputerRepairInfoResponse =
+        await getComputerRepairInfo(qrData.computerId);
+
+      if (!repairInfo.success) {
+        message.error(repairInfo.message || "Không thể lấy thông tin thiết bị");
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      const { data } = repairInfo;
+
+      // Check if computer has active repair
+      if (data.hasActiveRepair) {
+        message.warning(
+          `Máy này đang có yêu cầu sửa chữa chưa hoàn thành (${data.activeRepairInfo?.requestCode}). Vui lòng chọn máy khác.`
+        );
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Nếu tài sản đang ở trạng thái hư hỏng, thông báo và dừng
+      if (data.asset.status === AssetStatus.DAMAGED) {
+        message.warning(
+          `Thiết bị ${data.asset.name} (${data.asset.ktCode}) đang được đánh dấu hư hỏng. Vui lòng chọn máy khác hoặc kiểm tra yêu cầu sửa chữa hiện có.`
+        );
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Bước 1: Đảm bảo assignedFloors đã được load trước khi tiếp tục
+      if (!assignedFloorsLoaded) {
+        message.warning("Đang tải thông tin phân công. Vui lòng đợi một chút và thử lại.");
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Bước 2: Kiểm tra xem building/floor có trong assignedFloors không
+      const isFloorAssigned = assignedFloors.some(
+        (assigned) => assigned.building === data.room.building && assigned.floor === data.room.floor
+      );
+
+      if (!isFloorAssigned && assignedFloors.length > 0) {
+        message.warning(
+          `Tầng ${data.room.floor} của tòa nhà ${data.room.building} không thuộc phạm vi được phân công của bạn.`
+        );
+        setIsLoadingQRData(false);
+        return;
+      }
+
+      // Bước 2: Set rooms for the floor TRƯỚC khi set formData
+      // Đảm bảo filteredRooms được set trước để Select có thể hiển thị giá trị
+      const roomsOnFloor = rooms.filter(
+        (room) =>
+          room.building === data.room.building && room.floor === data.room.floor
+      );
+      
+      // Đảm bảo room được quét có trong filteredRooms
+      const scannedRoomExists = roomsOnFloor.some(r => r.id === data.room.id);
+      let finalRoomsList = roomsOnFloor;
+      
+      if (!scannedRoomExists) {
+        // Fallback: thêm room được quét vào danh sách nếu chưa có
+        const mappedRoom: RoomResponseDto = {
+          id: data.room.id,
+          building: data.room.building,
+          roomCode:
+            data.room.roomCode || data.room.roomNumber || data.room.name || "",
+          floor: data.room.floor,
+          roomNumber: data.room.roomNumber || "",
+          status: RoomStatus.ACTIVE,
+          name:
+            data.room.name ||
+            data.room.roomCode ||
+            data.room.roomNumber ||
+            "Phòng",
+          createdAt: new Date().toISOString(),
+        };
+        finalRoomsList = [mappedRoom, ...roomsOnFloor];
+      }
+      
+      // Set filteredRooms TRƯỚC khi set formData
+      setFilteredRooms(finalRoomsList);
+
+      // Bước 3: Set building, floor và roomId trong formData
+      // Set building trước để trigger tính toán availableFloors
+      setFormData((prev) => ({
+        ...prev,
+        building: data.room.building,
+        floor: "",
+        roomId: "",
+        assetId: "",
+      }));
+
+      // Đợi một chút để React cập nhật state và tính toán lại availableFloors
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Sau đó set floor và roomId
+      setFormData((prev) => ({
+        ...prev,
+        floor: data.room.floor,
+        roomId: data.room.id,
+      }));
+
+      // Bước 4: Load computers cho room
+      try {
+        setLoadingComputers(true);
+        const computers = await getComputersByRoomId(data.room.id);
+        if (Array.isArray(computers) && computers.length > 0) {
+          // Đảm bảo computer được quét có trong danh sách
+          const scannedComputer = computers.find(c => c.id === data.computer.id);
+          
+          if (!scannedComputer) {
+            message.warning("Không tìm thấy máy tính trong danh sách phòng");
+            setIsLoadingQRData(false);
+            return;
+          }
+
+          if (!scannedComputer.asset?.id) {
+            message.warning("Máy tính này chưa được gán tài sản");
+            setIsLoadingQRData(false);
+            return;
+          }
+
+          // Set filteredComputers TRƯỚC khi set selectedComputerId
+          setFilteredComputers(computers);
+
+          // Bước 5: Set selectedComputerId và assetId trong formData
+          // Set cùng lúc để đảm bảo tất cả giá trị được cập nhật
+          setSelectedComputerId(data.computer.id);
+          setFormData((prev) => ({
+            ...prev,
+            assetId: scannedComputer.asset!.id,
+          }));
+          
+          // Bước 6: Load components và software
+          // Đợi một chút để đảm bảo state đã được cập nhật
+          await new Promise(resolve => setTimeout(resolve, 100));
+          await loadComputerData(data.computer.id, scannedComputer);
+        } else {
+          setFilteredComputers([]);
+          message.warning("Không có máy tính nào trong phòng này");
+        }
+      } catch (error) {
+        console.error("Error loading computers:", error);
+        setFilteredComputers([]);
+        message.error("Không thể tải danh sách máy tính");
+      } finally {
+        setLoadingComputers(false);
+      }
+
+      setIsLoadingQRData(false);
+      setShowQRScanner(false); // Đóng modal sau khi quét thành công
+      message.success(
+        `Đã tự động điền thông tin từ mã QR: ${data.asset.name} (${data.asset.ktCode})`
+      );
+    } catch (error) {
+      console.error("QR scan error:", error);
+      message.error("Không thể tải thông tin từ mã QR. Vui lòng thử lại.");
+      setIsLoadingQRData(false);
+    } 
   };
 
   // Handle media upload
@@ -493,9 +695,6 @@ export default function GhiNhanXuLyLoiPage() {
         allReplacementsSuccessful = results.every(r => r === true);
       }
 
-      // ⚠️ LOGIC: Determine finalStatus based on repairMethod
-      // - ĐÃ_HOÀN_THÀNH: khi sửa xong (software_fixed hoặc hardware_fixed) HOẶC đã thay thế thành công
-      // - CHỜ_THAY_THẾ: khi cần thay thế linh kiện (need_replacement) nhưng chưa thay thế hoặc thay thế thất bại
       let finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ | undefined;
       
       if (formData.repairMethod === 'software_fixed' || formData.repairMethod === 'hardware_fixed') {
@@ -622,18 +821,22 @@ export default function GhiNhanXuLyLoiPage() {
 
       {/* QR Scanner for Mobile */}
       {isMobile && (
-        <Card>
-          <div className="text-center">
+        <Card className="bg-blue-50 border-blue-200">
+          <div className="text-center py-2">
             <Button
               type="primary"
               size="large"
               icon={<ScanOutlined />}
-              onClick={simulateQRScan}
-              className="mb-2"
+              className="mb-3 w-full sm:w-auto"
+              style={{ height: "48px", fontSize: "16px" }}
+              onClick={() => setShowQRScanner(true)}
+              loading={isLoadingQRData}
             >
-              Quét mã QR thiết bị
+              {isLoadingQRData
+                ? "Đang tải thông tin..."
+                : "Quét mã QR thiết bị"}
             </Button>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Quét mã QR trên thiết bị để tự động điền thông tin
             </p>
           </div>
@@ -671,7 +874,18 @@ export default function GhiNhanXuLyLoiPage() {
                         ? "Bạn chưa được phân công tòa nhà nào"
                         : "Không có dữ liệu"
                   }
+                  showSearch
+                  filterOption={(input, option) => {
+                    const children = option?.children as string | undefined;
+                    return children ? children.toLowerCase().includes(input.toLowerCase()) : false;
+                  }}
                 >
+                  {/* Đảm bảo giá trị hiện tại luôn có trong danh sách Option */}
+                  {formData.building && !buildings.includes(formData.building) && (
+                    <Option key={formData.building} value={formData.building}>
+                      {formData.building}
+                    </Option>
+                  )}
                   {buildings.map(building => (
                     <Option key={building} value={building}>
                       {building}
@@ -693,7 +907,7 @@ export default function GhiNhanXuLyLoiPage() {
                   }
                   value={formData.floor}
                   onChange={handleFloorChange}
-                  disabled={!assignedFloorsLoaded || !formData.building || availableFloors.length === 0}
+                  disabled={!assignedFloorsLoaded || !formData.building}
                   loading={!assignedFloorsLoaded}
                   notFoundContent={
                     !assignedFloorsLoaded
@@ -702,7 +916,18 @@ export default function GhiNhanXuLyLoiPage() {
                         ? "Không có tầng được phân công cho tòa nhà này"
                         : "Không có dữ liệu"
                   }
+                  showSearch
+                  filterOption={(input, option) => {
+                    const children = option?.children as string | undefined;
+                    return children ? children.toLowerCase().includes(input.toLowerCase()) : false;
+                  }}
                 >
+                  {/* Đảm bảo giá trị hiện tại luôn có trong danh sách Option */}
+                  {formData.floor && !availableFloors.includes(formData.floor) && (
+                    <Option key={formData.floor} value={formData.floor}>
+                      {formData.floor}
+                    </Option>
+                  )}
                   {availableFloors.map(floor => (
                     <Option key={floor} value={floor}>
                       {floor}
@@ -722,7 +947,18 @@ export default function GhiNhanXuLyLoiPage() {
                   value={formData.roomId}
                   onChange={handleRoomChange}
                   disabled={!formData.floor}
+                  showSearch
+                  filterOption={(input, option) => {
+                    const children = option?.children as string | undefined;
+                    return children ? children.toLowerCase().includes(input.toLowerCase()) : false;
+                  }}
                 >
+                  {/* Đảm bảo giá trị hiện tại luôn có trong danh sách Option */}
+                  {formData.roomId && !filteredRooms.some(r => r.id === formData.roomId) && (
+                    <Option key={formData.roomId} value={formData.roomId}>
+                      Phòng đã quét
+                    </Option>
+                  )}
                   {filteredRooms.map(room => (
                     <Option key={room.id} value={room.id}>
                       {room.name || room.roomNumber}
@@ -756,7 +992,18 @@ export default function GhiNhanXuLyLoiPage() {
                     ? "Đang tải..." 
                     : "Không có máy tính nào trong phòng này"
                 }
+                showSearch
+                filterOption={(input, option) => {
+                  const children = option?.children as React.ReactNode | undefined;
+                  return children ? children.toString().toLowerCase().includes(input.toLowerCase()) : false;
+                }}
               >
+                {/* Đảm bảo giá trị hiện tại luôn có trong danh sách Option */}
+                {selectedComputerId && !filteredComputers.some(c => c.id === selectedComputerId) && (
+                  <Option key={selectedComputerId} value={selectedComputerId}>
+                    Thiết bị đã quét
+                  </Option>
+                )}
                 {Array.isArray(filteredComputers) &&
                   filteredComputers.map((computer) => {
                     // Kiểm tra theo trạng thái tài sản: Asset status = DAMAGED (hư hỏng)
@@ -1245,6 +1492,13 @@ export default function GhiNhanXuLyLoiPage() {
         onClose={handleSuccessModalClose}
         title="Ghi nhận xử lý lỗi thành công!"
         message="Thông tin xử lý lỗi đã được ghi nhận vào hệ thống. Yêu cầu sẽ được cập nhật trạng thái tương ứng và thông báo đến người báo lỗi."
+      />
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        open={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScanSuccess={handleQRScanSuccess}
       />
     </div>
   );
