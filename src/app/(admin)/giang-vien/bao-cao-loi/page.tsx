@@ -21,6 +21,7 @@ import {
   ComputerRepairInfoResponse,
 } from "@/lib/api/computers";
 import { useProfile } from "@/hooks";
+import { evaluateRepairScanGuards } from "@/hooks/useRepairs";
 import { RoomStatus } from "@/lib/api/rooms";
 import {
   getHardwareErrorTypes,
@@ -551,21 +552,15 @@ export default function BaoCaoLoiPage() {
 
       const { data } = repairInfo;
 
-      // Check if computer has active repair
-      if (data.hasActiveRepair) {
-        message.warning(
-          `Máy này đang có yêu cầu sửa chữa chưa hoàn thành (${data.activeRepairInfo?.requestCode}). Vui lòng chọn máy khác.`
-        );
-        setIsLoadingQRData(false);
-        return;
-      }
-
-      // Nếu tài sản đang ở trạng thái hư hỏng, thông báo và dừng
-      if (data.asset.status === AssetStatus.DAMAGED) {
-        setDamagedMessage(
-          `Thiết bị ${data.asset.name} (${data.asset.ktCode}) đang được đánh dấu hư hỏng. Vui lòng chọn máy khác hoặc kiểm tra yêu cầu sửa chữa hiện có.`
-        );
-        setShowDamagedModal(true);
+      // Guard chung: hư hỏng / đang có yêu cầu mở (tận dụng hook)
+      const guardResult = evaluateRepairScanGuards(data);
+      if (guardResult.blocked) {
+        if (guardResult.reason === "DAMAGED") {
+          setDamagedMessage(guardResult.message || "");
+          setShowDamagedModal(true);
+        } else if (guardResult.reason === "ACTIVE_REPAIR") {
+          message.warning(guardResult.message);
+        }
         setIsLoadingQRData(false);
         return;
       }

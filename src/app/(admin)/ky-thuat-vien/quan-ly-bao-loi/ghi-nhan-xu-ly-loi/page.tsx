@@ -19,6 +19,7 @@ import { getComponentsByComputerId, getStockComponents, StockComponentDto, repla
 import { getSoftwareByAssetId } from "@/lib/api/asset-software";
 import { createAndProcessRepair, CreateAndProcessRepairRequest, getAssignedFloors, AssignedFloor } from "@/lib/api/repairs";
 import { useProfile } from "@/hooks";
+import { evaluateRepairScanGuards } from "@/hooks/useRepairs";
 import QRScanner from "@/components/common/QRScanner";
 import {
   getHardwareErrorTypes,
@@ -483,23 +484,18 @@ export default function GhiNhanXuLyLoiPage() {
 
       const { data } = repairInfo;
 
-      // Ưu tiên cảnh báo hư hỏng trước
-      if (data.asset.status === AssetStatus.DAMAGED) {
-        const warningText = `Thiết bị ${data.asset.name} (${data.asset.ktCode}) đang được đánh dấu hư hỏng. Vui lòng chọn máy khác hoặc kiểm tra yêu cầu sửa chữa hiện có.`;
-        message.warning(warningText);
-        setDamagedMessage(warningText);
-        setShowDamagedModal(true);
+      // Kiểm tra các guard chung: hư hỏng / đang có yêu cầu mở
+      const guardResult = evaluateRepairScanGuards(data);
+      if (guardResult.blocked) {
+        if (guardResult.reason === "DAMAGED") {
+          message.warning(guardResult.message);
+          setDamagedMessage(guardResult.message || "");
+          setShowDamagedModal(true);
+        } else if (guardResult.reason === "ACTIVE_REPAIR") {
+          message.warning(guardResult.message);
+        }
         setIsLoadingQRData(false);
         setShowQRScanner(false);
-        return;
-      }
-
-      // Sau đó cảnh báo nếu đã có yêu cầu sửa chữa đang mở
-      if (data.hasActiveRepair) {
-        message.warning(
-          `Máy này đang có yêu cầu sửa chữa chưa hoàn thành (${data.activeRepairInfo?.requestCode}). Vui lòng chọn máy khác.`
-        );
-        setIsLoadingQRData(false);
         return;
       }
 
