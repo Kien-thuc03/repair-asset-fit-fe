@@ -1,7 +1,9 @@
 "use client";
-import { Monitor, Eye, Wrench, QrCode } from "lucide-react";
-import { Asset, DeviceAsset } from "@/types";
+import { useState, useEffect } from "react";
+import { Monitor, Eye, QrCode } from "lucide-react";
+import { Asset, DeviceAsset, ComponentStatus } from "@/types";
 import { getAssetStatusDisplay } from "@/lib/constants/assetStatus";
+import { getComputerDetail } from "@/lib/api/computers";
 
 interface DeviceCardProps {
   asset: Asset | DeviceAsset;
@@ -13,6 +15,72 @@ export default function DeviceCard({ asset, onViewDetail, onShowQR }: DeviceCard
   const statusConfig = getAssetStatusDisplay(asset.status);
   const isDeviceAsset = (a: Asset | DeviceAsset): a is DeviceAsset => "computerId" in a;
   const canShowQR = isDeviceAsset(asset) && !!asset.computerId;
+
+  const getInitialCount = (): number | undefined => {
+    // Ưu tiên tính từ components array (nếu có) - lọc bỏ REMOVED
+    if ('components' in asset && asset.components && Array.isArray(asset.components)) {
+      return asset.components.filter(
+        (component) => component.status !== ComponentStatus.REMOVED
+      ).length;
+    }
+    return undefined;
+  };
+
+  const [componentCount, setComponentCount] = useState<number | undefined>(getInitialCount);
+  const [isLoadingCount, setIsLoadingCount] = useState(false);
+
+  // Fetch component count từ API nếu cần
+  useEffect(() => {
+    // Nếu đã có componentCount từ asset hoặc components, không cần fetch
+    const initialCount = getInitialCount();
+    if (initialCount !== undefined && initialCount !== null) {
+      if (componentCount !== initialCount) {
+        setComponentCount(initialCount);
+      }
+      return;
+    }
+
+    // Nếu không có, fetch từ API
+    let isMounted = true;
+    const fetchComponentCount = async () => {
+      try {
+        setIsLoadingCount(true);
+        const computerDetail = await getComputerDetail(asset.id);
+        
+        if (!isMounted) return;
+        
+        // LUÔN ưu tiên tính từ components array và lọc bỏ REMOVED
+        if (computerDetail.components && Array.isArray(computerDetail.components)) {
+          const count = computerDetail.components.filter(
+            (component) => component.status !== ComponentStatus.REMOVED
+          ).length;
+          setComponentCount(count);
+        } else if (computerDetail.componentCount !== undefined) {
+          console.warn(`Asset ${asset.id}: Không có components array, dùng componentCount (có thể không chính xác)`);
+          setComponentCount(computerDetail.componentCount);
+        } else {
+          setComponentCount(0);
+        }
+      } catch (error) {
+        console.error("Error fetching component count:", error);
+        // Nếu lỗi, hiển thị 0
+        if (isMounted) {
+          setComponentCount(0);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingCount(false);
+        }
+      }
+    };
+
+    fetchComponentCount();
+    
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asset.id, asset.componentCount, 'components' in asset ? asset.components : null]);
 
   return (
     <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow border border-gray-200">
@@ -57,7 +125,11 @@ export default function DeviceCard({ asset, onViewDetail, onShowQR }: DeviceCard
               Số linh kiện:
             </span>
             <span className="text-gray-900 font-medium">
-              {asset.componentCount}
+              {isLoadingCount ? (
+                <span className="text-gray-400">Đang tải...</span>
+              ) : (
+                componentCount ?? 0
+              )}
             </span>
           </div>
         </div>
