@@ -1,6 +1,7 @@
 "use client";
 import { Cpu, HardDrive, Monitor, Info, MemoryStick, Box, Zap, Keyboard, Mouse, Wifi, CircuitBoard, Fan, Speaker, Camera } from "lucide-react";
 import { Asset } from "@/types";
+import { ComponentStatus } from "@/types";
 
 interface AssetSpecificationsProps {
   asset: Asset;
@@ -10,7 +11,10 @@ export default function AssetSpecifications({
   asset,
 }: AssetSpecificationsProps) {
   // Lấy danh sách linh kiện từ API data (đã có trong asset.components)
-  const installedComponents = asset.components || [];
+  // Lọc bỏ các linh kiện đã gỡ (REMOVED)
+  const installedComponents = (asset.components || []).filter(
+    (component) => component.status !== ComponentStatus.REMOVED
+  );
 
   // Function to get appropriate icon for each component type
   const getComponentIcon = (componentType: string) => {
