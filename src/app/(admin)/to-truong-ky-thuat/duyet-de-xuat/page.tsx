@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { SubmissionFormData } from "@/types";
+import { SubmissionFormData, UserRole } from "@/types";
 import { Breadcrumb, Modal, message } from "antd";
 import { Pagination } from "@/components/common";
 import {
@@ -32,6 +32,7 @@ import {
   exportSubmissionDocx,
   generateSubmissionDocBlob,
 } from "@/components/common";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Map table field names to API field names - outside component to avoid recreation
 const mapSortFieldToAPI = (
@@ -95,10 +96,9 @@ export default function DuyetDeXuatPage() {
   const [isRejecting, setIsRejecting] = useState(false);
 
   // Team Lead Approver ID - Tổ trưởng kỹ thuật
-  const TEAM_LEAD_APPROVER_ID = "e30e5ae1-eed1-42f9-82ba-090a4ee27837";
-
-  // Note: submittedBy is always "Giảng Thanh Trọn" by default
-  // Users can edit if needed, but default is fixed
+  // const TEAM_LEAD_APPROVER_ID = "e30e5ae1-eed1-42f9-82ba-090a4ee27837";
+  const { user } = useAuth();
+  const TEAM_LEAD_APPROVER_ID = user?.activeRole?.code === UserRole.TO_TRUONG_KY_THUAT ? user?.id : "";
 
   // Memoize query params to prevent unnecessary re-renders
   const queryParams = useMemo(() => {
