@@ -811,12 +811,12 @@ export default function GhiNhanXuLyLoiPage() {
   // Handle success modal close
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
-    router.push("/ky-thuat-vien");
+    router.push("/ky-thuat-vien/quan-ly-bao-loi");
   };
 
   // Handle cancel
   const handleCancel = () => {
-    router.push("/ky-thuat-vien");
+    router.push("/ky-thuat-vien/quan-ly-bao-loi/ghi-nhan-xu-ly-loi");
   };
 
   // Filter error types based on category
