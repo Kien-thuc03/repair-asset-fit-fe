@@ -734,13 +734,20 @@ export default function GhiNhanXuLyLoiPage() {
       }
 
       let finalStatus: RepairStatus.ĐÃ_HOÀN_THÀNH | RepairStatus.CHỜ_THAY_THẾ | undefined;
+      const totalSelectedComponents = selectedComponentIds.length;
+      const replacedCount = Object.keys(replacementMapping).length;
+      const allSelectedComponentsReplaced =
+        formData.repairMethod === "need_replacement" &&
+        totalSelectedComponents > 0 &&
+        replacedCount === totalSelectedComponents &&
+        allReplacementsSuccessful;
       
       if (formData.repairMethod === 'software_fixed' || formData.repairMethod === 'hardware_fixed') {
         finalStatus = RepairStatus.ĐÃ_HOÀN_THÀNH;
       } else if (formData.repairMethod === 'need_replacement') {
-        // Nếu đã thay thế thành công tất cả linh kiện, chuyển sang ĐÃ_HOÀN_THÀNH
-        // Nếu không có chọn linh kiện thay thế hoặc thay thế thất bại, giữ CHỜ_THAY_THẾ
-        if (Object.keys(replacementMapping).length > 0 && allReplacementsSuccessful) {
+        // Chỉ chuyển ĐÃ_HOÀN_THÀNH khi tất cả linh kiện được chọn đã thay thế thành công
+        // Nếu còn linh kiện chưa thay thế (ví dụ chỉ thay 1/2), giữ CHỜ_THAY_THẾ
+        if (allSelectedComponentsReplaced) {
           finalStatus = RepairStatus.ĐÃ_HOÀN_THÀNH;
         } else {
           finalStatus = RepairStatus.CHỜ_THAY_THẾ;

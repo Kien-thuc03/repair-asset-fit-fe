@@ -253,11 +253,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
           },
         ],
       },
-      {
-        name: "Duyệt tờ trình",
-        href: "/qtv-khoa/duyet-to-trinh",
-        icon: ClipboardList
-      }
+      // {
+      //   name: "Duyệt tờ trình",
+      //   href: "/qtv-khoa/duyet-to-trinh",
+      //   icon: ClipboardList
+      // }
     ],
   };
 
