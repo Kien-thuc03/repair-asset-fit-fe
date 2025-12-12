@@ -6,7 +6,6 @@ import {
   DashboardHeader,
   StatsCards,
   QuickActions,
-  RecentActivity,
 } from "@/components/leadTechnician/dashboard";
 import { useRepairDashboardData } from "@/hooks/useRepairDashboardData";
 import { RepairStatus } from "@/types";
@@ -40,10 +39,6 @@ export default function ToTruongKyThuatDashboard() {
 
       {/* Quick Actions */}
       <QuickActions />
-
-      {/* Recent Activity */}
-      <RecentActivity />
-
     </div>
   );
 }

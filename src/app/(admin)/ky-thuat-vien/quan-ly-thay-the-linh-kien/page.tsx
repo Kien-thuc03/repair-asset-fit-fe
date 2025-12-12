@@ -246,14 +246,14 @@ export default function QuanLyThayTheLinhKienPage() {
 			color: 'geekblue', 
 			text: 'Đã lập tờ trình' 
 		},
-		[ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
-			color: 'lime', 
-			text: 'Đã duyệt tờ trình' 
-		},
-		[ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
-			color: 'volcano', 
-			text: 'Đã từ chối tờ trình' 
-		},
+		// [ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: { 
+		// 	color: 'lime', 
+		// 	text: 'Đã duyệt tờ trình' 
+		// },
+		// [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: { 
+		// 	color: 'volcano', 
+		// 	text: 'Đã từ chối tờ trình' 
+		// },
 		[ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: { 
 			color: 'purple', 
 			text: 'Đã gửi biên bản' 

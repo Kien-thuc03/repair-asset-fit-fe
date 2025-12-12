@@ -476,18 +476,10 @@ export default function ChiTietDuyetToTrinhPage() {
                       <p className="text-sm font-medium text-gray-900">
                         Tờ trình đề xuất
                       </p>
-                      <p className="text-xs text-gray-500">PDF Document</p>
+                      <p className="text-xs text-gray-500">Word Document</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <a
-                      href={proposal.submissionFormUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-900"
-                      title="Xem tài liệu">
-                      <Eye className="w-4 h-4" />
-                    </a>
                     <a
                       href={proposal.submissionFormUrl}
                       download

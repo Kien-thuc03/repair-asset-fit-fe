@@ -3,7 +3,7 @@
 import { RepairStatus, Component, ComponentStatus, ComponentType } from '@/types'
 import { useState, useEffect } from 'react'
 import { Button, Form, Input, Radio, Card, Alert, Select, message } from 'antd'
-import { CheckCircle, Settings, Package, FileText } from 'lucide-react'
+import { CheckCircle, Settings, Package, FileText, Loader2 } from 'lucide-react'
 import { getComponentsByAssetId, getStockComponents, StockComponentDto, replaceComponent, getComponentById } from '@/lib/api/components'
 
 const { TextArea } = Input
@@ -29,6 +29,7 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 	const [selectedComponentIds, setSelectedComponentIds] = useState<string[]>([])
 	const [filteredComponents, setFilteredComponents] = useState<Component[]>([])
 	const [loadingComponents, setLoadingComponents] = useState(false)
+	const [isSubmitting, setIsSubmitting] = useState(false)
 	// State cho linh kiện trong kho và mapping thay thế
 	const [stockComponents, setStockComponents] = useState<StockComponentDto[]>([])
 	const [replacementMapping, setReplacementMapping] = useState<Record<string, string>>({}) // oldComponentId -> newComponentId
@@ -228,26 +229,29 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 	const onFinish = async (formValues: FormValues) => {
 		console.log('Form values:', formValues)
 		
-		// Track kết quả thay thế từng linh kiện
-		const replacementSuccessMap: Record<string, boolean> = {}
-		// Xử lý thay thế linh kiện từ kho nếu có
-		let allReplacementsSuccessful = true
-		const replacementEntries = Object.entries(replacementMapping)
-		if (formValues.inspectionResult === 'replacement' && replacementEntries.length > 0) {
-			try {
-				const results = await Promise.all(
-					replacementEntries.map(async ([oldComponentId]) => {
-						const ok = await handleReplaceFromStock(oldComponentId, formValues.notes)
-						replacementSuccessMap[oldComponentId] = ok
-						return ok
-					})
-				)
-				allReplacementsSuccessful = results.every(Boolean)
-			} catch (error) {
-				console.error('Error replacing components:', error)
-				allReplacementsSuccessful = false
+		setIsSubmitting(true)
+		
+		try {
+			// Track kết quả thay thế từng linh kiện
+			const replacementSuccessMap: Record<string, boolean> = {}
+			// Xử lý thay thế linh kiện từ kho nếu có
+			let allReplacementsSuccessful = true
+			const replacementEntries = Object.entries(replacementMapping)
+			if (formValues.inspectionResult === 'replacement' && replacementEntries.length > 0) {
+				try {
+					const results = await Promise.all(
+						replacementEntries.map(async ([oldComponentId]) => {
+							const ok = await handleReplaceFromStock(oldComponentId, formValues.notes)
+							replacementSuccessMap[oldComponentId] = ok
+							return ok
+						})
+					)
+					allReplacementsSuccessful = results.every(Boolean)
+				} catch (error) {
+					console.error('Error replacing components:', error)
+					allReplacementsSuccessful = false
+				}
 			}
-		}
 		
 		// Xác định pending/replaced
 		const replacedAll = selectedComponentIds.length > 0 && selectedComponentIds.every(id => replacementSuccessMap[id])
@@ -267,6 +271,7 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 			// Lỗi phần cứng đã sửa được - bắt buộc phải có componentIds
 			if (selectedComponentIds.length === 0) {
 				message.error('Vui lòng chọn ít nhất 1 linh kiện bị lỗi')
+				setIsSubmitting(false)
 				return
 			}
 			componentIds = selectedComponentIds
@@ -280,6 +285,7 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 			// Cần thay thế linh kiện - bắt buộc phải có componentIds
 			if (selectedComponentIds.length === 0) {
 				message.error('Vui lòng chọn ít nhất 1 linh kiện cần thay thế')
+				setIsSubmitting(false)
 				return
 			}
 			// Luôn ghi nhận toàn bộ linh kiện đã chọn (để log cả đã thay và chưa thay)
@@ -302,20 +308,23 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 			}
 		}
 		
-		// Gọi callback để cập nhật trạng thái với componentIds
-		if (onStatusUpdate) {
-			try {
-				await onStatusUpdate(newStatus, finalNotes, componentIds, {
-					showSuccessModal: true, // Chỉ hiển thị modal khi nhấn nút cập nhật kết quả
-				})
-				// Nếu còn linh kiện cần thay thế, chuyển đến trang tạo đề xuất
-				if (formValues.inspectionResult === 'replacement' && newStatus === RepairStatus.CHỜ_THAY_THẾ) {
-					onCreateReplacement()
+			// Gọi callback để cập nhật trạng thái với componentIds
+			if (onStatusUpdate) {
+				try {
+					await onStatusUpdate(newStatus, finalNotes, componentIds, {
+						showSuccessModal: true, // Chỉ hiển thị modal khi nhấn nút cập nhật kết quả
+					})
+					// Nếu còn linh kiện cần thay thế, chuyển đến trang tạo đề xuất
+					if (formValues.inspectionResult === 'replacement' && newStatus === RepairStatus.CHỜ_THAY_THẾ) {
+						onCreateReplacement()
+					}
+				} catch (error) {
+					// Error đã được xử lý trong onStatusUpdate callback
+					console.error('Update status error:', error)
 				}
-			} catch (error) {
-				// Error đã được xử lý trong onStatusUpdate callback
-				console.error('Update status error:', error)
 			}
+		} finally {
+			setIsSubmitting(false)
 		}
 	}
 
@@ -652,15 +661,23 @@ export default function ActionPanel({ initStatus, assetId, errorTypeName, onCrea
 						<Button 
 							type="primary" 
 							htmlType="submit" 
-							icon={<FileText />}
+							icon={
+								isSubmitting ? (
+									<Loader2 className="w-4 h-4 animate-spin" />
+								) : (
+									<FileText className="w-4 h-4" />
+								)
+							}
+							loading={isSubmitting}
 							disabled={
-								errorCategory === 'hardware' && 
+								isSubmitting ||
+								(errorCategory === 'hardware' && 
 								inspectionResult !== '' && 
 								inspectionResult !== 'software' &&
-								selectedComponentIds.length === 0
+								selectedComponentIds.length === 0)
 							}
 						>
-							Cập nhật kết quả xử lý
+							{isSubmitting ? "Đang cập nhật..." : "Cập nhật kết quả xử lý"}
 						</Button>
 					</Form.Item>
 				</Form>

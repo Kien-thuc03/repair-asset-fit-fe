@@ -201,9 +201,15 @@ export default function GhiNhanXuLyLoiPage() {
         const stock = await getStockComponents();
         setStockComponents(stock);
         
+        // Chỉ lọc các linh kiện có loại: KEYBOARD, MOUSE, OTHER
+        const allowedTypes = [ComponentType.KEYBOARD, ComponentType.MOUSE, ComponentType.OTHER];
+        const filteredStock = stock.filter(comp => 
+          allowedTypes.includes(comp.componentType as ComponentType)
+        );
+        
         // Group by componentType
         const grouped: Record<string, StockComponentDto[]> = {};
-        stock.forEach(comp => {
+        filteredStock.forEach(comp => {
           const type = comp.componentType;
           if (!grouped[type]) {
             grouped[type] = [];
@@ -702,14 +708,23 @@ export default function GhiNhanXuLyLoiPage() {
 
     try {
       // Xử lý thay thế linh kiện nếu có chọn linh kiện thay thế từ kho
+      // Chỉ cho phép thay thế các linh kiện loại: KEYBOARD, MOUSE, OTHER
       let allReplacementsSuccessful = true;
       if (formData.repairMethod === 'need_replacement' && Object.keys(replacementMapping).length > 0 && selectedComputerId) {
+        const allowedTypes = [ComponentType.KEYBOARD, ComponentType.MOUSE, ComponentType.OTHER];
+        
         const replacementPromises = Object.entries(replacementMapping).map(async ([oldComponentId, newComponentId]) => {
           const oldComponent = filteredComponents.find(c => c.id === oldComponentId);
           const newComponent = stockComponents.find(c => c.id === newComponentId);
           
           if (!oldComponent || !newComponent) {
             throw new Error(`Không tìm thấy thông tin linh kiện để thay thế`);
+          }
+
+          // Kiểm tra loại linh kiện có được phép thay thế từ kho không
+          if (!allowedTypes.includes(oldComponent.componentType)) {
+            console.warn(`Linh kiện ${oldComponent.name} (${oldComponent.componentType}) không được phép thay thế từ kho`);
+            return false; // Bỏ qua linh kiện không được phép
           }
 
           try {
@@ -1288,7 +1303,13 @@ export default function GhiNhanXuLyLoiPage() {
                       const oldComponent = filteredComponents.find(c => c.id === oldComponentId);
                       if (!oldComponent) return null;
                       
-                      const availableStock = availableReplacements[oldComponent.componentType] || [];
+                      // Chỉ cho phép chọn linh kiện thay thế từ kho với các loại: KEYBOARD, MOUSE, OTHER
+                      const allowedTypes = [ComponentType.KEYBOARD, ComponentType.MOUSE, ComponentType.OTHER];
+                      const isAllowedType = allowedTypes.includes(oldComponent.componentType);
+                      
+                      const availableStock = isAllowedType 
+                        ? (availableReplacements[oldComponent.componentType] || [])
+                        : [];
                       const hasStock = availableStock.length > 0;
                       const selectedReplacementId = replacementMapping[oldComponentId];
                       
@@ -1299,50 +1320,61 @@ export default function GhiNhanXuLyLoiPage() {
                               <span className="font-medium text-gray-900">{oldComponent.name}</span>
                               <span className="text-sm text-gray-500 ml-2">({oldComponent.componentType})</span>
                             </div>
-                            {hasStock && (
+                            {isAllowedType && hasStock && (
                               <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
                                 Có {availableStock.length} linh kiện trong kho
                               </span>
                             )}
+                            {!isAllowedType && (
+                              <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
+                                Chỉ hỗ trợ thay thế từ kho cho: Chuột, Bàn phím, Other
+                              </span>
+                            )}
                           </div>
                           
-                          {hasStock ? (
-                            <Form.Item
-                              label="Chọn linh kiện thay thế từ kho"
-                              className="mb-0"
-                            >
-                              <Select
-                                placeholder="Chọn linh kiện thay thế (tùy chọn)"
-                                value={selectedReplacementId}
-                                onChange={(value) => {
-                                  setReplacementMapping(prev => ({
-                                    ...prev,
-                                    [oldComponentId]: value
-                                  }));
-                                }}
-                                allowClear
-                                showSearch
-                                filterOption={(input, option) => {
-                                  const label = typeof option?.label === 'string' 
-                                    ? option.label 
-                                    : String(option?.children || '');
-                                  return label.toLowerCase().includes(input.toLowerCase());
-                                }}
+                          {isAllowedType ? (
+                            hasStock ? (
+                              <Form.Item
+                                label="Chọn linh kiện thay thế từ kho"
+                                className="mb-0"
                               >
-                                {availableStock.map(stockComp => (
-                                  <Option key={stockComp.id} value={stockComp.id}>
-                                    {stockComp.name} {stockComp.componentSpecs && `- ${stockComp.componentSpecs}`}
-                                    {stockComp.serialNumber && ` (SN: ${stockComp.serialNumber})`}
-                                  </Option>
-                                ))}
-                              </Select>
-                              <div className="text-xs text-gray-500 mt-1">
-                                Nếu không chọn, linh kiện sẽ được đánh dấu cần thay thế và xử lý sau
+                                <Select
+                                  placeholder="Chọn linh kiện thay thế (tùy chọn)"
+                                  value={selectedReplacementId}
+                                  onChange={(value) => {
+                                    setReplacementMapping(prev => ({
+                                      ...prev,
+                                      [oldComponentId]: value
+                                    }));
+                                  }}
+                                  allowClear
+                                  showSearch
+                                  filterOption={(input, option) => {
+                                    const label = typeof option?.label === 'string' 
+                                      ? option.label 
+                                      : String(option?.children || '');
+                                    return label.toLowerCase().includes(input.toLowerCase());
+                                  }}
+                                >
+                                  {availableStock.map(stockComp => (
+                                    <Option key={stockComp.id} value={stockComp.id}>
+                                      {stockComp.name} {stockComp.componentSpecs && `- ${stockComp.componentSpecs}`}
+                                      {stockComp.serialNumber && ` (SN: ${stockComp.serialNumber})`}
+                                    </Option>
+                                  ))}
+                                </Select>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Nếu không chọn, linh kiện sẽ được đánh dấu cần thay thế và xử lý sau
+                                </div>
+                              </Form.Item>
+                            ) : (
+                              <div className="text-sm text-gray-600">
+                                ⚠️ Không có linh kiện cùng loại trong kho. Linh kiện sẽ được đánh dấu cần thay thế.
                               </div>
-                            </Form.Item>
+                            )
                           ) : (
                             <div className="text-sm text-gray-600">
-                              ⚠️ Không có linh kiện cùng loại trong kho. Linh kiện sẽ được đánh dấu cần thay thế.
+                              ⚠️ Loại linh kiện này không hỗ trợ thay thế từ kho. Chỉ hỗ trợ thay thế từ kho cho các loại: Chuột (MOUSE), Bàn phím (KEYBOARD), và Other (OTHER). Linh kiện sẽ được đánh dấu cần thay thế và xử lý sau.
                             </div>
                           )}
                         </div>
