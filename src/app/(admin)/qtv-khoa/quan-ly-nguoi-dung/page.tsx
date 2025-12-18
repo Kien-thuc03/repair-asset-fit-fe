@@ -1,34 +1,62 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { UserPlus, Users as UsersIcon, UserCheck, UserX, Building, Download } from 'lucide-react';
-import { Breadcrumb, message, Input, Select, Button, Card, Row, Col, Alert } from 'antd';
-import { SearchOutlined, SyncOutlined } from '@ant-design/icons';
-import { useUsersManagement } from '@/hooks/useUsersManagement';
-import { useRoles } from '@/hooks/useRoles';
-import { useUnits } from '@/hooks/useUnits';
-import { getUsers } from '@/lib/api/users';
-import type { UnitResponseDto } from '@/lib/api/units';
-import type { RoleResponseDto } from '@/lib/api/roles';
-import { IUserWithRoles, UserStatus } from '@/types';
-import { UserTable, UserConfirmModal } from '@/components/qtvKhoa';
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useRouter } from "next/navigation";
+import {
+  UserPlus,
+  Users as UsersIcon,
+  UserCheck,
+  UserX,
+  Building,
+  Download,
+} from "lucide-react";
+import {
+  Breadcrumb,
+  message,
+  Input,
+  Select,
+  Button,
+  Card,
+  Row,
+  Col,
+  Alert,
+} from "antd";
+import { SearchOutlined, SyncOutlined } from "@ant-design/icons";
+import { useUsersManagement } from "@/hooks/useUsersManagement";
+import { useRoles } from "@/hooks/useRoles";
+import { useUnits } from "@/hooks/useUnits";
+import { getUsers } from "@/lib/api/users";
+import type { UnitResponseDto } from "@/lib/api/units";
+import type { RoleResponseDto } from "@/lib/api/roles";
+import { IUserWithRoles, UserStatus } from "@/types";
+import { UserTable, UserConfirmModal } from "@/components/qtvKhoa";
+import {
+  ExportExcelSuccessModal,
+  ExportExcelErrorModal,
+} from "@/components/modal";
+import { useState, useMemo, useEffect, useCallback } from "react";
 
 export default function UsersManagementPage() {
   const router = useRouter();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-  
+
   // Modal state
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     user: IUserWithRoles | null;
-    action: 'toggle-status' | 'delete';
+    action: "toggle-status" | "delete";
   }>({
     isOpen: false,
     user: null,
-    action: 'toggle-status',
+    action: "toggle-status",
   });
-  
+
+  // Export modal states
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
+  const [exportError, setExportError] = useState("");
+
   // Hooks
   const {
     users,
@@ -58,8 +86,8 @@ export default function UsersManagementPage() {
     }
 
     // Tìm campus được chọn
-    const selectedCampus = campuses.find(c => c.id === filters.campusId);
-    
+    const selectedCampus = campuses.find((c) => c.id === filters.campusId);
+
     // Trả về childUnits của campus đó
     return selectedCampus?.childUnits || [];
   }, [filters.campusId, campuses]);
@@ -94,7 +122,7 @@ export default function UsersManagementPage() {
       if (totalUsers > 100) {
         const totalPages = Math.ceil(totalUsers / 100);
         const promises = [];
-        
+
         // Gọi các trang từ 2 đến totalPages
         for (let page = 2; page <= totalPages; page++) {
           promises.push(
@@ -107,21 +135,25 @@ export default function UsersManagementPage() {
 
         // Chờ tất cả các request hoàn thành
         const responses = await Promise.all(promises);
-        
+
         // Gộp tất cả users lại
-        responses.forEach(response => {
+        responses.forEach((response) => {
           allUsers = [...allUsers, ...response.data];
         });
       }
 
       // Tính toán stats
-      const activeUsers = allUsers.filter(u => u.status === UserStatus.ACTIVE);
-      const inactiveUsers = allUsers.filter(u => u.status === UserStatus.INACTIVE);
-      
+      const activeUsers = allUsers.filter(
+        (u) => u.status === UserStatus.ACTIVE
+      );
+      const inactiveUsers = allUsers.filter(
+        (u) => u.status === UserStatus.INACTIVE
+      );
+
       // Group by unit
       const byUnit = allUsers.reduce((acc, user) => {
-        const unitName = user.unit?.name || 'Chưa phân công';
-        const existing = acc.find(item => item.unitName === unitName);
+        const unitName = user.unit?.name || "Chưa phân công";
+        const existing = acc.find((item) => item.unitName === unitName);
         if (existing) {
           existing.count++;
         } else {
@@ -137,7 +169,7 @@ export default function UsersManagementPage() {
         byUnit,
       });
     } catch (err) {
-      console.error('Error fetching all users stats:', err);
+      console.error("Error fetching all users stats:", err);
       // Không set state nếu có lỗi, để fallback về tính từ users hiện tại
     }
   }, []);
@@ -156,13 +188,13 @@ export default function UsersManagementPage() {
 
     // Fallback: tính từ users hiện tại và total từ API
     // Đây là dữ liệu từ trang hiện tại, sẽ được thay thế khi allUsersStats fetch xong
-    const activeUsers = users.filter(u => u.status === UserStatus.ACTIVE);
-    const inactiveUsers = users.filter(u => u.status === UserStatus.INACTIVE);
-    
+    const activeUsers = users.filter((u) => u.status === UserStatus.ACTIVE);
+    const inactiveUsers = users.filter((u) => u.status === UserStatus.INACTIVE);
+
     // Group by unit từ users hiện tại
     const byUnit = users.reduce((acc, user) => {
-      const unitName = user.unit?.name || 'Chưa phân công';
-      const existing = acc.find(item => item.unitName === unitName);
+      const unitName = user.unit?.name || "Chưa phân công";
+      const existing = acc.find((item) => item.unitName === unitName);
       if (existing) {
         existing.count++;
       } else {
@@ -181,10 +213,8 @@ export default function UsersManagementPage() {
 
   // Navigation handlers
   const handleCreateUser = () => {
-    router.push('/qtv-khoa/quan-ly-nguoi-dung/tao-moi');
+    router.push("/qtv-khoa/quan-ly-nguoi-dung/tao-moi");
   };
-
-
 
   const handleEditUser = (user: IUserWithRoles) => {
     router.push(`/qtv-khoa/quan-ly-nguoi-dung/chinh-sua/${user.id}`);
@@ -198,7 +228,7 @@ export default function UsersManagementPage() {
     setConfirmModal({
       isOpen: true,
       user,
-      action: 'toggle-status',
+      action: "toggle-status",
     });
   };
 
@@ -206,7 +236,7 @@ export default function UsersManagementPage() {
     setConfirmModal({
       isOpen: true,
       user,
-      action: 'delete',
+      action: "delete",
     });
   };
 
@@ -215,7 +245,7 @@ export default function UsersManagementPage() {
     setConfirmModal({
       isOpen: false,
       user: null,
-      action: 'toggle-status',
+      action: "toggle-status",
     });
   };
 
@@ -223,89 +253,273 @@ export default function UsersManagementPage() {
     if (!confirmModal.user) return;
 
     try {
-      if (confirmModal.action === 'toggle-status') {
+      if (confirmModal.action === "toggle-status") {
         const success = await toggleUserStatus(confirmModal.user.id);
         if (success) {
-          const newStatus = confirmModal.user.status === UserStatus.ACTIVE 
-            ? UserStatus.INACTIVE 
-            : UserStatus.ACTIVE;
+          const newStatus =
+            confirmModal.user.status === UserStatus.ACTIVE
+              ? UserStatus.INACTIVE
+              : UserStatus.ACTIVE;
           message.success(
-            `${newStatus === UserStatus.ACTIVE ? 'Mở khóa' : 'Khóa'} tài khoản thành công!`
+            `${
+              newStatus === UserStatus.ACTIVE ? "Mở khóa" : "Khóa"
+            } tài khoản thành công!`
           );
           // Refetch stats sau khi toggle status thành công
           setTimeout(() => {
             fetchAllUsersStats();
           }, 500);
         } else {
-          message.error('Có lỗi xảy ra khi thay đổi trạng thái tài khoản');
+          message.error("Có lỗi xảy ra khi thay đổi trạng thái tài khoản");
         }
-      } else if (confirmModal.action === 'delete') {
+      } else if (confirmModal.action === "delete") {
         const success = await deleteUser(confirmModal.user.id, false); // Soft delete
         if (success) {
-          message.success('Xóa tài khoản thành công!');
+          message.success("Xóa tài khoản thành công!");
           // Refetch stats sau khi delete thành công
           setTimeout(() => {
             fetchAllUsersStats();
           }, 500);
         } else {
-          message.error('Có lỗi xảy ra khi xóa tài khoản');
+          message.error("Có lỗi xảy ra khi xóa tài khoản");
         }
       }
-      
+
       // Close modal
       handleCloseModal();
-      
     } catch (error) {
-      console.error('Error performing action:', error);
-      message.error('Có lỗi xảy ra khi thực hiện thao tác');
+      console.error("Error performing action:", error);
+      message.error("Có lỗi xảy ra khi thực hiện thao tác");
     }
   };
 
   // Hàm xuất Excel
   const handleExportExcel = async () => {
-    const selectedData = users.filter(user => selectedRowKeys.includes(user.id));
-    
+    const selectedData = users.filter((user) =>
+      selectedRowKeys.includes(user.id)
+    );
+
     if (selectedData.length === 0) {
-      message.warning('Vui lòng chọn ít nhất một người dùng để xuất Excel');
+      setExportError("Vui lòng chọn ít nhất một người dùng để xuất Excel!");
+      setShowExportErrorModal(true);
       return;
     }
 
     try {
       // Dynamic import để tránh lỗi SSR
-      const XLSX = await import('xlsx');
-      
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách người dùng");
+
       // Tạo dữ liệu Excel
       const excelData = selectedData.map((user, index) => ({
-        'STT': index + 1,
-        'Họ và tên': user.fullName,
-        'Tên đăng nhập': user.username,
-        'Email': user.email || 'Chưa có',
-        'Số điện thoại': user.phoneNumber || 'Chưa có',
-        'Đơn vị': user.unit?.name || 'Chưa phân công',
-        'Vai trò': user.roles.map(role => role.name).join(', '),
-        'Trạng thái': user.status === UserStatus.ACTIVE ? 'Đang hoạt động' : 'Bị khóa',
-        'Ngày sinh': user.birthDate ? new Date(user.birthDate).toLocaleDateString('vi-VN') : 'Chưa có',
-        'Ngày tạo': user.createdAt ? new Date(user.createdAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'
+        STT: index + 1,
+        "Họ và tên": user.fullName,
+        "Tên đăng nhập": user.username,
+        Email: user.email || "Chưa có",
+        "Số điện thoại": user.phoneNumber || "Chưa có",
+        "Đơn vị": user.unit?.name || "Chưa phân công",
+        "Vai trò": user.roles.map((role) => role.name).join(", "),
+        "Trạng thái":
+          user.status === UserStatus.ACTIVE ? "Đang hoạt động" : "Bị khóa",
+        "Ngày sinh": user.birthDate
+          ? new Date(user.birthDate).toLocaleDateString("vi-VN")
+          : "Chưa có",
+        "Ngày tạo": user.createdAt
+          ? new Date(user.createdAt).toLocaleDateString("vi-VN")
+          : "Chưa cập nhật",
       }));
 
-      // Tạo workbook và worksheet
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(excelData);
+      const columnHeaders = [
+        "STT",
+        "Họ và tên",
+        "Tên đăng nhập",
+        "Email",
+        "Số điện thoại",
+        "Đơn vị",
+        "Vai trò",
+        "Trạng thái",
+        "Ngày sinh",
+        "Ngày tạo",
+      ];
 
-      // Thêm worksheet vào workbook
-      XLSX.utils.book_append_sheet(wb, ws, 'Danh sách người dùng');
+      // Tạo footer
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const dateStr = `Ngày ${day} Tháng ${
+        month < 10 ? "0" + month : month
+      } Năm ${year}`;
+
+      const footerRow: string[] = new Array(columnHeaders.length).fill("");
+      footerRow[0] = "Người lập biểu";
+      footerRow[Math.floor(columnHeaders.length / 4)] = "Thư ký";
+      footerRow[Math.floor((columnHeaders.length * 2) / 4)] =
+        "Trưởng nhóm kiểm kê";
+      footerRow[columnHeaders.length - 1] = "Đại diện ĐV sử dụng";
+
+      let currentRow = 1;
+
+      // Hàng 1: TRƯỜNG ĐẠI HỌC...
+      const row1 = worksheet.getRow(currentRow);
+      const cell1 = row1.getCell(1);
+      cell1.value = "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP HỒ CHÍ MINH";
+      cell1.font = { name: "Arial", size: 9 };
+      cell1.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 2: Địa chỉ
+      const row2 = worksheet.getRow(currentRow);
+      const cell2 = row2.getCell(1);
+      cell2.value =
+        "Địa chỉ : 12 Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP Hồ Chí Minh";
+      cell2.font = { name: "Arial", size: 9 };
+      cell2.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 3: Dòng trống
+      currentRow++;
+
+      // Hàng 4: Tiêu đề sheet - màu đỏ
+      const row4 = worksheet.getRow(currentRow);
+      const cell4 = row4.getCell(1);
+      cell4.value = "DANH SÁCH NGƯỜI DÙNG";
+      cell4.font = {
+        name: "Arial",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFF0000" },
+      };
+      cell4.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 5: KHOA CÔNG NGHỆ THÔNG TIN
+      const row5 = worksheet.getRow(currentRow);
+      const cell5 = row5.getCell(1);
+      cell5.value = "KHOA CÔNG NGHỆ THÔNG TIN";
+      cell5.font = { name: "Arial", size: 9 };
+      cell5.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 6: NĂM
+      const row6 = worksheet.getRow(currentRow);
+      const cell6 = row6.getCell(1);
+      cell6.value = `NĂM ${new Date().getFullYear()}`;
+      cell6.font = { name: "Arial", size: 9 };
+      cell6.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Header của bảng - in hoa và màu vàng
+      const headerRow = worksheet.getRow(currentRow);
+      columnHeaders.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1);
+        cell.value = header.toUpperCase();
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" },
+        };
+      });
+      currentRow++;
+
+      // Data rows
+      excelData.forEach((rowData) => {
+        const row = worksheet.getRow(currentRow);
+
+        columnHeaders.forEach((header, index) => {
+          const cell = row.getCell(index + 1);
+          cell.value = rowData[header as keyof typeof rowData] ?? "";
+          cell.font = { name: "Arial", size: 9 };
+          cell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+        currentRow++;
+      });
+
+      // Dòng trống
+      currentRow++;
+
+      // Hàng ngày tháng
+      const dateRow = worksheet.getRow(currentRow);
+      const dateCell = dateRow.getCell(columnHeaders.length);
+      dateCell.value = dateStr;
+      dateCell.font = { name: "Arial", size: 9 };
+      dateCell.alignment = { horizontal: "center", vertical: "middle" };
+      currentRow++;
+
+      // Footer row
+      const footerRowExcel = worksheet.getRow(currentRow);
+      footerRow.forEach((value, index) => {
+        const cell = footerRowExcel.getCell(index + 1);
+        cell.value = value;
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+
+      // Set column widths
+      columnHeaders.forEach((_, index) => {
+        worksheet.getColumn(index + 1).width = 20;
+      });
 
       // Xuất file
-      const fileName = `danh-sach-nguoi-dung-${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      const fileName = `Danh_sach_nguoi_dung_${
+        new Date().toISOString().split("T")[0]
+      }_${selectedData.length}_ban_ghi.xlsx`;
 
-      message.success(`Đã xuất ${selectedData.length} người dùng ra file ${fileName}`);
-      
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      // Thông báo thành công với modal
+      setExportCount(selectedData.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+
       // Reset selection sau khi xuất
       setSelectedRowKeys([]);
     } catch (error) {
-      console.error('Lỗi xuất Excel:', error);
-      message.error('Có lỗi xảy ra khi xuất file Excel');
+      console.error("Lỗi xuất Excel:", error);
+      setExportError(
+        error instanceof Error ? error.message : "Lỗi không xác định"
+      );
+      setShowExportErrorModal(true);
     }
   };
 
@@ -315,7 +529,7 @@ export default function UsersManagementPage() {
       <Breadcrumb
         items={[
           {
-            href: '/qtv-khoa',
+            href: "/qtv-khoa",
             title: (
               <div className="flex items-center">
                 <span>Trang chủ</span>
@@ -335,9 +549,12 @@ export default function UsersManagementPage() {
       {/* Header */}
       <div className="sm:flex sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Quản lý người dùng
+          </h1>
           <p className="mt-2 text-sm text-gray-700">
-            Quản lý tài khoản người dùng trong khoa và phân quyền truy cập hệ thống.
+            Quản lý tài khoản người dùng trong khoa và phân quyền truy cập hệ
+            thống.
           </p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
@@ -345,15 +562,13 @@ export default function UsersManagementPage() {
             onClick={handleExportExcel}
             disabled={selectedRowKeys.length === 0}
             icon={<Download className="h-4 w-4" />}
-            type="default"
-          >
+            type="default">
             Xuất Excel ({selectedRowKeys.length})
           </Button>
           <Button
             onClick={handleCreateUser}
             type="primary"
-            icon={<UserPlus className="h-4 w-4" />}
-          >
+            icon={<UserPlus className="h-4 w-4" />}>
             Thêm người dùng
           </Button>
         </div>
@@ -427,9 +642,12 @@ export default function UsersManagementPage() {
                 </div>
                 <div className="text-lg font-medium text-gray-900">
                   {stats.byUnit
-                    .filter(u => {
+                    .filter((u) => {
                       const name = u.unitName.toLowerCase();
-                      return name.includes('công nghệ thông tin') || name.includes('cntt');
+                      return (
+                        name.includes("công nghệ thông tin") ||
+                        name.includes("cntt")
+                      );
                     })
                     .reduce((sum, u) => sum + u.count, 0)}
                 </div>
@@ -455,88 +673,99 @@ export default function UsersManagementPage() {
           <Col xs={24} sm={12} md={5}>
             <Select
               placeholder="Tất cả cơ sở"
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               value={filters.campusId || undefined}
               onChange={(value) => {
                 // Reset unitId khi đổi campus
-                updateFilters({ campusId: value || '', unitId: '' });
+                updateFilters({ campusId: value || "", unitId: "" });
               }}
               allowClear
               loading={unitsLoading}
-              notFoundContent={unitsLoading ? 'Đang tải...' : 'Không có dữ liệu'}
-            >
-              {campuses && campuses.length > 0 ? (
-                campuses.map((campus: UnitResponseDto) => (
-                  <Select.Option key={campus.id} value={campus.id}>
-                    {campus.name}
-                  </Select.Option>
-                ))
-              ) : (
-                !unitsLoading && <Select.Option value="" disabled>Không có cơ sở</Select.Option>
-              )}
+              notFoundContent={
+                unitsLoading ? "Đang tải..." : "Không có dữ liệu"
+              }>
+              {campuses && campuses.length > 0
+                ? campuses.map((campus: UnitResponseDto) => (
+                    <Select.Option key={campus.id} value={campus.id}>
+                      {campus.name}
+                    </Select.Option>
+                  ))
+                : !unitsLoading && (
+                    <Select.Option value="" disabled>
+                      Không có cơ sở
+                    </Select.Option>
+                  )}
             </Select>
           </Col>
-          
+
           <Col xs={24} sm={12} md={5}>
             <Select
-              placeholder={!filters.campusId ? "Chọn cơ sở trước" : "Tất cả đơn vị"}
-              style={{ width: '100%' }}
+              placeholder={
+                !filters.campusId ? "Chọn cơ sở trước" : "Tất cả đơn vị"
+              }
+              style={{ width: "100%" }}
               value={filters.unitId || undefined}
-              onChange={(value) => updateFilters({ unitId: value || '' })}
+              onChange={(value) => updateFilters({ unitId: value || "" })}
               allowClear
               disabled={!filters.campusId}
               loading={unitsLoading}
               notFoundContent={
-                !filters.campusId 
-                  ? 'Vui lòng chọn cơ sở trước'
-                  : unitsLoading 
-                    ? 'Đang tải...' 
-                    : 'Không có dữ liệu'
-              }
-            >
-              {filteredUnits && filteredUnits.length > 0 ? (
-                filteredUnits.map((unit) => (
-                  <Select.Option key={unit.id} value={unit.id}>
-                    {unit.name}
-                  </Select.Option>
-                ))
-              ) : (
-                !unitsLoading && filters.campusId && <Select.Option value="" disabled>Không có đơn vị</Select.Option>
-              )}
+                !filters.campusId
+                  ? "Vui lòng chọn cơ sở trước"
+                  : unitsLoading
+                  ? "Đang tải..."
+                  : "Không có dữ liệu"
+              }>
+              {filteredUnits && filteredUnits.length > 0
+                ? filteredUnits.map((unit) => (
+                    <Select.Option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </Select.Option>
+                  ))
+                : !unitsLoading &&
+                  filters.campusId && (
+                    <Select.Option value="" disabled>
+                      Không có đơn vị
+                    </Select.Option>
+                  )}
             </Select>
           </Col>
 
           <Col xs={24} sm={12} md={4}>
             <Select
               placeholder="Tất cả vai trò"
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               value={filters.roleId || undefined}
-              onChange={(value) => updateFilters({ roleId: value || '' })}
+              onChange={(value) => updateFilters({ roleId: value || "" })}
               allowClear
               loading={rolesLoading}
-              notFoundContent={rolesLoading ? 'Đang tải...' : 'Không có dữ liệu'}
-            >
-              {roles && roles.length > 0 ? (
-                roles.map((role: RoleResponseDto) => (
-                  <Select.Option key={role.id} value={role.id}>
-                    {role.name}
-                  </Select.Option>
-                ))
-              ) : (
-                !rolesLoading && <Select.Option value="" disabled>Không có vai trò</Select.Option>
-              )}
+              notFoundContent={
+                rolesLoading ? "Đang tải..." : "Không có dữ liệu"
+              }>
+              {roles && roles.length > 0
+                ? roles.map((role: RoleResponseDto) => (
+                    <Select.Option key={role.id} value={role.id}>
+                      {role.name}
+                    </Select.Option>
+                  ))
+                : !rolesLoading && (
+                    <Select.Option value="" disabled>
+                      Không có vai trò
+                    </Select.Option>
+                  )}
             </Select>
           </Col>
 
           <Col xs={24} sm={12} md={4}>
             <Select
               placeholder="Tất cả trạng thái"
-              style={{ width: '100%' }}
-              value={filters.status === 'all' ? undefined : filters.status}
-              onChange={(value) => updateFilters({ status: value || 'all' })}
-              allowClear
-            >
-              <Select.Option value={UserStatus.ACTIVE}>Đang hoạt động</Select.Option>
+              style={{ width: "100%" }}
+              value={filters.status === "all" ? undefined : filters.status}
+              onChange={(value) => updateFilters({ status: value || "all" })}
+              allowClear>
+              <Select.Option value={UserStatus.ACTIVE}>
+                Đang hoạt động
+              </Select.Option>
               <Select.Option value={UserStatus.INACTIVE}>Bị khóa</Select.Option>
               <Select.Option value={UserStatus.LOCKED}>Đã khóa</Select.Option>
               <Select.Option value={UserStatus.DELETED}>Đã xóa</Select.Option>
@@ -546,12 +775,10 @@ export default function UsersManagementPage() {
           <Col xs={24} sm={12} md={1}>
             <Button
               icon={<SyncOutlined />}
-              title='Tải lại bộ lọc'
+              title="Tải lại bộ lọc"
               onClick={resetFilters}
               type="default"
-              style={{ width: '100%' }}
-            >
-            </Button>
+              style={{ width: "100%" }}></Button>
           </Col>
         </Row>
       </Card>
@@ -567,7 +794,7 @@ export default function UsersManagementPage() {
           onClose={clearError}
         />
       )}
-      
+
       {/* Roles Error */}
       {rolesError && (
         <Alert
@@ -578,7 +805,7 @@ export default function UsersManagementPage() {
           closable
         />
       )}
-      
+
       {/* Units Error */}
       {unitsError && (
         <Alert
@@ -620,6 +847,19 @@ export default function UsersManagementPage() {
         />
       )}
 
+      {/* Export Modals */}
+      <ExportExcelSuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        fileName={exportFileName}
+        recordCount={exportCount}
+      />
+
+      <ExportExcelErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
+        errorMessage={exportError}
+      />
     </div>
   );
 }
