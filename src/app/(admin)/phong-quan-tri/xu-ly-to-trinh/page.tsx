@@ -7,14 +7,16 @@ import {
   Calendar,
   Eye,
   Download,
-  CheckCircle,
-  XCircle,
   Loader2,
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { Breadcrumb, Button, Modal } from "antd";
 import { Pagination, SortableHeader } from "@/components/common";
+import {
+  ExportExcelSuccessModal,
+  ExportExcelErrorModal,
+} from "@/components/modal";
 import { useRouter } from "next/navigation";
 import {
   useReplacementProposals,
@@ -38,6 +40,7 @@ export default function XuLyToTrinhPage() {
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
+  const [exportError, setExportError] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   const { updateStatus } = useUpdateReplacementProposalStatus();
@@ -123,10 +126,7 @@ export default function XuLyToTrinhPage() {
   // Pagination
   const totalItems = filteredData.length;
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = filteredData.slice(
-    startIndex,
-    startIndex + pageSize
-  );
+  const paginatedData = filteredData.slice(startIndex, startIndex + pageSize);
 
   // Page change handler
   const handlePageChange = (page: number) => {
@@ -187,13 +187,16 @@ export default function XuLyToTrinhPage() {
     );
 
     if (selectedData.length === 0) {
+      setExportError("Vui lòng chọn ít nhất một tờ trình để xuất Excel!");
       setShowExportErrorModal(true);
       return;
     }
 
     try {
       // Dynamic import để tránh lỗi SSR
-      const XLSX = await import("xlsx");
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách tờ trình");
 
       // Tạo dữ liệu Excel
       const excelData = selectedData.map((item, index) => ({
@@ -203,36 +206,186 @@ export default function XuLyToTrinhPage() {
         "Mô tả": item.description || "",
         "Người tạo": item.proposer?.fullName || "Chưa xác định",
         "Số lượng linh kiện": item.itemsCount || 0,
-        "Trạng thái": "Chờ xử lý",
+        "Trạng thái": getStatusText(item.status),
         "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
       }));
 
-      // Tạo workbook và worksheet
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(excelData);
-
-      // Đặt độ rộng cột tự động
-      const colWidths = [
-        { wch: 5 }, // STT
-        { wch: 20 }, // Mã đề xuất
-        { wch: 30 }, // Tiêu đề
-        { wch: 40 }, // Mô tả
-        { wch: 20 }, // Người tạo
-        { wch: 15 }, // Số lượng linh kiện
-        { wch: 15 }, // Trạng thái
-        { wch: 15 }, // Ngày tạo
+      const columnHeaders = [
+        "STT",
+        "Mã đề xuất",
+        "Tiêu đề",
+        "Mô tả",
+        "Người tạo",
+        "Số lượng linh kiện",
+        "Trạng thái",
+        "Ngày tạo",
       ];
-      ws["!cols"] = colWidths;
 
-      // Thêm worksheet vào workbook
-      XLSX.utils.book_append_sheet(wb, ws, "Danh sách tờ trình");
+      // Tạo footer
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const dateStr = `Ngày ${day} Tháng ${
+        month < 10 ? "0" + month : month
+      } Năm ${year}`;
+
+      const footerRow: string[] = new Array(columnHeaders.length).fill("");
+      footerRow[0] = "Người lập biểu";
+      footerRow[Math.floor(columnHeaders.length / 4)] = "Thư ký";
+      footerRow[Math.floor((columnHeaders.length * 2) / 4)] =
+        "Trưởng nhóm kiểm kê";
+      footerRow[columnHeaders.length - 1] = "Đại diện ĐV sử dụng";
+
+      let currentRow = 1;
+
+      // Hàng 1: TRƯỜNG ĐẠI HỌC...
+      const row1 = worksheet.getRow(currentRow);
+      const cell1 = row1.getCell(1);
+      cell1.value = "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP HỒ CHÍ MINH";
+      cell1.font = { name: "Arial", size: 9 };
+      cell1.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 2: Địa chỉ
+      const row2 = worksheet.getRow(currentRow);
+      const cell2 = row2.getCell(1);
+      cell2.value =
+        "Địa chỉ : 12 Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP Hồ Chí Minh";
+      cell2.font = { name: "Arial", size: 9 };
+      cell2.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 3: Dòng trống
+      currentRow++;
+
+      // Hàng 4: Tiêu đề sheet - màu đỏ
+      const row4 = worksheet.getRow(currentRow);
+      const cell4 = row4.getCell(1);
+      cell4.value = "DANH SÁCH TỜ TRÌNH THAY THẾ THIẾT BỊ";
+      cell4.font = {
+        name: "Arial",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFF0000" },
+      };
+      cell4.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 5: KHOA CÔNG NGHỆ THÔNG TIN
+      const row5 = worksheet.getRow(currentRow);
+      const cell5 = row5.getCell(1);
+      cell5.value = "KHOA CÔNG NGHỆ THÔNG TIN";
+      cell5.font = { name: "Arial", size: 9 };
+      cell5.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 6: NĂM
+      const row6 = worksheet.getRow(currentRow);
+      const cell6 = row6.getCell(1);
+      cell6.value = `NĂM ${new Date().getFullYear()}`;
+      cell6.font = { name: "Arial", size: 9 };
+      cell6.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Header của bảng - in hoa và màu vàng
+      const headerRow = worksheet.getRow(currentRow);
+      columnHeaders.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1);
+        cell.value = header.toUpperCase();
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" },
+        };
+      });
+      currentRow++;
+
+      // Data rows
+      excelData.forEach((rowData) => {
+        const row = worksheet.getRow(currentRow);
+
+        columnHeaders.forEach((header, index) => {
+          const cell = row.getCell(index + 1);
+          cell.value = rowData[header as keyof typeof rowData] ?? "";
+          cell.font = { name: "Arial", size: 9 };
+          cell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+        currentRow++;
+      });
+
+      // Dòng trống
+      currentRow++;
+
+      // Hàng ngày tháng
+      const dateRow = worksheet.getRow(currentRow);
+      const dateCell = dateRow.getCell(columnHeaders.length);
+      dateCell.value = dateStr;
+      dateCell.font = { name: "Arial", size: 9 };
+      dateCell.alignment = { horizontal: "center", vertical: "middle" };
+      currentRow++;
+
+      // Footer row
+      const footerRowExcel = worksheet.getRow(currentRow);
+      footerRow.forEach((value, index) => {
+        const cell = footerRowExcel.getCell(index + 1);
+        cell.value = value;
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+
+      // Set column widths
+      columnHeaders.forEach((_, index) => {
+        worksheet.getColumn(index + 1).width = 20;
+      });
 
       // Xuất file
       const fileName = `Danh_sach_to_trinh_${
         new Date().toISOString().split("T")[0]
-      }.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      }_${selectedData.length}_ban_ghi.xlsx`;
 
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      // Hiển thị thông báo thành công
       setExportCount(selectedData.length);
       setExportFileName(fileName);
       setShowExportSuccessModal(true);
@@ -241,6 +394,9 @@ export default function XuLyToTrinhPage() {
       setSelectedRowKeys([]);
     } catch (error) {
       console.error("Lỗi xuất Excel:", error);
+      setExportError(
+        error instanceof Error ? error.message : "Lỗi không xác định"
+      );
       setShowExportErrorModal(true);
     }
   };
@@ -510,9 +666,7 @@ export default function XuLyToTrinhPage() {
                           }
                           aria-label={`Chọn tờ trình ${item.proposalCode}`}
                         />
-                        <span>
-                          {(currentPage - 1) * pageSize + index + 1}
-                        </span>
+                        <span>{(currentPage - 1) * pageSize + index + 1}</span>
                       </div>
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap">
@@ -564,14 +718,11 @@ export default function XuLyToTrinhPage() {
                     <td className="px-2 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900">
                         <Calendar className="h-4 w-4 text-gray-400 mr-2" />
-                        {new Date(item.createdAt).toLocaleDateString(
-                          "vi-VN",
-                          {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          }
-                        )}
+                        {new Date(item.createdAt).toLocaleDateString("vi-VN", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
                       </div>
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap text-center">
@@ -761,61 +912,19 @@ export default function XuLyToTrinhPage() {
         )}
       </div>
 
-      {/* Export Success Modal */}
-      <Modal
-        open={showExportSuccessModal}
-        onCancel={() => setShowExportSuccessModal(false)}
-        footer={[
-          <button
-            key="ok"
-            onClick={() => setShowExportSuccessModal(false)}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-            Đóng
-          </button>,
-        ]}
-        centered
-        width={400}>
-        <div className="flex items-center space-x-3">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-          <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Xuất Excel thành công!
-            </h3>
-            <p className="text-sm text-gray-500">
-              Đã xuất {exportCount} tờ trình ra file {exportFileName} thành
-              công.
-            </p>
-          </div>
-        </div>
-      </Modal>
+      {/* Export Modals */}
+      <ExportExcelSuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        fileName={exportFileName}
+        recordCount={exportCount}
+      />
 
-      {/* Export Error Modal */}
-      <Modal
-        open={showExportErrorModal}
-        onCancel={() => setShowExportErrorModal(false)}
-        footer={[
-          <button
-            key="ok"
-            onClick={() => setShowExportErrorModal(false)}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-            Đóng
-          </button>,
-        ]}
-        centered
-        width={400}>
-        <div className="flex items-center space-x-3">
-          <XCircle className="h-8 w-8 text-red-600" />
-          <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Không thể xuất Excel
-            </h3>
-            <p className="text-sm text-gray-500">
-              Không có dữ liệu để xuất hoặc có lỗi xảy ra. Vui lòng chọn ít nhất
-              một tờ trình và thử lại.
-            </p>
-          </div>
-        </div>
-      </Modal>
+      <ExportExcelErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
+        errorMessage={exportError}
+      />
     </div>
   );
 }
