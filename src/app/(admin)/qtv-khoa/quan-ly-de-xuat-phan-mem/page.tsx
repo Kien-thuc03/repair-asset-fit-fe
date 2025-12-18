@@ -1,19 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-  Search, 
-  Eye, 
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Search,
+  Eye,
   Monitor,
   Clock,
-  CheckCircle
-} from 'lucide-react';
-import { Breadcrumb, Input, Select } from 'antd';
-import { SoftwareProposal, SoftwareProposalStatus } from '@/types/software';
-import { Pagination, SortableHeader } from '@/components/common';
-import { useSoftwareProposals } from '@/hooks/useSoftwareProposals';
-import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from '@/lib/constants';
+  CheckCircle,
+  FileDown,
+} from "lucide-react";
+import {
+  ExportExcelSuccessModal,
+  ExportExcelErrorModal,
+} from "@/components/modal";
+import { Breadcrumb, Input, Select } from "antd";
+import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
+import { Pagination, SortableHeader } from "@/components/common";
+import { useSoftwareProposals } from "@/hooks/useSoftwareProposals";
+import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from "@/lib/constants";
 
 const { Option } = Select;
 
@@ -35,14 +40,28 @@ const getRoomName = (proposal: SoftwareProposal): string => {
 
 export default function QtvKhoaSoftwareProposalsPage() {
   const router = useRouter();
-  
+
   // State
-  const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<SoftwareProposalStatus | ''>('');
-  const [sortField, setSortField] = useState<keyof SoftwareProposal | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc' | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState<SoftwareProposalStatus | "">(
+    ""
+  );
+  const [sortField, setSortField] = useState<keyof SoftwareProposal | null>(
+    null
+  );
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(
+    null
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+
+  // Export modal states
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
+  const [exportError, setExportError] = useState("");
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
   // Query params
   const queryParams = useMemo(() => {
@@ -178,12 +197,218 @@ export default function QtvKhoaSoftwareProposalsPage() {
     setCurrentPage(1);
   };
 
+  // Handle Excel export
+  const handleExportExcel = async () => {
+    const selectedData = proposals.filter((proposal) =>
+      selectedRowKeys.includes(proposal.id)
+    );
+
+    if (selectedData.length === 0) {
+      setExportError("Vui lòng chọn ít nhất một đề xuất để xuất Excel!");
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách đề xuất phần mềm");
+
+      const excelData = selectedData.map((proposal, index) => ({
+        STT: index + 1,
+        "Mã đề xuất": proposal.proposalCode,
+        "Người đề xuất": getUserName(proposal),
+        Phòng: getRoomName(proposal),
+        "Lý do": proposal.reason || "",
+        "Trạng thái":
+          SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status]?.label ||
+          proposal.status,
+        "Ngày tạo": new Date(proposal.createdAt).toLocaleDateString("vi-VN"),
+      }));
+
+      const columnHeaders = [
+        "STT",
+        "Mã đề xuất",
+        "Người đề xuất",
+        "Phòng",
+        "Lý do",
+        "Trạng thái",
+        "Ngày tạo",
+      ];
+
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const dateStr = `Ngày ${day} Tháng ${
+        month < 10 ? "0" + month : month
+      } Năm ${year}`;
+
+      const footerRow: string[] = new Array(columnHeaders.length).fill("");
+      footerRow[0] = "Người lập biểu";
+      footerRow[Math.floor(columnHeaders.length / 4)] = "Thư ký";
+      footerRow[Math.floor((columnHeaders.length * 2) / 4)] =
+        "Trưởng nhóm kiểm kê";
+      footerRow[columnHeaders.length - 1] = "Đại diện ĐV sử dụng";
+
+      let currentRow = 1;
+
+      const row1 = worksheet.getRow(currentRow);
+      const cell1 = row1.getCell(1);
+      cell1.value = "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP HỒ CHÍ MINH";
+      cell1.font = { name: "Arial", size: 9 };
+      cell1.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      const row2 = worksheet.getRow(currentRow);
+      const cell2 = row2.getCell(1);
+      cell2.value =
+        "Địa chỉ : 12 Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP Hồ Chí Minh";
+      cell2.font = { name: "Arial", size: 9 };
+      cell2.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      currentRow++;
+
+      const row4 = worksheet.getRow(currentRow);
+      const cell4 = row4.getCell(1);
+      cell4.value = "DANH SÁCH ĐỀ XUẤT PHẦN MỀM";
+      cell4.font = {
+        name: "Arial",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFF0000" },
+      };
+      cell4.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      const row5 = worksheet.getRow(currentRow);
+      const cell5 = row5.getCell(1);
+      cell5.value = "KHOA CÔNG NGHỆ THÔNG TIN";
+      cell5.font = { name: "Arial", size: 9 };
+      cell5.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      const row6 = worksheet.getRow(currentRow);
+      const cell6 = row6.getCell(1);
+      cell6.value = `NĂM ${new Date().getFullYear()}`;
+      cell6.font = { name: "Arial", size: 9 };
+      cell6.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      currentRow++;
+
+      const headerRow = worksheet.getRow(currentRow);
+      columnHeaders.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1);
+        cell.value = header.toUpperCase();
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" },
+        };
+      });
+      currentRow++;
+
+      excelData.forEach((rowData) => {
+        const row = worksheet.getRow(currentRow);
+        columnHeaders.forEach((header, index) => {
+          const cell = row.getCell(index + 1);
+          cell.value = rowData[header as keyof typeof rowData] ?? "";
+          cell.font = { name: "Arial", size: 9 };
+          cell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+        currentRow++;
+      });
+
+      currentRow++;
+
+      const dateRow = worksheet.getRow(currentRow);
+      const dateCell = dateRow.getCell(columnHeaders.length);
+      dateCell.value = dateStr;
+      dateCell.font = { name: "Arial", size: 9 };
+      dateCell.alignment = { horizontal: "center", vertical: "middle" };
+      currentRow++;
+
+      const footerRowExcel = worksheet.getRow(currentRow);
+      footerRow.forEach((value, index) => {
+        const cell = footerRowExcel.getCell(index + 1);
+        cell.value = value;
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+
+      columnHeaders.forEach((_, index) => {
+        worksheet.getColumn(index + 1).width = 20;
+      });
+
+      const fileName = `Danh_sach_de_xuat_phan_mem_${
+        new Date().toISOString().split("T")[0]
+      }_${selectedData.length}_ban_ghi.xlsx`;
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      setExportCount(selectedData.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setExportError(
+        error instanceof Error ? error.message : "Lỗi không xác định"
+      );
+      setShowExportErrorModal(true);
+    }
+  };
+
   // Stats
   const stats = {
     total: proposals?.length || 0,
-    pending: proposals?.filter(p => p.status === SoftwareProposalStatus.CHỜ_DUYỆT).length || 0,
-    approved: proposals?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_DUYỆT).length || 0,
-    equipped: proposals?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ).length || 0,
+    pending:
+      proposals?.filter((p) => p.status === SoftwareProposalStatus.CHỜ_DUYỆT)
+        .length || 0,
+    approved:
+      proposals?.filter((p) => p.status === SoftwareProposalStatus.ĐÃ_DUYỆT)
+        .length || 0,
+    equipped:
+      proposals?.filter((p) => p.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ)
+        .length || 0,
   };
 
   // Show loading state
@@ -204,7 +429,7 @@ export default function QtvKhoaSoftwareProposalsPage() {
       <Breadcrumb
         items={[
           {
-            href: '/qtv-khoa',
+            href: "/qtv-khoa",
             title: (
               <div className="flex items-center">
                 <span>Trang chủ</span>
@@ -234,7 +459,8 @@ export default function QtvKhoaSoftwareProposalsPage() {
               Quản lý đề xuất phần mềm
             </h1>
             <p className="text-gray-600">
-              Theo dõi các đề xuất cài đặt phần mềm từ giảng viên và kỹ thuật viên.
+              Theo dõi các đề xuất cài đặt phần mềm từ giảng viên và kỹ thuật
+              viên.
             </p>
           </div>
         </div>
@@ -356,6 +582,14 @@ export default function QtvKhoaSoftwareProposalsPage() {
               Đã trang bị
             </Option>
           </Select>
+
+          <button
+            onClick={handleExportExcel}
+            disabled={selectedRowKeys.length === 0}
+            className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            <FileDown className="w-4 h-4 mr-2" />
+            Xuất Excel ({selectedRowKeys.length}/{proposals.length})
+          </button>
         </div>
       </div>
 
@@ -366,6 +600,35 @@ export default function QtvKhoaSoftwareProposalsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left">
+                  <input
+                    type="checkbox"
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={
+                      paginatedProposals.length > 0 &&
+                      paginatedProposals.every((p) =>
+                        selectedRowKeys.includes(p.id)
+                      )
+                    }
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRowKeys([
+                          ...new Set([
+                            ...selectedRowKeys,
+                            ...paginatedProposals.map((p) => p.id),
+                          ]),
+                        ]);
+                      } else {
+                        setSelectedRowKeys(
+                          selectedRowKeys.filter(
+                            (key) =>
+                              !paginatedProposals.find((p) => p.id === key)
+                          )
+                        );
+                      }
+                    }}
+                  />
+                </th>
                 <SortableHeader
                   field="proposalCode"
                   sortField={sortField}
@@ -408,11 +671,33 @@ export default function QtvKhoaSoftwareProposalsPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedProposals.map((proposal) => {
-                const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+                const statusConfig =
+                  SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
                 const StatusIcon = statusConfig.icon;
 
                 return (
                   <tr key={proposal.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        checked={selectedRowKeys.includes(proposal.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedRowKeys([
+                              ...selectedRowKeys,
+                              proposal.id,
+                            ]);
+                          } else {
+                            setSelectedRowKeys(
+                              selectedRowKeys.filter(
+                                (key) => key !== proposal.id
+                              )
+                            );
+                          }
+                        }}
+                      />
+                    </td>
                     <td className="py-4 whitespace-nowrap text-left">
                       <div
                         className="text-sm font-medium text-blue-600 cursor-pointer hover:text-blue-800 hover:underline"
@@ -436,9 +721,7 @@ export default function QtvKhoaSoftwareProposalsPage() {
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          statusConfig.color
-                        }`}>
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusConfig.color}`}>
                         <StatusIcon className="w-3 h-3 mr-1" />
                         {statusConfig.label}
                       </span>
@@ -468,48 +751,66 @@ export default function QtvKhoaSoftwareProposalsPage() {
         {/* Mobile Card View */}
         <div className="lg:hidden space-y-4 p-4">
           {paginatedProposals.map((proposal) => {
-            const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+            const statusConfig =
+              SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
             const StatusIcon = statusConfig.icon;
 
             return (
               <div
                 key={proposal.id}
                 className="border border-gray-200 rounded-lg p-4 space-y-3">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={selectedRowKeys.includes(proposal.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRowKeys([...selectedRowKeys, proposal.id]);
+                      } else {
+                        setSelectedRowKeys(
+                          selectedRowKeys.filter((key) => key !== proposal.id)
+                        );
+                      }
+                    }}
+                  />
                   <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-blue-600 cursor-pointer hover:text-blue-800 hover:underline"
-                        onClick={() => handleViewProposal(proposal)}>
-                      {proposal.proposalCode}
-                    </h3>
-                    <div className="mt-2 space-y-1">
-                      <div className="flex items-center text-xs text-gray-600">
-                        {getUserName(proposal)}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3
+                          className="text-sm font-semibold text-blue-600 cursor-pointer hover:text-blue-800 hover:underline"
+                          onClick={() => handleViewProposal(proposal)}>
+                          {proposal.proposalCode}
+                        </h3>
+                        <div className="mt-2 space-y-1">
+                          <div className="flex items-center text-xs text-gray-600">
+                            {getUserName(proposal)}
+                          </div>
+                          <div className="flex items-center text-xs text-gray-600">
+                            {getRoomName(proposal)}
+                          </div>
+                          <div className="flex items-center text-xs text-gray-600">
+                            {new Date(proposal.createdAt).toLocaleDateString(
+                              "vi-VN"
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center text-xs text-gray-600">
-                        {getRoomName(proposal)}
-                      </div>
-                      <div className="flex items-center text-xs text-gray-600">
-                        {new Date(proposal.createdAt).toLocaleDateString(
-                          "vi-VN"
-                        )}
-                      </div>
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}>
+                        <StatusIcon className="w-3 h-3 mr-1" />
+                        {statusConfig.label}
+                      </span>
+                    </div>
+                    <div className="flex justify-end space-x-2 pt-2 border-t border-gray-200">
+                      <button
+                        onClick={() => handleViewProposal(proposal)}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        <Eye className="w-3 h-3 mr-1" />
+                        Chi tiết
+                      </button>
                     </div>
                   </div>
-                  <span
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
-                      statusConfig.color
-                    }`}>
-                    <StatusIcon className="w-3 h-3 mr-1" />
-                    {statusConfig.label}
-                  </span>
-                </div>
-                <div className="flex justify-end space-x-2 pt-2 border-t border-gray-200">
-                  <button
-                    onClick={() => handleViewProposal(proposal)}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                    <Eye className="w-3 h-3 mr-1" />
-                    Chi tiết
-                  </button>
                 </div>
               </div>
             );
@@ -540,6 +841,20 @@ export default function QtvKhoaSoftwareProposalsPage() {
           showTotal={true}
         />
       </div>
+
+      {/* Export Modals */}
+      <ExportExcelSuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        fileName={exportFileName}
+        recordCount={exportCount}
+      />
+
+      <ExportExcelErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
+        errorMessage={exportError}
+      />
     </div>
   );
 }
