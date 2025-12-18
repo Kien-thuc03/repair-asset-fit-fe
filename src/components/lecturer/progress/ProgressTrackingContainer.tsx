@@ -82,9 +82,7 @@ export default function ProgressTrackingContainer() {
             ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ??
             false) ||
-          (request.ktCode
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ??
+          (request.ktCode?.toLowerCase().includes(searchTerm.toLowerCase()) ??
             false) ||
           (request.roomName?.toLowerCase().includes(searchTerm.toLowerCase()) ??
             false)
@@ -219,7 +217,9 @@ export default function ProgressTrackingContainer() {
 
     try {
       // Dynamic import để tránh lỗi SSR
-      const XLSX = await import("xlsx");
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách yêu cầu sửa chữa");
 
       // Tạo dữ liệu Excel
       const excelData = itemsToExport.map((item, index) => ({
@@ -247,18 +247,186 @@ export default function ProgressTrackingContainer() {
         "Ghi chú xử lý": item.resolutionNotes || "",
       }));
 
-      // Tạo workbook và worksheet
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(excelData);
+      const columnHeaders = [
+        "STT",
+        "Mã yêu cầu",
+        "Tên tài sản",
+        "Mã tài sản",
+        "Vị trí",
+        "Máy",
+        "Người báo",
+        "KTV phụ trách",
+        "Loại lỗi",
+        "Mô tả lỗi",
+        "Trạng thái",
+        "Ngày báo",
+        "Ngày tiếp nhận",
+        "Ngày hoàn thành",
+        "Ghi chú xử lý",
+      ];
 
-      // Thêm worksheet vào workbook
-      XLSX.utils.book_append_sheet(wb, ws, "Danh sách yêu cầu sửa chữa");
+      // Tạo footer
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const dateStr = `Ngày ${day} Tháng ${
+        month < 10 ? "0" + month : month
+      } Năm ${year}`;
+
+      const footerRow: string[] = new Array(columnHeaders.length).fill("");
+      footerRow[0] = "Người lập biểu";
+      footerRow[Math.floor(columnHeaders.length / 4)] = "Thư ký";
+      footerRow[Math.floor((columnHeaders.length * 2) / 4)] =
+        "Trưởng nhóm kiểm kê";
+      footerRow[columnHeaders.length - 1] = "Đại diện ĐV sử dụng";
+
+      let currentRow = 1;
+
+      // Hàng 1: TRƯỜNG ĐẠI HỌC...
+      const row1 = worksheet.getRow(currentRow);
+      const cell1 = row1.getCell(1);
+      cell1.value = "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP HỒ CHÍ MINH";
+      cell1.font = { name: "Arial", size: 9 };
+      cell1.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 2: Địa chỉ
+      const row2 = worksheet.getRow(currentRow);
+      const cell2 = row2.getCell(1);
+      cell2.value =
+        "Địa chỉ : 12 Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP Hồ Chí Minh";
+      cell2.font = { name: "Arial", size: 9 };
+      cell2.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 3: Dòng trống
+      currentRow++;
+
+      // Hàng 4: Tiêu đề sheet - màu đỏ
+      const row4 = worksheet.getRow(currentRow);
+      const cell4 = row4.getCell(1);
+      cell4.value = "DANH SÁCH YÊU CẦU SỬA CHỮA";
+      cell4.font = {
+        name: "Arial",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFF0000" },
+      };
+      cell4.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 5: KHOA CÔNG NGHỆ THÔNG TIN
+      const row5 = worksheet.getRow(currentRow);
+      const cell5 = row5.getCell(1);
+      cell5.value = "KHOA CÔNG NGHỆ THÔNG TIN";
+      cell5.font = { name: "Arial", size: 9 };
+      cell5.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 6: NĂM
+      const row6 = worksheet.getRow(currentRow);
+      const cell6 = row6.getCell(1);
+      cell6.value = `NĂM ${new Date().getFullYear()}`;
+      cell6.font = { name: "Arial", size: 9 };
+      cell6.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Header của bảng - in hoa và màu vàng
+      const headerRow = worksheet.getRow(currentRow);
+      columnHeaders.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1);
+        cell.value = header.toUpperCase();
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" },
+        };
+      });
+      currentRow++;
+
+      // Data rows
+      excelData.forEach((rowData) => {
+        const row = worksheet.getRow(currentRow);
+
+        columnHeaders.forEach((header, index) => {
+          const cell = row.getCell(index + 1);
+          cell.value = rowData[header as keyof typeof rowData] ?? "";
+          cell.font = { name: "Arial", size: 9 };
+          cell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+        currentRow++;
+      });
+
+      // Dòng trống
+      currentRow++;
+
+      // Hàng ngày tháng
+      const dateRow = worksheet.getRow(currentRow);
+      const dateCell = dateRow.getCell(columnHeaders.length);
+      dateCell.value = dateStr;
+      dateCell.font = { name: "Arial", size: 9 };
+      dateCell.alignment = { horizontal: "center", vertical: "middle" };
+      currentRow++;
+
+      // Footer row
+      const footerRowExcel = worksheet.getRow(currentRow);
+      footerRow.forEach((value, index) => {
+        const cell = footerRowExcel.getCell(index + 1);
+        cell.value = value;
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+
+      // Set column widths
+      columnHeaders.forEach((_, index) => {
+        worksheet.getColumn(index + 1).width = 20;
+      });
 
       // Xuất file
       const fileName = `danh-sach-yeu-cau-sua-chua-${
         new Date().toISOString().split("T")[0]
       }.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
 
       setExportCount(itemsToExport.length);
       setExportFileName(fileName);

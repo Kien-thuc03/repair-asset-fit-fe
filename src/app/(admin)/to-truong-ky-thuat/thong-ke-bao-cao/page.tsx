@@ -115,8 +115,6 @@ const replacementStatusConfig: Record<string, string> = {
   [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: "Đã từ chối",
   [ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: "Đã lập tờ trình",
   [ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: "Khoa đã duyệt tờ trình",
-  [ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: "Đã duyệt tờ trình",
-  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: "Đã từ chối tờ trình",
   [ReplacementProposalStatus.CHỜ_XÁC_MINH]: "Chờ xác minh",
   [ReplacementProposalStatus.ĐÃ_XÁC_MINH]: "Đã xác minh",
   [ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: "Đã gửi biên bản",
@@ -131,9 +129,7 @@ const replacementStatusColors: Record<string, string> = {
   [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: "#ef4444", // Đỏ
   [ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: "#3b82f6", // Xanh dương
   [ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: "#06b6d4", // Cyan
-  [ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: "#8b5cf6", // Tím
-  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: "#f97316", // Cam đậm
-  [ReplacementProposalStatus.CHỜ_XÁC_MINH]: "#6366f1", // Indigo
+   [ReplacementProposalStatus.CHỜ_XÁC_MINH]: "#6366f1", // Indigo
   [ReplacementProposalStatus.ĐÃ_XÁC_MINH]: "#14b8a6", // Teal
   [ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: "#a855f7", // Tím đậm
   [ReplacementProposalStatus.ĐÃ_KÝ_BIÊN_BẢN]: "#ec4899", // Hồng
