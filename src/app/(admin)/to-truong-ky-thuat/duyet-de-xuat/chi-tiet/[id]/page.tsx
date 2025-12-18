@@ -816,7 +816,7 @@ Trân trọng kính trình.`;
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800 text-xs sm:text-sm underline flex items-center gap-1">
                     <FileText className="w-4 h-4" />
-                    📄 Tờ trình đề xuất
+                    Tờ trình đề xuất
                   </a>
                 </div>
               </div>

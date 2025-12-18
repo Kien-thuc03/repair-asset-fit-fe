@@ -18,6 +18,9 @@ export default function AssetSoftwareInfo({ asset }: AssetSoftwareInfoProps) {
     <div className="lg:col-span">
       <h4 className="text-lg font-medium text-gray-900 mb-4 flex items-center space-x-2">
         <span>Phần mềm cài đặt</span>
+        <span className="text-sm text-gray-500 font-normal">
+          ({installedSoftware.length} phần mềm)
+        </span>
       </h4>
       
       {installedSoftware.length > 0 ? (

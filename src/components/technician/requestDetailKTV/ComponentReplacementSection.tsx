@@ -6,7 +6,7 @@ import { Package, ArrowRight, CheckCircle2, AlertCircle, Info, RefreshCw, CheckC
 import { ReplacementItem } from '@/lib/api/replacement-proposals'
 import { replaceComponent, getComponentById, getStockComponents, StockComponentDto } from '@/lib/api/components'
 import { completeRepair } from '@/lib/api/repairs'
-import { RepairStatus } from '@/types'
+import { ComponentStatus, RepairStatus } from '@/types'
 import { ReplacementProposalStatus } from '@/types/repair'
 
 const { Option } = Select
@@ -346,7 +346,7 @@ export default function ComponentReplacementSection({
 																{item.oldComponent.componentSpecs && (
 																	<p className="text-xs text-gray-600 truncate">{item.oldComponent.componentSpecs}</p>
 																)}
-																<Tag color="red" className="text-xs mt-1">{item.oldComponent.status}</Tag>
+																<Tag color="orange" className="text-xs mt-1">{item.oldComponent.status === ComponentStatus.PENDING_REPLACEMENT ? 'Chờ thay thế' : item.oldComponent.status}</Tag>
 															</>
 														)}
 													</div>
@@ -369,7 +369,7 @@ export default function ComponentReplacementSection({
 												className="space-y-3"
 											>
 												{/* Chọn linh kiện từ kho */}
-												{item.oldComponent && (
+												{/* {item.oldComponent && (
 													<Form.Item
 														label={<span className="font-medium text-sm">Chọn linh kiện thay thế từ kho (tùy chọn)</span>}
 														className="mb-0"
@@ -424,7 +424,7 @@ export default function ComponentReplacementSection({
 																: 'Không có linh kiện cùng loại trong kho. Vui lòng nhập thủ công.'}
 														</div>
 													</Form.Item>
-												)}
+												)} */}
 
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 													<Form.Item

@@ -84,10 +84,10 @@ export default function TechnicianRepairHistoryTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4 sm:mb-6">
         <div className="flex items-center space-x-2">
           <Settings className="w-5 h-5 text-blue-600" />
-          <h4 className="text-lg font-medium text-gray-900">
+          <h4 className="text-base sm:text-lg font-medium text-gray-900">
             Lịch sử bảo trì và sửa chữa
           </h4>
         </div>
@@ -97,12 +97,12 @@ export default function TechnicianRepairHistoryTab({
       </div>
 
       {repairHistory.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="text-center py-10 sm:py-12 bg-gray-50 rounded-lg px-4">
+          <AlertTriangle className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
             Chưa có lịch sử bảo trì
           </h3>
-          <p className="text-gray-500">
+          <p className="text-gray-500 text-sm sm:text-base">
             Thiết bị này chưa từng được báo cáo lỗi hoặc bảo trì.
           </p>
         </div>
@@ -115,15 +115,15 @@ export default function TechnicianRepairHistoryTab({
               
               {/* Header (collapsible trigger) */}
               <button
-                className="w-full bg-gray-50 px-6 py-4 border-b border-gray-200 rounded-t-lg flex items-center justify-between text-left"
+                className="w-full bg-gray-50 px-4 sm:px-6 py-4 border-b border-gray-200 rounded-t-lg flex flex-col sm:flex-row sm:items-center sm:justify-between text-left gap-3 sm:gap-0"
                 onClick={() => toggleCard(repair.id)}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600">
+                  <div className="w-9 h-9 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-600">
                     {repairHistory.length - index}
                   </div>
                   <div>
-                    <h5 className="font-semibold text-lg text-gray-900">
+                    <h5 className="font-semibold text-base sm:text-lg text-gray-900">
                       {repair.requestCode}
                     </h5>
                     <p className="text-sm text-gray-600 flex items-center">
@@ -132,12 +132,12 @@ export default function TechnicianRepairHistoryTab({
                     </p>
                   </div>
                 </div>
-                <div className="text-right flex items-center gap-3">
+                <div className="text-left sm:text-right flex items-center sm:justify-end gap-3 flex-wrap">
                   {(() => {
                     const badge = getStatusBadge(repair.status);
                     return (
                       <div
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${badge.color}`}>
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium border ${badge.color}`}>
                         {badge.label}
                       </div>
                     );
@@ -154,8 +154,8 @@ export default function TechnicianRepairHistoryTab({
 
               {/* Content */}
               {expandedId === repair.id && (
-                <div className="p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="p-4 sm:p-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-4">
                       <div>
                         <h6 className="font-medium text-gray-900 mb-2 flex items-center">
@@ -224,11 +224,7 @@ export default function TechnicianRepairHistoryTab({
                                     {item.quantity && (
                                       <span>Số lượng: {item.quantity}</span>
                                     )}
-                                    {item.proposalStatus && (
-                                      <span className="px-2 py-1 rounded-full bg-white border border-blue-200 text-blue-700 text-[11px] font-medium">
-                                        {item.proposalStatus.replace(/_/g, " ")}
-                                      </span>
-                                    )}
+                                  
                                   </div>
                                 </div>
                               </div>

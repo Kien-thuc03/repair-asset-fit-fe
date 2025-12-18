@@ -33,6 +33,8 @@ import {
   ClipboardEdit,
   CheckCircle,
   Package,
+  QrCode,
+  Monitor,
 } from "lucide-react";
 
 // Navigation items
@@ -180,11 +182,21 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         href: "/to-truong-ky-thuat/danh-sach-bao-loi",
         icon: ClipboardList,
       },
-
       {
         name: "Quản lý thiết bị",
-        href: "/to-truong-ky-thuat/quan-ly-thiet-bi",
-        icon: Search,
+        icon: Monitor,
+        children: [
+          {
+            name: "Danh sách thiết bị",
+            href: "/to-truong-ky-thuat/quan-ly-thiet-bi",
+            icon: Search,
+          },
+          {
+            name: "Mã QR thiết bị",
+            href: "/to-truong-ky-thuat/quan-ly-thiet-bi/ma-qr-thiet-bi",
+            icon: QrCode,
+          },
+        ],
       },
       {
         name: "Thống kê báo cáo",
@@ -241,11 +253,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
           },
         ],
       },
-      {
-        name: "Duyệt tờ trình",
-        href: "/qtv-khoa/duyet-to-trinh",
-        icon: ClipboardList
-      }
+      // {
+      //   name: "Duyệt tờ trình",
+      //   href: "/qtv-khoa/duyet-to-trinh",
+      //   icon: ClipboardList
+      // }
     ],
   };
 
@@ -255,42 +267,6 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
     ] as NavigationItem[]) || []
   );
 };
-
-// Fallback navigation for admin route
-// const navigation: NavigationItem[] = [
-//   {
-//     name: "Dashboard",
-//     href: "/admin",
-//     icon: LayoutDashboard,
-//   },
-//   {
-//     name: "Quản lý sửa chữa",
-//     href: "/admin/repairs",
-//     icon: Wrench,
-//   },
-//   {
-//     name: "Danh sách thiết bị",
-//     href: "/admin/assets",
-//     icon: ClipboardList,
-//   },
-//   {
-//     name: "Người dùng",
-//     href: "/admin/users",
-//     icon: Users,
-//   },
-//   {
-//     name: "Báo cáo",
-//     href: "/admin/reports",
-//     icon: BarChart3,
-//   },
-//   {
-//     name: "Cài đặt",
-//     href: "/admin/settings",
-//     icon: Settings,
-//   },
-// ];
-
-// Sidebar User Section
 
 // Sidebar Navigation
 function SidebarNavigation({

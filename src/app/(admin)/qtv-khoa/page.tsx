@@ -35,7 +35,7 @@ export default function QTVKhoaDashboard() {
     const pendingSoftware = softwareList.filter(p => p.status === SoftwareProposalStatus.CHỜ_DUYỆT).length
     const pendingReplacement = replacementList.filter(
       req => req.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT || 
-             req.status === ReplacementProposalStatus.CHỜ_XÁC_MINH
+      req.status === ReplacementProposalStatus.CHỜ_XÁC_MINH
     ).length
 
     return [
@@ -60,13 +60,6 @@ export default function QTVKhoaDashboard() {
         changeType: pendingReplacement > 0 ? 'neutral' as const : 'positive' as const,
         icon: ClipboardList,
       },
-      {
-        name: 'Hệ thống',
-        value: '99.9%',
-        change: 'Uptime',
-        changeType: 'positive' as const,
-        icon: Server,
-      },
     ]
   }, [users, totalUsers, softwareData, replacementData])
 
@@ -83,7 +76,7 @@ export default function QTVKhoaDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((item) => (
           <div
             key={item.name}
@@ -120,7 +113,7 @@ export default function QTVKhoaDashboard() {
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
             Chức năng chính
           </h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Link href="/qtv-khoa/quan-ly-nguoi-dung" className="relative group bg-blue-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg hover:bg-blue-100 transition-colors">
               <span className="rounded-lg inline-flex p-3 bg-blue-600 text-white">
                 <Users className="h-6 w-6" />
@@ -286,7 +279,7 @@ export default function QTVKhoaDashboard() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-900">
-                      Đề xuất {item.proposalCode} - {item.title || item.description || 'Không tiêu đề'}
+                      Đề xuất {item.proposalCode} - {item.reason || 'Không lý do'}
                     </p>
                     <p className="text-xs text-gray-500">
                       {new Date(item.createdAt).toLocaleString('vi-VN')}

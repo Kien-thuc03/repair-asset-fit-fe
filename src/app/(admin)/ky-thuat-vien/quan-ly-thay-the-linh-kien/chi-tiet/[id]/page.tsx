@@ -366,7 +366,7 @@ export default function ChiTietThayThePage() {
 											rel="noopener noreferrer"
 											className="text-blue-600 hover:text-blue-800 underline"
 										>
-											📄 Tờ trình đề xuất
+											Tờ trình đề xuất
 										</a>
 									</div>
 								)}

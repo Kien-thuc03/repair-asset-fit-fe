@@ -7,6 +7,8 @@ import {
   updateRepairStatus,
   GetRepairsQueryParams,
 } from "@/lib/api/repairs";
+import { ComputerRepairInfoResponse } from "@/lib/api/computers";
+import { AssetStatus } from "@/types/computer";
 import { RepairRequest, RepairRequestWithDetails, RepairStatus } from "@/types/repair";
 
 /**
@@ -91,6 +93,37 @@ export const useRepairs = (initialParams?: GetRepairsQueryParams) => {
     updateParams,
     refetch,
   };
+};
+
+// Helper: kiểm tra thông tin máy sau khi quét QR (tái sử dụng giữa các trang)
+export type RepairScanGuardReason = "DAMAGED" | "ACTIVE_REPAIR";
+
+export interface RepairScanGuardResult {
+  blocked: boolean;
+  reason?: RepairScanGuardReason;
+  message?: string;
+}
+
+export const evaluateRepairScanGuards = (
+  data: ComputerRepairInfoResponse["data"]
+): RepairScanGuardResult => {
+  if (data.asset.status === AssetStatus.DAMAGED) {
+    return {
+      blocked: true,
+      reason: "DAMAGED",
+      message: `Thiết bị ${data.asset.name} (${data.asset.ktCode}) đang được đánh dấu hư hỏng. Vui lòng chọn máy khác hoặc kiểm tra yêu cầu sửa chữa hiện có.`,
+    };
+  }
+
+  if (data.hasActiveRepair) {
+    return {
+      blocked: true,
+      reason: "ACTIVE_REPAIR",
+      message: `Máy này đang có yêu cầu sửa chữa chưa hoàn thành (${data.activeRepairInfo?.requestCode}). Vui lòng chọn máy khác.`,
+    };
+  }
+
+  return { blocked: false };
 };
 
 /**
