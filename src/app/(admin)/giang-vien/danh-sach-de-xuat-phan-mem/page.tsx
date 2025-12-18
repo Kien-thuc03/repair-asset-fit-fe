@@ -20,6 +20,7 @@ import SoftwareProposalCards from "@/components/lecturer/softwareProposal/Softwa
 import { useSoftwareProposalsByProposer } from "@/hooks/useSoftwareProposals";
 import { useAuth } from "@/contexts/AuthContext";
 import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from "@/lib/constants";
+import { useProfile } from "@/hooks";
 
 const { Option } = Select;
 
@@ -35,6 +36,7 @@ const getRoomName = (proposal: SoftwareProposal): string => {
 export default function SoftwareProposalsPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { userDetails } = useProfile();
 
   // State
   const [searchText, setSearchText] = useState("");
@@ -320,6 +322,28 @@ export default function SoftwareProposalsPage() {
       currentRow++;
 
       // Hàng 7: Dòng trống
+      currentRow++;
+
+      // User info row
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Dòng trống
       currentRow++;
 
       // Header của bảng - in hoa và màu vàng

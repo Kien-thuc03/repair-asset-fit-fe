@@ -6,6 +6,7 @@ import { RepairRequest } from "@/types";
 import { repairRequestStatusConfig } from "@/lib/constants/repairStatus";
 import { useRepairsByReporter } from "@/hooks";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks";
 import Pagination from "@/components/common/Pagination";
 import ProgressHeader from "./ProgressHeader";
 import ProgressFilters from "./ProgressFilters";
@@ -17,6 +18,7 @@ import type { Dayjs } from "dayjs";
 export default function ProgressTrackingContainer() {
   const router = useRouter();
   const { user } = useAuth();
+  const { userDetails } = useProfile();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<
@@ -338,6 +340,28 @@ export default function ProgressTrackingContainer() {
       currentRow++;
 
       // Hàng 7: Dòng trống
+      currentRow++;
+
+      // User info row
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Dòng trống
       currentRow++;
 
       // Header của bảng - in hoa và màu vàng
