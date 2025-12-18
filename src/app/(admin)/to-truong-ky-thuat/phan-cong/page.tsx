@@ -1,7 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle } from "lucide-react";
-import { Modal, Spin, message } from "antd";
+import { Spin, message } from "antd";
+import {
+  ExportExcelSuccessModal,
+  ExportExcelErrorModal,
+} from "@/components/modal";
 import Pagination from "@/components/common/Pagination";
 import {
   AssignmentHeader,
@@ -18,6 +21,7 @@ import {
 } from "@/lib/api/technician-assignments";
 import { Technician } from "@/types";
 import { Room, RoomStatus } from "@/types/unit";
+import { useProfile } from "@/hooks";
 
 // Extended Room type to include assignmentId
 interface RoomWithAssignment extends Room {
@@ -25,6 +29,7 @@ interface RoomWithAssignment extends Room {
 }
 
 export default function PhanCongPage() {
+  const { userDetails } = useProfile();
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [rooms, setRooms] = useState<RoomWithAssignment[]>([]);
   const [allRooms, setAllRooms] = useState<RoomWithAssignment[]>([]); // Lưu ALL data không filter
@@ -53,6 +58,8 @@ export default function PhanCongPage() {
 
   // Export states
   const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
+  const [exportError, setExportError] = useState("");
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
 
@@ -371,15 +378,18 @@ export default function PhanCongPage() {
         : sortedRooms;
 
     if (itemsToExport.length === 0) {
+      setExportError("Vui lòng chọn ít nhất một phòng để xuất Excel!");
       setShowExportErrorModal(true);
       return;
     }
 
     try {
       // Dynamic import để tránh lỗi SSR
-      const XLSX = await import("xlsx");
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách phân công phòng");
 
-      // Export areas data
+      // Tạo dữ liệu Excel
       const excelData = itemsToExport.map((room, index) => ({
         STT: index + 1,
         "Số phòng": room.roomNumber,
@@ -391,26 +401,204 @@ export default function PhanCongPage() {
         "Trạng thái": room.status,
       }));
 
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(excelData);
-
-      // Đặt độ rộng cột
-      ws["!cols"] = [
-        { wch: 5 }, // STT
-        { wch: 15 }, // Số phòng
-        { wch: 15 }, // Tòa nhà
-        { wch: 10 }, // Tầng
-        { wch: 25 }, // Kỹ thuật viên
-        { wch: 15 }, // Trạng thái
+      const columnHeaders = [
+        "STT",
+        "Số phòng",
+        "Tòa nhà",
+        "Tầng",
+        "Kỹ thuật viên phụ trách",
+        "Trạng thái",
       ];
 
-      XLSX.utils.book_append_sheet(wb, ws, "Danh sách phòng");
-      const fileName = `danh-sach-phan-cong-phong-${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      // Tạo footer
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const dateStr = `Ngày ${day} Tháng ${
+        month < 10 ? "0" + month : month
+      } Năm ${year}`;
 
+      const footerRow: string[] = new Array(columnHeaders.length).fill("");
+      footerRow[0] = "Người lập biểu";
+      footerRow[Math.floor(columnHeaders.length / 4)] = "Thư ký";
+      footerRow[Math.floor((columnHeaders.length * 2) / 4)] =
+        "Trưởng nhóm kiểm kê";
+      footerRow[columnHeaders.length - 1] = "Đại diện ĐV sử dụng";
+
+      let currentRow = 1;
+
+      // Hàng 1: TRƯỜNG ĐẠI HỌC...
+      const row1 = worksheet.getRow(currentRow);
+      const cell1 = row1.getCell(1);
+      cell1.value = "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP HỒ CHÍ MINH";
+      cell1.font = { name: "Arial", size: 9 };
+      cell1.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 2: Địa chỉ
+      const row2 = worksheet.getRow(currentRow);
+      const cell2 = row2.getCell(1);
+      cell2.value =
+        "Địa chỉ : 12 Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP Hồ Chí Minh";
+      cell2.font = { name: "Arial", size: 9 };
+      cell2.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 3: Dòng trống
+      currentRow++;
+
+      // Hàng 4: Tiêu đề sheet - màu đỏ
+      const row4 = worksheet.getRow(currentRow);
+      const cell4 = row4.getCell(1);
+      cell4.value = "DANH SÁCH PHÂN CÔNG PHÒNG";
+      cell4.font = {
+        name: "Arial",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFF0000" },
+      };
+      cell4.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 5: KHOA CÔNG NGHỆ THÔNG TIN
+      const row5 = worksheet.getRow(currentRow);
+      const cell5 = row5.getCell(1);
+      cell5.value = "KHOA CÔNG NGHỆ THÔNG TIN";
+      cell5.font = { name: "Arial", size: 9 };
+      cell5.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 6: NĂM
+      const row6 = worksheet.getRow(currentRow);
+      const cell6 = row6.getCell(1);
+      cell6.value = `NĂM ${new Date().getFullYear()}`;
+      cell6.font = { name: "Arial", size: 9 };
+      cell6.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Người lập và thời gian xuất
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
+      currentRow++;
+
+      // Header của bảng - in hoa và màu vàng
+      const headerRow = worksheet.getRow(currentRow);
+      columnHeaders.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1);
+        cell.value = header.toUpperCase();
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" },
+        };
+      });
+      currentRow++;
+
+      // Data rows
+      excelData.forEach((rowData) => {
+        const row = worksheet.getRow(currentRow);
+
+        columnHeaders.forEach((header, index) => {
+          const cell = row.getCell(index + 1);
+          cell.value = rowData[header as keyof typeof rowData] ?? "";
+          cell.font = { name: "Arial", size: 9 };
+          cell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+        currentRow++;
+      });
+
+      // Dòng trống
+      currentRow++;
+
+      // Hàng ngày tháng
+      const dateRow = worksheet.getRow(currentRow);
+      const dateCell = dateRow.getCell(columnHeaders.length);
+      dateCell.value = dateStr;
+      dateCell.font = { name: "Arial", size: 9 };
+      dateCell.alignment = { horizontal: "center", vertical: "middle" };
+      currentRow++;
+
+      // Footer row
+      const footerRowExcel = worksheet.getRow(currentRow);
+      footerRow.forEach((value, index) => {
+        const cell = footerRowExcel.getCell(index + 1);
+        cell.value = value;
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+
+      // Set column widths
+      columnHeaders.forEach((_, index) => {
+        worksheet.getColumn(index + 1).width = 20;
+      });
+
+      // Xuất file
+      const fileName = `Danh_sach_phan_cong_phong_${
+        new Date().toISOString().split("T")[0]
+      }_${itemsToExport.length}_ban_ghi.xlsx`;
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      // Hiển thị thông báo thành công
       setExportCount(itemsToExport.length);
+      setExportFileName(fileName);
       setShowExportSuccessModal(true);
 
       // Reset selection sau khi xuất
@@ -418,6 +606,9 @@ export default function PhanCongPage() {
       setSelectAll(false);
     } catch (error) {
       console.error("Lỗi xuất Excel:", error);
+      setExportError(
+        error instanceof Error ? error.message : "Lỗi không xác định"
+      );
       setShowExportErrorModal(true);
     }
   };
@@ -528,33 +719,18 @@ export default function PhanCongPage() {
       )}
 
       {/* Export Modals */}
-      <Modal
-        open={showExportSuccessModal}
-        onOk={() => setShowExportSuccessModal(false)}
-        onCancel={() => setShowExportSuccessModal(false)}
-        footer={null}
-        closable={true}
-        centered>
-        <div className="text-center">
-          <CheckCircle className="mx-auto mb-4 text-green-500" size={48} />
-          <h3 className="text-lg font-semibold mb-2">Xuất Excel thành công!</h3>
-          <p className="text-gray-600">Đã xuất {exportCount} phòng</p>
-        </div>
-      </Modal>
+      <ExportExcelSuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        fileName={exportFileName}
+        recordCount={exportCount}
+      />
 
-      <Modal
-        open={showExportErrorModal}
-        onOk={() => setShowExportErrorModal(false)}
-        onCancel={() => setShowExportErrorModal(false)}
-        footer={null}
-        closable={true}
-        centered>
-        <div className="text-center">
-          <XCircle className="mx-auto mb-4 text-red-500" size={48} />
-          <h3 className="text-lg font-semibold mb-2">Không có dữ liệu</h3>
-          <p className="text-gray-600">Không có dữ liệu để xuất Excel</p>
-        </div>
-      </Modal>
+      <ExportExcelErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
+        errorMessage={exportError}
+      />
     </div>
   );
 }

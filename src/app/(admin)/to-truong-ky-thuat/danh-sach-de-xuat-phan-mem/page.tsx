@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Breadcrumb, Input, Select, message } from "antd";
+import { Breadcrumb, Input, Select, message, Button } from "antd";
 import {
   Search,
   Eye,
@@ -11,7 +11,8 @@ import {
   Monitor,
   Calendar,
   User,
-  Building
+  Building,
+  Download,
 } from "lucide-react";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import { Pagination, SortableHeader } from "@/components/common";
@@ -20,8 +21,13 @@ import {
   useUpdateSoftwareProposalStatus,
 } from "@/hooks/useSoftwareProposals";
 import { useAuth } from "@/contexts/AuthContext";
-import { SoftwareProposalConfirmModal } from "@/components/modal";
+import {
+  SoftwareProposalConfirmModal,
+  ExportExcelSuccessModal,
+  ExportExcelErrorModal,
+} from "@/components/modal";
 import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from "@/lib/constants";
+import { useProfile } from "@/hooks";
 
 const { Option } = Select;
 
@@ -44,6 +50,14 @@ const getRoomName = (proposal: SoftwareProposal): string => {
 export default function DanhSachDeXuatPhanMemPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { userDetails } = useProfile();
+
+  // State cho Modal xuất Excel
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
+  const [exportError, setExportError] = useState("");
 
   // State
   const [searchText, setSearchText] = useState("");
@@ -318,6 +332,252 @@ export default function DanhSachDeXuatPhanMemPage() {
     setSelectedRowKeys([]);
   };
 
+  // Hàm xuất Excel với Modal thông báo
+  const handleExportExcel = async () => {
+    const selectedData = proposals.filter((item: SoftwareProposal) =>
+      selectedRowKeys.includes(item.id)
+    );
+
+    if (selectedData.length === 0) {
+      setExportError("Vui lòng chọn ít nhất một đề xuất để xuất Excel!");
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách đề xuất phần mềm");
+
+      // Tạo dữ liệu Excel
+      const excelData = selectedData.map(
+        (item: SoftwareProposal, index: number) => ({
+          STT: index + 1,
+          "Mã đề xuất": item.proposalCode,
+          "Người đề xuất": getUserName(item),
+          Phòng: getRoomName(item),
+          "Lý do": item.reason || "",
+          "Trạng thái":
+            SOFTWARE_PROPOSAL_STATUS_CONFIG[item.status]?.label || item.status,
+          "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+          "Ngày cập nhật": new Date(item.updatedAt).toLocaleDateString("vi-VN"),
+        })
+      );
+
+      const columnHeaders = [
+        "STT",
+        "Mã đề xuất",
+        "Người đề xuất",
+        "Phòng",
+        "Lý do",
+        "Trạng thái",
+        "Ngày tạo",
+        "Ngày cập nhật",
+      ];
+
+      // Tạo footer
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const dateStr = `Ngày ${day} Tháng ${
+        month < 10 ? "0" + month : month
+      } Năm ${year}`;
+
+      const footerRow: string[] = new Array(columnHeaders.length).fill("");
+      footerRow[0] = "Người lập biểu";
+      footerRow[Math.floor(columnHeaders.length / 4)] = "Thư ký";
+      footerRow[Math.floor((columnHeaders.length * 2) / 4)] =
+        "Trưởng nhóm kiểm kê";
+      footerRow[columnHeaders.length - 1] = "Đại diện ĐV sử dụng";
+
+      let currentRow = 1;
+
+      // Hàng 1: TRƯỜNG ĐẠI HỌC...
+      const row1 = worksheet.getRow(currentRow);
+      const cell1 = row1.getCell(1);
+      cell1.value = "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP HỒ CHÍ MINH";
+      cell1.font = { name: "Arial", size: 9 };
+      cell1.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 2: Địa chỉ
+      const row2 = worksheet.getRow(currentRow);
+      const cell2 = row2.getCell(1);
+      cell2.value =
+        "Địa chỉ : 12 Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP Hồ Chí Minh";
+      cell2.font = { name: "Arial", size: 9 };
+      cell2.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 3: Dòng trống
+      currentRow++;
+
+      // Hàng 4: Tiêu đề sheet - màu đỏ
+      const row4 = worksheet.getRow(currentRow);
+      const cell4 = row4.getCell(1);
+      cell4.value = "DANH SÁCH ĐỀ XUẤT PHẦN MỀM";
+      cell4.font = {
+        name: "Arial",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFF0000" },
+      };
+      cell4.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 5: KHOA CÔNG NGHỆ THÔNG TIN
+      const row5 = worksheet.getRow(currentRow);
+      const cell5 = row5.getCell(1);
+      cell5.value = "KHOA CÔNG NGHỆ THÔNG TIN";
+      cell5.font = { name: "Arial", size: 9 };
+      cell5.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 6: NĂM
+      const row6 = worksheet.getRow(currentRow);
+      const cell6 = row6.getCell(1);
+      cell6.value = `NĂM ${new Date().getFullYear()}`;
+      cell6.font = { name: "Arial", size: 9 };
+      cell6.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Người lập và thời gian xuất
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
+      currentRow++;
+
+      // Header của bảng - in hoa và màu vàng
+      const headerRow = worksheet.getRow(currentRow);
+      columnHeaders.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1);
+        cell.value = header.toUpperCase();
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" },
+        };
+      });
+      currentRow++;
+
+      // Data rows
+      excelData.forEach((rowData) => {
+        const row = worksheet.getRow(currentRow);
+
+        columnHeaders.forEach((header, index) => {
+          const cell = row.getCell(index + 1);
+          cell.value = rowData[header as keyof typeof rowData] ?? "";
+          cell.font = { name: "Arial", size: 9 };
+          cell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+        currentRow++;
+      });
+
+      // Dòng trống
+      currentRow++;
+
+      // Hàng ngày tháng
+      const dateRow = worksheet.getRow(currentRow);
+      const dateCell = dateRow.getCell(columnHeaders.length);
+      dateCell.value = dateStr;
+      dateCell.font = { name: "Arial", size: 9 };
+      dateCell.alignment = { horizontal: "center", vertical: "middle" };
+      currentRow++;
+
+      // Footer row
+      const footerRowExcel = worksheet.getRow(currentRow);
+      footerRow.forEach((value, index) => {
+        const cell = footerRowExcel.getCell(index + 1);
+        cell.value = value;
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+
+      // Set column widths
+      columnHeaders.forEach((_, index) => {
+        worksheet.getColumn(index + 1).width = 20;
+      });
+
+      // Xuất file
+      const fileName = `Danh_sach_de_xuat_phan_mem_${
+        new Date().toISOString().split("T")[0]
+      }_${selectedData.length}_ban_ghi.xlsx`;
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      // Hiển thị thông báo thành công
+      setExportCount(selectedData.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất thành công
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setExportError(
+        error instanceof Error ? error.message : "Lỗi không xác định"
+      );
+      setShowExportErrorModal(true);
+    }
+  };
+
   // Show loading state
   if (loading && proposals.length === 0) {
     return (
@@ -405,6 +665,17 @@ export default function DanhSachDeXuatPhanMemPage() {
               Đã trang bị
             </Option>
           </Select>
+
+          <div className="flex justify-end">
+            <Button
+              type="primary"
+              icon={<Download className="w-4 h-4" />}
+              onClick={handleExportExcel}
+              disabled={selectedRowKeys.length === 0}
+              size="middle">
+              Xuất Excel ({selectedRowKeys.length})
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -471,7 +742,8 @@ export default function DanhSachDeXuatPhanMemPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedProposals.map((proposal) => {
-                const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+                const statusConfig =
+                  SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
                 const StatusIcon = statusConfig.icon;
                 const canApprove =
                   proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT;
@@ -516,9 +788,7 @@ export default function DanhSachDeXuatPhanMemPage() {
                     </td>
                     <td className="px-2 py-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          statusConfig.color
-                        }`}>
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusConfig.color}`}>
                         <StatusIcon className="w-3 h-3 mr-1" />
                         {statusConfig.label}
                       </span>
@@ -577,7 +847,8 @@ export default function DanhSachDeXuatPhanMemPage() {
         {/* Mobile Card View */}
         <div className="lg:hidden space-y-4 p-4">
           {paginatedProposals.map((proposal) => {
-            const statusConfig = SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
+            const statusConfig =
+              SOFTWARE_PROPOSAL_STATUS_CONFIG[proposal.status];
             const StatusIcon = statusConfig.icon;
             const canApprove =
               proposal.status === SoftwareProposalStatus.CHỜ_DUYỆT;
@@ -622,9 +893,7 @@ export default function DanhSachDeXuatPhanMemPage() {
                     </div>
                   </div>
                   <span
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
-                      statusConfig.color
-                    }`}>
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}>
                     <StatusIcon className="w-3 h-3 mr-1" />
                     {statusConfig.label}
                   </span>
@@ -698,6 +967,20 @@ export default function DanhSachDeXuatPhanMemPage() {
           isLoading={isUpdatingStatus}
         />
       )}
+
+      {/* Modal thông báo xuất Excel */}
+      <ExportExcelSuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        fileName={exportFileName}
+        recordCount={exportCount}
+      />
+
+      <ExportExcelErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
+        errorMessage={exportError}
+      />
     </div>
   );
 }

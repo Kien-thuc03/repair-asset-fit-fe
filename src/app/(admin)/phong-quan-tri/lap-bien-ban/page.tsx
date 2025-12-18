@@ -9,16 +9,19 @@ import {
   Search,
   Eye,
   User,
-  CheckCircle,
   Download,
-  XCircle,
   Loader2,
   AlertCircle,
   ClipboardList,
+  CheckCircle,
 } from "lucide-react";
-import { Breadcrumb, Modal, Button } from "antd";
+import { Breadcrumb, Button } from "antd";
 import { SortableHeader, Pagination } from "@/components/common";
-import { useReplacementProposals } from "@/hooks";
+import {
+  ExportExcelSuccessModal,
+  ExportExcelErrorModal,
+} from "@/components/modal";
+import { useReplacementProposals, useProfile } from "@/hooks";
 import { ReplacementProposal } from "@/lib/api/replacement-proposals";
 import { ReplacementProposalStatus } from "@/types";
 
@@ -28,6 +31,7 @@ type SortDirection = "asc" | "desc" | null;
 export default function LapBienBanPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { userDetails } = useProfile();
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("search") || ""
   );
@@ -42,6 +46,7 @@ export default function LapBienBanPage() {
   const [showExportErrorModal, setShowExportErrorModal] = useState(false);
   const [exportCount, setExportCount] = useState(0);
   const [exportFileName, setExportFileName] = useState("");
+  const [exportError, setExportError] = useState("");
 
   // Fetch proposals với status ĐÃ_XÁC_MINH (B9 - Phòng Quản trị đã xác nhận và xác minh thực tế xong)
   const {
@@ -203,13 +208,16 @@ export default function LapBienBanPage() {
         : filteredReports;
 
     if (dataToExport.length === 0) {
+      setExportError("Vui lòng chọn ít nhất một biên bản để xuất Excel!");
       setShowExportErrorModal(true);
       return;
     }
 
     try {
       // Dynamic import để tránh lỗi SSR
-      const XLSX = await import("xlsx");
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách biên bản kiểm tra");
 
       // Tạo dữ liệu Excel
       const excelData = dataToExport.map((proposal, index) => {
@@ -230,33 +238,204 @@ export default function LapBienBanPage() {
         };
       });
 
-      // Tạo workbook và worksheet
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(excelData);
-
-      // Đặt độ rộng cột tự động
-      const colWidths = [
-        { wch: 5 }, // STT
-        { wch: 20 }, // Mã tờ trình
-        { wch: 40 }, // Tiêu đề
-        { wch: 25 }, // Người tạo
-        { wch: 12 }, // Tổng số phòng
-        { wch: 15 }, // Tổng loại linh kiện
-        { wch: 12 }, // Tổng số lượng
-        { wch: 15 }, // Trạng thái
-        { wch: 15 }, // Ngày tạo
-        { wch: 15 }, // Ngày cập nhật
+      const columnHeaders = [
+        "STT",
+        "Mã tờ trình",
+        "Tiêu đề",
+        "Người tạo",
+        "Tổng số phòng",
+        "Tổng loại linh kiện",
+        "Tổng số lượng",
+        "Trạng thái",
+        "Ngày tạo",
+        "Ngày cập nhật",
       ];
-      ws["!cols"] = colWidths;
 
-      // Thêm worksheet vào workbook
-      XLSX.utils.book_append_sheet(wb, ws, "Danh sách biên bản kiểm tra");
+      // Tạo footer
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const dateStr = `Ngày ${day} Tháng ${
+        month < 10 ? "0" + month : month
+      } Năm ${year}`;
+
+      const footerRow: string[] = new Array(columnHeaders.length).fill("");
+      footerRow[0] = "Người lập biểu";
+      footerRow[Math.floor(columnHeaders.length / 4)] = "Thư ký";
+      footerRow[Math.floor((columnHeaders.length * 2) / 4)] =
+        "Trưởng nhóm kiểm kê";
+      footerRow[columnHeaders.length - 1] = "Đại diện ĐV sử dụng";
+
+      let currentRow = 1;
+
+      // Hàng 1: TRƯỜNG ĐẠI HỌC...
+      const row1 = worksheet.getRow(currentRow);
+      const cell1 = row1.getCell(1);
+      cell1.value = "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP HỒ CHÍ MINH";
+      cell1.font = { name: "Arial", size: 9 };
+      cell1.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 2: Địa chỉ
+      const row2 = worksheet.getRow(currentRow);
+      const cell2 = row2.getCell(1);
+      cell2.value =
+        "Địa chỉ : 12 Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP Hồ Chí Minh";
+      cell2.font = { name: "Arial", size: 9 };
+      cell2.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 3: Dòng trống
+      currentRow++;
+
+      // Hàng 4: Tiêu đề sheet - màu đỏ
+      const row4 = worksheet.getRow(currentRow);
+      const cell4 = row4.getCell(1);
+      cell4.value = "DANH SÁCH BIÊN BẢN KIỂM TRA";
+      cell4.font = {
+        name: "Arial",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFF0000" },
+      };
+      cell4.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 5: KHOA CÔNG NGHỆ THÔNG TIN
+      const row5 = worksheet.getRow(currentRow);
+      const cell5 = row5.getCell(1);
+      cell5.value = "KHOA CÔNG NGHỆ THÔNG TIN";
+      cell5.font = { name: "Arial", size: 9 };
+      cell5.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 6: NĂM
+      const row6 = worksheet.getRow(currentRow);
+      const cell6 = row6.getCell(1);
+      cell6.value = `NĂM ${new Date().getFullYear()}`;
+      cell6.font = { name: "Arial", size: 9 };
+      cell6.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Thông tin người lập và thời gian
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
+      currentRow++;
+
+      // Header của bảng - in hoa và màu vàng
+      const headerRow = worksheet.getRow(currentRow);
+      columnHeaders.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1);
+        cell.value = header.toUpperCase();
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" },
+        };
+      });
+      currentRow++;
+
+      // Data rows
+      excelData.forEach((rowData) => {
+        const row = worksheet.getRow(currentRow);
+
+        columnHeaders.forEach((header, index) => {
+          const cell = row.getCell(index + 1);
+          cell.value = rowData[header as keyof typeof rowData] ?? "";
+          cell.font = { name: "Arial", size: 9 };
+          cell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+        currentRow++;
+      });
+
+      // Dòng trống
+      currentRow++;
+
+      // Hàng ngày tháng
+      const dateRow = worksheet.getRow(currentRow);
+      const dateCell = dateRow.getCell(columnHeaders.length);
+      dateCell.value = dateStr;
+      dateCell.font = { name: "Arial", size: 9 };
+      dateCell.alignment = { horizontal: "center", vertical: "middle" };
+      currentRow++;
+
+      // Footer row
+      const footerRowExcel = worksheet.getRow(currentRow);
+      footerRow.forEach((value, index) => {
+        const cell = footerRowExcel.getCell(index + 1);
+        cell.value = value;
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+
+      // Set column widths
+      columnHeaders.forEach((_, index) => {
+        worksheet.getColumn(index + 1).width = 20;
+      });
 
       // Xuất file
       const fileName = `Danh_sach_bien_ban_kiem_tra_${
         new Date().toISOString().split("T")[0]
-      }.xlsx`;
-      XLSX.writeFile(wb, fileName);
+      }_${dataToExport.length}_ban_ghi.xlsx`;
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
 
       // Thông báo thành công với modal
       setExportCount(dataToExport.length);
@@ -267,6 +446,9 @@ export default function LapBienBanPage() {
       setSelectedRowKeys([]);
     } catch (error) {
       console.error("Lỗi xuất Excel:", error);
+      setExportError(
+        error instanceof Error ? error.message : "Lỗi không xác định"
+      );
       setShowExportErrorModal(true);
     }
   };
@@ -279,7 +461,6 @@ export default function LapBienBanPage() {
         : [...prev, itemId]
     );
   };
-
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
@@ -313,43 +494,26 @@ export default function LapBienBanPage() {
           ]}
         />
       </div>
-
       {/* Header */}
-      {/* <div className="bg-white shadow rounded-lg p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+
+      <div className="bg-white shadow rounded-lg p-6 mt-2">
+        <div className="flex items-center space-x-3">
+          <div className="shrink-0">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <ClipboardList className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900">
               Danh sách biên bản kiểm tra
             </h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Danh sách các tờ trình đã được Phòng Quản trị xác minh (trạng thái
-              &ldquo;Đã xác minh&rdquo; - B9). Bạn có thể lập biên bản kiểm tra
-              cho các tờ trình này.
+            <p className="text-gray-600">
+              Danh sách các tờ trình đã được Phòng Quản trị xác minh. Bạn có thể
+              lập biên bản kiểm tra cho các tờ trình này.
             </p>
           </div>
         </div>
-      </div> */}
-
-            {/* Header */}
-      
-            <div className="bg-white shadow rounded-lg p-6 mt-2">
-              <div className="flex items-center space-x-3">
-                <div className="shrink-0">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <ClipboardList className="w-6 h-6 text-blue-600" />
-                  </div>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    Danh sách biên bản kiểm tra
-                  </h1>
-                  <p className="text-gray-600">
-                    Danh sách các tờ trình đã được Phòng Quản trị xác minh. Bạn có thể lập biên bản kiểm tra
-              cho các tờ trình này.
-                  </p>
-                </div>
-              </div>
-            </div>
+      </div>
 
       {/* Search and Export */}
       <div className="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6">
@@ -427,16 +591,28 @@ export default function LapBienBanPage() {
                           title="Chọn tất cả biên bản"
                           type="checkbox"
                           checked={
-                            selectedRowKeys.length === paginatedReports.length &&
+                            selectedRowKeys.length ===
+                              paginatedReports.length &&
                             paginatedReports.length > 0
                           }
                           onChange={(e) => {
                             if (e.target.checked) {
-                              const currentPageKeys = paginatedReports.map((report) => report.id);
-                              setSelectedRowKeys((prev) => [...prev, ...currentPageKeys]);
+                              const currentPageKeys = paginatedReports.map(
+                                (report) => report.id
+                              );
+                              setSelectedRowKeys((prev) => [
+                                ...prev,
+                                ...currentPageKeys,
+                              ]);
                             } else {
-                              const currentPageKeys = paginatedReports.map((report) => report.id);
-                              setSelectedRowKeys((prev) => prev.filter((key) => !currentPageKeys.includes(key)));
+                              const currentPageKeys = paginatedReports.map(
+                                (report) => report.id
+                              );
+                              setSelectedRowKeys((prev) =>
+                                prev.filter(
+                                  (key) => !currentPageKeys.includes(key)
+                                )
+                              );
                             }
                           }}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -503,7 +679,7 @@ export default function LapBienBanPage() {
                           </td>
                           <td className="px-2 py-4">
                             <div className="flex items-center">
-                               <div className="min-w-0 flex-1">
+                              <div className="min-w-0 flex-1">
                                 <div
                                   className="text-sm font-medium text-blue-600 truncate cursor-pointer hover:text-blue-800 hover:underline"
                                   onClick={() => handleViewReport(proposal.id)}>
@@ -773,60 +949,19 @@ export default function LapBienBanPage() {
         )}
       </div>
 
-      {/* Export Success Modal */}
-      <Modal
-        open={showExportSuccessModal}
-        onCancel={() => setShowExportSuccessModal(false)}
-        footer={[
-          <button
-            key="ok"
-            onClick={() => setShowExportSuccessModal(false)}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-            Đóng
-          </button>,
-        ]}
-        centered
-        width={400}>
-        <div className="flex items-center space-x-3">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-          <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Xuất Excel thành công!
-            </h3>
-            <p className="text-sm text-gray-500">
-              Đã xuất {exportCount} biên bản ra file {exportFileName} thành
-              công.
-            </p>
-          </div>
-        </div>
-      </Modal>
+      {/* Export Modals */}
+      <ExportExcelSuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        fileName={exportFileName}
+        recordCount={exportCount}
+      />
 
-      {/* Export Error Modal */}
-      <Modal
-        open={showExportErrorModal}
-        onCancel={() => setShowExportErrorModal(false)}
-        footer={[
-          <button
-            key="ok"
-            onClick={() => setShowExportErrorModal(false)}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
-            Đóng
-          </button>,
-        ]}
-        centered
-        width={400}>
-        <div className="flex items-center space-x-3">
-          <XCircle className="h-8 w-8 text-red-600" />
-          <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Không thể xuất Excel
-            </h3>
-            <p className="text-sm text-gray-500">
-              Vui lòng chọn ít nhất một biên bản để xuất Excel.
-            </p>
-          </div>
-        </div>
-      </Modal>
+      <ExportExcelErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
+        errorMessage={exportError}
+      />
     </div>
   );
 }

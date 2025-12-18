@@ -19,6 +19,7 @@ import { ErrorType, ERROR_TYPE_LABELS } from "@/lib/constants/errorTypes";
 import { Table, Collapse, Tag } from "antd";
 import { apiClient } from "@/lib/api";
 import ExcelExportButton from "@/components/common/ExcelExportButton";
+import { useProfile } from "@/hooks";
 
 const { Option } = Select;
 
@@ -115,8 +116,6 @@ const replacementStatusConfig: Record<string, string> = {
   [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: "Đã từ chối",
   [ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: "Đã lập tờ trình",
   [ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: "Khoa đã duyệt tờ trình",
-  [ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: "Đã duyệt tờ trình",
-  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: "Đã từ chối tờ trình",
   [ReplacementProposalStatus.CHỜ_XÁC_MINH]: "Chờ xác minh",
   [ReplacementProposalStatus.ĐÃ_XÁC_MINH]: "Đã xác minh",
   [ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: "Đã gửi biên bản",
@@ -131,8 +130,6 @@ const replacementStatusColors: Record<string, string> = {
   [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI]: "#ef4444", // Đỏ
   [ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH]: "#3b82f6", // Xanh dương
   [ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH]: "#06b6d4", // Cyan
-  [ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH]: "#8b5cf6", // Tím
-  [ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH]: "#f97316", // Cam đậm
   [ReplacementProposalStatus.CHỜ_XÁC_MINH]: "#6366f1", // Indigo
   [ReplacementProposalStatus.ĐÃ_XÁC_MINH]: "#14b8a6", // Teal
   [ReplacementProposalStatus.ĐÃ_GỬI_BIÊN_BẢN]: "#a855f7", // Tím đậm
@@ -159,6 +156,7 @@ const softwareStatusColors: Record<string, string> = {
 };
 
 export default function ThongKeBaoCaoPage() {
+  const { userDetails } = useProfile();
   const [loading, setLoading] = useState(true);
   const [roomStatisticsLoading, setRoomStatisticsLoading] = useState(false);
   const [statistics, setStatistics] = useState<StatisticsData>({
@@ -500,6 +498,28 @@ export default function ThongKeBaoCaoPage() {
     // Hàng 7: Dòng trống
     currentRow++;
 
+    // Hàng 8: Thông tin người lập và thời gian
+    const now = new Date();
+    const infoRow = worksheet.getRow(currentRow);
+    const infoCell = infoRow.getCell(1);
+    infoCell.value = `Người lập: ${
+      userDetails?.fullName || "N/A"
+    } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })}`;
+    infoCell.font = { name: "Arial", size: 9 };
+    infoCell.alignment = { horizontal: "left", vertical: "middle" };
+    worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+    currentRow++;
+
+    // Hàng 9: Dòng trống
+    currentRow++;
+
     // Header của bảng - in hoa và màu vàng
     const headerRow = worksheet.getRow(currentRow);
     columnHeaders.forEach((header, index) => {
@@ -772,9 +792,8 @@ export default function ThongKeBaoCaoPage() {
       );
 
       // Xuất file
-      const fileName = `thong-ke-theo-phong-${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
+      const fileName = `
+      -ke-theo-phong-${new Date().toISOString().split("T")[0]}.xlsx`;
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
