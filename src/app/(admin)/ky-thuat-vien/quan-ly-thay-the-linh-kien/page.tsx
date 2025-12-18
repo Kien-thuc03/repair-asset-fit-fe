@@ -248,6 +248,26 @@ export default function QuanLyThayTheLinhKienPage() {
 
       currentRow++;
 
+      const now = new Date();
+      const infoRow3 = worksheet.getRow(currentRow);
+      const infoCell3 = infoRow3.getCell(1);
+      infoCell3.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell3.font = { name: "Arial", size: 9 };
+      infoCell3.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      currentRow++;
+
       const headerRow = worksheet.getRow(currentRow);
       columnHeaders.forEach((header, index) => {
         const cell = headerRow.getCell(index + 1);
