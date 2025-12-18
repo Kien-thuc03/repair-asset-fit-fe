@@ -16,6 +16,7 @@ import {
   useUpdateReplacementProposalStatus,
 } from "@/hooks/useReplacementProposals";
 import { ReplacementProposalStatus } from "@/types";
+import { useProfile } from "@/hooks";
 
 // Interface cho InspectionReport
 interface InspectionReport {
@@ -32,6 +33,7 @@ interface InspectionReport {
 
 export default function BienBanPage() {
   const router = useRouter();
+  const { userDetails } = useProfile();
 
   // API hook for updating status
   const { updateStatus } = useUpdateReplacementProposalStatus();
@@ -418,6 +420,28 @@ export default function BienBanPage() {
       currentRow++;
 
       // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Người lập và thời gian xuất
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
       currentRow++;
 
       // Header của bảng - in hoa và màu vàng

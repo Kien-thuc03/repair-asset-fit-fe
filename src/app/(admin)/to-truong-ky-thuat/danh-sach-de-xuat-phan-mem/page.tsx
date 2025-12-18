@@ -27,6 +27,7 @@ import {
   ExportExcelErrorModal,
 } from "@/components/modal";
 import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from "@/lib/constants";
+import { useProfile } from "@/hooks";
 
 const { Option } = Select;
 
@@ -49,6 +50,7 @@ const getRoomName = (proposal: SoftwareProposal): string => {
 export default function DanhSachDeXuatPhanMemPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { userDetails } = useProfile();
 
   // State cho Modal xuất Excel
   const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
@@ -447,6 +449,28 @@ export default function DanhSachDeXuatPhanMemPage() {
       currentRow++;
 
       // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Người lập và thời gian xuất
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
       currentRow++;
 
       // Header của bảng - in hoa và màu vàng

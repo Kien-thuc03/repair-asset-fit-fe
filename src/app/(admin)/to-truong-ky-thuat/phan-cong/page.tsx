@@ -21,6 +21,7 @@ import {
 } from "@/lib/api/technician-assignments";
 import { Technician } from "@/types";
 import { Room, RoomStatus } from "@/types/unit";
+import { useProfile } from "@/hooks";
 
 // Extended Room type to include assignmentId
 interface RoomWithAssignment extends Room {
@@ -28,6 +29,7 @@ interface RoomWithAssignment extends Room {
 }
 
 export default function PhanCongPage() {
+  const { userDetails } = useProfile();
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [rooms, setRooms] = useState<RoomWithAssignment[]>([]);
   const [allRooms, setAllRooms] = useState<RoomWithAssignment[]>([]); // Lưu ALL data không filter
@@ -481,6 +483,28 @@ export default function PhanCongPage() {
       currentRow++;
 
       // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Người lập và thời gian xuất
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
       currentRow++;
 
       // Header của bảng - in hoa và màu vàng

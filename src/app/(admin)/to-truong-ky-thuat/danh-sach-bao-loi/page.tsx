@@ -23,6 +23,7 @@ import { RepairStatus, RepairRequest } from "@/types";
 import { Pagination } from "@/components/common";
 import { useRepairs } from "@/hooks/useRepairs";
 import type { GetRepairsQueryParams } from "@/lib/api/repairs";
+import { useProfile } from "@/hooks";
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -39,6 +40,7 @@ type SortDirection = "asc" | "desc" | "none";
 type RangeValue = [Dayjs | null, Dayjs | null] | null;
 
 export default function DanhSachBaoLoiPage() {
+  const { userDetails } = useProfile();
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<RepairStatus | "">("");
   const [dateRange, setDateRange] = useState<RangeValue>(null);
@@ -305,6 +307,28 @@ export default function DanhSachBaoLoiPage() {
       currentRow++;
 
       // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Người lập và thời gian xuất
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
       currentRow++;
 
       // Header của bảng - in hoa và màu vàng
