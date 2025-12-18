@@ -24,6 +24,7 @@ import { SearchOutlined, SyncOutlined } from "@ant-design/icons";
 import { useUsersManagement } from "@/hooks/useUsersManagement";
 import { useRoles } from "@/hooks/useRoles";
 import { useUnits } from "@/hooks/useUnits";
+import { useProfile } from "@/hooks";
 import { getUsers } from "@/lib/api/users";
 import type { UnitResponseDto } from "@/lib/api/units";
 import type { RoleResponseDto } from "@/lib/api/roles";
@@ -37,6 +38,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 
 export default function UsersManagementPage() {
   const router = useRouter();
+  const { userDetails } = useProfile();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
   // Modal state
@@ -416,6 +418,28 @@ export default function UsersManagementPage() {
       currentRow++;
 
       // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Thông tin người lập và thời gian
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
       currentRow++;
 
       // Header của bảng - in hoa và màu vàng

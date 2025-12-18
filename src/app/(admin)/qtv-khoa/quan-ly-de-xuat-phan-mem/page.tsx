@@ -18,6 +18,7 @@ import { Breadcrumb, Input, Select } from "antd";
 import { SoftwareProposal, SoftwareProposalStatus } from "@/types/software";
 import { Pagination, SortableHeader } from "@/components/common";
 import { useSoftwareProposals } from "@/hooks/useSoftwareProposals";
+import { useProfile } from "@/hooks";
 import { SOFTWARE_PROPOSAL_STATUS_CONFIG } from "@/lib/constants";
 
 const { Option } = Select;
@@ -40,6 +41,7 @@ const getRoomName = (proposal: SoftwareProposal): string => {
 
 export default function QtvKhoaSoftwareProposalsPage() {
   const router = useRouter();
+  const { userDetails } = useProfile();
 
   // State
   const [searchText, setSearchText] = useState("");
@@ -298,6 +300,26 @@ export default function QtvKhoaSoftwareProposalsPage() {
       cell6.value = `NĂM ${new Date().getFullYear()}`;
       cell6.font = { name: "Arial", size: 9 };
       cell6.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      currentRow++;
+
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
       worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
       currentRow++;
 

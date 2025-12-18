@@ -34,6 +34,7 @@ import { useRouter } from "next/navigation";
 import {
   useReplacementProposals,
   useUpdateReplacementProposalStatus,
+  useProfile,
 } from "@/hooks";
 import { ReplacementProposal } from "@/lib/api/replacement-proposals";
 import { ReplacementProposalStatus } from "@/types/repair";
@@ -46,6 +47,7 @@ type SortDirection = "asc" | "desc" | null;
 
 export default function DuyetToTrinhPage() {
   const router = useRouter();
+  const { userDetails } = useProfile();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [dateRange, setDateRange] = useState<
@@ -340,6 +342,28 @@ export default function DuyetToTrinhPage() {
       currentRow++;
 
       // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Thông tin người lập và thời gian
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
       currentRow++;
 
       // Header của bảng - in hoa và màu vàng
