@@ -1,32 +1,6 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { users as demoUsersData } from '@/lib/mockData/users'
-import { UserEntity } from '@/types/user'
-
-// Demo accounts component
-function DemoAccountsInfo() {
-  // Demo users for testing - should match AuthContext
-  const demoUsers = demoUsersData.map((user: UserEntity) => ({
-    id: user.id,
-    fullName: user.fullName,
-    username: user.username,
-    password: user.password,
-  }))
-
-  return (
-    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-      <h4 className="text-xs font-medium text-blue-800 mb-2">Tài khoản demo:</h4>
-      <div className="space-y-1 text-xs text-blue-700">
-        {demoUsers.map((user, index) => (
-          <p key={index}>
-            <strong>{user.fullName}:</strong> {user.username} / {user.password}
-          </p>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -50,9 +24,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 Trường Đại học Công nghiệp TP. Hồ Chí Minh
                 </p>
             </div>
-
-            {/* Demo accounts info */}
-            <DemoAccountsInfo />
         </div>
       </div>
     </div>

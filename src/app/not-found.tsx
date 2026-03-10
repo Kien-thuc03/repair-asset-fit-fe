@@ -2,8 +2,23 @@
 
 import Link from 'next/link'
 import { ArrowLeft, Home } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { UserRole, RoleInfo } from '@/types/repair'
 
 export default function NotFound() {
+  const { user } = useAuth()
+  
+  // Tính toán URL trang chủ dựa trên role của người dùng
+  const getHomeUrl = () => {
+    if (!user || !user.activeRole) {
+      return '/login'  // Nếu chưa đăng nhập, về trang login
+    }
+    
+    // Lấy defaultRoute từ RoleInfo dựa trên role hiện tại
+    const roleInfo = RoleInfo[user.activeRole.code as UserRole]
+    return roleInfo?.defaultRoute || '/login'
+  }
+
   return (
     <div className="min-h-screen bg-blue-900 flex flex-col items-center justify-center text-white p-4">
       <div className="max-w-2xl w-full text-center space-y-8">
@@ -50,11 +65,11 @@ export default function NotFound() {
           </button>
           
           <Link 
-            href="/" 
+            href={getHomeUrl()} 
             className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
           >
             <Home size={18} />
-            <span>Về trang chủ</span>
+            <span>{user ? 'Về trang chủ' : 'Về trang đăng nhập'}</span>
           </Link>
         </div>
       </div>

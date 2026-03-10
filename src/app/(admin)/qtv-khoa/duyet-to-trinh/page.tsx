@@ -1,0 +1,1059 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import {
+  FileText,
+  Eye,
+  Download,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  AlertCircle,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
+import Link from "next/link";
+import {
+  Breadcrumb,
+  Button,
+  Modal,
+  Card,
+  Row,
+  Col,
+  Input,
+  Select,
+  DatePicker,
+} from "antd";
+import { SearchOutlined, SyncOutlined } from "@ant-design/icons";
+import Pagination from "@/components/common/Pagination";
+import SuccessModal from "@/components/modal/SuccessModal";
+import ErrorModal from "@/components/modal/ErrorModal";
+import ExportExcelSuccessModal from "@/components/modal/ExportExcelSuccessModal";
+import ExportExcelErrorModal from "@/components/modal/ExportExcelErrorModal";
+import { useRouter } from "next/navigation";
+import {
+  useReplacementProposals,
+  useUpdateReplacementProposalStatus,
+  useProfile,
+} from "@/hooks";
+import { ReplacementProposal } from "@/lib/api/replacement-proposals";
+import { ReplacementProposalStatus } from "@/types/repair";
+import type { Dayjs } from "dayjs";
+
+const { RangePicker } = DatePicker;
+
+type SortField = keyof ReplacementProposal;
+type SortDirection = "asc" | "desc" | null;
+
+export default function DuyetToTrinhPage() {
+  const router = useRouter();
+  const { userDetails } = useProfile();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [dateRange, setDateRange] = useState<
+    [Dayjs | null, Dayjs | null] | null
+  >(null);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
+  const [showExportSuccessModal, setShowExportSuccessModal] = useState(false);
+  const [showExportErrorModal, setShowExportErrorModal] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showApprovalSuccessModal, setShowApprovalSuccessModal] =
+    useState(false);
+  const [showApprovalErrorModal, setShowApprovalErrorModal] = useState(false);
+  const [selectedProposal, setSelectedProposal] =
+    useState<ReplacementProposal | null>(null);
+  const [exportCount, setExportCount] = useState(0);
+  const [exportFileName, setExportFileName] = useState("");
+  const [exportError, setExportError] = useState("");
+  const [approvalSuccessMessage, setApprovalSuccessMessage] = useState({
+    title: "",
+    message: "",
+  });
+  const [approvalErrorMessage, setApprovalErrorMessage] = useState({
+    title: "",
+    message: "",
+  });
+
+  // Tính toán fromDate và toDate từ dateRange
+  const fromDate = dateRange?.[0]?.toISOString();
+  const toDate = dateRange?.[1]?.toISOString();
+
+  // Map sortField to API sortBy
+  const mapSortFieldToAPI = (
+    field: SortField | null
+  ): "createdAt" | "updatedAt" | "proposalCode" | "status" | undefined => {
+    if (!field) return undefined;
+    if (
+      field === "createdAt" ||
+      field === "updatedAt" ||
+      field === "proposalCode" ||
+      field === "status"
+    ) {
+      return field;
+    }
+    return undefined;
+  };
+
+  // Fetch data từ API với các filter
+  const {
+    data: apiData,
+    loading,
+    error,
+    refetch,
+  } = useReplacementProposals({
+    status: statusFilter
+      ? (statusFilter as ReplacementProposalStatus)
+      : ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH,
+    search: searchTerm || undefined,
+    fromDate: fromDate,
+    toDate: toDate,
+    page: currentPage,
+    limit: pageSize,
+    sortBy: mapSortFieldToAPI(sortField),
+    sortOrder: sortDirection
+      ? sortDirection === "asc"
+        ? "ASC"
+        : "DESC"
+      : undefined,
+  });
+
+  const { updateStatus } = useUpdateReplacementProposalStatus();
+
+  // Data từ API đã được filter và paginate
+  const proposals = apiData?.data || [];
+  const totalItems = apiData?.total || 0;
+  const totalPages = apiData?.totalPages || 0;
+  const paginatedData = proposals;
+
+  // Hàm reset filters
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setDateRange(null);
+    setSortField(null);
+    setSortDirection(null);
+    setCurrentPage(1);
+    setSelectedRowKeys([]);
+  };
+
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      // Toggle between asc and desc
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortDirection(null);
+        setSortField(null);
+      } else {
+        setSortDirection("asc");
+      }
+    } else {
+      // New field selected, start with asc
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  // Hàm hiển thị icon sắp xếp
+  const getSortIcon = (field: SortField | null) => {
+    if (!field || sortField !== field) return null;
+    return (
+      <div className="flex flex-col ml-1">
+        <ChevronUp
+          className={`h-3 w-3 ${
+            sortDirection === "asc" ? "text-blue-600" : "text-gray-300"
+          }`}
+        />
+        <ChevronDown
+          className={`h-3 w-3 -mt-1 ${
+            sortDirection === "desc" ? "text-blue-600" : "text-gray-300"
+          }`}
+        />
+      </div>
+    );
+  };
+
+  const getStatusColor = () => {
+    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị màu xanh dương (chờ xử lý)
+    return "bg-indigo-100 text-indigo-800 border-indigo-200";
+  };
+
+  const getStatusText = () => {
+    // Chỉ có trạng thái ĐÃ_LẬP_TỜ_TRÌNH nên luôn hiển thị "Đã lập tờ trình"
+    return "Đã lập tờ trình";
+  };
+
+  // Hàm xử lý khi nhấn nút duyệt tờ trình
+  const handleApproveClick = (proposal: ReplacementProposal) => {
+    setSelectedProposal(proposal);
+    setShowApprovalModal(true);
+  };
+
+  // Hàm xử lý khi xác nhận duyệt tờ trình
+  const handleApproveConfirm = async () => {
+    if (!selectedProposal) return;
+
+    try {
+      await updateStatus(selectedProposal.id, {
+        status: ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH,
+      });
+
+      // Đóng modal xác nhận
+      setShowApprovalModal(false);
+      setSelectedProposal(null);
+
+      // Refetch data
+      refetch();
+
+      // Hiển thị thông báo thành công
+      setApprovalSuccessMessage({
+        title: "Duyệt tờ trình thành công!",
+        message: `Tờ trình ${selectedProposal.proposalCode} đã được quản trị viên khoa phê duyệt và chuyển tới Ban giám hiệu.`,
+      });
+      setShowApprovalSuccessModal(true);
+    } catch (error) {
+      console.error("Error approving proposal:", error);
+      setShowApprovalModal(false);
+      setApprovalErrorMessage({
+        title: "Không thể duyệt tờ trình",
+        message: "Đã xảy ra lỗi khi duyệt tờ trình. Vui lòng thử lại sau.",
+      });
+      setShowApprovalErrorModal(true);
+    }
+  };
+
+  // Hàm xuất Excel
+  const handleExportExcel = async () => {
+    const selectedData = proposals.filter((item) =>
+      selectedRowKeys.includes(item.id)
+    );
+
+    if (selectedData.length === 0) {
+      setExportError("Vui lòng chọn ít nhất một tờ trình để xuất Excel!");
+      setShowExportErrorModal(true);
+      return;
+    }
+
+    try {
+      // Dynamic import để tránh lỗi SSR
+      const ExcelJS = (await import("exceljs")).default;
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Danh sách tờ trình cần duyệt");
+
+      // Tạo dữ liệu Excel
+      const excelData = selectedData.map((item, index) => ({
+        STT: index + 1,
+        "Mã đề xuất": item.proposalCode,
+        "Tiêu đề": item.title || "",
+        "Mô tả": item.description || "",
+        "Người tạo": item.proposer?.fullName || "Chưa xác định",
+        "Tổ trưởng duyệt": item.teamLeadApprover?.fullName || "Chưa có",
+        "Số lượng linh kiện": item.itemsCount || 0,
+        "Trạng thái": "Đã lập tờ trình",
+        "Ngày tạo": new Date(item.createdAt).toLocaleDateString("vi-VN"),
+      }));
+
+      const columnHeaders = [
+        "STT",
+        "Mã đề xuất",
+        "Tiêu đề",
+        "Mô tả",
+        "Người tạo",
+        "Tổ trưởng duyệt",
+        "Số lượng linh kiện",
+        "Trạng thái",
+        "Ngày tạo",
+      ];
+
+      // Tạo footer
+      const currentDate = new Date();
+      const day = currentDate.getDate();
+      const month = currentDate.getMonth() + 1;
+      const year = currentDate.getFullYear();
+      const dateStr = `Ngày ${day} Tháng ${
+        month < 10 ? "0" + month : month
+      } Năm ${year}`;
+
+      const footerRow: string[] = new Array(columnHeaders.length).fill("");
+      footerRow[0] = "Người lập biểu";
+      footerRow[Math.floor(columnHeaders.length / 4)] = "Thư ký";
+      footerRow[Math.floor((columnHeaders.length * 2) / 4)] =
+        "Trưởng nhóm kiểm kê";
+      footerRow[columnHeaders.length - 1] = "Đại diện ĐV sử dụng";
+
+      let currentRow = 1;
+
+      // Hàng 1: TRƯỜNG ĐẠI HỌC...
+      const row1 = worksheet.getRow(currentRow);
+      const cell1 = row1.getCell(1);
+      cell1.value = "TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TP HỒ CHÍ MINH";
+      cell1.font = { name: "Arial", size: 9 };
+      cell1.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 2: Địa chỉ
+      const row2 = worksheet.getRow(currentRow);
+      const cell2 = row2.getCell(1);
+      cell2.value =
+        "Địa chỉ : 12 Nguyễn Văn Bảo, Phường 4, Quận Gò Vấp, TP Hồ Chí Minh";
+      cell2.font = { name: "Arial", size: 9 };
+      cell2.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 3: Dòng trống
+      currentRow++;
+
+      // Hàng 4: Tiêu đề sheet - màu đỏ
+      const row4 = worksheet.getRow(currentRow);
+      const cell4 = row4.getCell(1);
+      cell4.value = "DANH SÁCH TỜ TRÌNH CẦN DUYỆT";
+      cell4.font = {
+        name: "Arial",
+        size: 12,
+        bold: true,
+        color: { argb: "FFFF0000" },
+      };
+      cell4.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 5: KHOA CÔNG NGHỆ THÔNG TIN
+      const row5 = worksheet.getRow(currentRow);
+      const cell5 = row5.getCell(1);
+      cell5.value = "KHOA CÔNG NGHỆ THÔNG TIN";
+      cell5.font = { name: "Arial", size: 9 };
+      cell5.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 6: NĂM
+      const row6 = worksheet.getRow(currentRow);
+      const cell6 = row6.getCell(1);
+      cell6.value = `NĂM ${new Date().getFullYear()}`;
+      cell6.font = { name: "Arial", size: 9 };
+      cell6.alignment = { horizontal: "center", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 7: Dòng trống
+      currentRow++;
+
+      // Hàng 8: Thông tin người lập và thời gian
+      const now = new Date();
+      const infoRow = worksheet.getRow(currentRow);
+      const infoCell = infoRow.getCell(1);
+      infoCell.value = `Người lập: ${
+        userDetails?.fullName || "N/A"
+      } | Thời gian xuất: ${now.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+      infoCell.font = { name: "Arial", size: 9 };
+      infoCell.alignment = { horizontal: "left", vertical: "middle" };
+      worksheet.mergeCells(currentRow, 1, currentRow, columnHeaders.length);
+      currentRow++;
+
+      // Hàng 9: Dòng trống
+      currentRow++;
+
+      // Header của bảng - in hoa và màu vàng
+      const headerRow = worksheet.getRow(currentRow);
+      columnHeaders.forEach((header, index) => {
+        const cell = headerRow.getCell(index + 1);
+        cell.value = header.toUpperCase();
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFFFFF00" },
+        };
+      });
+      currentRow++;
+
+      // Data rows
+      excelData.forEach((rowData) => {
+        const row = worksheet.getRow(currentRow);
+
+        columnHeaders.forEach((header, index) => {
+          const cell = row.getCell(index + 1);
+          cell.value = rowData[header as keyof typeof rowData] ?? "";
+          cell.font = { name: "Arial", size: 9 };
+          cell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+        currentRow++;
+      });
+
+      // Dòng trống
+      currentRow++;
+
+      // Hàng ngày tháng
+      const dateRow = worksheet.getRow(currentRow);
+      const dateCell = dateRow.getCell(columnHeaders.length);
+      dateCell.value = dateStr;
+      dateCell.font = { name: "Arial", size: 9 };
+      dateCell.alignment = { horizontal: "center", vertical: "middle" };
+      currentRow++;
+
+      // Footer row
+      const footerRowExcel = worksheet.getRow(currentRow);
+      footerRow.forEach((value, index) => {
+        const cell = footerRowExcel.getCell(index + 1);
+        cell.value = value;
+        cell.font = { name: "Arial", size: 9, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+
+      // Set column widths
+      columnHeaders.forEach((_, index) => {
+        worksheet.getColumn(index + 1).width = 20;
+      });
+
+      // Xuất file
+      const fileName = `Danh_sach_to_trinh_can_duyet_${
+        new Date().toISOString().split("T")[0]
+      }_${selectedData.length}_ban_ghi.xlsx`;
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      setExportCount(selectedData.length);
+      setExportFileName(fileName);
+      setShowExportSuccessModal(true);
+
+      // Reset selection sau khi xuất
+      setSelectedRowKeys([]);
+    } catch (error) {
+      console.error("Lỗi xuất Excel:", error);
+      setExportError(
+        error instanceof Error ? error.message : "Lỗi không xác định"
+      );
+      setShowExportErrorModal(true);
+    }
+  };
+
+  // Hàm xử lý chọn row
+  const handleRowSelect = (id: string, selected: boolean) => {
+    if (selected) {
+      setSelectedRowKeys((prev) => [...prev, id]);
+    } else {
+      setSelectedRowKeys((prev) => prev.filter((key) => key !== id));
+    }
+  };
+
+  // Hàm xử lý chọn tất cả
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      const currentPageKeys = paginatedData.map((row) => row.id);
+      setSelectedRowKeys((prev) => [...prev, ...currentPageKeys]);
+    } else {
+      const currentPageKeys = paginatedData.map((row) => row.id);
+      setSelectedRowKeys((prev) =>
+        prev.filter((key) => !currentPageKeys.includes(key))
+      );
+    }
+  };
+
+  // Reset pagination when changing search
+  useEffect(() => {
+    setCurrentPage(1);
+    setSelectedRowKeys([]);
+  }, [searchTerm, statusFilter, dateRange]);
+
+  return (
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
+      {/* Breadcrumb */}
+      <div className="mb-2">
+        <Breadcrumb
+          items={[
+            {
+              href: "/",
+              title: (
+                <div className="flex items-center">
+                  <span>Trang chủ</span>
+                </div>
+              ),
+            },
+            {
+              href: "/qtv-khoa",
+              title: (
+                <div className="flex items-center">
+                  <span>Quản trị viên khoa</span>
+                </div>
+              ),
+            },
+            {
+              title: (
+                <div className="flex items-center">
+                  <span>Duyệt tờ trình</span>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+
+      {/* Header */}
+      <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Duyệt tờ trình đề xuất thay thế
+        </h1>
+        <p className="mt-2 text-sm sm:text-base text-gray-600">
+          Danh sách các tờ trình đang chờ phê duyệt từ tổ trưởng kỹ thuật. Tất
+          cả tờ trình ở đây đều có trạng thái &ldquo;Đã lập tờ trình&rdquo; và
+          cần được quản trị viên khoa xem xét phê duyệt.
+        </p>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} sm={12} md={7}>
+            <Input
+              placeholder="Tìm kiếm theo mã hoặc tiêu đề"
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              allowClear
+            />
+          </Col>
+
+          <Col xs={24} sm={12} md={5}>
+            <Select
+              placeholder="Lọc theo trạng thái"
+              style={{ width: "100%" }}
+              value={statusFilter || undefined}
+              onChange={(value) => {
+                setStatusFilter(value || "");
+                setCurrentPage(1);
+              }}
+              allowClear>
+              <Select.Option value={ReplacementProposalStatus.ĐÃ_LẬP_TỜ_TRÌNH}>
+                Đã lập tờ trình
+              </Select.Option>
+              <Select.Option
+                value={ReplacementProposalStatus.KHOA_ĐÃ_DUYỆT_TỜ_TRÌNH}>
+                Khoa đã duyệt tờ trình
+              </Select.Option>
+              {/* <Select.Option value={ReplacementProposalStatus.ĐÃ_DUYỆT_TỜ_TRÌNH}>
+                Ban giám hiệu đã duyệt tờ trình
+              </Select.Option>
+              <Select.Option value={ReplacementProposalStatus.ĐÃ_TỪ_CHỐI_TỜ_TRÌNH}>
+                Đã từ chối tờ trình
+              </Select.Option> */}
+            </Select>
+          </Col>
+
+          <Col xs={24} sm={12} md={7}>
+            <RangePicker
+              placeholder={["Từ ngày", "Đến ngày"]}
+              format="DD/MM/YYYY"
+              style={{ width: "100%" }}
+              value={dateRange}
+              onChange={(dates) => {
+                setDateRange(dates);
+                setCurrentPage(1);
+              }}
+            />
+          </Col>
+
+          <Col xs={24} sm={12} md={1}>
+            <Button
+              icon={<SyncOutlined />}
+              title="Tải lại bộ lọc"
+              onClick={handleResetFilters}
+              type="default"
+              style={{ width: "100%" }}></Button>
+          </Col>
+
+          <Col xs={24} sm={12} md={3}>
+            <Button
+              type="primary"
+              icon={<Download className="w-4 h-4" />}
+              onClick={handleExportExcel}
+              disabled={selectedRowKeys.length === 0}
+              style={{
+                backgroundColor:
+                  selectedRowKeys.length > 0 ? "#16a34a" : undefined,
+                borderColor: selectedRowKeys.length > 0 ? "#16a34a" : undefined,
+                width: "100%",
+              }}>
+              <span className="hidden sm:inline">
+                Xuất Excel{" "}
+                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+              </span>
+              <span className="sm:hidden">
+                Xuất{" "}
+                {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+              </span>
+            </Button>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Table - Desktop */}
+      <div className="bg-white rounded-lg shadow hidden lg:block">
+        <div className="flex flex-col min-h-[500px]">
+          <div className="flex-1 overflow-auto">
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-500">Đang tải dữ liệu...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Error State */}
+            {error && !loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                  <p className="text-gray-900 font-medium mb-2">
+                    Lỗi tải dữ liệu
+                  </p>
+                  <p className="text-gray-500 text-sm">{error}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Table Content */}
+            {!loading && !error && (
+              <table className="w-full divide-y divide-gray-200 table-fixed">
+                <thead className="bg-gray-50 sticky top-0 z-0">
+                  <tr>
+                    <th className="w-[5%] px-3 py-3 text-left">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={
+                            paginatedData.length > 0 &&
+                            paginatedData.every((row) =>
+                              selectedRowKeys.includes(row.id)
+                            )
+                          }
+                          onChange={(e) => handleSelectAll(e.target.checked)}
+                          aria-label="Chọn tất cả tờ trình"
+                        />
+                      </div>
+                    </th>
+                    <th className="w-[13%] px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <button
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
+                        onClick={() => handleSort("proposalCode")}>
+                        <span>Mã đề xuất</span>
+                        {getSortIcon("proposalCode")}
+                      </button>
+                    </th>
+                    <th className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <button
+                        className="flex items-center space-x-1 hover:text-gray-700 uppercase whitespace-nowrap"
+                        onClick={() => handleSort("title")}>
+                        <span>Tiêu đề đề xuất</span>
+                        {getSortIcon("title")}
+                      </button>
+                    </th>
+                    <th className="w-[8%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Người tạo
+                    </th>
+                    <th className="w-[15%] px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <button
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
+                        onClick={() => handleSort("status")}>
+                        <span>Trạng thái</span>
+                        {getSortIcon("status")}
+                      </button>
+                    </th>
+                    <th className="w-[10%] hidden lg:table-cell px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <button
+                        className="flex items-center justify-center space-x-1 hover:text-gray-700 mx-auto uppercase whitespace-nowrap"
+                        onClick={() => handleSort("createdAt")}>
+                        <span>Ngày tạo</span>
+                        {getSortIcon("createdAt")}
+                      </button>
+                    </th>
+                    <th className="w-[18%] lg:w-[18%] px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                      Thao tác
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="w-[5%] px-3 py-4">
+                          <input
+                            type="checkbox"
+                            className="rounded border-gray-300"
+                            checked={selectedRowKeys.includes(item.id)}
+                            onChange={(e) =>
+                              handleRowSelect(item.id, e.target.checked)
+                            }
+                            aria-label={`Chọn tờ trình ${item.proposalCode}`}
+                          />
+                        </td>
+                        <td className="px-2 py-4 whitespace-nowrap w-[13%]">
+                          <div
+                            className="text-sm text-blue-600 truncate font-medium cursor-pointer hover:text-blue-800 hover:underline"
+                            title={item.proposalCode}
+                            onClick={() => {
+                              router.push(
+                                `/qtv-khoa/duyet-to-trinh/chi-tiet/${item.id}`
+                              );
+                            }}>
+                            {item.proposalCode}
+                          </div>
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap w-[25%]">
+                          <div className="flex items-center min-w-0">
+                            <FileText className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div
+                                className="text-sm font-medium text-gray-900 truncate"
+                                title={item.title || ""}>
+                                {item.title || "Không có tiêu đề"}
+                              </div>
+                              <div
+                                className="text-xs text-gray-500 truncate"
+                                title={item.description || ""}>
+                                {item.description || "Không có mô tả"}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-2 py-4 whitespace-nowrap text-center w-[8%]">
+                          <div
+                            className="text-sm text-gray-900"
+                            title={item.proposer?.fullName || "Chưa xác định"}>
+                            {item.proposer?.fullName || "N/A"}
+                          </div>
+                        </td>
+                        <td className="px-2 py-4 whitespace-nowrap text-center w-[15%]">
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${getStatusColor()}`}
+                            title={getStatusText()}>
+                            {getStatusText()}
+                          </span>
+                        </td>
+                        <td className="hidden lg:table-cell px-2 py-4 whitespace-nowrap text-center w-[10%]">
+                          <div className="text-sm text-gray-900">
+                            {new Date(item.createdAt).toLocaleDateString(
+                              "vi-VN",
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              }
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-4 whitespace-nowrap w-[18%]">
+                          <div className="flex items-center justify-center space-x-2">
+                            <button
+                              onClick={() => {
+                                router.push(
+                                  `/qtv-khoa/duyet-to-trinh/chi-tiet/${item.id}`
+                                );
+                              }}
+                              className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                              title="Xem chi tiết">
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleApproveClick(item)}
+                              className="inline-flex items-center justify-center p-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                              title="Duyệt tờ trình">
+                              <CheckCircle className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <FileText className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                        <h3 className="text-sm font-medium text-gray-900 mb-1">
+                          Không tìm thấy kết quả
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile View */}
+      <div className="lg:hidden bg-white shadow rounded-lg">
+        {/* Header */}
+        <div className="px-3 sm:px-6 py-3 sm:py-4 border-b">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            Danh sách tờ trình ({totalItems})
+          </h2>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <span className="ml-2 text-gray-600">Đang tải dữ liệu...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center justify-center py-12">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+            <span className="ml-2 text-red-600">Lỗi: {error}</span>
+          </div>
+        )}
+
+        {/* Mobile Cards */}
+        {!loading && !error && (
+          <div className="p-4 space-y-4">
+            {paginatedData.length > 0 ? (
+              paginatedData.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-lg shadow-sm p-4 space-y-3">
+                  {/* Header Row */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 flex-1">
+                      <FileText className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm">
+                          {item.proposalCode}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                          {item.title || "Không có tiêu đề"}
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={selectedRowKeys.includes(item.id)}
+                      onChange={(e) =>
+                        handleRowSelect(item.id, e.target.checked)
+                      }
+                      aria-label={`Chọn tờ trình ${item.proposalCode}`}
+                      className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 shrink-0"
+                    />
+                  </div>
+
+                  {/* Info Grid */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-gray-500">Người tạo:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {item.proposer?.fullName || "Chưa xác định"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Số lượng:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {item.itemsCount || 0} thiết bị
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Ngày tạo:</span>
+                      <p className="font-medium text-gray-900 mt-0.5">
+                        {new Date(item.createdAt).toLocaleDateString("vi-VN")}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Trạng thái:</span>
+                      <div className="mt-0.5">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${getStatusColor()}`}>
+                          {getStatusText()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer with Actions */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <Link
+                      href={`/qtv-khoa/duyet-to-trinh/chi-tiet/${item.id}`}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-md hover:bg-blue-700">
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>Xem chi tiết</span>
+                    </Link>
+                    <button
+                      onClick={() => handleApproveClick(item)}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-md hover:bg-green-700">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      <span>Duyệt</span>
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">
+                  Không tìm thấy tờ trình nào
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 sm:mt-6">
+          <div className="bg-white rounded-lg shadow-sm">
+            <Pagination
+              currentPage={currentPage}
+              pageSize={pageSize}
+              total={totalItems}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Export Modals */}
+      <ExportExcelSuccessModal
+        isOpen={showExportSuccessModal}
+        onClose={() => setShowExportSuccessModal(false)}
+        fileName={exportFileName}
+        recordCount={exportCount}
+      />
+
+      <ExportExcelErrorModal
+        isOpen={showExportErrorModal}
+        onClose={() => setShowExportErrorModal(false)}
+        errorMessage={exportError}
+      />
+
+      {/* Approval Confirmation Modal */}
+      <Modal
+        open={showApprovalModal}
+        onCancel={() => setShowApprovalModal(false)}
+        footer={[
+          <button
+            key="cancel"
+            onClick={() => setShowApprovalModal(false)}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 mr-2">
+            Hủy
+          </button>,
+          <button
+            key="confirm"
+            onClick={handleApproveConfirm}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            Xác nhận duyệt
+          </button>,
+        ]}
+        centered
+        width={500}
+        title="Xác nhận duyệt tờ trình">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="h-8 w-8 text-green-600" />
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">
+                Bạn có chắc chắn muốn duyệt tờ trình sau?
+              </h3>
+              <p className="text-sm text-red-500 mt-1 font-medium">
+                Sau khi duyệt, trạng thái tờ trình sẽ được chuyển thành
+                &ldquo;Khoa đã duyệt tờ trình&rdquo; và chuyển tới Ban giám hiệu
+                để phê duyệt cuối cùng. Không thể hoàn tác.
+              </p>
+            </div>
+          </div>
+
+          {selectedProposal && (
+            <div className="bg-gray-50 p-4 rounded-md">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-600">Mã tờ trình:</div>
+                <div className="font-medium">
+                  {selectedProposal.proposalCode}
+                </div>
+
+                <div className="text-gray-600">Tiêu đề:</div>
+                <div className="font-medium">{selectedProposal.title}</div>
+
+                <div className="text-gray-600">Thời gian duyệt:</div>
+                <div className="font-medium">
+                  {new Date().toLocaleString("vi-VN")}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
+
+      {/* Approval Success Modal */}
+      <SuccessModal
+        isOpen={showApprovalSuccessModal}
+        onClose={() => {
+          setShowApprovalSuccessModal(false);
+          router.push("/qtv-khoa/duyet-to-trinh");
+        }}
+        title={approvalSuccessMessage.title}
+        message={approvalSuccessMessage.message}
+      />
+
+      {/* Approval Error Modal */}
+      <ErrorModal
+        isOpen={showApprovalErrorModal}
+        onClose={() => setShowApprovalErrorModal(false)}
+        title={approvalErrorMessage.title}
+        message={approvalErrorMessage.message}
+        showRetry={false}
+      />
+    </div>
+  );
+}

@@ -1,0 +1,72 @@
+import { api } from "../api";
+
+/**
+ * Room status enum
+ */
+export enum RoomStatus {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  MAINTENANCE = "MAINTENANCE",
+}
+
+/**
+ * Room response DTO matching backend
+ */
+export interface RoomResponseDto {
+  id: string;
+  building: string;
+  roomCode: string;
+  floor: string;
+  roomNumber: string;
+  status: RoomStatus;
+  name: string;
+  unitId?: string;
+  unit?: {
+    id: string;
+    name: string;
+    code: string;
+    type: string;
+  };
+  adjacentRooms?: RoomResponseDto[];
+  createdAt: string;
+  createdBy?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+}
+
+/**
+ * Lấy danh sách phòng theo Khoa Công nghệ Thông tin
+ * @returns Promise with list of rooms
+ */
+export const getRoomsApi = async (): Promise<RoomResponseDto[]> => {
+  try {
+    const url = `/api/v1/rooms/unit`;
+    const response = await api.get<RoomResponseDto[]>(url);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy danh sách phòng theo khoa thất bại."
+    );
+  }
+};
+
+/**
+ * Get room by ID
+ * @param id Room ID
+ * @returns Promise with room details
+ */
+export const getRoomByIdApi = async (id: string): Promise<RoomResponseDto> => {
+  try {
+    const response = await api.get<RoomResponseDto>(`/api/v1/rooms/${id}`);
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(
+      err.response?.data?.message || "Lấy thông tin phòng thất bại."
+    );
+  }
+};
+

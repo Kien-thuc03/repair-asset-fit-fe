@@ -1,0 +1,338 @@
+import { useState, useEffect, useCallback } from "react";
+import {
+  getSoftwareProposals,
+  getSoftwareProposalById,
+  getSoftwareProposalsByProposer,
+  getSoftwareProposalsByTechnician,
+  updateSoftwareProposalStatus,
+  GetSoftwareProposalsQueryParams,
+  UpdateSoftwareProposalStatusRequest,
+} from "@/lib/api/software-proposals";
+import { SoftwareProposal } from "@/types/software";
+
+/**
+ * Custom hook để quản lý danh sách đề xuất phần mềm
+ * @param initialParams Query parameters ban đầu
+ * @returns Object chứa data, loading state, error, và các hàm quản lý
+ */
+export const useSoftwareProposals = (
+  initialParams?: GetSoftwareProposalsQueryParams
+) => {
+  const [data, setData] = useState<SoftwareProposal[]>([]);
+  const [meta, setMeta] = useState<{
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  });
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [params, setParams] = useState<
+    GetSoftwareProposalsQueryParams | undefined
+  >(initialParams);
+
+  /**
+   * Lấy danh sách đề xuất phần mềm
+   */
+  const fetchSoftwareProposals = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getSoftwareProposals(params);
+      console.log("📊 Software Proposals API Response:", response);
+
+      // Backend trả về flat structure: { data, total, page, limit, totalPages }
+      // Data includes nested objects (proposer, approver, room, items)
+      setData(response.data);
+      setMeta({
+        total: response.total,
+        page: response.page,
+        limit: response.limit,
+        totalPages: response.totalPages,
+      });
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Có lỗi xảy ra khi lấy danh sách đề xuất phần mềm.";
+      setError(errorMessage);
+      console.error("Error fetching software proposals:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [params]);
+
+  /**
+   * Cập nhật query parameters và tự động fetch lại
+   */
+  const updateParams = useCallback(
+    (newParams: GetSoftwareProposalsQueryParams) => {
+      setParams((prev) => ({ ...prev, ...newParams }));
+    },
+    []
+  );
+
+  /**
+   * Refetch data với params hiện tại
+   */
+  const refetch = useCallback(() => {
+    fetchSoftwareProposals();
+  }, [fetchSoftwareProposals]);
+
+  // Auto-fetch khi params thay đổi
+  useEffect(() => {
+    fetchSoftwareProposals();
+  }, [fetchSoftwareProposals]);
+
+  return {
+    data,
+    meta,
+    loading,
+    error,
+    params,
+    updateParams,
+    refetch,
+  };
+};
+
+/**
+ * Custom hook để quản lý chi tiết một đề xuất phần mềm
+ * @param id ID của đề xuất phần mềm
+ * @returns Object chứa data, loading state, error, và hàm refetch
+ */
+export const useSoftwareProposalDetail = (id: string) => {
+  const [data, setData] = useState<SoftwareProposal | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Lấy chi tiết đề xuất phần mềm
+   */
+  const fetchSoftwareProposalDetail = useCallback(async () => {
+    if (!id) {
+      console.warn("⚠️ useSoftwareProposalDetail: No ID provided");
+      return;
+    }
+
+    console.log("🔍 useSoftwareProposalDetail: Fetching detail for ID:", id);
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getSoftwareProposalById(id);
+      console.log("✅ useSoftwareProposalDetail: Raw API Response:", response);
+
+      // Backend returns nested objects (proposer, approver, room, items)
+      setData(response);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Có lỗi xảy ra khi lấy chi tiết đề xuất phần mềm.";
+      setError(errorMessage);
+      console.error(
+        "❌ useSoftwareProposalDetail: Error fetching detail:",
+        err
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  /**
+   * Refetch chi tiết
+   */
+  const refetch = useCallback(() => {
+    fetchSoftwareProposalDetail();
+  }, [fetchSoftwareProposalDetail]);
+
+  useEffect(() => {
+    fetchSoftwareProposalDetail();
+  }, [fetchSoftwareProposalDetail]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Custom hook để lấy danh sách đề xuất phần mềm theo người đề xuất
+ * @param proposerId ID của người đề xuất
+ * @returns Object chứa data, loading state, error, và hàm refetch
+ */
+export const useSoftwareProposalsByProposer = (
+  proposerId: string | undefined
+) => {
+  const [data, setData] = useState<SoftwareProposal[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Lấy danh sách đề xuất phần mềm theo người đề xuất
+   */
+  const fetchSoftwareProposalsByProposer = useCallback(async () => {
+    if (!proposerId) {
+      console.warn("⚠️ useSoftwareProposalsByProposer: No proposerId provided");
+      setData([]);
+      return;
+    }
+
+    console.log(
+      "🔍 useSoftwareProposalsByProposer: Fetching proposals for proposerId:",
+      proposerId
+    );
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getSoftwareProposalsByProposer(proposerId);
+      console.log(
+        "✅ useSoftwareProposalsByProposer: Raw API Response:",
+        response
+      );
+
+      setData(response);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Có lỗi xảy ra khi lấy danh sách đề xuất phần mềm.";
+      setError(errorMessage);
+      console.error(
+        "❌ useSoftwareProposalsByProposer: Error fetching proposals:",
+        err
+      );
+      setData([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  }, [proposerId]);
+
+  /**
+   * Refetch data
+   */
+  const refetch = useCallback(() => {
+    fetchSoftwareProposalsByProposer();
+  }, [fetchSoftwareProposalsByProposer]);
+
+  useEffect(() => {
+    fetchSoftwareProposalsByProposer();
+  }, [fetchSoftwareProposalsByProposer]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Custom hook để lấy danh sách đề xuất phần mềm theo kỹ thuật viên được phân công
+ * @param technicianId ID của kỹ thuật viên
+ * @returns Object chứa data, loading state, error, và hàm refetch
+ */
+export const useSoftwareProposalsByTechnician = (
+  technicianId: string | undefined
+) => {
+  const [data, setData] = useState<SoftwareProposal[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Lấy danh sách đề xuất phần mềm theo kỹ thuật viên
+   */
+  const fetchSoftwareProposalsByTechnician = useCallback(async () => {
+    if (!technicianId) {
+      console.warn("⚠️ useSoftwareProposalsByTechnician: No technicianId provided");
+      setData([]);
+      return;
+    }
+
+    console.log(
+      "🔍 useSoftwareProposalsByTechnician: Fetching proposals for technicianId:",
+      technicianId
+    );
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getSoftwareProposalsByTechnician(technicianId);
+      console.log(
+        "✅ useSoftwareProposalsByTechnician: Raw API Response:",
+        response
+      );
+
+      setData(response);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Có lỗi xảy ra khi lấy danh sách đề xuất phần mềm.";
+      setError(errorMessage);
+      console.error(
+        "❌ useSoftwareProposalsByTechnician: Error fetching proposals:",
+        err
+      );
+      setData([]); // Set empty array on error
+    } finally {
+      setLoading(false);
+    }
+  }, [technicianId]);
+
+  /**
+   * Refetch data
+   */
+  const refetch = useCallback(() => {
+    fetchSoftwareProposalsByTechnician();
+  }, [fetchSoftwareProposalsByTechnician]);
+
+  useEffect(() => {
+    fetchSoftwareProposalsByTechnician();
+  }, [fetchSoftwareProposalsByTechnician]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch,
+  };
+};
+
+/**
+ * Hook để cập nhật trạng thái đề xuất phần mềm
+ */
+export const useUpdateSoftwareProposalStatus = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateStatus = async (
+    id: string,
+    data: UpdateSoftwareProposalStatusRequest
+  ) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await updateSoftwareProposalStatus(id, data);
+      return response;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Đã xảy ra lỗi";
+      setError(errorMessage);
+      console.error("Error updating software proposal status:", err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    updateStatus,
+    loading,
+    error,
+  };
+};

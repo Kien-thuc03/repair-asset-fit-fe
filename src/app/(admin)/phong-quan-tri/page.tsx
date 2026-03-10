@@ -1,59 +1,55 @@
-'use client'
+"use client";
 
-import { useAuth } from '@/contexts/AuthContext'
-import { Building, Users, FileText, TrendingUp, DollarSign, Calendar } from 'lucide-react'
+import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
+import { FileText, FileCheck, ClipboardList } from "lucide-react";
 
 const stats = [
   {
-    name: 'Tổng đơn vị',
-    value: '12',
-    change: '2 khoa chính',
-    changeType: 'neutral',
-    icon: Building,
-  },
-  {
-    name: 'Nhân sự kỹ thuật',
-    value: '45',
-    change: '5 tổ trưởng',
-    changeType: 'neutral',
-    icon: Users,
-  },
-  {
-    name: 'Báo cáo tháng này',
-    value: '156',
-    change: '+12%',
-    changeType: 'positive',
+    name: "Tờ trình chờ xử lý",
+    value: "8",
+    change: "3 tờ trình mới",
+    changeType: "positive",
     icon: FileText,
   },
   {
-    name: 'Ngân sách',
-    value: '2.5M',
-    change: '80% đã sử dụng',
-    changeType: 'neutral',
-    icon: DollarSign,
+    name: "Biên bản hoàn thành",
+    value: "24",
+    change: "+5 tuần này",
+    changeType: "positive",
+    icon: ClipboardList,
   },
-]
+  {
+    name: "Đề xuất đã gửi",
+    value: "156",
+    change: "+12%",
+    changeType: "positive",
+    icon: FileCheck,
+  },
+];
 
 export default function PhongQuanTriDashboard() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   return (
-    <div className="space-y-8">
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard Phòng quản trị</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Dashboard Phòng quản trị
+        </h1>
         <p className="mt-2 text-gray-600">
-          Chào mừng {user?.name}! Quản lý toàn bộ hệ thống sửa chữa trường học.
+          Chào mừng {user?.fullName}! Quản lý toàn bộ hệ thống sửa chữa trường
+          học.
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((item) => (
           <div
             key={item.name}
-            className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6"
-          >
+            className="relative overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:px-6 sm:py-6">
             <div>
               <div className="absolute rounded-md bg-purple-500 p-3">
                 <item.icon className="h-6 w-6 text-white" aria-hidden="true" />
@@ -63,16 +59,17 @@ export default function PhongQuanTriDashboard() {
               </p>
             </div>
             <div className="ml-16 flex items-baseline">
-              <p className="text-2xl font-semibold text-gray-900">{item.value}</p>
+              <p className="text-2xl font-semibold text-gray-900">
+                {item.value}
+              </p>
               <p
                 className={`ml-2 flex items-baseline text-sm font-semibold ${
-                  item.changeType === 'positive'
-                    ? 'text-green-600'
-                    : item.changeType === 'negative'
-                    ? 'text-red-600'
-                    : 'text-gray-600'
-                }`}
-              >
+                  item.changeType === "positive"
+                    ? "text-green-600"
+                    : item.changeType === "negative"
+                    ? "text-red-600"
+                    : "text-gray-600"
+                }`}>
                 {item.change}
               </p>
             </div>
@@ -84,56 +81,62 @@ export default function PhongQuanTriDashboard() {
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-            Quản lý hệ thống
+            Chức năng chính
           </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <button className="relative group bg-purple-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 rounded-lg hover:bg-purple-100 transition-colors">
+            <Link
+              href="/phong-quan-tri/xu-ly-to-trinh"
+              className="relative group bg-blue-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg hover:bg-blue-100 transition-colors block">
+              <span className="rounded-lg inline-flex p-3 bg-blue-600 text-white">
+                <FileText className="h-6 w-6" />
+              </span>
+              <div className="mt-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Quản lý tờ trình
+                </h3>
+                <p className="mt-2 text-sm text-gray-500">
+                  Xem xét và phê duyệt các tờ trình thay thế từ các khoa
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/phong-quan-tri/lap-bien-ban"
+              className="relative group bg-green-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg hover:bg-green-100 transition-colors block">
+              <span className="rounded-lg inline-flex p-3 bg-green-600 text-white">
+                <ClipboardList className="h-6 w-6" />
+              </span>
+              <div className="mt-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Quản lý biên bản
+                </h3>
+                <p className="mt-2 text-sm text-gray-500">
+                  Tạo biên bản hoàn thành và bàn giao thiết bị từ các khoa
+                </p>
+              </div>
+            </Link>
+
+            <Link
+              href="/phong-quan-tri/gui-de-xuat-thay-the"
+              className="relative group bg-purple-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 rounded-lg hover:bg-purple-100 transition-colors block">
               <span className="rounded-lg inline-flex p-3 bg-purple-600 text-white">
-                <Building className="h-6 w-6" />
+                <FileCheck className="h-6 w-6" />
               </span>
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Quản lý đơn vị
+                  Danh sách mua sắm thiết bị
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Thêm, sửa, xóa thông tin khoa/phòng ban
+                  Tạo và gửi đề xuất thay thế thiết bị lên cấp trên từ các khoa
                 </p>
               </div>
-            </button>
-
-            <button className="relative group bg-teal-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-teal-500 rounded-lg hover:bg-teal-100 transition-colors">
-              <span className="rounded-lg inline-flex p-3 bg-teal-600 text-white">
-                <Users className="h-6 w-6" />
-              </span>
-              <div className="mt-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Quản lý người dùng
-                </h3>
-                <p className="mt-2 text-sm text-gray-500">
-                  Phân quyền và quản lý tài khoản
-                </p>
-              </div>
-            </button>
-
-            <button className="relative group bg-red-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-red-500 rounded-lg hover:bg-red-100 transition-colors">
-              <span className="rounded-lg inline-flex p-3 bg-red-600 text-white">
-                <TrendingUp className="h-6 w-6" />
-              </span>
-              <div className="mt-4">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Báo cáo tổng hợp
-                </h3>
-                <p className="mt-2 text-sm text-gray-500">
-                  Thống kê toàn trường theo thời gian
-                </p>
-              </div>
-            </button>
+            </Link>
           </div>
         </div>
       </div>
 
       {/* System Overview */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 ">
         {/* Recent Activities */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
@@ -143,33 +146,33 @@ export default function PhongQuanTriDashboard() {
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0">
-                  <Calendar className="h-5 w-5 text-gray-400" />
+                  <FileText className="h-5 w-5 text-blue-500" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-900">
-                    Phê duyệt thay thế máy chiếu phòng A301
+                    Phê duyệt tờ trình thay thế máy chiếu phòng A301
                   </p>
                   <p className="text-xs text-gray-500">2 giờ trước</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0">
-                  <Calendar className="h-5 w-5 text-gray-400" />
+                  <ClipboardList className="h-5 w-5 text-green-500" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-900">
-                    Thêm kỹ thuật viên mới - Khoa CNTT
+                    Lập biên bản bàn giao máy tính mới - Khoa CNTT
                   </p>
                   <p className="text-xs text-gray-500">1 ngày trước</p>
                 </div>
               </div>
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0">
-                  <Calendar className="h-5 w-5 text-gray-400" />
+                  <FileCheck className="h-5 w-5 text-purple-500" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-gray-900">
-                    Cập nhật quy trình sửa chữa
+                    Gửi đề xuất thay thế thiết bị Khoa Cơ khí
                   </p>
                   <p className="text-xs text-gray-500">3 ngày trước</p>
                 </div>
@@ -177,54 +180,7 @@ export default function PhongQuanTriDashboard() {
             </div>
           </div>
         </div>
-
-        {/* Department Status */}
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              Trạng thái các khoa
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                  <span className="text-sm font-medium">Khoa CNTT</span>
-                </div>
-                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  Hoạt động bình thường
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
-                  <span className="text-sm font-medium">Khoa Cơ khí</span>
-                </div>
-                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
-                  3 thiết bị cần sửa
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                  <span className="text-sm font-medium">Khoa Điện</span>
-                </div>
-                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  Hoạt động bình thường
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
-                  <span className="text-sm font-medium">Phòng hành chính</span>
-                </div>
-                <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
-                  1 lỗi khẩn cấp
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,45 +1,74 @@
 'use client'
 
+import { useMemo } from 'react'
+import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { Database, Shield, Users, Settings, Activity, Server } from 'lucide-react'
-
-const stats = [
-  {
-    name: 'Tổng người dùng',
-    value: '234',
-    change: '+12 tháng này',
-    changeType: 'positive',
-    icon: Users,
-  },
-  {
-    name: 'Hệ thống',
-    value: '99.9%',
-    change: 'Uptime',
-    changeType: 'positive',
-    icon: Server,
-  },
-  {
-    name: 'Dữ liệu',
-    value: '15.2GB',
-    change: '+2.1GB tháng này',
-    changeType: 'neutral',
-    icon: Database,
-  },
-  {
-    name: 'Bảo mật',
-    value: '0',
-    change: 'Cảnh báo',
-    changeType: 'positive',
-    icon: Shield,
-  },
-]
+import { 
+  Users, 
+  Activity, 
+  Server, 
+  ClipboardList,
+  FolderCode,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Package
+} from 'lucide-react'
+import { useUsersManagement } from '@/hooks/useUsersManagement'
+import { useSoftwareProposals } from '@/hooks/useSoftwareProposals'
+import { useReplacementProposals } from '@/hooks/useReplacementProposals'
+import { SoftwareProposalStatus } from '@/types/software'
+import { ReplacementProposalStatus, UserStatus } from '@/types'
+import { Card, Empty, Spin } from 'antd'
 
 export default function QTVKhoaDashboard() {
   const { user } = useAuth()
+  const { users, total: totalUsers, loading: usersLoading } = useUsersManagement({ initialLimit: 5 })
+  const { data: softwareData, loading: softwareLoading } = useSoftwareProposals({ page: 1, limit: 100 })
+  const { data: replacementData, loading: replacementLoading } = useReplacementProposals({ page: 1, limit: 100 })
+
+  const stats = useMemo(() => {
+    const activeUsers = users.filter(u => u.status === UserStatus.ACTIVE).length
+    const softwareList = softwareData || []
+    const replacementList = replacementData?.data || []
+
+    const pendingSoftware = softwareList.filter(p => p.status === SoftwareProposalStatus.CHỜ_DUYỆT).length
+    const pendingReplacement = replacementList.filter(
+      req => req.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT || 
+      req.status === ReplacementProposalStatus.CHỜ_XÁC_MINH
+    ).length
+
+    return [
+      {
+        name: 'Tổng người dùng',
+        value: totalUsers.toString(),
+        change: `${activeUsers} đang hoạt động`,
+        changeType: 'positive' as const,
+        icon: Users,
+      },
+      {
+        name: 'Đề xuất phần mềm',
+        value: softwareList.length.toString(),
+        change: `${pendingSoftware} chờ duyệt`,
+        changeType: pendingSoftware > 0 ? 'neutral' as const : 'positive' as const,
+        icon: FolderCode,
+      },
+      {
+        name: 'Đề xuất linh kiện',
+        value: (replacementData?.total || replacementList.length).toString(),
+        change: `${pendingReplacement} chờ xử lý`,
+        changeType: pendingReplacement > 0 ? 'neutral' as const : 'positive' as const,
+        icon: ClipboardList,
+      },
+    ]
+  }, [users, totalUsers, softwareData, replacementData])
+
+  const loading = usersLoading || softwareLoading || replacementLoading
+
+  const recentSoftware = (softwareData || []).slice(0, 3)
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-4 min-h-screen space-y-4 sm:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard Quản trị viên khoa</h1>
         <p className="mt-2 text-gray-600">
@@ -47,8 +76,7 @@ export default function QTVKhoaDashboard() {
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((item) => (
           <div
             key={item.name}
@@ -68,9 +96,9 @@ export default function QTVKhoaDashboard() {
                 className={`ml-2 flex items-baseline text-sm font-semibold ${
                   item.changeType === 'positive'
                     ? 'text-green-600'
-                    : item.changeType === 'negative'
-                    ? 'text-red-600'
-                    : 'text-gray-600'
+                    : item.changeType === 'neutral'
+                    ? 'text-yellow-600'
+                    : 'text-red-600'
                 }`}
               >
                 {item.change}
@@ -80,191 +108,187 @@ export default function QTVKhoaDashboard() {
         ))}
       </div>
 
-      {/* Quick Actions */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-            Quản trị hệ thống
+            Chức năng chính
           </h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <button className="relative group bg-blue-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg hover:bg-blue-100 transition-colors">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Link href="/qtv-khoa/quan-ly-nguoi-dung" className="relative group bg-blue-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 rounded-lg hover:bg-blue-100 transition-colors">
               <span className="rounded-lg inline-flex p-3 bg-blue-600 text-white">
                 <Users className="h-6 w-6" />
               </span>
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Quản lý tài khoản
+                  Quản lý người dùng
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Tạo, sửa, xóa tài khoản người dùng
+                  Tạo, cập nhật tài khoản và phân quyền
                 </p>
               </div>
-            </button>
+            </Link>
 
-            <button className="relative group bg-green-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg hover:bg-green-100 transition-colors">
+            <Link href="/qtv-khoa/quan-ly-de-xuat-phan-mem" className="relative group bg-green-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-green-500 rounded-lg hover:bg-green-100 transition-colors">
               <span className="rounded-lg inline-flex p-3 bg-green-600 text-white">
-                <Database className="h-6 w-6" />
+                <FolderCode className="h-6 w-6" />
               </span>
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Sao lưu dữ liệu
+                  Đề xuất phần mềm
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Backup và khôi phục dữ liệu
+                  Theo dõi các đề xuất cài đặt phần mềm
                 </p>
               </div>
-            </button>
+            </Link>
 
-            <button className="relative group bg-red-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-red-500 rounded-lg hover:bg-red-100 transition-colors">
-              <span className="rounded-lg inline-flex p-3 bg-red-600 text-white">
-                <Shield className="h-6 w-6" />
+            <Link href="/qtv-khoa/quan-ly-thay-the-linh-kien" className="relative group bg-purple-50 p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-purple-500 rounded-lg hover:bg-purple-100 transition-colors">
+              <span className="rounded-lg inline-flex p-3 bg-purple-600 text-white">
+                <ClipboardList className="h-6 w-6" />
               </span>
               <div className="mt-4">
                 <h3 className="text-lg font-medium text-gray-900">
-                  Bảo mật
+                  Đề xuất linh kiện
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Kiểm tra và cấu hình bảo mật
+                  Theo dõi các đề xuất thay thế linh kiện
                 </p>
               </div>
-            </button>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* System Monitor */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* System Status */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              Trạng thái hệ thống
+              Trạng thái đề xuất phần mềm
             </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Activity className="h-5 w-5 text-green-500 mr-3" />
-                  <span className="text-sm font-medium">Database Server</span>
+            {softwareLoading ? (
+              <div className="flex items-center justify-center py-4"><Spin /></div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 text-yellow-500 mr-3" />
+                    <span className="text-sm font-medium">Chờ duyệt</span>
+                  </div>
+                  <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                    {softwareData?.filter(p => p.status === SoftwareProposalStatus.CHỜ_DUYỆT).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  Hoạt động
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Activity className="h-5 w-5 text-green-500 mr-3" />
-                  <span className="text-sm font-medium">Web Server</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
+                    <span className="text-sm font-medium">Đã duyệt</span>
+                  </div>
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                    {softwareData?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_DUYỆT).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  Hoạt động
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Activity className="h-5 w-5 text-green-500 mr-3" />
-                  <span className="text-sm font-medium">File Storage</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Package className="h-5 w-5 text-blue-500 mr-3" />
+                    <span className="text-sm font-medium">Đã trang bị</span>
+                  </div>
+                  <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                    {softwareData?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_TRANG_BỊ).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                  Hoạt động
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Activity className="h-5 w-5 text-yellow-500 mr-3" />
-                  <span className="text-sm font-medium">Backup Service</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <XCircle className="h-5 w-5 text-red-500 mr-3" />
+                    <span className="text-sm font-medium">Đã từ chối</span>
+                  </div>
+                  <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                    {softwareData?.filter(p => p.status === SoftwareProposalStatus.ĐÃ_TỪ_CHỐI).length || 0}
+                  </span>
                 </div>
-                <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
-                  Đang chạy
-                </span>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Recent Logs */}
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-              Nhật ký hệ thống
+              Trạng thái đề xuất linh kiện
             </h3>
-            <div className="space-y-3">
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+            {replacementLoading ? (
+              <div className="flex items-center justify-center py-4"><Spin /></div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 text-yellow-500 mr-3" />
+                    <span className="text-sm font-medium">Chờ tổ trưởng duyệt</span>
+                  </div>
+                  <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                    {replacementData?.data.filter(req => req.status === ReplacementProposalStatus.CHỜ_TỔ_TRƯỞNG_DUYỆT).length || 0}
+                  </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-900">
-                    Người dùng &apos;giangvien&apos; đăng nhập thành công
-                  </p>
-                  <p className="text-xs text-gray-500">10:30 AM</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
+                    <span className="text-sm font-medium">Đã duyệt</span>
+                  </div>
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                    {replacementData?.data.filter(req => req.status === ReplacementProposalStatus.ĐÃ_DUYỆT).length || 0}
+                  </span>
                 </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Activity className="h-5 w-5 text-blue-500 mr-3" />
+                    <span className="text-sm font-medium">Đã hoàn tất mua sắm</span>
+                  </div>
+                  <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                    {replacementData?.data.filter(req => req.status === ReplacementProposalStatus.ĐÃ_HOÀN_TẤT_MUA_SẮM).length || 0}
+                  </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-900">
-                    Backup dữ liệu hoàn thành
-                  </p>
-                  <p className="text-xs text-gray-500">09:00 AM</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-900">
-                    Tạo tài khoản mới cho kỹ thuật viên
-                  </p>
-                  <p className="text-xs text-gray-500">08:45 AM</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-900">
-                    Cập nhật quyền truy cập cho nhóm giảng viên
-                  </p>
-                  <p className="text-xs text-gray-500">08:20 AM</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <XCircle className="h-5 w-5 text-red-500 mr-3" />
+                    <span className="text-sm font-medium">Đã từ chối</span>
+                  </div>
+                  <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                    {replacementData?.data.filter(req => req.status === ReplacementProposalStatus.ĐÃ_TỪ_CHỐI).length || 0}
+                  </span>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* System Settings */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-            Cấu hình hệ thống
+            Hoạt động gần đây
           </h3>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="text-center">
-              <Settings className="mx-auto h-8 w-8 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Cấu hình chung</h3>
-              <p className="mt-1 text-xs text-gray-500">Thiết lập hệ thống cơ bản</p>
+          {loading ? (
+            <div className="flex items-center justify-center py-4"><Spin /></div>
+          ) : recentSoftware.length === 0 ? (
+            <Empty description="Chưa có đề xuất phần mềm nào" />
+          ) : (
+            <div className="space-y-3">
+              {recentSoftware.map((item) => (
+                <div className="flex items-start space-x-3" key={item.id}>
+                  <div className="flex-shrink-0">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-gray-900">
+                      Đề xuất {item.proposalCode} - {item.reason || 'Không lý do'}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(item.createdAt).toLocaleString('vi-VN')}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="text-center">
-              <Shield className="mx-auto h-8 w-8 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Bảo mật</h3>
-              <p className="mt-1 text-xs text-gray-500">Chính sách và quyền hạn</p>
-            </div>
-            <div className="text-center">
-              <Database className="mx-auto h-8 w-8 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Cơ sở dữ liệu</h3>
-              <p className="mt-1 text-xs text-gray-500">Quản lý và tối ưu hóa</p>
-            </div>
-            <div className="text-center">
-              <Activity className="mx-auto h-8 w-8 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Giám sát</h3>
-              <p className="mt-1 text-xs text-gray-500">Theo dõi hiệu suất</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

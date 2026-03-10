@@ -12,21 +12,22 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Repair Asset Management - FIT IUH",
-  description: "Hệ thống quản lý sửa chữa tài sản - Khoa CNTT Đại học Công nghiệp TP.HCM",
+  description:
+    "Hệ thống quản lý sửa chữa tài sản - Khoa CNTT Đại học Công nghiệp TP.HCM",
   icons: {
-    icon: "/logo_iuh.png",
-    shortcut: "/logo_iuh.png",
-    apple: "/logo_iuh.png",
+    icon: "/images/Logo-rut-gon.png",
+    shortcut: "/images/Logo-rut-gon.png",
+    apple: "/images/Logo-rut-gon.png",
   },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" className="mdl-js">
-      <body suppressHydrationWarning className={`${inter.variable} antialiased`}>
-        <Providers>
-          {children}
-        </Providers>
+      <body
+        suppressHydrationWarning
+        className={`${inter.variable} antialiased`}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

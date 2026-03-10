@@ -10,40 +10,56 @@ import { Eye, EyeOff, User, Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { RoleSelectionModal } from '@/components/modal/RoleSelectionModal'
 import Image from 'next/image'
+import Link from 'next/link'
 
 const schema = yup.object({
-  username: yup.string().required('Tên đăng nhập là bắt buộc'),
-  password: yup.string().min(6, 'Mật khẩu ít nhất 6 ký tự').required('Mật khẩu là bắt buộc'),
-})
+  username: yup.string().required("Tên đăng nhập là bắt buộc"),
+  password: yup
+    .string()
+    .min(6, "Mật khẩu ít nhất 6 ký tự")
+    .required("Mật khẩu là bắt buộc"),
+});
 
 interface LoginForm {
-  username: string
-  password: string
+  username: string;
+  password: string;
 }
 
 export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showRoleModal, setShowRoleModal] = useState(false)
-  const router = useRouter()
-  const { login, isLoading, user } = useAuth()
-  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const router = useRouter();
+  const { login, isLoading, user } = useAuth();
+
   // Check if user is logged in and has multiple roles
   useEffect(() => {
+    console.log("📍 LoginPage useEffect - user:", user);
+
     if (user && user.roles && user.roles.length > 1) {
-      setShowRoleModal(true)
+      console.log("🔀 User has multiple roles, showing role selection modal");
+      setShowRoleModal(true);
     } else if (user && user.activeRole) {
+      console.log(
+        "✅ User has single role or activeRole is set:",
+        user.activeRole
+      );
+
       // If user has only one role or activeRole is set, redirect to their role-specific page
       const roleRoutes = {
-        'QTV_KHOA': '/qtv-khoa',
-        'PHONG_QUAN_TRI': '/phong-quan-tri', 
-        'TO_TRUONG_KY_THUAT': '/to-truong-ky-thuat',
-        'KY_THUAT_VIEN': '/ky-thuat-vien',
-        'GIANG_VIEN': '/giang-vien'
-      }
-      const route = roleRoutes[user.activeRole as keyof typeof roleRoutes] || '/admin'
-      router.push(route)
+        ADMIN: "/qtv-khoa",
+        QTV_KHOA: "/qtv-khoa",
+        PHONG_QUAN_TRI: "/phong-quan-tri",
+        TO_TRUONG_KY_THUAT: "/to-truong-ky-thuat",
+        KY_THUAT_VIEN: "/ky-thuat-vien",
+        GIANG_VIEN: "/giang-vien",
+      };
+      const route =
+        roleRoutes[user.activeRole?.code as keyof typeof roleRoutes] ||
+        "/login";
+      console.log("➡️ Redirecting to:", route);
+      router.push(route);
     }
-  }, [user, router])
+  }, [user, router]);
 
   const {
     register,
@@ -51,32 +67,39 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginForm>({
     resolver: yupResolver(schema),
-  })
+  });
 
   const onSubmit = async (data: LoginForm) => {
     try {
+      console.log("🔑 Attempting login with username:", data.username);
+
       // Sử dụng trực tiếp username không chuyển đổi thành email
-      await login(data.username, data.password)
-      toast.success('Đăng nhập thành công!')
-      
+      await login(data.username, data.password);
+      toast.success("Đăng nhập thành công!");
+
+      console.log(
+        "✅ Login successful, waiting for role selection or redirect..."
+      );
+
       // Role selection will be handled by useEffect to avoid race conditions
     } catch (error) {
-      console.error('Login error:', error)
-      toast.error('Tên đăng nhập hoặc mật khẩu không chính xác!')
+      console.error("❌ Login error:", error);
+      toast.error("Tên đăng nhập hoặc mật khẩu không chính xác!");
     }
-  }
+  };
 
   const handleCloseRoleModal = () => {
-    setShowRoleModal(false)
-    router.push('/admin')
-  }
-  
+    setShowRoleModal(false);
+    // Không redirect về login, giữ nguyên modal để user chọn lại
+    console.log("⚠️ User closed role selection modal without choosing");
+  };
+
   return (
     <div className="bg-white/40 backdrop-blur-sm rounded-lg shadow-lg p-8 w-full max-w-md mx-auto">
       {/* Logo */}
       <div className="text-center mb-6">
         <Image
-          src={"/images/logo-light.webp"}
+          src={"/images/Logo_new.png"}
           alt="Logo IUH"
           width={250}
           height={109}
@@ -100,14 +123,16 @@ export default function LoginPage() {
               <User className="h-5 w-5 text-gray-500" />
             </div>
             <input
-              {...register('username')}
+              {...register("username")}
               type="text"
               className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2.5 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
               placeholder="Nhập mã số cá nhân"
             />
           </div>
           {errors.username && (
-            <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.username.message}
+            </p>
           )}
         </div>
 
@@ -121,16 +146,15 @@ export default function LoginPage() {
               <Lock className="h-5 w-5 text-gray-500" />
             </div>
             <input
-              {...register('password')}
-              type={showPassword ? 'text' : 'password'}
+              {...register("password")}
+              type={showPassword ? "text" : "password"}
               className="appearance-none rounded-md relative block w-full pl-10 pr-3 py-2.5 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
               placeholder="Nhập mật khẩu"
             />
             <button
               type="button"
               className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowPassword(!showPassword)}
-            >
+              onClick={() => setShowPassword(!showPassword)}>
               {showPassword ? (
                 <EyeOff className="h-5 w-5 text-gray-500 hover:text-gray-600" />
               ) : (
@@ -139,27 +163,18 @@ export default function LoginPage() {
             </button>
           </div>
           {errors.password && (
-            <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.password.message}
+            </p>
           )}
         </div>
 
-        {/* Remember me and Forgot password */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <input
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-              Ghi nhớ đăng nhập
-            </label>
-          </div>
+        {/* Forgot password */}
+        <div className="flex items-center justify-end">
           <div className="text-sm">
-            <a href="#" className="font-medium text-blue-700 hover:text-blue-600">
+            <Link href="/forgot-password" className="font-medium text-blue-700 hover:text-blue-600">
               Quên mật khẩu?
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -167,27 +182,39 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-        >
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
           {isLoading ? (
             <div className="flex items-center">
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
               Đang đăng nhập...
             </div>
           ) : (
-            'Đăng nhập'
+            "Đăng nhập"
           )}
         </button>
       </form>
-      
+
       {/* Role Selection Modal */}
-      <RoleSelectionModal 
+      <RoleSelectionModal
         isOpen={showRoleModal}
         onClose={handleCloseRoleModal}
       />
     </div>
-  )
+  );
 }
