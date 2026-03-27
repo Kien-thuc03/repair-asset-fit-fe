@@ -7,6 +7,7 @@ import { ICreateUserRequest, UserStatus } from '@/types';
 import { message } from 'antd';
 import { useRoles } from '@/hooks/useRoles';
 import { useUnits } from '@/hooks/useUnits';
+import { getUsers } from '@/lib/api/users';
 
 const { Text, Title } = Typography;
 
@@ -49,22 +50,34 @@ export default function UserExcelImportModal({
 
   // Fetch real data from API
   const { roles } = useRoles();
-  const { units } = useUnits();
+  const { units, campuses } = useUnits();
 
   // Build role code to ID mapping from real data
   const roleCodeToIdMap: Record<string, string> = {};
   const validRoleCodes: string[] = [];
   
   roles.forEach(role => {
-    // Giả sử role có thuộc tính code hoặc name có thể map
-    // Nếu không có, sẽ cần thêm field code vào RoleResponseDto
-    const code = role.name.toUpperCase().replace(/\s+/g, '_');
+    // Sử dụng code từ database hoặc fallback sang name map
+    const code = role.code || role.name.toUpperCase().replace(/\s+/g, '_');
     roleCodeToIdMap[code] = role.id;
     validRoleCodes.push(code);
   });
 
-  // Build valid unit IDs from real data
+  // Build valid unit IDs/Codes from real data
   const validUnitIds = units.map(unit => unit.id);
+  const unitCodeToIdMap: Record<string, string> = {};
+  const validUnitCodes: string[] = [];
+  
+  units.forEach(unit => {
+    if (unit.unitCode !== undefined && unit.unitCode !== null) {
+      unitCodeToIdMap[unit.unitCode.toString()] = unit.id;
+      validUnitCodes.push(unit.unitCode.toString());
+    }
+    // Hỗ trợ tìm qua tên đơn vị (tuỳ chọn thêm cho thân thiện)
+    if (unit.name) {
+      unitCodeToIdMap[unit.name.trim().toLowerCase()] = unit.id;
+    }
+  });
 
   // Đặt lại state khi đóng modal
   const handleClose = () => {
@@ -80,33 +93,33 @@ export default function UserExcelImportModal({
     try {
       const XLSX = await import('xlsx');
       
-      // Lấy ví dụ unit ID và role IDs từ dữ liệu thực
-      const exampleUnitId = units.length > 0 ? units[0].id : 'UNIT_UUID_HERE';
-      const exampleRoleId1 = roles.length > 0 ? roles[0].id : 'ROLE_UUID_1';
-      const exampleRoleId2 = roles.length > 1 ? roles[1].id : 'ROLE_UUID_2';
+      // Lấy ví dụ unitCode và role codes từ dữ liệu thực
+      const exampleUnitCode = units.length > 0 && units[0].unitCode ? units[0].unitCode.toString() : '4';
+      const exampleRoleCode1 = roles.length > 0 ? (roles[0].code || roles[0].name.toUpperCase().replace(/\s+/g, '_')) : 'QTV_KHOA';
+      const exampleRoleCode2 = roles.length > 1 ? (roles[1].code || roles[1].name.toUpperCase().replace(/\s+/g, '_')) : 'GIANG_VIEN';
       
       const templateData = [
         {
           'STT': 1,
           'Họ và tên (*)': 'Nguyễn Văn A',
-          'Tên đăng nhập (*)': 'nguyenvana',
+          'Tên đăng nhập (*)': '21020011',
           'Email (*)': 'nguyenvana@iuh.edu.vn',
           'Số điện thoại': '0901234567',
-          'Mã đơn vị (*)': exampleUnitId,
-          'Mã vai trò (*)': exampleRoleId1,
+          'Mã đơn vị hoặc Tên (*)': exampleUnitCode,
+          'Mã vai trò (*)': exampleRoleCode1,
           'Ngày sinh (YYYY-MM-DD)': '1990-01-15',
-          'Mật khẩu (*)': 'Pass123'
+          'Mật khẩu (*)': 'Pass@123'
         },
         {
           'STT': 2,
           'Họ và tên (*)': 'Trần Thị B',
-          'Tên đăng nhập (*)': 'tranthib',
+          'Tên đăng nhập (*)': '21020012',
           'Email (*)': 'tranthib@iuh.edu.vn',
           'Số điện thoại': '0987654321',
-          'Mã đơn vị (*)': exampleUnitId,
-          'Mã vai trò (*)': `${exampleRoleId1}, ${exampleRoleId2}`,
+          'Mã đơn vị hoặc Tên (*)': exampleUnitCode,
+          'Mã vai trò (*)': `${exampleRoleCode1}, ${exampleRoleCode2}`,
           'Ngày sinh (YYYY-MM-DD)': '1985-03-15',
-          'Mật khẩu (*)': 'Pass456'
+          'Mật khẩu (*)': 'Pass@123'
         }
       ];
 
@@ -131,13 +144,13 @@ export default function UserExcelImportModal({
       // Thêm sheet hướng dẫn
       const instructionsData = [
         { 'Trường': 'Họ và tên (*)', 'Mô tả': 'Từ 2-100 ký tự, chỉ chữ cái và khoảng trắng', 'Ví dụ': 'Nguyễn Văn A' },
-        { 'Trường': 'Tên đăng nhập (*)', 'Mô tả': 'Từ 3-50 ký tự, chỉ chữ cái, số và . _ -', 'Ví dụ': 'nguyenvana' },
+        { 'Trường': 'Tên đăng nhập (*)', 'Mô tả': 'Đúng 8 chữ số (thường là mã nhân viên/giảng viên)', 'Ví dụ': '10000001' },
         { 'Trường': 'Email (*)', 'Mô tả': 'Email hợp lệ, tối đa 100 ký tự', 'Ví dụ': 'user@example.com' },
         { 'Trường': 'Số điện thoại', 'Mô tả': 'Định dạng Việt Nam (10-12 số)', 'Ví dụ': '0901234567' },
-        { 'Trường': 'Mã đơn vị (*)', 'Mô tả': 'UUID của đơn vị trong hệ thống', 'Ví dụ': exampleUnitId },
-        { 'Trường': 'Mã vai trò (*)', 'Mô tả': 'UUID hoặc mã vai trò (có thể nhiều, cách nhau bởi dấu phẩy)', 'Ví dụ': roles.length > 0 ? roles[0].id : 'role-uuid' },
+        { 'Trường': 'Mã đơn vị hoặc Tên (*)', 'Mô tả': 'Mã ID, Định danh số (unitCode), hoặc Tên đơn vị', 'Ví dụ': exampleUnitCode },
+        { 'Trường': 'Mã vai trò (*)', 'Mô tả': 'Mã vai trò (có thể nhiều, cách nhau bởi phẩy)', 'Ví dụ': exampleRoleCode1 },
         { 'Trường': 'Ngày sinh', 'Mô tả': 'Định dạng YYYY-MM-DD, tuổi 16-100', 'Ví dụ': '1990-01-15' },
-        { 'Trường': 'Mật khẩu (*)', 'Mô tả': 'Tối thiểu 6 ký tự, có chữ hoa, thường, số', 'Ví dụ': 'Pass123' },
+        { 'Trường': 'Mật khẩu (*)', 'Mô tả': 'Tối thiểu 6 ký tự, chữ hoa, chữ thường, số và ký tự đặc biệt', 'Ví dụ': 'Pass@123' },
       ];
       const wsInstructions = XLSX.utils.json_to_sheet(instructionsData);
       wsInstructions['!cols'] = [
@@ -146,6 +159,48 @@ export default function UserExcelImportModal({
         { wch: 25 }
       ];
       XLSX.utils.book_append_sheet(wb, wsInstructions, 'Hướng dẫn');
+
+      // Thêm sheet Danh mục Mã Vai Trò
+      const rolesData = roles.map(role => ({
+        'Mã quy định (Code)': role.code || role.name.toUpperCase().replace(/\s+/g, '_'),
+        'Tên hiển thị': role.name
+      }));
+      const wsRoles = XLSX.utils.json_to_sheet(rolesData);
+      wsRoles['!cols'] = [
+        { wch: 30 }, // Mã quy định (Code)
+        { wch: 50 }  // Tên hiển thị
+      ];
+      XLSX.utils.book_append_sheet(wb, wsRoles, 'Mã Vai Trò');
+      
+      // Thêm sheet Danh mục Mã Đơn Vị
+      const unitsData = units.map(unit => {
+        // Tìm tên Cơ sở/Đơn vị cha
+        let parentName = '';
+        if (unit.parentUnitId) {
+          // Tìm trong danh sách Cơ sở trước (do đơn vị con thường thuộc Cơ sở), hoặc kho đơn vị
+          const parent = campuses.find(c => c.id === unit.parentUnitId) || units.find(u => u.id === unit.parentUnitId);
+          if (parent) parentName = parent.name;
+        } 
+        
+        // Fallback
+        if (!parentName && unit.parentUnit && unit.parentUnit.name) {
+          parentName = unit.parentUnit.name;
+        }
+
+        return {
+          'Mã quy định (Code)': unit.unitCode?.toString() || unit.id,
+          'Tên hiển thị': unit.name,
+          'Đơn vị cha/Cơ sở': parentName || 'Không có (Cấp cao nhất)'
+        };
+      });
+      
+      const wsUnits = XLSX.utils.json_to_sheet(unitsData);
+      wsUnits['!cols'] = [
+        { wch: 30 }, // Mã quy định (Code)
+        { wch: 50 }, // Tên hiển thị
+        { wch: 40 }  // Cơ sở / Đơn vị cha
+      ];
+      XLSX.utils.book_append_sheet(wb, wsUnits, 'Mã Đơn Vị');
 
       XLSX.writeFile(wb, 'template-import-nguoi-dung.xlsx');
       
@@ -159,6 +214,7 @@ export default function UserExcelImportModal({
   // Xử lý file upload
   const handleFileUpload = async (file: File) => {
     try {
+      message.loading({ content: 'Đang kiểm tra dữ liệu với hệ thống...', key: 'importValidation', duration: 0 });
       const XLSX = await import('xlsx');
       
       const data = await file.arrayBuffer();
@@ -167,9 +223,47 @@ export default function UserExcelImportModal({
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as unknown[][];
 
       if (jsonData.length < 2) {
+        message.destroy('importValidation');
         message.error('File Excel không có dữ liệu');
-        return;
+        return false;
       }
+
+      // Fetch users real-time to check duplicates (chia nhỏ request vì BE max limit 100)
+      let existingEmails = new Set<string>();
+      let existingUsernames = new Set<string>();
+      try {
+        const firstPageResponse = await getUsers({ limit: 100, page: 1 });
+        if (firstPageResponse && firstPageResponse.data) {
+          firstPageResponse.data.forEach(u => {
+            existingEmails.add(u.email.toLowerCase());
+            existingUsernames.add(u.username);
+          });
+          
+          // Lấy tiếp các trang còn lại nếu có
+          const { totalPages } = firstPageResponse;
+          if (totalPages > 1) {
+            const subsequentPromises = [];
+            for (let i = 2; i <= totalPages; i++) {
+              subsequentPromises.push(getUsers({ limit: 100, page: i }));
+            }
+            
+            const subsequentResponses = await Promise.all(subsequentPromises);
+            subsequentResponses.forEach(res => {
+              if (res && res.data) {
+                res.data.forEach(u => {
+                  existingEmails.add(u.email.toLowerCase());
+                  existingUsernames.add(u.username);
+                });
+              }
+            });
+          }
+        }
+      } catch (err) {
+         console.warn('Could not fetch existing users for validation', err);
+      }
+
+      const fileEmails = new Set<string>();
+      const fileUsernames = new Set<string>();
 
       // Bỏ qua dòng header (dòng đầu tiên)
       const dataRows = jsonData.slice(1);
@@ -213,12 +307,15 @@ export default function UserExcelImportModal({
         // Username validation
         if (!username) {
           errors.push('Tên đăng nhập không được để trống');
-        } else if (username.length < 3) {
-          errors.push('Tên đăng nhập phải có ít nhất 3 ký tự');
-        } else if (username.length > 50) {
-          errors.push('Tên đăng nhập không được vượt quá 50 ký tự');
-        } else if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
-          errors.push('Tên đăng nhập chỉ được chứa chữ cái, số và . _ -');
+        } else if (!/^[0-9]{8}$/.test(username)) {
+          errors.push('Tên đăng nhập phải là chuỗi gồm đúng 8 chữ số');
+        } else {
+          if (existingUsernames.has(username)) {
+            errors.push('Tên đăng nhập đã tồn tại trong hệ thống');
+          } else if (fileUsernames.has(username)) {
+            errors.push('Tên đăng nhập bị trùng lặp trong file upload');
+          }
+          fileUsernames.add(username);
         }
 
         // Email validation
@@ -228,6 +325,14 @@ export default function UserExcelImportModal({
           errors.push('Email không được vượt quá 100 ký tự');
         } else if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(email)) {
           errors.push('Email không hợp lệ');
+        } else {
+          const emailLower = email.toLowerCase();
+          if (existingEmails.has(emailLower)) {
+            errors.push('Email đã tồn tại trong hệ thống');
+          } else if (fileEmails.has(emailLower)) {
+            errors.push('Email bị trùng lặp trong file upload');
+          }
+          fileEmails.add(emailLower);
         }
 
         // Password validation
@@ -241,12 +346,13 @@ export default function UserExcelImportModal({
           const hasUppercase = /[A-Z]/.test(password);
           const hasLowercase = /[a-z]/.test(password);
           const hasNumber = /[0-9]/.test(password);
+          const hasSpecialChar = /[@$!%*?&]/.test(password);
           const hasWhitespace = /\s/.test(password);
 
           if (hasWhitespace) {
             errors.push('Mật khẩu không được chứa khoảng trắng');
-          } else if (!hasUppercase || !hasLowercase || !hasNumber) {
-            errors.push('Mật khẩu phải chứa chữ hoa, chữ thường và số');
+          } else if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecialChar) {
+            errors.push('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt (@$!%*?&)');
           }
 
           if (username && password.toLowerCase().includes(username.toLowerCase())) {
@@ -292,11 +398,23 @@ export default function UserExcelImportModal({
           }
         }
 
-        // Unit ID validation
-        if (!unitId) {
+        // Unit Code / Unit ID validation
+        let finalUnitId = unitId; // Có thể là mã đơn vị, ID, hoặc tên đơn vị
+        if (!finalUnitId) {
           errors.push('Mã đơn vị không được để trống');
-        } else if (validUnitIds.length > 0 && !validUnitIds.includes(unitId)) {
-          errors.push('Mã đơn vị không tồn tại trong hệ thống');
+        } else {
+          // Nếu người dùng nhập ID trực tiếp
+          if (validUnitIds.includes(finalUnitId)) {
+            // Hợp lệ, giữ nguyên
+          } 
+          // Nếu nằm trong map code/name
+          else if (unitCodeToIdMap[finalUnitId.trim().toLowerCase()]) {
+            finalUnitId = unitCodeToIdMap[finalUnitId.trim().toLowerCase()];
+          }
+          // Không tìm thấy
+          else {
+            errors.push('Mã (hoặc tên) đơn vị không tồn tại trong hệ thống');
+          }
         }
 
         // Role codes/IDs validation
@@ -349,7 +467,7 @@ export default function UserExcelImportModal({
           email,
           password,
           phoneNumber: phoneNumber || undefined,
-          unitId,
+          unitId: finalUnitId,
           roleIds,
           birthDate: birthDateStr || undefined,
           status: UserStatus.ACTIVE,
@@ -360,15 +478,18 @@ export default function UserExcelImportModal({
         user.fullName || user.username || user.email
       );
 
+      message.destroy('importValidation');
+
       if (importUsers.length === 0) {
         message.error('Không tìm thấy dữ liệu hợp lệ trong file Excel');
-        return;
+        return false;
       }
 
       setImportData(importUsers);
       setCurrentStep('preview');
       
     } catch (error) {
+      message.destroy('importValidation');
       console.error('Error processing Excel file:', error);
       message.error('Có lỗi khi xử lý file Excel. Vui lòng kiểm tra định dạng file.');
     }
@@ -430,11 +551,11 @@ export default function UserExcelImportModal({
               description={
                 <div className="space-y-2">
                   <div>1. Tải file mẫu và điền thông tin theo đúng định dạng</div>
-                  <div>2. Các trường có dấu (*) là bắt buộc</div>
-                  <div>3. <strong>Mã vai trò:</strong> Sử dụng UUID của vai trò (có thể nhiều, cách nhau bởi dấu phẩy)</div>
-                  <div>4. <strong>Mã đơn vị:</strong> Sử dụng UUID của đơn vị</div>
+                  <div>2. Các trường có dấu (*) là bắt buộc. Tên đăng nhập phải là chuỗi đúng 8 chữ số.</div>
+                  <div>3. <strong>Mã vai trò:</strong> Nhập mã dạng chữ của vai trò (VD: QTV_KHOA, ADMIN) (có thể nhiều, cách nhau bởi dấu phẩy)</div>
+                  <div>4. <strong>Mã đơn vị:</strong> Mã số (unitCode) hoặc Tên đầy đủ của đơn vị đều được chấp nhận. UUID vẫn có thể dùng.</div>
                   <div>5. Ngày sinh theo định dạng YYYY-MM-DD (VD: 1990-01-15)</div>
-                  <div>6. Mật khẩu tối thiểu 6 ký tự, có chữ hoa, chữ thường và số</div>
+                  <div>6. Mật khẩu tối thiểu 6 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&)</div>
                   <div>7. Số điện thoại định dạng Việt Nam (VD: 0901234567)</div>
                 </div>
               }

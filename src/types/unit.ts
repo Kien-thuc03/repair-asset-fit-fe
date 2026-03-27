@@ -15,11 +15,14 @@ export enum UnitType {
 export interface Unit {
   id: string;
   name: string;
+  unitCode?: number; // Mã đơn vị dạng số định danh từ DB
   phone?: string;
   email?: string;
   type: UnitType;
   representativeId: string;
   status: UnitStatus;
+  parentUnitId?: string;
+  parentUnit?: any; // Unit (Cơ sở)
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
