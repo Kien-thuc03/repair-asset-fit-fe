@@ -173,15 +173,11 @@ export default function CreateUserPage() {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Username validation
+    // Username validation - Chỉ cho phép chuỗi 8 chữ số (mã nhân viên)
     if (!formData.username) {
       newErrors.username = "Tên đăng nhập là bắt buộc";
-    } else if (formData.username.length < 3) {
-      newErrors.username = "Tên đăng nhập phải có ít nhất 3 ký tự";
-    } else if (formData.username.length > 50) {
-      newErrors.username = "Tên đăng nhập không được vượt quá 50 ký tự";
-    } else if (!/^[a-zA-Z0-9._-]+$/.test(formData.username)) {
-      newErrors.username = "Tên đăng nhập chỉ được chứa chữ cái, số và các ký tự . _ -";
+    } else if (!/^[0-9]{8}$/.test(formData.username)) {
+      newErrors.username = "Tên đăng nhập phải là chuỗi gồm đúng 8 chữ số";
     }
 
     // Password validation - Khớp với BE: ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt (@$!%*?&)
@@ -482,13 +478,13 @@ export default function CreateUserPage() {
                 className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   errors.username ? "border-red-500" : ""
                 }`}
-                placeholder="VD: nguyenvana"
-                minLength={3}
-                maxLength={50}
-                pattern="^[a-zA-Z0-9._-]+$"
-                title="Chỉ được chứa chữ cái, số và các ký tự . _ -"
+                placeholder="VD: 21020001"
+                minLength={8}
+                maxLength={8}
+                pattern="^[0-9]{8}$"
+                title="Tên đăng nhập phải là chuỗi gồm đúng 8 chữ số"
               />
-              <p className="mt-1 text-xs text-gray-500">Từ 3-50 ký tự, chỉ chữ cái, số và . _ -</p>
+              <p className="mt-1 text-xs text-gray-500">Đúng 8 chữ số (mã Giảng viên)</p>
               {errors.username && (
                 <p className="mt-1 text-sm text-red-600">{errors.username}</p>
               )}
