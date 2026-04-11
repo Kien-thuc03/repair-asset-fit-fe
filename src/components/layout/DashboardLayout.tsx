@@ -35,6 +35,7 @@ import {
   Package,
   QrCode,
   Monitor,
+  Building,
 } from "lucide-react";
 
 // Navigation items
@@ -236,6 +237,11 @@ const getNavigationByRole = (userRole: string): NavigationItem[] => {
         name: "Quản lý người dùng",
         href: "/qtv-khoa/quan-ly-nguoi-dung",
         icon: Users,
+      },
+      {
+        name: "Quản lý phòng",
+        href: "/qtv-khoa/quan-ly-phong",
+        icon: Building,
       },
       {
         name: "Quản lý đề xuất",

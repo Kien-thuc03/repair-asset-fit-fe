@@ -33,7 +33,20 @@ export interface Unit {
 export enum RoomStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
+  MAINTENANCE = "MAINTENANCE",
 }
+
+export interface ICreateRoomRequest {
+  name: string;
+  building: string;
+  floor: string;
+  roomNumber: string;
+  status?: RoomStatus;
+  unitId?: string;
+  adjacentRoomIds?: string[];
+}
+
+export interface IUpdateRoomRequest extends Partial<ICreateRoomRequest> {}
 
 export interface Room {
   id: string;
