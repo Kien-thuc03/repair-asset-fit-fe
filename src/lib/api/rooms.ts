@@ -28,7 +28,7 @@ export interface RoomResponseDto {
     code: string;
     type: string;
   };
-  adjacentRooms?: RoomResponseDto[];
+  // adjacentRooms?: RoomResponseDto[];
   createdAt: string;
   createdBy?: {
     id: string;
